@@ -217,7 +217,7 @@ export default function NewtonBackwardInterpolations() {
 
       {vSteps.length > 0 && (
         <div className="space-y-4 mt-6 pl-5">
-          <h2 className="text-xl font-semibold">Steps for Calculating 'v'</h2>
+          <h2 className="text-xl font-semibold">Steps for Calculating v</h2>
           <div className=" ">
             {vSteps.map((step, index) => (
               <pre key={index} className="text-lg pl-5">
