@@ -1,23 +1,22 @@
-'use client';
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
 
 export default function NewtonBackwardInterpolations() {
-  
-
-  const [rows, setRows] = useState([{ x: '', y: '' }]);
-  const [interpolateX, setInterpolateX] = useState('');
-  const [output, setOutput] = useState('');
+  const [vSteps, setVSteps] = useState([]);
+  const [rows, setRows] = useState([{ x: "", y: "" }]);
+  const [interpolateX, setInterpolateX] = useState("");
+  const [output, setOutput] = useState("");
   const [diffTable, setDiffTable] = useState([]);
   const [polynomialSteps, setPolynomialSteps] = useState({
     formulas: [],
     substituted: [],
     calculated: [],
-    final: ''
+    final: "",
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
 
   const handleAddRow = () => {
-    setRows([...rows, { x: '', y: '' }]);
+    setRows([...rows, { x: "", y: "" }]);
   };
 
   const handleInputChange = (index, type, value) => {
@@ -25,28 +24,36 @@ export default function NewtonBackwardInterpolations() {
     newRows[index][type] = value;
     setRows(newRows);
   };
-  const xValues = rows.map(row => parseFloat(row.x));
-  
+  const xValues = rows.map((row) => parseFloat(row.x));
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const xValues = rows.map(row => parseFloat(row.x));
-    const yValues = rows.map(row => parseFloat(row.y));
+    const xValues = rows.map((row) => parseFloat(row.x));
+    const yValues = rows.map((row) => parseFloat(row.y));
     const x = parseFloat(interpolateX);
 
     if (xValues.length < 2 || yValues.length < 2) {
-      setOutput('Please enter at least two data points.');
+      setOutput("Please enter at least two data points.");
       return;
     }
 
     const points = xValues.map((xi, i) => ({ x: xi, y: yValues[i] }));
-    const { interpolatedValue, diffTable, stepFormulas, stepSubstituted, stepCalculated } = newtonBackwardInterpolation(points, x);
-    
+    const {
+      interpolatedValue,
+      diffTable,
+      stepFormulas,
+      stepSubstituted,
+      stepCalculated,
+      vSteps,
+    } = newtonBackwardInterpolation(points, x);
+
+    setVSteps(vSteps);
     setDiffTable(diffTable);
     setPolynomialSteps({
       formulas: stepFormulas,
       substituted: stepSubstituted,
       calculated: stepCalculated,
-      final: `Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`
+      final: `Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`,
     });
     setOutput(`Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`);
   };
@@ -59,9 +66,9 @@ export default function NewtonBackwardInterpolations() {
     setDemoInProgress(true);
 
     for (let i = 0; i < demoX.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      setRows(prevRows => {
+      setRows((prevRows) => {
         const newRows = [...prevRows];
         if (newRows[i]) {
           newRows[i].x = demoX[i];
@@ -73,11 +80,11 @@ export default function NewtonBackwardInterpolations() {
       });
     }
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setInterpolateX(demoInterpolateX);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
-    document.getElementById('interpolateButton').click();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    document.getElementById("interpolateButton").click();
 
     setDemoInProgress(false);
   };
@@ -85,13 +92,17 @@ export default function NewtonBackwardInterpolations() {
   return (
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Newton Backward Interpolation Calculator</h1>
+        <h1 className="text-2xl font-bold">
+          Newton Backward Interpolation Calculator
+        </h1>
         <button
-          className={`bg-purple-500 text-white px-4 py-2 rounded ${demoInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`bg-purple-500 text-white px-4 py-2 rounded ${
+            demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           onClick={handleDemo}
           disabled={demoInProgress}
         >
-          {demoInProgress ? 'Demo Running...' : 'Demo'}
+          {demoInProgress ? "Demo Running..." : "Demo"}
         </button>
       </div>
 
@@ -112,7 +123,9 @@ export default function NewtonBackwardInterpolations() {
                     step="any"
                     className="w-full p-2 border border-gray-300"
                     value={row.x}
-                    onChange={(e) => handleInputChange(index, 'x', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(index, "x", e.target.value)
+                    }
                     required
                   />
                 </td>
@@ -122,7 +135,9 @@ export default function NewtonBackwardInterpolations() {
                     step="any"
                     className="w-full p-2 border border-gray-300"
                     value={row.y}
-                    onChange={(e) => handleInputChange(index, 'y', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(index, "y", e.target.value)
+                    }
                     required
                   />
                 </td>
@@ -130,7 +145,11 @@ export default function NewtonBackwardInterpolations() {
             ))}
           </tbody>
         </table>
-        <button type="button" className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleAddRow}>
+        <button
+          type="button"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={handleAddRow}
+        >
           Add Row
         </button>
         <div className="space-y-2">
@@ -145,12 +164,15 @@ export default function NewtonBackwardInterpolations() {
             required
           />
         </div>
-        <button type="submit" id="interpolateButton" className="bg-green-500 text-white px-4 py-2 rounded">
+        <button
+          type="submit"
+          id="interpolateButton"
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
           Interpolate
         </button>
       </form>
 
-      
       {diffTable.length > 0 && (
         <div className="mt-6 overflow-x-auto">
           <h2 className="text-xl font-semibold">Difference Table</h2>
@@ -159,18 +181,32 @@ export default function NewtonBackwardInterpolations() {
               <tr>
                 <th className="border border-gray-300 p-2">x</th>
                 {Array.from({ length: diffTable.length }).map((_, i) => (
-                  <th key={i} className="border border-gray-300 p-2">Δ<sup>{i}</sup>Y</th>
+                  <th key={i} className="border border-gray-300 p-2">
+                    Δ<sup>{i}</sup>Y
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {diffTable.map((row, rowIndex) => (
-                <tr key={rowIndex}  className={rowIndex === diffTable.length - 1 ? 'bg-red-500' : ''}>
-                  <td className="border border-gray-300 p-2">{xValues[rowIndex]}</td>
-                 
+                <tr
+                  key={rowIndex}
+                  className={
+                    rowIndex === diffTable.length - 1 ? "bg-red-500" : ""
+                  }
+                >
+                  <td className="border border-gray-300 p-2">
+                    {xValues[rowIndex]}
+                  </td>
+
                   {row.map((value, colIndex) => (
-                    
-                    <td key={colIndex} className="border border-gray-300 p-2">{value !== undefined ?  (value.toFixed(4) !== "0.0000" ? value.toFixed(4) : '') : ''}</td>
+                    <td key={colIndex} className="border border-gray-300 p-2">
+                      {value !== undefined
+                        ? value.toFixed(4) !== "0.0000"
+                          ? value.toFixed(4)
+                          : ""
+                        : ""}
+                    </td>
                   ))}
                 </tr>
               ))}
@@ -179,75 +215,94 @@ export default function NewtonBackwardInterpolations() {
         </div>
       )}
 
-
-      <div id="steps" className="mt-6 p-10">
-        <h2 className="text-xl font-semibold">Polynomial Calculation Steps</h2>
+      {vSteps.length > 0 && (
+        <div className="space-y-4 mt-6 pl-5">
+          <h2 className="text-xl font-semibold">Steps for Calculating 'v'</h2>
+          <div className=" ">
+            {vSteps.map((step, index) => (
+              <pre key={index} className="text-lg pl-5">
+                {step}
+              </pre>
+            ))}
+          </div>
+        </div>
+      )}
+      {vSteps.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mt-6 pl-5">
+            Polynomial Calculation Steps
+          </h2>
+        </div>
+      )}
+      <div id="steps" className="mt-6 pl-5">
         <div className="space-y-4 ">
           {polynomialSteps.formulas.length > 0 && (
             <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold ">1. Formula of the Polynomial:</h3>
-              <pre>{polynomialSteps.formulas.join(' + \n')}</pre>
+              <h3 className="text-lg font-semibold ">
+                1. Formula of the Polynomial:
+              </h3>
+              <pre className="text-lg text-wrap pl-5">{polynomialSteps.formulas.join(" + \n")}</pre>
             </div>
           )}
           {polynomialSteps.substituted.length > 0 && (
             <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold">2. Substituted Values in the Polynomial:</h3>
-              <pre>{polynomialSteps.substituted.join(' + \n')}</pre>
+              <h3 className="text-lg font-semibold">
+                2. Substituted Values in the Polynomial:
+              </h3>
+              <pre className="text-wrap pl-5">{polynomialSteps.substituted.join(" + \n")}</pre>
             </div>
           )}
           {polynomialSteps.calculated.length > 0 && (
-            <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold">3. Evaluated Terms:</h3>
-              <pre>{polynomialSteps.calculated.join(' + \n')}</pre>
+            <div>
+              <h3 className="text-lg font-semibold pb-3">3. Evaluated Terms:</h3>
+              <pre className="pl-5">{polynomialSteps.calculated.join(" + \n")}</pre>
             </div>
           )}
           {polynomialSteps.final && (
-            <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold">4. Final Answer:</h3>
-              <pre>{polynomialSteps.final}</pre>
+            <div>
+              <h3 className="text-lg font-semibold pb-3">4. Final Answer:</h3>
+              <pre className="text-balance pl-5">{polynomialSteps.final}</pre>
             </div>
           )}
         </div>
       </div>
-
-      
     </div>
   );
 }
 
 function newtonBackwardInterpolation(points, x) {
-  const tr =[`y${'\u2099'}`,
-    `(v/1!)Δ${'\u00B9'}y${'\u2099\u208b\u2081'}`,
-    `((v(v+1))/2!)Δ${'\u00B2'}y${'\u2099\u208b\u2082'}`,
-    `((v(v+1)(v+2))/3!)Δ${'\u00B3'}y${'\u2099\u208b\u2083'}`,
-`((v(v+1)(v+2)(v+3))/4!)Δ${'\u{2074}'}y${'\u2099\u208b\u2084'}`,
-`((v(v+1)(v+2)(v+3)(v+4))/5!)Δ${'\u{2075}'}y${'\u2099\u208b\u2085'}`,
-`((v(v+1)(v+2)(v+3)(v+4)(v+5))/6!)Δ${'\u{2076}'}y${'\u2099\u208b\u2086'}`,
-`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6))/7!)Δ${'\u{2077}'}y${'\u2099\u208b\u2087'}`,
-`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7))/8!)Δ${'\u{2078}'}y${'\u2099\u208b\u2088'}`,
-`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8))/9!)${'\u2079'}y${'\u2099\u208b\u2089'}`,
-`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9))/10!)Δ${'\u00B9\u2070'}y${'\u2099\u208b\u2081\u2080'}`
-]
+  const tr = [
+    `y${"\u2099"}`,
+    `(v/1!)Δ${"\u00B9"}y${"\u2099\u208b\u2081"}`,
+    `((v(v+1))/2!)Δ${"\u00B2"}y${"\u2099\u208b\u2082"}`,
+    `((v(v+1)(v+2))/3!)Δ${"\u00B3"}y${"\u2099\u208b\u2083"}`,
+    `((v(v+1)(v+2)(v+3))/4!)Δ${"\u{2074}"}y${"\u2099\u208b\u2084"}`,
+    `((v(v+1)(v+2)(v+3)(v+4))/5!)Δ${"\u{2075}"}y${"\u2099\u208b\u2085"}`,
+    `((v(v+1)(v+2)(v+3)(v+4)(v+5))/6!)Δ${"\u{2076}"}y${"\u2099\u208b\u2086"}`,
+    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6))/7!)Δ${"\u{2077}"}y${"\u2099\u208b\u2087"}`,
+    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7))/8!)Δ${"\u{2078}"}y${"\u2099\u208b\u2088"}`,
+    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8))/9!)${"\u2079"}y${"\u2099\u208b\u2089"}`,
+    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9))/10!)Δ${"\u00B9\u2070"}y${"\u2099\u208b\u2081\u2080"}`,
+  ];
   const n = points.length;
-  const xi = points.map(p => p.x);
-  const yi = points.map(p => p.y);
+  const xi = points.map((p) => p.x);
+  const yi = points.map((p) => p.y);
 
   let diffTable = Array.from({ length: n }, (_, i) => Array(n).fill(0));
   for (let i = 0; i < n; i++) {
     diffTable[i][0] = yi[i];
   }
 
-   // Building the difference table
-   for (let j = 1; j < n; j++) {
+  // Building the difference table
+  for (let j = 1; j < n; j++) {
     for (let i = n - 1; i >= j; i--) {
       diffTable[i][j] = diffTable[i][j - 1] - diffTable[i - 1][j - 1];
     }
   }
-
+  const h = xi[1] - xi[0];
   let u = (x - xi[n - 1]) / (xi[1] - xi[0]); // Calculate 'u'
   let interpolatedValue = diffTable[n - 1][0]; // Starting with the last y-value
-  console.log(xi)
-;
+  console.log(xi);
   let uProduct = 1;
   let factorial = 1;
 
@@ -255,9 +310,17 @@ function newtonBackwardInterpolation(points, x) {
   let stepSubstituted = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Substituted step
   let stepCalculated = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Initial calculated step
 
+  // Adding step for calculating 'v'
+  let vSteps = [];
+  vSteps.push(`h = x₂ - x₁`);
+  vSteps.push(`v = (x - xₙ) / h`);
+
+  vSteps.push(`v = (${x} - ${xi[n - 1]}) / ${h}`);
+  vSteps.push(`v = ${(x - xi[n - 1]) / h}`);
+
   // Building the polynomial step by step
   for (let i = 1; i < n; i++) {
-    uProduct *= (u + i - 1);
+    uProduct *= u + i - 1;
     factorial *= i;
     let term = (uProduct * diffTable[n - 1][i]) / factorial;
 
@@ -269,25 +332,25 @@ function newtonBackwardInterpolation(points, x) {
 
     // Substituted steps
     let stepMid = [` `];
-    for( let ij = 1 ;ij<=i;ij++)
-      {
-    stepMid.push(` (${u} + ${ij })`);
-   }let stepMidString = stepMid.join(' * ');
-   
-   stepSubstituted.push(`(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)}) / ${i}!`);
-    
+    for (let ij = 1; ij <= i; ij++) {
+      stepMid.push(` (${u} + ${ij})`);
+    }
+    let stepMidString = stepMid.join(" * ");
+
+    stepSubstituted.push(
+      `(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)}) / ${i}!`
+    );
+
     // Calculated steps
     stepCalculated.push(`${term}`);
-
-    
   }
- 
+
   return {
     interpolatedValue,
     diffTable,
     stepFormulas,
     stepSubstituted,
-    stepCalculated
+    stepCalculated,
+    vSteps,
   };
 }
-
