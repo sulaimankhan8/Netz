@@ -152,7 +152,7 @@ export default function NewtonBackwardInterpolations() {
 
       
       {diffTable.length > 0 && (
-        <div className="mt-6 overflow-x-scroll">
+        <div className="mt-6 overflow-x-auto">
           <h2 className="text-xl font-semibold">Difference Table</h2>
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
@@ -182,27 +182,27 @@ export default function NewtonBackwardInterpolations() {
 
       <div id="steps" className="mt-6 p-10">
         <h2 className="text-xl font-semibold">Polynomial Calculation Steps</h2>
-        <div className="space-y-4">
+        <div className="space-y-4 ">
           {polynomialSteps.formulas.length > 0 && (
-            <div>
+            <div className="overflow-x-auto">
               <h3 className="text-lg font-semibold ">1. Formula of the Polynomial:</h3>
               <pre>{polynomialSteps.formulas.join(' + \n')}</pre>
             </div>
           )}
           {polynomialSteps.substituted.length > 0 && (
-            <div>
+            <div className="overflow-x-auto">
               <h3 className="text-lg font-semibold">2. Substituted Values in the Polynomial:</h3>
               <pre>{polynomialSteps.substituted.join(' + \n')}</pre>
             </div>
           )}
           {polynomialSteps.calculated.length > 0 && (
-            <div>
+            <div className="overflow-x-auto">
               <h3 className="text-lg font-semibold">3. Evaluated Terms:</h3>
               <pre>{polynomialSteps.calculated.join(' + \n')}</pre>
             </div>
           )}
           {polynomialSteps.final && (
-            <div>
+            <div className="overflow-x-auto">
               <h3 className="text-lg font-semibold">4. Final Answer:</h3>
               <pre>{polynomialSteps.final}</pre>
             </div>
@@ -216,15 +216,17 @@ export default function NewtonBackwardInterpolations() {
 }
 
 function newtonBackwardInterpolation(points, x) {
-    const tr =["yn","(v/1!)Δyn-1","((v(v+1))/2!)Δ2yn-2",
-"((v(v+1)(v+2))/3!)Δ3yn-3",
-"((v(v+1)(v+2)(v+3))/4!)Δ4yn-4",
-"((v(v+1)(v+2)(v+3)(v+4))/5!)Δ5yn-5",
-"((v(v+1)(v+2)(v+3)(v+4)(v+5))/6!)Δ6yn-6",
-"((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6))/7!)Δ7yn-7",
-"((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7))/8!)Δ8yn-8",
-"((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8))/9!)9yn-9",
-"((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9))/10!)Δ10yn-10"
+  const tr =[`y${'\u2099'}`,
+    `(v/1!)Δ${'\u00B9'}y${'\u2099\u208b\u2081'}`,
+    `((v(v+1))/2!)Δ${'\u00B2'}y${'\u2099\u208b\u2082'}`,
+    `((v(v+1)(v+2))/3!)Δ${'\u00B3'}y${'\u2099\u208b\u2083'}`,
+`((v(v+1)(v+2)(v+3))/4!)Δ${'\u{2074}'}y${'\u2099\u208b\u2084'}`,
+`((v(v+1)(v+2)(v+3)(v+4))/5!)Δ${'\u{2075}'}y${'\u2099\u208b\u2085'}`,
+`((v(v+1)(v+2)(v+3)(v+4)(v+5))/6!)Δ${'\u{2076}'}y${'\u2099\u208b\u2086'}`,
+`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6))/7!)Δ${'\u{2077}'}y${'\u2099\u208b\u2087'}`,
+`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7))/8!)Δ${'\u{2078}'}y${'\u2099\u208b\u2088'}`,
+`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8))/9!)${'\u2079'}y${'\u2099\u208b\u2089'}`,
+`((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9))/10!)Δ${'\u00B9\u2070'}y${'\u2099\u208b\u2081\u2080'}`
 ]
   const n = points.length;
   const xi = points.map(p => p.x);
