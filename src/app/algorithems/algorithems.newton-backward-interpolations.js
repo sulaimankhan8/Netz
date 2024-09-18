@@ -19,12 +19,32 @@ export default function NewtonBackwardInterpolations() {
     setRows([...rows, { x: "", y: "" }]);
   };
 
+  const handleDeleteRow = (index) => {
+    const newRows = rows.filter((_, i) => i !== index);
+    setRows(newRows);
+  };
   const handleInputChange = (index, type, value) => {
     const newRows = [...rows];
     newRows[index][type] = value;
     setRows(newRows);
   };
   const xValues = rows.map((row) => parseFloat(row.x));
+
+
+  const handleReset = () => {
+    // Reset all form inputs and clear output
+    setRows([{ x: "", y: "" }]); // Reset table to a single row
+    setInterpolateX(""); // Clear the interpolated X input
+    setOutput(""); // Clear the output
+    setDiffTable([]); // Clear the difference table
+    setVSteps([]); // Clear the v calculation steps
+    setPolynomialSteps({
+      formulas: [],
+      substituted: [],
+      calculated: [],
+      final: "",
+    }); // Clear polynomial steps
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -112,6 +132,7 @@ export default function NewtonBackwardInterpolations() {
             <tr>
               <th className="border border-gray-300 p-2">X Value</th>
               <th className="border border-gray-300 p-2">Y Value</th>
+            
             </tr>
           </thead>
           <tbody>
@@ -140,6 +161,15 @@ export default function NewtonBackwardInterpolations() {
                     }
                     required
                   />
+                </td>
+                <td className="border border-gray-300 p-2">
+                  <button
+                    type="button"
+                    className="bg-red-500  text-white px-4 py-2 rounded"
+                    onClick={() => handleDeleteRow(index)}
+                  >
+                    X
+                  </button>
                 </td>
               </tr>
             ))}
@@ -170,7 +200,17 @@ export default function NewtonBackwardInterpolations() {
           className="bg-green-500 text-white px-4 py-2 rounded"
         >
           Interpolate
-        </button>
+        </button> 
+
+        <button
+            type="button"
+            className="bg-red-500 float-right
+             text-white px-4 py-2 rounded"
+            onClick={handleReset}
+          >
+            Reset
+          </button>
+     
       </form>
 
       {diffTable.length > 0 && (
