@@ -51,7 +51,7 @@ export default function NewtonBackwardInterpolation() {
                     The formula for Newton Backward Interpolation is:</p>
 
                 <div className="overflow-auto">
-                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{2! v(v+1)}{\\Delta^2 y_n} + \\frac{3! v(v+1)(v+2)}{\\Delta^3 y_n} + \\ldots`} />
+                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_n + \\frac{3! v(v+1)(v+2)}{\\Delta^3 y_n} + \\ldots`} />
                 </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>
@@ -167,8 +167,8 @@ export default function NewtonBackwardInterpolation() {
     \\frac{(-1.75 \\cdot (-1.75+1) \\cdot (-1.75+2) \\cdot (-1.75+3) \\cdot (-1.75+4))}{4!} \\cdot 4.0400`}
                             />
                         </div>
-                        <p className="py-5 text-2xl">Step-by-step:</p>
-                        <ol className="list-decimal text-xl pl-5">
+                        <p className="py-5 text-lg">Step-by-step:</p>
+                        <ol className="list-decimal text-lg pl-5">
                             <li className="p-3 "><p>First term: <InlineMath math={`40`} /> </p></li>
                             <li className="p-3 "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
 
