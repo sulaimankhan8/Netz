@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
-
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 
 export default function NewtonBackwardInterpolations() {
@@ -217,7 +218,7 @@ export default function NewtonBackwardInterpolations() {
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400"
           onClick={handleAddRow}
         >
-          <img src="/add-row-below.svg"/>
+          <img src="/add-row-below.svg" />
         </button>
         <div className="space-y-2">
           <label htmlFor="interpolateX">Interpolate at X:</label>
@@ -245,7 +246,7 @@ export default function NewtonBackwardInterpolations() {
              text-white px-4 py-2 rounded hover:bg-red-400"
           onClick={handleReset}
         >
-          <img src="/reset.svg"/>
+          <img src="/reset.svg" />
         </button>
 
       </form>
@@ -315,54 +316,43 @@ export default function NewtonBackwardInterpolations() {
       )}
 
       {vSteps.length > 0 && (
-        <div className="space-y-4 mt-6 pl-5">
-          <h2 className="text-xl font-semibold">Steps for Calculating v</h2>
-          <div className=" ">
-            {vSteps.map((step, index) => (
-              <pre key={index} className="text-lg pl-5">
-                {step}
-              </pre>
-            ))}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold">V Calculation Steps</h2>
+          <div className="mt-2 p-4 border border-gray-300 rounded-lg over">
+            <pre className="whitespace-pre-wrap">
+              <BlockMath math={vSteps.join(",")} /></pre>
           </div>
         </div>
       )}
-      {vSteps.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mt-6 pl-5">
-            Polynomial Calculation Steps
-          </h2>
-        </div>
-      )}
-      <div id="steps" className="mt-6 pl-5">
+      
+      <div id="steps" className="mt-6 text-wrap">
         <div className="space-y-4 ">
           {polynomialSteps.formulas.length > 0 && (
-            <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold ">
-                1. Formula of the Polynomial:
-              </h3>
-              <pre className="text-lg text-wrap pl-5">{polynomialSteps.formulas.join(" + \n")}</pre>
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold">Polynomial Steps</h2>
+              <div className="mt-2 p-4 border border-gray-300 rounded-lg">
+                <div className="overflow-x-auto">
+                  <h3 className="text-lg font-semibold p-5">Formulas:</h3>
+                  <BlockMath math={polynomialSteps.formulas.join(" + ")} />
+                </div>
+                <div  className="overflow-x-auto">
+                  <h3 className="text-lg font-semibold p-5">Substituted Values:</h3>
+                  <BlockMath math={polynomialSteps.substituted.join(" + ")} />
+                </div>
+                <div  className="overflow-x-auto break-words  whitespace-pre-wrap" >
+                  <h3 className="text-lg font-semibold p-5">Evaluated Terms:</h3>
+                  <BlockMath  math={polynomialSteps.calculated.join(" + \n ")} />
+                </div>
+                <div  className="overflow-x-auto">
+                  <h3 className="text-lg font-semibold p-5">Final Answer:</h3>
+                  <p className="font-bold text-lg">{polynomialSteps.final}</p>
+
+                </div>
+
+              </div>
             </div>
           )}
-          {polynomialSteps.substituted.length > 0 && (
-            <div className="overflow-x-auto">
-              <h3 className="text-lg font-semibold">
-                2. Substituted Values in the Polynomial:
-              </h3>
-              <pre className="text-wrap pl-5">{polynomialSteps.substituted.join(" + \n")}</pre>
-            </div>
-          )}
-          {polynomialSteps.calculated.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold pb-3">3. Evaluated Terms:</h3>
-              <pre className="pl-5">{polynomialSteps.calculated.join(" + \n")}</pre>
-            </div>
-          )}
-          {polynomialSteps.final && (
-            <div>
-              <h3 className="text-lg font-semibold pb-3">4. Final Answer:</h3>
-              <pre className="text-balance pl-5">{polynomialSteps.final}</pre>
-            </div>
-          )}
+
         </div>
       </div>
     </div>
@@ -371,18 +361,19 @@ export default function NewtonBackwardInterpolations() {
 
 function newtonBackwardInterpolation(points, x) {
   const tr = [
-    `y${"\u2099"}`,
-    `(v/1!)Δ${"\u00B9"}y${"\u2099\u208b\u2081"}`,
-    `((v(v+1))/2!)Δ${"\u00B2"}y${"\u2099\u208b\u2082"}`,
-    `((v(v+1)(v+2))/3!)Δ${"\u00B3"}y${"\u2099\u208b\u2083"}`,
-    `((v(v+1)(v+2)(v+3))/4!)Δ${"\u{2074}"}y${"\u2099\u208b\u2084"}`,
-    `((v(v+1)(v+2)(v+3)(v+4))/5!)Δ${"\u{2075}"}y${"\u2099\u208b\u2085"}`,
-    `((v(v+1)(v+2)(v+3)(v+4)(v+5))/6!)Δ${"\u{2076}"}y${"\u2099\u208b\u2086"}`,
-    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6))/7!)Δ${"\u{2077}"}y${"\u2099\u208b\u2087"}`,
-    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7))/8!)Δ${"\u{2078}"}y${"\u2099\u208b\u2088"}`,
-    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8))/9!)${"\u2079"}y${"\u2099\u208b\u2089"}`,
-    `((v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9))/10!)Δ${"\u00B9\u2070"}y${"\u2099\u208b\u2081\u2080"}`,
+    `y_{n}`,
+    `\\frac{v}{1!} \\Delta^{1} y_{n-1}`,
+    `\\frac{v(v+1)}{2!} \\Delta^{2} y_{n-2}`,
+    `\\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3}`,
+    `\\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)}{5!} \\Delta^{5} y_{n-5}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)}{6!} \\Delta^{6} y_{n-6}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)}{7!} \\Delta^{7} y_{n-7}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)}{8!} \\Delta^{8} y_{n-8}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)}{9!} \\Delta^{9} y_{n-9}`,
+    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9)}{10!} \\Delta^{10} y_{n-10}`
   ];
+
   const n = points.length;
   const xi = points.map((p) => p.x);
   const yi = points.map((p) => p.y);
@@ -412,9 +403,9 @@ function newtonBackwardInterpolation(points, x) {
   // Adding step for calculating 'v'
   let vSteps = [];
   vSteps.push(`h = x₂ - x₁`);
-  vSteps.push(`v = (x - xₙ) / h`);
+  vSteps.push(`v =\\frac{(x - x_n)}{ h}`);
+  vSteps.push(`v =\\frac{(${x} - ${xi[n - 1]})}{ ${h}}`);
 
-  vSteps.push(`v = (${x} - ${xi[n - 1]}) / ${h}`);
   vSteps.push(`v = ${(x - xi[n - 1]) / h}`);
 
   // Building the polynomial step by step
@@ -437,11 +428,11 @@ function newtonBackwardInterpolation(points, x) {
     let stepMidString = stepMid.join(" * ");
 
     stepSubstituted.push(
-      `(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)}) / ${i}!`
+      `\\frac{(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)})}{ ${i}!}`
     );
 
     // Calculated steps
-    stepCalculated.push(`${term}`);
+    stepCalculated.push(`(${term})`);
   }
 
   return {
