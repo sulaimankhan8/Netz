@@ -1,6 +1,7 @@
 "use client"
-import { InlineMath, BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
+import { InlineMath, BlockMath } from "react-katex";
+
 import { useState,useEffect } from "react";
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
@@ -151,7 +152,7 @@ export default function NewtonBackwardInterpolation() {
                     <div className="mb-4">
                         <p className="text-lg font-semibold mb-2"></p>
                         <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
-                            <BlockMath
+                            <InlineMath
                                math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} + \\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}\\ldots`} 
                             />
                         </div>
@@ -202,7 +203,7 @@ export default function NewtonBackwardInterpolation() {
 
 
 
-            <section>
+            <section className="p-5"> 
                 <NewtonBackwardInterpolations />
             </section>
 
