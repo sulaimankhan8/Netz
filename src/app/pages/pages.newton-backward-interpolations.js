@@ -57,9 +57,9 @@ export default function NewtonBackwardInterpolation() {
 
                     The formula for Newton Backward Interpolation is:</p>
 
-                <div className="overflow-auto">
-                    <BlockMath math={str} />
-                </div>
+                    <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
+                        <BlockMath math={formula} />
+                        </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>
                         <li><InlineMath math="v = \frac{x - x_n}{h}" /></li>
