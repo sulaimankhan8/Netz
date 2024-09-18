@@ -156,7 +156,7 @@ export default function NewtonBackwardInterpolations() {
           Newton Backward Interpolation Calculator
         </h1>
         <button
-          className={`bg-purple-500 text-white px-4 py-2 rounded  ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+          className={`bg-purple-500 text-white md:px-4 py-2 rounded  ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
             } hover:bg-purple-400`}
           onClick={handleDemo}
           disabled={demoInProgress}
@@ -243,7 +243,7 @@ export default function NewtonBackwardInterpolations() {
         <button
           type="button"
           className="bg-red-500 float-right
-             text-white px-4 py-2 rounded hover:bg-red-400"
+             text-white md:px-4 lg:py-2 rounded hover:bg-red-400"
           onClick={handleReset}
         >
           <img src="/reset.svg" />
@@ -319,7 +319,7 @@ export default function NewtonBackwardInterpolations() {
         <div className="mt-6">
           <h2 className="text-xl font-semibold">V Calculation Steps</h2>
           <div className="mt-2 p-4 border border-gray-300 rounded-lg over">
-            <pre className="whitespace-pre-wrap">
+            <pre className="overflow-x-auto">
               <BlockMath math={vSteps.join(",")} /></pre>
           </div>
         </div>
