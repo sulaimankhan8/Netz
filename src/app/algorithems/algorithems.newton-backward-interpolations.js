@@ -204,7 +204,7 @@ export default function NewtonBackwardInterpolations() {
                 <td className="border border-gray-300 p-2">
                   <button
                     type="button"
-                    className="bg-red-500  text-white sm:px-4 sm:py-2 rounded hover:bg-red-400"
+                    className="bg-red-500  text-white px-2 py-1 sm:px-4 sm:py-2 rounded hover:bg-red-400"
                     onClick={() => handleDeleteRow(index)}
                   ><img src="/delete.svg" />
                   </button>
