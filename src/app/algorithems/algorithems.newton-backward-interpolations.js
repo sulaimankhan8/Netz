@@ -150,7 +150,7 @@ export default function NewtonBackwardInterpolations() {
 
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="container mx-auto md:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">
           Newton Backward Interpolation Calculator
