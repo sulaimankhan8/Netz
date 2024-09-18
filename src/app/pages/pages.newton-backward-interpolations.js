@@ -1,7 +1,7 @@
 "use client"
-import { InlineMath, BlockMath } from 'react-katex';
-import 'katex/dist/katex.min.css';
-import { useState,useEffect } from 'react';
+import { InlineMath, BlockMath } from "react-katex";
+import "katex/dist/katex.min.css";
+import { useState,useEffect } from "react";
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
 
