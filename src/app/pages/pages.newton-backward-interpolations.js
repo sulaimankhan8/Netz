@@ -51,7 +51,7 @@ export default function NewtonBackwardInterpolation() {
                     The formula for Newton Backward Interpolation is:</p>
 
                 <div className="overflow-auto">
-                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_n + \\frac{3! v(v+1)(v+2)}{\\Delta^3 y_n} + \\ldots`} />
+                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_n + \\ldots`} />
                 </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>
