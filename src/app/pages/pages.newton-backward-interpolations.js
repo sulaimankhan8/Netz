@@ -7,6 +7,7 @@ import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-back
 
 export default function NewtonBackwardInterpolation() {
 
+    const str = [`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} \\ldots`];
     const data = [
         { xxx: 24, yyy: 28.0600, deltaY: '', delta2Y: '', delta3Y: '', delta4Y: '' },
         { xxx: 28, yyy: 30.1900, deltaY: 2.1300, delta2Y: '', delta3Y: '', delta4Y: '' },
@@ -51,7 +52,7 @@ export default function NewtonBackwardInterpolation() {
                     The formula for Newton Backward Interpolation is:</p>
 
                 <div className="overflow-auto">
-                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} \\ldots`} />
+                    <BlockMath math={str.join("+")} />
                 </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>

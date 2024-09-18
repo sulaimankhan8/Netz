@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { InlineMath, BlockMath } from "react-katex";
+import {  BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
 
 
