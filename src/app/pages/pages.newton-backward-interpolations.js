@@ -69,7 +69,7 @@ export default function NewtonBackwardInterpolation() {
             <section className="container mx-auto p-8">
                 <div className="p-4 ">
                     <h1 className="text-2xl font-bold mb-4">Example of Newton Backward Interpolation</h1>
-                    <h2>Let's say we are given the following data points:</h2><br></br>
+                    <h2>Let&apos;ss say we are given the following data points:</h2><br></br>
                     <div className="p-4 flex justify-center overflow-hidden">
                         <table className="w-[80%] border-collapse border rounded-xl overflow-hidden ">
                             <thead>
