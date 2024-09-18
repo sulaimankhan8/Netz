@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState,useRef} from "react";
 
 export default function NewtonBackwardInterpolations() {
   const [vSteps, setVSteps] = useState([]);
+  const [showCopyButton, setShowCopyButton] = useState(false);
   const [rows, setRows] = useState([{ x: "", y: "" }]);
   const [interpolateX, setInterpolateX] = useState("");
   const [output, setOutput] = useState("");
@@ -14,6 +15,8 @@ export default function NewtonBackwardInterpolations() {
     final: "",
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
+  const copyRef = useRef(null);
+
 
   const handleAddRow = () => {
     setRows([...rows, { x: "", y: "" }]);
@@ -67,6 +70,7 @@ export default function NewtonBackwardInterpolations() {
       vSteps,
     } = newtonBackwardInterpolation(points, x);
 
+    setShowCopyButton(true);
     setVSteps(vSteps);
     setDiffTable(diffTable);
     setPolynomialSteps({
@@ -108,6 +112,39 @@ export default function NewtonBackwardInterpolations() {
 
     setDemoInProgress(false);
   };
+ // Handle the copy to clipboard action
+const handleCopy = () => {
+  const textToCopy = `
+  Difference Table:
+  ${diffTable.map((row, rowIndex) => `Row ${rowIndex + 1}: ${row.map((col, colIndex) => `Cell (${rowIndex + 1}, ${colIndex + 1}): ${col}`).join(", ")}`).join("\n")}
+
+  Polynomial Steps:
+  1. Formula: ${polynomialSteps.formulas.join(" + ")}
+  2. Substituted Values: ${polynomialSteps.substituted.join(" + ")}
+  3. Evaluated Terms: ${polynomialSteps.calculated.join(" + ")}
+  4. Final Answer: ${polynomialSteps.final}
+
+  v Calculation Steps:
+  ${vSteps.join("\n")}
+  `;
+
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      // Show a notification or message box
+      const messageBox = document.getElementById("messageBox");
+      messageBox.innerText = "Steps copied to clipboard!";
+      messageBox.style.display = "block";
+      
+      // Hide the message after a few seconds
+      setTimeout(() => {
+        messageBox.style.display = "none";
+      }, 3000); // 3 seconds
+    })
+    .catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+};
+
 
   return (
     <div className="container mx-auto p-8">
@@ -116,9 +153,9 @@ export default function NewtonBackwardInterpolations() {
           Newton Backward Interpolation Calculator
         </h1>
         <button
-          className={`bg-purple-500 text-white px-4 py-2 rounded ${
+          className={`bg-purple-500 text-white px-4 py-2 rounded  ${
             demoInProgress ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          } hover:bg-purple-400`}
           onClick={handleDemo}
           disabled={demoInProgress}
         >
@@ -165,7 +202,7 @@ export default function NewtonBackwardInterpolations() {
                 <td className="border border-gray-300 p-2">
                   <button
                     type="button"
-                    className="bg-red-500  text-white px-4 py-2 rounded"
+                    className="bg-red-500  text-white px-4 py-2 rounded hover:bg-red-400"
                     onClick={() => handleDeleteRow(index)}
                   >
                     X
@@ -177,7 +214,7 @@ export default function NewtonBackwardInterpolations() {
         </table>
         <button
           type="button"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400"
           onClick={handleAddRow}
         >
           Add Row
@@ -197,7 +234,7 @@ export default function NewtonBackwardInterpolations() {
         <button
           type="submit"
           id="interpolateButton"
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-400"
         >
           Interpolate
         </button> 
@@ -205,7 +242,7 @@ export default function NewtonBackwardInterpolations() {
         <button
             type="button"
             className="bg-red-500 float-right
-             text-white px-4 py-2 rounded"
+             text-white px-4 py-2 rounded hover:bg-red-400"
             onClick={handleReset}
           >
             Reset
@@ -213,9 +250,31 @@ export default function NewtonBackwardInterpolations() {
      
       </form>
 
+        <div id="messageBox" style={{
+        display: 'none',
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        padding: '10px',
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        borderRadius: '5px'
+      }}>
+        Steps copied to clipboard!
+      </div>
+
       {diffTable.length > 0 && (
         <div className="mt-6 overflow-x-auto">
-          <h2 className="text-xl font-semibold">Difference Table</h2>
+          <h2 className="text-xl inline-block font-semibold">Difference Table </h2>{showCopyButton && (
+
+<button
+  type="button"
+  className="bg-blue-500 text-white px-4 inline-block py-2 rounded mb-4 float-end hover:bg-blue-400"
+  onClick={handleCopy}
+  ref={copyRef}
+>
+  Copy Steps
+</button>)}
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
               <tr>
