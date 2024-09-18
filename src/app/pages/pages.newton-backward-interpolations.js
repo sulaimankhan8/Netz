@@ -17,8 +17,9 @@ export default function NewtonBackwardInterpolation() {
         { xxx: 40, yyy: 40.0000, deltaY: 5.0600, delta2Y: 2.8700, delta3Y: 3.2400, delta4Y: 4.0400 },
     ];
     const formula = `
-    P(x) = y_n + v \cdot \Delta y_n + \frac{v(v+1)}{2!} \cdot \Delta^2 y_{n-2} + \frac{v(v+1)(v+2)}{3!} \cdot \Delta^3 y_{n-3} + \frac{v(v+1)(v+2)(v+3)}{4!} \cdot \Delta^4 y_{n-4} + \cdots
-
+    P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} 
+    + \\frac{v(v+1)(v+2)}{3!} \\cdot \\Delta^3 y_{n-3} 
+    + \\frac{v(v+1)(v+2)(v+3)}{4!} \\cdot \\Delta^4 y_{n-4} + \\cdots
   `;
 
     const [theme, setTheme] = useState('light');
