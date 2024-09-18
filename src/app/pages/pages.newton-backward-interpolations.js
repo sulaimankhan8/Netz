@@ -16,6 +16,10 @@ export default function NewtonBackwardInterpolation() {
         { xxx: 36, yyy: 34.9400, deltaY: 2.1900, delta2Y: -0.3700, delta3Y: -0.8000, delta4Y: '' },
         { xxx: 40, yyy: 40.0000, deltaY: 5.0600, delta2Y: 2.8700, delta3Y: 3.2400, delta4Y: 4.0400 },
     ];
+    const formula = `
+    P(x) = y_n + v \cdot \Delta y_n + \frac{v(v+1)}{2!} \cdot \Delta^2 y_{n-2} + \frac{v(v+1)(v+2)}{3!} \cdot \Delta^3 y_{n-3} + \frac{v(v+1)(v+2)(v+3)}{4!} \cdot \Delta^4 y_{n-4} + \cdots
+
+  `;
 
     const [theme, setTheme] = useState('light');
 
@@ -152,9 +156,7 @@ export default function NewtonBackwardInterpolation() {
                     <div className="mb-4">
                         <p className="text-lg font-semibold mb-2"></p>
                         <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
-                            <InlineMath
-                               math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} + \\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}\\ldots`} 
-                            />
+                        <BlockMath math={formula} />
                         </div>
                     </div>
 
