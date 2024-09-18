@@ -156,7 +156,7 @@ export default function NewtonBackwardInterpolations() {
           Newton Backward Interpolation Calculator
         </h1>
         <button
-          className={`bg-purple-500 text-white md:px-4 py-2 rounded  ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+          className={`bg-purple-500 text-white px-2 sm:px-4 py-2 rounded  ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
             } hover:bg-purple-400`}
           onClick={handleDemo}
           disabled={demoInProgress}
@@ -204,7 +204,7 @@ export default function NewtonBackwardInterpolations() {
                 <td className="border border-gray-300 p-2">
                   <button
                     type="button"
-                    className="bg-red-500  text-white px-4 py-2 rounded hover:bg-red-400"
+                    className="bg-red-500  text-white sm:px-4 sm:py-2 rounded hover:bg-red-400"
                     onClick={() => handleDeleteRow(index)}
                   ><img src="/delete.svg" />
                   </button>
@@ -243,7 +243,7 @@ export default function NewtonBackwardInterpolations() {
         <button
           type="button"
           className="bg-red-500 float-right
-             text-white md:px-4 lg:py-2 rounded hover:bg-red-400"
+             text-white px-4 py-2 rounded hover:bg-red-400"
           onClick={handleReset}
         >
           <img src="/reset.svg" />
@@ -270,7 +270,7 @@ export default function NewtonBackwardInterpolations() {
 
             <button
               type="button"
-              className="bg-blue-500 text-white px-4 inline-block py-2 rounded mb-4 float-end hover:bg-blue-400"
+              className="bg-blue-500 text-white py-1 px-2 sm:px-4 inline-block sm:py-2 rounded mb-4 float-end hover:bg-blue-400"
               onClick={handleCopy}
               ref={copyRef}
             >
