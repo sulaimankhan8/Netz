@@ -51,7 +51,7 @@ export default function NewtonBackwardInterpolation() {
                     The formula for Newton Backward Interpolation is:</p>
 
                 <div className="overflow-auto">
-                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_n + \\ldots`} />
+                    <BlockMath math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} \\ldots`} />
                 </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>
@@ -149,9 +149,9 @@ export default function NewtonBackwardInterpolation() {
 
                     <div className="mb-4">
                         <p className="text-lg font-semibold mb-2"></p>
-                        <div className="bg-gray-100 p-4 border border-gray-300 rounded-lg shadow-md">
+                        <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
                             <BlockMath
-                                math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_n + \\frac{v(v+1)(v+2)}{3!} \\cdot \\Delta^3 y_n + \\dots`}
+                               math={`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} + \\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}\\ldots`} 
                             />
                         </div>
                     </div>
