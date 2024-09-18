@@ -1,5 +1,7 @@
 "use client";
-import { useState,useRef} from "react";
+import { useState, useRef } from "react";
+
+
 
 export default function NewtonBackwardInterpolations() {
   const [vSteps, setVSteps] = useState([]);
@@ -112,9 +114,9 @@ export default function NewtonBackwardInterpolations() {
 
     setDemoInProgress(false);
   };
- // Handle the copy to clipboard action
-const handleCopy = () => {
-  const textToCopy = `
+  // Handle the copy to clipboard action
+  const handleCopy = () => {
+    const textToCopy = `
   Difference Table:
   ${diffTable.map((row, rowIndex) => `Row ${rowIndex + 1}: ${row.map((col, colIndex) => `Cell (${rowIndex + 1}, ${colIndex + 1}): ${col}`).join(", ")}`).join("\n")}
 
@@ -128,22 +130,22 @@ const handleCopy = () => {
   ${vSteps.join("\n")}
   `;
 
-  navigator.clipboard.writeText(textToCopy)
-    .then(() => {
-      // Show a notification or message box
-      const messageBox = document.getElementById("messageBox");
-      messageBox.innerText = "Steps copied to clipboard!";
-      messageBox.style.display = "block";
-      
-      // Hide the message after a few seconds
-      setTimeout(() => {
-        messageBox.style.display = "none";
-      }, 3000); // 3 seconds
-    })
-    .catch(err => {
-      console.error('Failed to copy: ', err);
-    });
-};
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        // Show a notification or message box
+        const messageBox = document.getElementById("messageBox");
+        messageBox.innerText = "Steps copied to clipboard!";
+        messageBox.style.display = "block";
+
+        // Hide the message after a few seconds
+        setTimeout(() => {
+          messageBox.style.display = "none";
+        }, 3000); // 3 seconds
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+  };
 
 
   return (
@@ -153,9 +155,8 @@ const handleCopy = () => {
           Newton Backward Interpolation Calculator
         </h1>
         <button
-          className={`bg-purple-500 text-white px-4 py-2 rounded  ${
-            demoInProgress ? "opacity-50 cursor-not-allowed" : ""
-          } hover:bg-purple-400`}
+          className={`bg-purple-500 text-white px-4 py-2 rounded  ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+            } hover:bg-purple-400`}
           onClick={handleDemo}
           disabled={demoInProgress}
         >
@@ -169,7 +170,7 @@ const handleCopy = () => {
             <tr>
               <th className="border border-gray-300 p-2">X Value</th>
               <th className="border border-gray-300 p-2">Y Value</th>
-            
+
             </tr>
           </thead>
           <tbody>
@@ -204,8 +205,7 @@ const handleCopy = () => {
                     type="button"
                     className="bg-red-500  text-white px-4 py-2 rounded hover:bg-red-400"
                     onClick={() => handleDeleteRow(index)}
-                  >
-                    X
+                  ><img src="/delete.svg" />
                   </button>
                 </td>
               </tr>
@@ -217,7 +217,7 @@ const handleCopy = () => {
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400"
           onClick={handleAddRow}
         >
-          Add Row
+          <img src="/add-row-below.svg"/>
         </button>
         <div className="space-y-2">
           <label htmlFor="interpolateX">Interpolate at X:</label>
@@ -237,20 +237,20 @@ const handleCopy = () => {
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-400"
         >
           Interpolate
-        </button> 
+        </button>
 
         <button
-            type="button"
-            className="bg-red-500 float-right
+          type="button"
+          className="bg-red-500 float-right
              text-white px-4 py-2 rounded hover:bg-red-400"
-            onClick={handleReset}
-          >
-            Reset
-          </button>
-     
+          onClick={handleReset}
+        >
+          <img src="/reset.svg"/>
+        </button>
+
       </form>
 
-        <div id="messageBox" style={{
+      <div id="messageBox" style={{
         display: 'none',
         backgroundColor: '#4CAF50',
         color: 'white',
@@ -267,14 +267,14 @@ const handleCopy = () => {
         <div className="mt-6 overflow-x-auto">
           <h2 className="text-xl inline-block font-semibold">Difference Table </h2>{showCopyButton && (
 
-<button
-  type="button"
-  className="bg-blue-500 text-white px-4 inline-block py-2 rounded mb-4 float-end hover:bg-blue-400"
-  onClick={handleCopy}
-  ref={copyRef}
->
-  Copy Steps
-</button>)}
+            <button
+              type="button"
+              className="bg-blue-500 text-white px-4 inline-block py-2 rounded mb-4 float-end hover:bg-blue-400"
+              onClick={handleCopy}
+              ref={copyRef}
+            >
+              Copy Steps
+            </button>)}
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
               <tr>

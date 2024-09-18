@@ -1,11 +1,15 @@
 'use client';
-import NewtonBackwardInterpolations from "./algorithems/algorithems.newton-backward-interpolations";
+
+import NewtonBackwardInterpolation from "./pages/pages.newton-backward-interpolations";
+
 
 export default function Home() {
-  return (
-    
-    <NewtonBackwardInterpolations/>
+  return(
+  <>
   
+    <NewtonBackwardInterpolation/>
+   
   
+  </>
   );
 }
