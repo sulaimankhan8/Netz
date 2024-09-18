@@ -174,14 +174,14 @@ export default function NewtonBackwardInterpolation() {
                         </div>
                         <p className="py-5 text-lg">Step-by-step:</p>
                         <ol className="list-decimal text-lg pl-5">
-                            <li className="p-3 "><p>First term: <InlineMath math={`40`} /> </p></li>
-                            <li className="p-3 "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
+                            <li className="p-3 overflow-auto "><p>First term: <InlineMath math={`40`} /> </p></li>
+                            <li className="p-3 overflow-auto "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
 
-                            <li className="p-3 "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
+                            <li className="p-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
 
-                            <li className="p-3 "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
+                            <li className="p-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
 
-                            <li className="p-3 "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3)∗(−1.75+4))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
+                            <li className="p-3 overflow-auto  "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3)∗(−1.75+4))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
                         </ol>
 
                         <div className="space-x-2 text-lg">
