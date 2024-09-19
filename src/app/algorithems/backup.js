@@ -168,18 +168,18 @@ export default function NewtonBackwardInterpolations() {
         <h1 className="text-2xl font-bold">
           Newton Backward Interpolation Calculator
         </h1>
-
-
+        
+       
         <TButton
-
-          tooltipText="Demo"
-          onClick={handleDemo}
-          className={`bg-purple-500 ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+        
+        tooltipText="Demo"
+        onClick={handleDemo}
+        className={`bg-purple-500 ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
             } hover:bg-purple-400`}
-          color="bg-purple-500"
-          altText={demoInProgress ? "Demo Running..." : "Demo"}
-        ></TButton>
-
+        color="bg-purple-500"
+        altText={demoInProgress ? "Demo Running..." : "Demo"}
+       ></TButton>
+        
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -219,29 +219,35 @@ export default function NewtonBackwardInterpolations() {
                   />
                 </td>
                 <td className=" p-2 relative flex justify-center md:w-20">
+                  <button
+                    type="button"
+                    className="bg-red-500  text-white px-2 py-1 sm:px-4 sm:py-2 rounded hover:bg-red-400 "
 
-                  <TButton
-                    imgSrc="/delete.svg"
-                    altText="Delete"
+                    onMouseEnter={() => setHovered(index)}
+                    onMouseLeave={() => setHovered(null)}
                     onClick={() => handleDeleteRow(index)}
-                    tooltipText="Delete"
-                    color="#FF0000"
-                    className="bg-red-500 hover:bg-red-400"
+                  ><img className="justify-center" src="/delete.svg" alt="Delete" />
+                  </button>
+                  
+                  {hovered === index && (
+                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-700 text-white text-sm rounded shadow-lg">
+                      Delete
+                    </div>
+                  )}
 
-                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <TButton
-          tooltipText="add&nbsp;row"
-          onClick={handleAddRow}
-          imgSrc="/add-row-below.svg"
-          altText="add row"
-          color="#3b82f6"
-          className="text-lg"
-        />
+       <TButton
+       tooltipText="add&nbsp;row"
+       onClick={handleAddRow}
+       imgSrc="/add-row-below.svg"
+       altText="add row"
+       color="#3b82f6" 
+        className="text-lg"
+       />
         <div className="space-y-2">
           <label htmlFor="interpolateX">Interpolate at X:</label>
           <input
@@ -263,26 +269,13 @@ export default function NewtonBackwardInterpolations() {
         </button>
 
         <TButton
-          tooltipText="Reset"
-          onClick={handleReset}
-          imgSrc="/reset.svg"
-          altText="Reset"
-          className="float-right "
-          color="#FF0000"
-          float="float-right"
-        />
-        {showCopyButton && (
-
-<TButton
-  tooltipText="Copy Steps"
-  onClick={handleCopy}
-  imgSrc="/copy.svg"
-  altText="Copy Steps"
-  className=""
-  color="#3b82f6"
-  float="float-right"
+  tooltipText="Reset"
+  onClick={handleReset}
+  imgSrc="/reset.svg"
+  altText="Reset"
+  className="float-right "
+  color="#FF0000"
 />
-)}
 
 
       </form>
@@ -300,10 +293,18 @@ export default function NewtonBackwardInterpolations() {
         Steps copied to clipboard!
       </div>
 
-      
       {diffTable.length > 0 && (
         <div className="mt-6 overflow-x-auto">
-          <h2 className="text-xl inline-block font-semibold">Difference Table </h2>
+          <h2 className="text-xl inline-block font-semibold">Difference Table </h2>{showCopyButton && (
+
+            <button
+              type="button"
+              className="bg-blue-500 text-white py-1 px-2 sm:px-4 inline-block sm:py-2 rounded mb-4 float-end hover:bg-blue-400"
+              onClick={handleCopy}
+              ref={copyRef}
+            >
+              Copy Steps
+            </button>)}
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
               <tr>

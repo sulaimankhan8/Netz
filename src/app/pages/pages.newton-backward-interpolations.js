@@ -2,7 +2,7 @@
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
 
@@ -42,7 +42,7 @@ export default function NewtonBackwardInterpolation() {
     return (
         <>
 
-<div className="fixed top-4 right-4">
+            <div className="fixed top-4 right-4">
                 <button
                     onClick={toggleTheme}
                     className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-4 py-2 rounded-full shadow-md"
@@ -57,9 +57,9 @@ export default function NewtonBackwardInterpolation() {
 
                     The formula for Newton Backward Interpolation is:</p>
 
-                    <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
-                        <BlockMath math={formula} />
-                        </div>
+                <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
+                    <BlockMath math={formula} />
+                </div>
                 <div className="pl-1"><p className="text-xl">where:</p>
                     <ul className={"list-disc list-inside text-lg p-3"}>
                         <li><InlineMath math="v = \frac{x - x_n}{h}" /></li>
@@ -103,9 +103,9 @@ export default function NewtonBackwardInterpolation() {
 
                 <div className="">
                     <p><span className="font-bold text-lg">Step 1:</span> Calculate the backward differences for the <InlineMath math="y" /> values.</p><br></br>
-                    <div className=" flex justify-center overflow-hidden ">
+                    <div className=" flex justify-center overflow-x-auto ">
                         <div className="w-full max-w-4xl">
-                            <table className="w-full border rounded-lg overflow-hidden">
+                            <table className="w-full border rounded-lg overflow-x-auto">
                                 <thead>
                                     <tr>
                                         <th className="border px-4 py-2 bg-gray-100 text-left rounded-tl-2xl">
@@ -145,7 +145,7 @@ export default function NewtonBackwardInterpolation() {
                     </div>
                 </div><br></br>
                 <div>
-                    <p className="text-xl"><span className="font-bold text-lg">Step 2:</span> use the formula <InlineMath math="v = \frac{x - x_n}{h}" /> values.</p><br></br>
+                    <p className="text-xl "><span className="font-bold  text-lg">Step 2:</span> use the formula <InlineMath math="v = \frac{x - x_n}{h}" /> values.</p><br></br>
                     <BlockMath math="\text{Given } x = 33 \text{ and } x_n = 40 \text{ with } h = 4," />
                     <BlockMath math="v = \frac{x - x_n}{h}" />
                     <BlockMath math="v = \frac{33 - 40}{4}" />
@@ -157,7 +157,7 @@ export default function NewtonBackwardInterpolation() {
                     <div className="mb-4">
                         <p className="text-lg font-semibold mb-2"></p>
                         <div className="bg-gray-100 p-4 border overflow-auto border-gray-300 rounded-lg shadow-md">
-                        <BlockMath math={formula} />
+                            <BlockMath math={formula} />
                         </div>
                     </div>
 
@@ -174,25 +174,27 @@ export default function NewtonBackwardInterpolation() {
                         </div>
                         <p className="py-5 text-lg">Step-by-step:</p>
                         <ol className="list-decimal text-lg pl-5">
-                            <li className="p-3 overflow-auto "><p>First term: <InlineMath math={`40`} /> </p></li>
-                            <li className="p-3 overflow-auto "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
 
-                            <li className="p-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
+                            <li className="py-3 overflow-auto"><p>First term: <InlineMath math={`40`} /> </p></li>
 
-                            <li className="p-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
+                            <li className="py-3 spa overflow-auto "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
 
-                            <li className="p-3 overflow-auto  "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3)∗(−1.75+4))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
+                            <li className="py-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
+
+                            <li className="py-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
+
+                            <li className="py-3 overflow-auto  "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3)∗(−1.75+4))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
                         </ol>
 
-                        <div className="space-x-2 text-lg">
+                        <div className=" text-lg">
 
-                            <p className=" font-bold">Adding them together:</p>
-                            <div className="p-3 ">
+                            <p className=" font-bold my-2">Adding them together:</p>
+                            <div className="p-3 my-3  ">
                                 <InlineMath math={'P(33)= 40+(−8.855000000000004)+(1.883437500000003)+(0.1771875000000003)+(0.06904296875000004)'} />
                             </div>
 
 
-                            <p >Thus, the interpolated value of <InlineMath math={`y   `} /> at <InlineMath math={'x = 33'}/> is approximately <InlineMath math={`33.27466    `} />  </p>
+                            <p >Thus, the interpolated value of <InlineMath math={`y   `} /> at <InlineMath math={'x = 33'} /> is approximately <InlineMath math={`33.27466    `} />  </p>
                         </div>
                     </div>
                 </div>
@@ -206,7 +208,7 @@ export default function NewtonBackwardInterpolation() {
 
 
 
-            <section className="p-5"> 
+            <section className="p-5">
                 <NewtonBackwardInterpolations />
             </section>
 

@@ -1,0 +1,9 @@
+bg-green-600: #16a34a
+bg-red-600: #dc2626
+bg-purple-600: #6d28d9
+bg-blue-600: #2563eb
+
+bg-green-500: #22c55e
+bg-red-500: #ef4444
+bg-purple-500: #8b5cf6
+bg-blue-500:#3b82f6
