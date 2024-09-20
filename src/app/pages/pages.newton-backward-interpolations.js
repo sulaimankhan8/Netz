@@ -5,6 +5,7 @@ import { InlineMath, BlockMath } from "react-katex";
 import { useState, useEffect } from "react";
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
+import FullscreenToggle from "../components/FullscreanToggle";
 
 export default function NewtonBackwardInterpolation() {
 
@@ -42,6 +43,9 @@ export default function NewtonBackwardInterpolation() {
     return (
         <>
 
+<FullscreenToggle>
+    
+    
             <div className="fixed top-4 right-4">
                 <button
                     onClick={toggleTheme}
@@ -99,9 +103,9 @@ export default function NewtonBackwardInterpolation() {
                             </tbody>
                         </table></div>
                 </div>
-                <p>We are tasked with finding <InlineMath math="y" /> where <InlineMath math="x = 33" /></p><br></br>
+                <p className=" p-4">We are tasked with finding <InlineMath math="y" /> where <InlineMath math="x = 33" /></p><br></br>
 
-                <div className="">
+                <div className=" p-4">
                     <p><span className="font-bold text-lg">Step 1:</span> Calculate the backward differences for the <InlineMath math="y" /> values.</p><br></br>
                     <div className=" flex justify-center overflow-x-auto ">
                         <div className="w-full max-w-4xl">
@@ -144,7 +148,7 @@ export default function NewtonBackwardInterpolation() {
                         </div>
                     </div>
                 </div><br></br>
-                <div>
+                <div className="p-4">
                     <p className="text-xl "><span className="font-bold  text-lg">Step 2:</span> use the formula <InlineMath math="v = \frac{x - x_n}{h}" /> values.</p><br></br>
                     <BlockMath math="\text{Given } x = 33 \text{ and } x_n = 40 \text{ with } h = 4," />
                     <BlockMath math="v = \frac{x - x_n}{h}" />
@@ -172,7 +176,13 @@ export default function NewtonBackwardInterpolation() {
     \\frac{(-1.75 \\cdot (-1.75+1) \\cdot (-1.75+2) \\cdot (-1.75+3) \\cdot (-1.75+4))}{4!} \\cdot 4.0400`}
                             />
                         </div>
-                        <p className="py-5 text-lg">Step-by-step:</p>
+                        
+                        </div>
+                    </div>
+              
+
+                <div className="p-8">
+                    <h1 className="py-5 text-lg">Step-by-step:</h1>
                         <ol className="list-decimal text-lg pl-5">
 
                             <li className="py-3 overflow-auto"><p>First term: <InlineMath math={`40`} /> </p></li>
@@ -194,10 +204,7 @@ export default function NewtonBackwardInterpolation() {
                             </div>
 
 
-                            <p >Thus, the interpolated value of <InlineMath math={`y   `} /> at <InlineMath math={'x = 33'} /> is approximately <InlineMath math={`33.27466    `} />  </p>
-                        </div>
-                    </div>
-                </div>
+                            <p >Thus, the interpolated value of <InlineMath math={`y   `} /> at <InlineMath math={'x = 33'} /> is approximately <InlineMath math={`33.27466    `} />  </p></div>  </div>
 
 
             </section>
@@ -212,7 +219,7 @@ export default function NewtonBackwardInterpolation() {
                 <NewtonBackwardInterpolations />
             </section>
 
-
+            </FullscreenToggle>
 
         </>
 

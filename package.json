@@ -20,7 +20,8 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
     "react-katex": "^3.0.1",
-    "svg-crowbar": "^0.7.0"
+    "svg-crowbar": "^0.7.0",
+    "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
     "eslint": "^8",

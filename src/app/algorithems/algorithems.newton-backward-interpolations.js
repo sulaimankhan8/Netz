@@ -1,17 +1,21 @@
 "use client";
 import { useState, useRef } from "react";
-import { BlockMath } from "react-katex";
+import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import Plot from "../components/Plot";
 import TButton from "../components/TButton";
 import html2canvas from 'html2canvas';
 
+
+
 export default function NewtonBackwardInterpolations() {
   const [vSteps, setVSteps] = useState([]);
 
-  const [xRange, setXRange] = useState([]);
+  const [xRange, setXRange] =  useState(Array.from({ length: 100 }, (_, i) => i));
+  const [showMessage, setShowMessage] = useState(false);
 
-  const [showCopyButton, setShowCopyButton] = useState(false);
+  const [showInline, setshowInline] = useState(false);
+  const [inline, setInline] = useState(false);
   const [rows, setRows] = useState([{ x: "", y: "" }]);
   const [interpolateX, setInterpolateX] = useState("");
   const [output, setOutput] = useState("");
@@ -23,16 +27,22 @@ export default function NewtonBackwardInterpolations() {
     final: "",
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
-  const copyRef = useRef(null);
 
-   // Function to export table to PNG
-   const exportTableToPNG = () => {
+const handleClick = (e) => {
+    e.preventDefault(); // Prevent default action
+    e.stopPropagation(); // Prevent event from bubbling up
+    if (onClick) onClick();
+};
+  // Function to export table to PNG
+  const exportTableToPNG = () => {
     html2canvas(document.getElementById('diffTable')).then(canvas => {
       const link = document.createElement('a');
       link.href = canvas.toDataURL("image/png");
       link.download = 'difference_table.png';
       link.click();
     });
+    showCopied();
+
   };
 
   // Function to export graph to PNG
@@ -43,7 +53,8 @@ export default function NewtonBackwardInterpolations() {
       link.href = canvas.toDataURL("image/png");
       link.download = 'graph.png';
       link.click();
-    }
+    };
+    showCopied();
   };
 
   // Function to export polynomial steps to PNG
@@ -53,18 +64,29 @@ export default function NewtonBackwardInterpolations() {
       link.href = canvas.toDataURL("image/png");
       link.download = 'polynomial_steps.png';
       link.click();
-    });
+    }); showCopied();
   };
 
+  const showCopied = () => {
+    setShowMessage(true);
 
-
+    setTimeout(() => {
+      setShowMessage(false);
+    }, 2000);
+  }
   const handleAddRow = () => {
     setRows([...rows, { x: "", y: "" }]);
   };
 
   const handleDeleteRow = (index) => {
-    const newRows = rows.filter((_, i) => i !== index);
-    setRows(newRows);
+    if (rows.length === 1) {
+      // Clear the values of the last row instead of deleting
+      setRows([{ x: "", y: "" }]);
+  } else {
+      // Delete the specified row
+      const newRows = rows.filter((_, i) => i !== index);
+      setRows(newRows);
+  }
   };
   const handleInputChange = (index, type, value) => {
     const newRows = [...rows];
@@ -115,7 +137,7 @@ export default function NewtonBackwardInterpolations() {
     setXRange(Array.from({ length: 100 }, (_, i) => minX + i * (maxX - minX) / 99));
 
 
-    setShowCopyButton(true);
+
     setVSteps(vSteps);
     setDiffTable(diffTable);
     setPolynomialSteps({
@@ -158,7 +180,7 @@ export default function NewtonBackwardInterpolations() {
     setDemoInProgress(false);
   };
   // Handle the copy to clipboard action
-  
+
   return (
     <div className="container mx-auto md:p-8">
       <div className="flex justify-between items-center mb-6">
@@ -171,16 +193,16 @@ export default function NewtonBackwardInterpolations() {
 
           tooltipText="Demo"
           onClick={handleDemo}
-          className={`bg-purple-500 ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
+          className={`bg-purple-700 ${demoInProgress ? "opacity-50 cursor-not-allowed" : ""
             } hover:bg-purple-400`}
-          color="bg-purple-500"
+          color="violet"
           altText={demoInProgress ? "Demo Running..." : "Demo"}
         ></TButton>
 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <table className="w-full m-auto table-auto border-collapse border-gray-300 lg:w-[90%] ">
+        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed border-collapse border-gray-300  ">
           <thead>
             <tr>
               <th className="border border-gray-300 p-2">X Value</th>
@@ -222,8 +244,8 @@ export default function NewtonBackwardInterpolations() {
                     altText="Delete"
                     onClick={() => handleDeleteRow(index)}
                     tooltipText="Delete"
-                    color="#FF0000"
-                    className="bg-red-500 hover:bg-red-400"
+                    color="red"
+                    className=" "
 
                   />
                 </td>
@@ -236,7 +258,7 @@ export default function NewtonBackwardInterpolations() {
           onClick={handleAddRow}
           imgSrc="/add-row-below.svg"
           altText="add row"
-          color="#3b82f6"
+          color="blue"
           className="text-lg"
         />
         <div className="space-y-2">
@@ -254,7 +276,7 @@ export default function NewtonBackwardInterpolations() {
         <button
           type="submit"
           id="interpolateButton"
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-400"
+          className="focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 text-white px-4 py-2 rounded hover:bg-green-400 bg-green-500 active:bg-green-700 focus:ring-green-700"
         >
           Interpolate
         </button>
@@ -265,37 +287,34 @@ export default function NewtonBackwardInterpolations() {
           imgSrc="/reset.svg"
           altText="Reset"
           className="float-right "
-          color="#FF0000"
+          color="red"
           float="float-right"
         />
-        {showCopyButton && (
-        <div className="flex space-x-2 mb-4">
-          <TButton onClick={exportTableToPNG} tooltipText="Export Table to PNG" color="#3b82f6" altText="Export Table" className=""/>
-          <TButton onClick={exportGraphToPNG} tooltipText="Export Graph to PNG" color="#3b82f6" altText="Export Graph" className=""/>
-          <TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export Polynomial Steps to PNG" color="#3b82f6" altText="Export steps" className=""/>
-        </div>
-      )}
 
 
       </form>
 
       <div id="messageBox" style={{
-        display: 'none',
+        display: showMessage ? 'block' : 'none',
         backgroundColor: '#4CAF50',
         color: 'white',
         padding: '10px',
         position: 'fixed',
         bottom: '30px',
         right: '20px',
-        borderRadius: '5px'
+        borderRadius: '5px',
       }}>
-        Steps copied to clipboard!
+        copied
       </div>
 
-      
-      {diffTable.length > 0 && (
+
+      {diffTable.length > 0 && (<div>
+
+        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="" altText="Export Table" imgSrc="/copy.svg" float="float-right" />
+
         <div id="diffTable" className="mt-6 overflow-x-auto">
           <h2 className="text-xl inline-block font-semibold">Difference Table </h2>
+
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
               <tr>
@@ -332,29 +351,50 @@ export default function NewtonBackwardInterpolations() {
               ))}
             </tbody>
           </table>
-        </div>
+        </div></div>
       )}
 
       {xRange.length > 0 && (
-        <div className="mt-6 ">
+        <div className="mt-6 w-full md:w-[80vw] mx-auto ">
+          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph to&nbsp;PNG" color="blue" altText="Export Graph" imgSrc="/copy.svg" float="float-right" />
           <h2 className="text-xl font-semibold">Plot:</h2>
           <Plot points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} xRange={xRange} />
         </div>
       )}
 
-     
 
-      <div  id="steps"   className="mt-6 text-wrap">
 
-      {vSteps.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold">V Calculation Steps</h2>
-          <div className="mt-2 p-4 border border-gray-300 rounded-lg over">
-            <pre className="overflow-x-auto">
-              <BlockMath math={vSteps.join(",")} /></pre>
+      <div id="steps" className="mt-6 text-wrap">
+        {vSteps.length > 0 && (
+          <><TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" color="blue" altText="Export&nbsp;steps" className="bg-blue-700" float="float-right" imgSrc="/copy.svg" />
+
+
+            <TButton
+              onClick={() =>
+                setInline(prev => !prev)}
+
+              float="float-right"
+              className="mx-1"
+              altText="Inline"
+              tooltipText="Inline&nbsp;or&nbsp;Block"
+              color="red"
+            /></>
+
+        )}
+
+        {vSteps.length > 0 && (
+          <div className="mt-6 overflow-visible">
+            <h2 className="text-xl font-semibold">V Calculation Steps</h2>
+            <div className="mt-2 p-4 border border-gray-300 rounded-lg">
+            
+                <pre className="overflow-x-auto">
+                  <BlockMath math={vSteps.join(",")} />
+                </pre>
+            
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
 
 
         <div className="space-y-4 ">
@@ -362,22 +402,53 @@ export default function NewtonBackwardInterpolations() {
             <div className="mt-6">
               <h2 className="text-xl font-semibold">Polynomial Steps</h2>
               <div className="mt-2 p-4 border border-gray-300 rounded-lg">
-                <div className="overflow-x-auto">
+                <div className="">
                   <h3 className="text-lg font-semibold p-5">Formulas:</h3>
-                  <BlockMath math={polynomialSteps.formulas.join(" + ")} />
+
+                  {inline ? (
+                    <div className="overflow-x-auto break-words overflow-y-visible p-4">
+                      <InlineMath math={polynomialSteps.formulas.join(`+ \\displaystyle`)} />
+                    </div>
+
+                  ) : (
+                    <pre className="overflow-x-auto break-words whitespace-normal">
+                      <BlockMath math={polynomialSteps.formulas.join("+")} />
+                    </pre>
+                  )}
                 </div>
-                <div className="overflow-x-auto">
+                <div className="">
                   <h3 className="text-lg font-semibold p-5">Substituted Values:</h3>
-                  <BlockMath math={polynomialSteps.substituted.join(" + ")} />
+                  {inline ? (
+                    <div className="break-words overflow-x-auto overflow-y-visible p-4 ">
+                      <InlineMath math={polynomialSteps.substituted.join(" + \\displaystyle")} />
+                    </div>
+                  ) : (
+                    <pre className="break-words whitespace-normal overflow-x-auto p-4">
+                      <BlockMath math={polynomialSteps.substituted.join(" + ")} />
+                    </pre>
+                  )}
+
                 </div>
-                <div className="overflow-x-auto break-words  whitespace-pre-wrap" >
+                <div className="" >
                   <h3 className="text-lg font-semibold p-5">Evaluated Terms:</h3>
-                  <BlockMath math={polynomialSteps.calculated.join(" + \n ")} />
+
+                  {inline ? (
+
+                    <div className="break-words overflow-x-auto overflow-y-visible p-4">
+                      <InlineMath math={polynomialSteps.calculated.join(` \\displaystyle +`)} />
+                    </div>
+                  ) : (
+                    <pre className="break-words whitespace-normal overflow-x-auto">
+                      <BlockMath math={polynomialSteps.calculated.join("+")} />
+                    </pre>
+                  )}
+
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto p-4">
                   <h3 className="text-lg font-semibold p-5">Final Answer:</h3>
                   <p className="font-bold text-lg">{polynomialSteps.final}</p>
 
+                  <br></br>
                 </div>
 
               </div>
@@ -393,7 +464,7 @@ export default function NewtonBackwardInterpolations() {
 function newtonBackwardInterpolation(points, x) {
   const tr = [
     `y_{n}`,
-    `\\frac{v}{1!} \\Delta^{1} y_{n-1}`,
+    `\\frac{v}{1!} \\Delta^{1} y_{n-1} `,
     `\\frac{v(v+1)}{2!} \\Delta^{2} y_{n-2}`,
     `\\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3}`,
     `\\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}`,
@@ -409,6 +480,10 @@ function newtonBackwardInterpolation(points, x) {
   const xi = points.map((p) => p.x);
   const yi = points.map((p) => p.y);
 
+  if (xi.length < 2) {
+    throw new Error("xi array must have at least two elements.");
+  }
+  
   let diffTable = Array.from({ length: n }, (_, i) => Array(n).fill(0));
   for (let i = 0; i < n; i++) {
     diffTable[i][0] = yi[i];
