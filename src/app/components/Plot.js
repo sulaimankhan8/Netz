@@ -145,7 +145,15 @@ const Plot = ({ points, xRange }) => {
     }
   };
 
-  return <Line data={data} options={options} />;
+  return (
+    <div>
+      <Line
+        data={data}
+        options={options}
+        
+      />
+    </div>
+  );
 };
 
 export default Plot;

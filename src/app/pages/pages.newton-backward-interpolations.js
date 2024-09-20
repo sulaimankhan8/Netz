@@ -105,10 +105,10 @@ export default function NewtonBackwardInterpolation() {
                     <p><span className="font-bold text-lg">Step 1:</span> Calculate the backward differences for the <InlineMath math="y" /> values.</p><br></br>
                     <div className=" flex justify-center overflow-x-auto ">
                         <div className="w-full max-w-4xl">
-                            <table className="w-full border rounded-lg overflow-x-auto">
+                            <table className="w-full  rounded-lg overflow-x-auto">
                                 <thead>
                                     <tr>
-                                        <th className="border px-4 py-2 bg-gray-100 text-left rounded-tl-2xl">
+                                        <th className=" px-4 py-2 bg-gray-100 text-left rounded-tl-2xl">
                                             <InlineMath math="x" />
                                         </th>
                                         <th className="border px-4 py-2 bg-gray-100 text-left">
@@ -123,7 +123,7 @@ export default function NewtonBackwardInterpolation() {
                                         <th className="border px-4 py-2 bg-gray-100 text-left">
                                             <InlineMath math={'{\\Delta^3 y} '} />
                                         </th>
-                                        <th className="border px-4 py-2 bg-gray-100 text-left rounded-tr-2xl">
+                                        <th className=" px-4 py-2 bg-gray-100 text-left rounded-tr-2xl">
                                             <InlineMath math={'{\\Delta^4 y} '} />
                                         </th>
                                     </tr>
