@@ -142,7 +142,7 @@
 }
 
 .switch__input:checked + .switch__label .switch__decoration {
-  top: 50%;
+  top: 70%;
   transform: translate(0%, -50%);
   width: 20px;
   height: 20px;
@@ -154,6 +154,7 @@
   height: 10px;
   bottom: 0;
   left: -8px;
+  animation: none; 
 }
 
 .switch__input:checked + .switch__label .switch__decoration::after {
@@ -161,6 +162,8 @@
   height: 15px;
   bottom: 0;
   left: 16px;
+  animation: none; 
+  
 }
 
 @keyframes cloud {
