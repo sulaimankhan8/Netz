@@ -120,7 +120,7 @@ const Plot = ({ points, xRange, darkTheme }) => {
         position: 'top',
         labels: {
           font: {
-            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
+            size:   15, // Set font size for the legend
           },
           color: darkTheme ? 'gray-800' : 'black',
         }
@@ -142,12 +142,12 @@ const Plot = ({ points, xRange, darkTheme }) => {
           text: 'X Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
+            size:  15, // Set font size for the legend
           },},
         ticks: {
           color: darkTheme ? '#f3f4f6' : 'black', // Change ticks color
           font: {
-            size:  window.innerWidth < 768 ? 10 : 15,// Set font size for the legend
+            size:   15,// Set font size for the legend
           },
         }
       },
@@ -157,12 +157,12 @@ const Plot = ({ points, xRange, darkTheme }) => {
           text: 'Y Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
+            size: 15, // Set font size for the legend
           },},
         ticks: {
           color: darkTheme ? '#f3f4f6': 'black', // Change ticks color
           font: {
-            size:  window.innerWidth < 768 ? 10 : 15,// Set font size for the legend
+            size:  15,// Set font size for the legend
           },}
       }
     }
