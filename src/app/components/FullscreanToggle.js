@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 const FullscreenToggle = ({ children }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
-
+ 
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (containerRef.current.requestFullscreen) {
@@ -51,11 +51,12 @@ const FullscreenToggle = ({ children }) => {
     }
   }, [isFullscreen]);
 
+
   return (
     <div
       ref={containerRef}
       onDoubleClick={toggleFullscreen}
-      className={`relative ${isFullscreen ? "fixed top-0 left-0 w-screen h-screen bg-white overflow-auto z-50": ""}`}
+      className={`relative ${isFullscreen ? "fixed top-0 left-0 w-screen h-screen  overflow-auto z-50": ""} bg-white dark:bg-neutral-700`}
     >
       {children}
     </div>

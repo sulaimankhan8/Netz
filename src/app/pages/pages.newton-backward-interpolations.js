@@ -40,18 +40,28 @@ export default function NewtonBackwardInterpolation() {
       document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
     return (
-        <>
+        
 
-            <FullscreenToggle>
+            <FullscreenToggle className="dark:bg-neutral-700">
 
-
-                <button
-                            onClick={toggleTheme}
-                            className="bg-gray-300 dark:bg-neutral-800 text-black dark:text-white px-4 py-2 rounded-lg float-right fixed">
-                            Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
-                        </button> 
+            
+                
                 <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
-                    <h1 className="text-2xl font-bold pb-5">Newton Backward Interpolation Method</h1>
+                    <h1 className="text-2xl font-bold pb-5 inline-block
+                    ">Newton Backward Interpolation Method</h1>
+                    <div className="switch float-right inline-block fixed ">
+      <input
+        type="checkbox"
+        className="switch__input"
+        id="Switch"
+        checked={theme === 'light'}
+        onChange={toggleTheme}
+      />
+      <label className="switch__label" htmlFor="Switch">
+        <span className="switch__indicator"></span>
+        <span className="switch__decoration"></span>
+      </label>
+    </div>
                     <p className="text-base pl-1" >Newton Backward Interpolation is used to estimate the value of a function at a given point when the data points are tabulated at equal intervals. This method is particularly useful when you want to interpolate a value near the end of the data set. It utilizes backward differences to form the interpolation polynomial.<br></br><br></br>
 
                         The formula for Newton Backward Interpolation is:</p>
@@ -162,7 +172,7 @@ export default function NewtonBackwardInterpolation() {
 
                         <div className="mb-4">
                             <p className="text-lg font-semibold mb-2">Substituting the values:</p>
-                            <div className="bg-gray-100 p-4 border border-gray-300 rounded-lg shadow-md overflow-auto line-wrap-custom ">
+                            <div className="bg-gray-100 p-4 border border-gray-300 rounded-lg shadow-md overflow-auto line-wrap-custom dark:bg-neutral-900">
                                 <BlockMath
                                     math={`P(40) = 40 + 
     \\frac{(-1.75 \\cdot (-1.75+1))}{1!} \\cdot 5.0600 + 
@@ -210,13 +220,13 @@ export default function NewtonBackwardInterpolation() {
 
 
 
-                <section className="p-5">
+                <section className="p-5 dark:bg-neutral-700">
                     <NewtonBackwardInterpolations />
                 </section>
 
             </FullscreenToggle>
 
-        </>
+        
 
     );
 }

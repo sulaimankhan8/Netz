@@ -197,9 +197,9 @@ export default function NewtonBackwardInterpolations({ theme }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed  p-4 ">
+        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed  p-4 shadow-md ">
           <thead>
-            <tr>
+            <tr >
               <th className="border border-gray-300 p-2">X Value</th>
               <th className="border border-gray-300 p-2">Y Value</th>
 
@@ -207,11 +207,12 @@ export default function NewtonBackwardInterpolations({ theme }) {
           </thead>
           <tbody >
             {rows.map((row, index) => (
-              <tr key={index}>
-                <td className="border border-gray-300 p-2">
+              <tr key={index} > 
+                <td className="border border-gray-300 p-2 ">
                   <input
                     type="number"
                     step="any"
+                    placeholder="x.xxxx"
                     className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600  rounded-md hover:border hover:border-neutral-300"
                     value={row.x}
                     onChange={(e) =>
@@ -224,6 +225,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
                   <input
                     type="number"
                     step="any"
+                    placeholder="y.yyyy"
                     className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600  rounded-md hover:border hover:border-neutral-300"
                     value={row.y}
                     onChange={(e) =>
@@ -232,7 +234,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
                     required
                   />
                 </td>
-                <td className=" p-2 relative flex justify-center md:w-20">
+                <td className=" p-2 relative flex justify-center w-[80px]">
 
                   <TButton
                     imgSrc="/delete.svg"
@@ -261,6 +263,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
           <input
             type="number"
             step="any"
+            placeholder="0.00000"
             id="interpolateX"
             className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600 rounded-md hover:border hover:border-neutral-300 "
             value={interpolateX}
@@ -289,10 +292,10 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
       </form>
       {xRange.length > 0 && (
-        <div className="mt-6 w-full  md:w-[80vw] mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 ">
+        <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 overflow-scroll">
           <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph to&nbsp;PNG"
           color="blue"
-          theme={theme}
+          
            altText="Export Graph" 
            imgSrc="/copy.svg" 
            float="float-right" />
@@ -315,7 +318,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
 
       {diffTable.length > 0 && (<div>
-        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible" altText="Export Table" imgSrc="/copy.svg" float="float-right" />
+        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible " altText="Export Table" imgSrc="/copy.svg" float="float-right" />
 
 
         <div id="diffTable" className="mt-6 ml-8  overflow-x-auto dark:bg-neutral-700">
@@ -366,26 +369,23 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
 
       <div id="steps" className="mt-6 text-wrap">
-        {vSteps.length > 0 && (
-          <><TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" color="blue" altText="Export&nbsp;steps" className="bg-blue-700" float="float-right" imgSrc="/copy.svg" />
-
-
-            <TButton
-              onClick={() =>
-                setInline(prev => !prev)}
-
-              float="float-right"
-              className="mx-1"
-              altText="Inline"
-              tooltipText="Inline&nbsp;or&nbsp;Block"
-              color="red"
-            /></>
-
-        )}
-
+      
         {vSteps.length > 0 && (
           <div className="mt-6 overflow-visible">
-            <h2 className="text-xl font-semibold">V Calculation Steps</h2>
+            <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2> <div className="inline-block float-right" ><TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" color="blue" altText="Export&nbsp;steps" className="" float="float-right" imgSrc="/copy.svg" />
+
+
+<TButton
+  onClick={() =>
+    setInline(prev => !prev)}
+
+  float="float-right"
+  className="mx-1 "
+  altText="Inline"
+  tooltipText="Inline&nbsp;or&nbsp;Block"
+  color="red"
+/></div></div>
+
             <div className="mt-2 p-4 border border-gray-300 rounded-lg">
 
               <pre className="overflow-x-auto">

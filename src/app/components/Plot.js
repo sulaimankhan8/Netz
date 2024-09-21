@@ -114,6 +114,7 @@ const Plot = ({ points, xRange, darkTheme }) => {
 
   const options = {
     responsive: true,
+    
     plugins: {
       legend: {
         position: 'top',
@@ -170,7 +171,7 @@ const Plot = ({ points, xRange, darkTheme }) => {
 
 
   return (
-    <div>
+    <div >
       <Line
         data={data}
         options={options}
