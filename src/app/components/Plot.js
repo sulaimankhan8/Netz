@@ -114,13 +114,13 @@ const Plot = ({ points, xRange, darkTheme }) => {
 
   const options = {
     responsive: true,
-    
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
         labels: {
           font: {
-            size: '15rem', // Set font size for the legend
+            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
           },
           color: darkTheme ? 'gray-800' : 'black',
         }
@@ -142,12 +142,12 @@ const Plot = ({ points, xRange, darkTheme }) => {
           text: 'X Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size: '15rem', // Set font size for the legend
+            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
           },},
         ticks: {
           color: darkTheme ? '#f3f4f6' : 'black', // Change ticks color
           font: {
-            size: '15rem', // Set font size for the legend
+            size:  window.innerWidth < 768 ? 10 : 15,// Set font size for the legend
           },
         }
       },
@@ -157,12 +157,12 @@ const Plot = ({ points, xRange, darkTheme }) => {
           text: 'Y Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size: '15rem', // Set font size for the legend
+            size:  window.innerWidth < 768 ? 10 : 15, // Set font size for the legend
           },},
         ticks: {
           color: darkTheme ? '#f3f4f6': 'black', // Change ticks color
           font: {
-            size: '15rem', // Set font size for the legend
+            size:  window.innerWidth < 768 ? 10 : 15,// Set font size for the legend
           },}
       }
     }
@@ -171,7 +171,7 @@ const Plot = ({ points, xRange, darkTheme }) => {
 
 
   return (
-    <div >
+    <div className="plot-container">
       <Line
         data={data}
         options={options}

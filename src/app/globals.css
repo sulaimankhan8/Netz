@@ -171,3 +171,18 @@
   50% { transform: translate(-50%, -50%); }
   100% { transform: translate(0%, -50%); }
 }
+.plot-container {
+  max-width: 100%; /* Ensures it takes full width on mobile */
+  height: auto; /* Adjusts height dynamically */
+  padding: 1rem; /* Adjust padding */
+  margin: 0 auto; /* Center the plot */
+}
+
+@media (max-width: 768px) {
+  .plot-container {
+    padding: 0.5rem;
+    height: 400px;
+    width: 400px;
+    overflow-x: scroll;
+  }
+}
