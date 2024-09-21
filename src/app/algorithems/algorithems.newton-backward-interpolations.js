@@ -177,7 +177,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
   // Handle the copy to clipboard action
 
   return (
-    <div className="container mx-auto md:p-8 dark:text-whitetransition-all duration-300 dark:text-white">
+    <div className="container mx-auto md:p-8  transition-all duration-300 dark:bg-neutral-700 dark:text-white">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold">
           Newton Backward Interpolation Calculator
@@ -292,7 +292,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
       </form>
       {xRange.length > 0 && (
-        <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 overflow-scroll">
+        <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 ">
           <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
           color="blue"
           
@@ -368,7 +368,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
 
 
-      <div id="steps" className="mt-6 text-wrap">
+      <div id="steps" className="mt-6 text-wrap dark:bg-neutral-700">
       
         {vSteps.length > 0 && (
           <div className="mt-6 overflow-visible">
