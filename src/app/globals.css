@@ -12,4 +12,16 @@
     z-index: 9999; /* Ensure it's on top */
     background-color: white /* Optional: make background black */
   }
-  
+  html.dark, body.dark {
+    background-color: #404040;
+     /* Or another dark color you prefer */
+}
+.dark .border{
+  border-color: #747474;
+}
+.dark .input {
+  color: white; /* Change text color to white */
+  background-color: white ; /* Change text color to white */
+}
+
+

@@ -1,7 +1,7 @@
 // components/TooltipButton.js
 import { useState } from 'react';
 
-const TButton = ({ tooltipText, onClick, imgSrc, altText, color = "1", className ,type="button", float}) => {
+const TButton = ({ tooltipText, onClick, imgSrc, altText, color , className ,type="button", float,}) => {
   const [hovered, setHovered] = useState(false);
 
 
@@ -11,6 +11,7 @@ const TButton = ({ tooltipText, onClick, imgSrc, altText, color = "1", className
 };
   
   const colorClasses = (() => {
+  
     switch (color) {
       case 'red':
         return 'bg-red-600 active:bg-red-600 focus:ring-red-700';

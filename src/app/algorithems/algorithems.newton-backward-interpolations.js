@@ -8,13 +8,12 @@ import html2canvas from 'html2canvas';
 
 
 
-export default function NewtonBackwardInterpolations() {
+export default function NewtonBackwardInterpolations({ theme }) {
   const [vSteps, setVSteps] = useState([]);
 
-  const [xRange, setXRange] =  useState(Array.from({ length: 100 }, (_, i) => i));
+  const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
   const [showMessage, setShowMessage] = useState(false);
 
-  const [showInline, setshowInline] = useState(false);
   const [inline, setInline] = useState(false);
   const [rows, setRows] = useState([{ x: "", y: "" }]);
   const [interpolateX, setInterpolateX] = useState("");
@@ -28,11 +27,7 @@ export default function NewtonBackwardInterpolations() {
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
 
-const handleClick = (e) => {
-    e.preventDefault(); // Prevent default action
-    e.stopPropagation(); // Prevent event from bubbling up
-    if (onClick) onClick();
-};
+
   // Function to export table to PNG
   const exportTableToPNG = () => {
     html2canvas(document.getElementById('diffTable')).then(canvas => {
@@ -82,11 +77,11 @@ const handleClick = (e) => {
     if (rows.length === 1) {
       // Clear the values of the last row instead of deleting
       setRows([{ x: "", y: "" }]);
-  } else {
+    } else {
       // Delete the specified row
       const newRows = rows.filter((_, i) => i !== index);
       setRows(newRows);
-  }
+    }
   };
   const handleInputChange = (index, type, value) => {
     const newRows = [...rows];
@@ -182,8 +177,8 @@ const handleClick = (e) => {
   // Handle the copy to clipboard action
 
   return (
-    <div className="container mx-auto md:p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto md:p-8 dark:text-whitetransition-all duration-300 dark:text-white">
+      <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold">
           Newton Backward Interpolation Calculator
         </h1>
@@ -202,7 +197,7 @@ const handleClick = (e) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed border-collapse border-gray-300  ">
+        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed  p-4 ">
           <thead>
             <tr>
               <th className="border border-gray-300 p-2">X Value</th>
@@ -217,7 +212,7 @@ const handleClick = (e) => {
                   <input
                     type="number"
                     step="any"
-                    className="w-full p-2 border border-gray-300"
+                    className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600  rounded-md hover:border hover:border-neutral-300"
                     value={row.x}
                     onChange={(e) =>
                       handleInputChange(index, "x", e.target.value)
@@ -229,7 +224,7 @@ const handleClick = (e) => {
                   <input
                     type="number"
                     step="any"
-                    className="w-full p-2 border border-gray-300"
+                    className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600  rounded-md hover:border hover:border-neutral-300"
                     value={row.y}
                     onChange={(e) =>
                       handleInputChange(index, "y", e.target.value)
@@ -267,7 +262,7 @@ const handleClick = (e) => {
             type="number"
             step="any"
             id="interpolateX"
-            className="w-full p-2 border border-gray-300"
+            className="w-full p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600 rounded-md hover:border hover:border-neutral-300 "
             value={interpolateX}
             onChange={(e) => setInterpolateX(e.target.value)}
             required
@@ -276,7 +271,7 @@ const handleClick = (e) => {
         <button
           type="submit"
           id="interpolateButton"
-          className="focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 text-white px-4 py-2 rounded hover:bg-green-400 bg-green-500 active:bg-green-700 focus:ring-green-700"
+          className="focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 text-white px-4 py-2 rounded hover:bg-green-400 bg-green-500 active:bg-green-700 focus:ring-green-700 "
         >
           Interpolate
         </button>
@@ -293,7 +288,18 @@ const handleClick = (e) => {
 
 
       </form>
-
+      {xRange.length > 0 && (
+        <div className="mt-6 w-full  md:w-[80vw] mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 ">
+          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph to&nbsp;PNG"
+          color="blue"
+          theme={theme}
+           altText="Export Graph" 
+           imgSrc="/copy.svg" 
+           float="float-right" />
+          <h2 className="text-xl font-semibold">Plot:</h2>
+          <Plot points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} xRange={xRange} darkTheme={theme} />
+        </div>
+      )}
       <div id="messageBox" style={{
         display: showMessage ? 'block' : 'none',
         backgroundColor: '#4CAF50',
@@ -309,11 +315,12 @@ const handleClick = (e) => {
 
 
       {diffTable.length > 0 && (<div>
+        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible" altText="Export Table" imgSrc="/copy.svg" float="float-right" />
 
-        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="" altText="Export Table" imgSrc="/copy.svg" float="float-right" />
 
-        <div id="diffTable" className="mt-6 overflow-x-auto">
-          <h2 className="text-xl inline-block font-semibold">Difference Table </h2>
+        <div id="diffTable" className="mt-6 ml-8  overflow-x-auto dark:bg-neutral-700">
+          <div></div><h2 className="text-xl inline-block font-semibold">Difference Table </h2>
+
 
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">
             <thead>
@@ -354,13 +361,7 @@ const handleClick = (e) => {
         </div></div>
       )}
 
-      {xRange.length > 0 && (
-        <div className="mt-6 w-full md:w-[80vw] mx-auto ">
-          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph to&nbsp;PNG" color="blue" altText="Export Graph" imgSrc="/copy.svg" float="float-right" />
-          <h2 className="text-xl font-semibold">Plot:</h2>
-          <Plot points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} xRange={xRange} />
-        </div>
-      )}
+
 
 
 
@@ -386,11 +387,11 @@ const handleClick = (e) => {
           <div className="mt-6 overflow-visible">
             <h2 className="text-xl font-semibold">V Calculation Steps</h2>
             <div className="mt-2 p-4 border border-gray-300 rounded-lg">
-            
-                <pre className="overflow-x-auto">
-                  <BlockMath math={vSteps.join(",")} />
-                </pre>
-            
+
+              <pre className="overflow-x-auto">
+                <BlockMath math={vSteps.join(",")} />
+              </pre>
+
             </div>
           </div>
         )}
@@ -483,7 +484,7 @@ function newtonBackwardInterpolation(points, x) {
   if (xi.length < 2) {
     throw new Error("xi array must have at least two elements.");
   }
-  
+
   let diffTable = Array.from({ length: n }, (_, i) => Array(n).fill(0));
   for (let i = 0; i < n; i++) {
     diffTable[i][0] = yi[i];

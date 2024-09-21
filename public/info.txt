@@ -7,3 +7,7 @@ bg-green-500: #22c55e
 bg-red-500: #ef4444
 bg-purple-500: #8b5cf6
 bg-blue-500:#3b82f6
+
+dark:bg-neutral-800
+dark:bg-neutral-700
+dark:bg-neutral-600
