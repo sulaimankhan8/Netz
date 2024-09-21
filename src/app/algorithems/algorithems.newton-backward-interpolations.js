@@ -293,14 +293,14 @@ export default function NewtonBackwardInterpolations({ theme }) {
       </form>
       {xRange.length > 0 && (
         <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 overflow-scroll">
-          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph to&nbsp;PNG"
+          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
           color="blue"
           
            altText="Export Graph" 
            imgSrc="/copy.svg" 
            float="float-right" />
-          <h2 className="text-xl font-semibold">Plot:</h2>
-          <Plot points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} xRange={xRange} darkTheme={theme} />
+          <h2 className="text-xl font-semibold ">Plot:</h2>
+          <Plot  points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} xRange={xRange} darkTheme={theme} />
         </div>
       )}
       <div id="messageBox" style={{
