@@ -1,7 +1,7 @@
 "use client"
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
-
+import PageButton from "../components/pageButton";
 import { useState, useEffect } from "react";
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
@@ -9,7 +9,7 @@ import FullscreenToggle from "../components/FullscreanToggle";
 
 export default function NewtonBackwardInterpolation() {
 
-    const str = [`P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} \\ldots`];
+    const str = `P(x) = y_n + v \\cdot \\Delta y_n + \\frac{v(v+1)}{2!} \\cdot \\Delta^2 y_{n-2} + \\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3} \\ldots`;
     const data = [
         { xxx: 24, yyy: 28.0600, deltaY: '', delta2Y: '', delta3Y: '', delta4Y: '' },
         { xxx: 28, yyy: 30.1900, deltaY: 2.1300, delta2Y: '', delta3Y: '', delta4Y: '' },
@@ -154,6 +154,8 @@ export default function NewtonBackwardInterpolation() {
                             </div>
                         </div>
                     </div><br></br>
+
+
                     <div className="p-4">
                         <p className="text-xl "><span className="font-bold  text-lg">Step 2:</span> use the formula <InlineMath math="v = \frac{x - x_n}{h}" /> values.</p><br></br>
                         <BlockMath math="\text{Given } x = 33 \text{ and } x_n = 40 \text{ with } h = 4," />
@@ -162,7 +164,8 @@ export default function NewtonBackwardInterpolation() {
                         <BlockMath math="v = -1.75" />
                     </div><br></br>
 
-                    <div className="p-4"> <p className="text-xl"><span className="font-bold text-lg">Step 3:</span>  Apply the Newton Backward Interpolation formula:</p><br></br>
+                    <div className="p-4"> 
+                        <p className="text-xl"><span className="font-bold text-lg">Step 3:</span>  Apply the Newton Backward Interpolation formula:</p><br></br>
 
                         <div className="mb-4">
                             <p className="text-lg font-semibold mb-2"></p>
@@ -193,13 +196,13 @@ export default function NewtonBackwardInterpolation() {
 
                             <li className="py-3 overflow-auto"><p>First term: <InlineMath math={`40`} /> </p></li>
 
-                            <li className="py-3 spa overflow-auto "><p>Second term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{1!}∗5.0600 = −8.85500`} /> </p></li>
+                            <li className="py-3 spa overflow-auto "><p>Second term: <InlineMath math={`\\frac{(−1.75)}{1!}∗5.0600 = −8.85500`} /> </p></li>
 
-                            <li className="py-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
+                            <li className="py-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1))}{2!} ∗2.8700  = 0.17718 `} /> </p></li>
 
-                            <li className="py-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
+                            <li className="py-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2))}{3!} ∗3.2400 = 0.17718 `} /> </p></li>
 
-                            <li className="py-3 overflow-auto  "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3)∗(−1.75+4))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
+                            <li className="py-3 overflow-auto  "><p>Fifth term: <InlineMath math={`\\frac{(−1.75∗(−1.75+1)∗(−1.75+2)∗(−1.75+3))}{4!} ∗4.0400 =0.06904 `} /> </p></li>
                         </ol>
 
                         <div className=" text-lg">
@@ -224,6 +227,27 @@ export default function NewtonBackwardInterpolation() {
                 <section className="p-5 dark:bg-neutral-700">
                     <NewtonBackwardInterpolations />
                 </section>
+                <section className="p-8 m-4">
+  <div className="flex justify-between items-center">
+    <PageButton 
+      st="prev"
+      route="/newton-foward"
+    />
+    
+    <div className="flex-grow flex justify-center mx-4">
+      <PageButton 
+        st="home"
+        route="/"
+      />
+    </div>
+    
+    <PageButton 
+      st="next"
+      route="/newton-backward"
+    />
+  </div>
+</section>
+
 
             </FullscreenToggle>
 
