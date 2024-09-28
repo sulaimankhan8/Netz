@@ -24,7 +24,7 @@ export default function Home() {
           <div className=" order-2 lg:order-none rounded-lg   max-lg:max-w-[50rem] mx-auto p-5 ">
             <h1 className="text-4xl text-white font-bold text-wrap text-center p-4">Keep Mathing with No Lag!</h1>
 
-            <p className="text-xl text-gray-200 text-center m-5 p-5">Tired of clunky, slow tools holding back your math progress? Netz delivers lightning-fast problem-solving right at your fingertips. Whether you're crunching numbers on the go or leading a real-time class. No lag, no interruptions — just pure math mastery.
+            <p className="text-xl text-gray-200 text-center m-5 p-5">Tired of clunky, slow tools holding back your math progress? Netz delivers lightning-fast problem-solving right at your fingertips. Whether you&apos;re crunching numbers on the go or leading a real-time class. No lag, no interruptions — just pure math mastery.
             </p>
             <p className="text-lg text-gray-400 text-center p-5 px-10 m-5">
 
