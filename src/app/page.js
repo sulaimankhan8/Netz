@@ -144,7 +144,7 @@ export default function Home() {
       lg:grid-cols-3 lg:grid-rows-3">
 
         <div className=" p-6 text-center md:col-span-2 lg:col-span-1 rounded-xl text-white ">
-          <h2 className=" text-3xl p-4 m-4">It’s Free and Fun—Start Learning with Netz Today!</h2>
+          <h2 className=" text-3xl p-4 m-4">It&apos;s Free and Fun—Start Learning with Netz Today!</h2>
           <p className="p-4 text-slate-400">
           Join a community of math learners and teachers who are transforming the way they approach mathematics. Download solutions, create notes, and level up your math skills in a fun and intuitive environment—all for free. Get started with Netz and make learning math a truly rewarding experience.</p></div>
 
@@ -236,7 +236,7 @@ export default function Home() {
           </div>
           <p className="text-left text-white text-2xl font-semibold ml-1">Visualize with Graph</p>
           <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Graphs are more than just lines and dots—they're powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.
+            Graphs are more than just lines and dots—they&apos;re powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.
           </p>
           <NButton
             route="/"
@@ -252,7 +252,7 @@ export default function Home() {
           </div>
           <p className="text-left text-white text-2xl font-semibold ml-1">Your Essential Math Companion</p>
           <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you're always prepared for your next challenge.
+            Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you&apos;re always prepared for your next challenge.
           </p>
           <NButton
             route="/"
