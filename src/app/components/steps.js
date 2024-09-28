@@ -19,7 +19,7 @@ const StepInfo = () => {
 
     <>
          
-         <div className="h-[67rem] sm:h-[75rem]  lg:h-[45rem] bg-[#0D1117] bg-opacity-60 text-white md:p-8 my-8 mx-auto space-y-2 md:w-[80%] rounded-lg">
+         <div className="h-[67rem] sm:h-[75rem]  lg:h-[55rem] bg-[#0D1117] bg-opacity-60 text-white md:p-8 my-8 mx-auto space-y-2 md:w-[80%] rounded-lg">
   <div className="py-4 ">
     <h2 className="text-white md:text-4xl text-2xl text-center p-5 font-semibold">A custom environment designed for learning math quickly and easily</h2>
     <p className="text-[#C7C9D3] text-center">
@@ -36,7 +36,7 @@ const StepInfo = () => {
         <div
           key={step.id}
           onClick={() => setActiveStep(step)}
-          className={`cursor-pointer p-4 rounded-md transition duration-300 ease-in-out bg-opacity-50 hover:bg-[#0D1117]
+          className={`cursor-pointer p-4 rounded-md border-t-2 border-[black] transition duration-300 ease-in-out bg-opacity-50 hover:bg-[#0D1117]
           ${activeStep.id === step.id ? 'bg-[#161B22] text-white' : 'bg-[#0D1117] text-gray-400 hover:bg-[#30363D] hover:text-white bg-opacity-100'}`}
         >
           <h2 className="text-lg font-semibold">{step.title}</h2>

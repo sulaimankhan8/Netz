@@ -71,7 +71,7 @@ export default function Home() {
               <div className="absolute [bottom:5%] [right:5%] bg-opacity-70 bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-30">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
-                    <img src="/graph.svg" alt="Graph Icon" className="mr-2" />
+                    <img src="/calculate.svg" alt="table Icon" className="mr-2" />
                     <p className="text-green-600 font-semibold">TABLES</p>
                   </div>
                   <img src="/setting.svg" alt="Settings Icon" />
