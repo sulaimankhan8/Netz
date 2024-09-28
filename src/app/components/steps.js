@@ -19,7 +19,7 @@ const StepInfo = () => {
 
     <>
          
-         <div className="h-[65rem] sm:h-[72rem]  lg:h-[45rem] bg-[#0D1117] bg-opacity-60 text-white md:p-8 my-8 mx-auto space-y-4 md:w-[80%]">
+         <div className="h-[67rem] sm:h-[75rem]  lg:h-[45rem] bg-[#0D1117] bg-opacity-60 text-white md:p-8 my-8 mx-auto space-y-2 md:w-[80%] rounded-lg">
   <div className="py-4 ">
     <h2 className="text-white md:text-4xl text-2xl text-center p-5 font-semibold">A custom environment designed for learning math quickly and easily</h2>
     <p className="text-[#C7C9D3] text-center">

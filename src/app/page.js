@@ -172,7 +172,7 @@ export default function Home() {
           </div>
           <p className="text-left text-white text-2xl font-semibold ml-1">Export</p>
           <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            With Netz, you can easily export your solutions, step-by-step processes, graphs, and tables. Share your progress and findings with classmates or keep them for your own reference—it's all just a click away!
+            With Netz, you can easily export your solutions, step-by-step processes, graphs, and tables. Share your progress and findings with classmates or keep them for your own reference—it&apos;s all just a click away!
           </p>
           <NButton
             route="/"
