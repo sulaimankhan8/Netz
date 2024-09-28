@@ -10,14 +10,14 @@ export default function Home() {
     <main className="bg-neutral-950 h-[500vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>
 
-      <div className="container ">
+      <div className=" w-full ">
         <div className=" p-5 flex w-full ">
           <div className="text-6xl mx-auto  font-bold text-white">NETZ</div>
         </div>
 
 
 
-        <div className="container  static space-y-4  grid grid-cols-1 lg:grid-cols-2 w-full h-[25rem] p-14  mx-auto  gap-20">
+        <div className="   space-y-4  grid grid-cols-1 lg:grid-cols-2 w-[100%]  p-14   justify-center gap-20 ml-30px">
 
 
 
@@ -35,12 +35,12 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Right Div */}
-          <div className="flex items-center justify-center p-4 rounded-lg  order-1 lg:order-1 pt-15 relative  justify-between">
-            <div className=" top-0 w-[80%] h-[310px]   lg:w-full lg:h-[410px] bg-gradient-to-r from-[#4c4f5a] to-[#202125] rounded-lg m-auto"></div>
+          {/* Right Div */}<div className="order-1 lg:order-1 pt-15  ">
+          <div className=" rounded-lg   relative">
+            <div className=" top-0 w-[80%] h-[310px]   lg:w-full lg:h-[410px] bg-gradient-to-r from-[#ef05ef] to-[#eacb06] rounded-lg  mx-auto justify-between"></div>
 
-              <div className="absolute [top:-10%] [left:-5%]
-         bg-gray-800  rounded-lg shadow-lg shadow-blackmax-w-[20rem] w-[15rem] z-10 ">
+              <div className="absolute [top:-10%] [left:5%] bg-opacity-70
+         bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-10 ">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/graph.svg" alt="Graph Icon" className="mr-2" />
@@ -61,7 +61,7 @@ export default function Home() {
 
 
 
-              <div className="absolute [bottom:10%] [right:-10%] bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-30">
+              <div className="absolute [bottom:5%] [right:5%] bg-opacity-70 bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-30">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/graph.svg" alt="Graph Icon" className="mr-2" />
@@ -71,16 +71,12 @@ export default function Home() {
                 </div>
 
                 <div className="mt-1 p-1  text-white">
-                  <LottieAnimation src="/videos/table.json" height={40} width={80} /><InlineMath math={'y = 3x + 2'} /><p>Netz will produce a table of selected
-                    𝑥
-                    x-values and their corresponding
-                    𝑦
-                    y-values, making it easy to observe linear relationships and trends.</p>
+                  <LottieAnimation src="/videos/table.json" height={40} width={80} /><InlineMath math={'y = 3x + 2'} /><p>Netz will produce a table of selected 𝑥 x-values and their corresponding 𝑦 y-values, making it easy to observe linear relationships and trends.</p>
 
                 </div>
               </div>
 
-              <div className="absolute [top:-10%] [left:40%] bg-gray-800  rounded-xl shadow-lg shadow-black max-w-[20rem] w-[15rem] m-5 z-5">
+              <div className="absolute [top:-10%] [left:40%] bg-opacity-70 bg-gray-800  rounded-xl shadow-lg shadow-black max-w-[20rem] w-[15rem] m-5 z-5">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/download.svg" alt="stepsIcon" className="mr-2" />
@@ -91,14 +87,14 @@ export default function Home() {
                 <div className="m-1 p-2 text-white">
 
 
-                  <LottieAnimation src="/videos/graph.json" height={40} width={80} /><p className="">Netz makes it easy to export your solutions and graphs with a single click. Download high-quality images of your work in PNG format to use in presentations, reports, or share with students and peers.</p>
+                  <LottieAnimation src="/videos/graph.json" height={40} width={80} /><p className=""> Download high-quality images of your work in PNG format to use in presentations, reports, or share with students and peers.</p>
 
                 </div>
               </div>
 
 
 
-              <div className="absolute [top:50%] m-5[left:10%] bg-gray-800  rounded-xl shadow-lg shadow-black max-w-[20rem] w-[15rem]  z-10">
+              <div className="absolute [top:50%]  [left:25%] bg-gray-800  rounded-xl shadow-xl shadow-black max-w-[20rem] w-[15rem] bg-opacity-70 z-10">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/Step.svg" alt="stepsIcon" className="mr-2" />
@@ -113,21 +109,16 @@ export default function Home() {
 
                 </div>
               </div>
-            </div>
+            </div></div>
           </div> 
       </div>
 
-      <div className="w-full  h-10 bg-black bg-opacity-50 ">
-      </div>
-
-      <div className="w-full  h-10 bg-black bg-opacity-50 ">
-      </div>
-
-      <div className="w-full  h-10 bg-black bg-opacity-50 ">
-      </div>
-
-      <div className="w-full  h-10 bg-black bg-opacity-50 ">
-      </div>
+     <div className="bg-black bg-opacity-60 rounded-md w-[80%] h-20 mx-auto flex "> 
+      <div className=""><button><img src=""/></button></div>
+      <div className=""></div>
+      
+     </div>
+      
 
 
 
