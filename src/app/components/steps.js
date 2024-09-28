@@ -23,7 +23,7 @@ const StepInfo = () => {
   <div className="py-4 ">
     <h2 className="text-white md:text-4xl text-2xl text-center p-5 font-semibold">A custom environment designed for learning math quickly and easily</h2>
     <p className="text-[#C7C9D3] text-center">
-    Here’s a quick guide on how to study math efficiently with Netz. Follow these steps to get started!</p>
+    Here is a quick guide on how to study math efficiently with Netz. Follow these steps to get started!</p>
 
   </div>
 
