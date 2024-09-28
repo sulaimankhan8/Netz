@@ -1,7 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+*{
+  box-sizing: border-box;
+}
 /* Add this to your CSS file */
 .fullscreen {
     position: fixed;
@@ -10,8 +12,10 @@
     width: 100%;
     height: 100%;
     z-index: 9999; /* Ensure it's on top */
-    background-color: white /* Optional: make background black */
+    background-color: white /* Add the missing semicolon */
+
   }
+
   html.dark, body.dark {
     background-color: #404040;
      /* Or another dark color you prefer */
@@ -172,9 +176,6 @@
   100% { transform: translate(0%, -50%); }
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Add this to your CSS file */
 .fullscreen {

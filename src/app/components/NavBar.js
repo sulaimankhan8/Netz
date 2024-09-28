@@ -15,9 +15,9 @@ const NavBar = () => {
     };
 
     return (
-        <nav className="bg-gray-800 text-white p-4">
+        <nav className="bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">
             <div className="flex justify-between items-center">
-                <h1 className="text-xl font-bold cursor-pointer" onClick={() => handleNavigation('/')}>MyApp</h1>
+                <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}><img src="/icon.svg"/></div>
                 <div className="relative">
                     <button
                         className="focus:outline-none"
@@ -26,15 +26,15 @@ const NavBar = () => {
                         Menu
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-10">
+                        <div className="absolute right-0 mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
                             <button
-                                className="block px-4 py-2 text-sm hover:bg-gray-600"
+                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-backward')}
                             >
                                 Newton Backward Interpolations
                             </button>
                             <button
-                                className="block px-4 py-2 text-sm hover:bg-gray-600"
+                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-foward')}
                             >
                                 Newton Forward Interpolations

@@ -10,9 +10,9 @@ module.exports = {
     extend: {
       
       },
-      fontFamily: {
-        script: ['"Dancing Script"', 'cursive'],
-      },
+     
+      
+        
     },
     variants: {
       extend: {

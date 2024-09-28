@@ -1,7 +1,7 @@
 "use client";
-import "katex/dist/katex.min.css";
-import { InlineMath, BlockMath } from "react-katex";
 
+import { InlineMath, BlockMath } from "react-katex";
+import "katex/dist/katex.min.css";
 import { useState, useEffect } from "react";
 import NewtonForwardInterpolations from "../algorithems/algorithems.newton-forward-interpolations"; // Updated import
 
@@ -187,13 +187,14 @@ export default function NewtonForwardInterpolation() {
                         <h1 className="py-5 text-lg">Step-by-step:</h1>
                         <ol className="list-decimal text-lg pl-5">
 
-                            <li className="py-3 overflow-auto"><p>First term: <InlineMath math={`2`} /> </p></li>
+                            <li className="py-3 overflow-auto">
+                                <BlockMath math={`\\text{First term = } 2`}/></li>
 
-                            <li className="py-3 spa overflow-auto "><p>Second term: <InlineMath math={`1.5 \\cdot 3 = 4.5`} /> </p></li>
+                            <li className="py-3 spa overflow-auto "><BlockMath math={`\\text{Second term: } 1.5 \\cdot 3 = 4.5`} /> </li>
 
-                            <li className="py-3 overflow-auto "><p>Third term: <InlineMath math={`\\frac{1.5(1.5-1)}{2!} \\cdot 2 = 0.75 `} /> </p></li>
+                            <li className="py-3 overflow-auto "> <BlockMath math={` \\text{Third term: } \\frac{1.5(1.5-1)}{2!} \\cdot 2 = 0.75 `} /> </li>
 
-                            <li className="py-3 overflow-auto "><p>Fourth term: <InlineMath math={`\\frac{1.5(.5-1)(1.5-2)}{3!} \\cdot (0) = 0 `} /> </p></li>
+                            <li className="py-3 overflow-auto "><BlockMath math={`  \\text{Fourth term: } \\frac{1.5(.5-1)(1.5-2)}{3!} \\cdot (0) = 0 `} /></li>
 
                            
                         </ol>
@@ -202,13 +203,13 @@ export default function NewtonForwardInterpolation() {
 
                             <p className=" font-bold my-2">Adding them together:</p>
                             <div className="p-3 my-3  ">
-                                <InlineMath math={'P(33)= 2+(4.5)+(0.75)+(0)'} />
+                                <BlockMath math={'P(33)= 2+(4.5)+(0.75)+(0)'} />
                             </div>
 
 
                             <p >Thus, the interpolated value of <InlineMath math={`y   `} /> at <InlineMath math={'x =2.5'} /> is approximately <InlineMath math={`7.25   `} />  </p></div>  </div></div>
             </section>
-            <section><NewtonForwardInterpolations/></section>
+            <section className="p-5"><NewtonForwardInterpolations/></section>
             <section className="p-8 m-4">
   <div className="flex justify-between items-center">
     <PageButton 
