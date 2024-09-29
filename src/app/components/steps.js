@@ -62,6 +62,7 @@ const StepInfo = () => {
           alt={activeStep.title}
           width={800}
           height={800}
+          layout="responsive"
           className="rounded-md shadow-lg m-auto"
         />
       </motion.div>

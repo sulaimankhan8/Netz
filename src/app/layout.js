@@ -4,7 +4,7 @@
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css";
-import Footer from './components/Footer';
+
 
 export const metadata = {
   title: "netz",
@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         {children}
         <Analytics />
         <SpeedInsights />
-        <Footer/>
+      
       
       </body>
      

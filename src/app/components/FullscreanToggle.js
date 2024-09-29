@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+'use client';
+ import { useState, useEffect, useRef } from "react";
 
 const FullscreenToggle = ({ children }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
