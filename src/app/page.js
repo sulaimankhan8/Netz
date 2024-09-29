@@ -8,6 +8,82 @@ import Image from "next/image.js";
 import StepInfo from "./components/steps.js";
 
 export default function Home() {
+
+  const cardsData = [
+    {
+      imgSrc: "/game.svg",
+      imgAlt: "levelup icon",
+      title: "Level Up",
+      description: "Transform your math study sessions into an engaging experience! Sign in to Netz and start leveling up your profile. Gamify your learning and unlock new achievements as you master mathematical concepts.",
+      buttonText: "SignUp",
+      buttonRoute: "/",
+      buttonIcon: "/sign-in.png",
+    },
+    {
+      imgSrc: "/export.svg",
+      imgAlt: "export icon",
+      title: "Export",
+      description: "With Netz, you can easily export your solutions, step-by-step processes, graphs, and tables. Share your progress and findings with classmates or keep them for your own reference—it’s all just a click away!",
+      buttonText: "Export",
+      buttonRoute: "/",
+      buttonIcon: "/try.png",
+    },
+    {
+      imgSrc: "/notes.svg",
+      imgAlt: "notes icon",
+      title: "Notes",
+      description: "Are you a Tier 2 user? Enjoy the ability to create and share notes with your peers! Generate unique access keys to give others the opportunity to view or collaborate on your notes seamlessly.",
+      buttonText: "Try Notes",
+      buttonRoute: "/",
+      buttonIcon: "/sign-in.png",
+    },
+    {
+      imgSrc: "/page.svg",
+      imgAlt: "pages icon",
+      title: "Explore Pages",
+      description: "Discover a wealth of knowledge created by us for you! Access an array of pages filled with useful information and resources to enhance your math understanding and skills.",
+      buttonText: "Explore",
+      buttonRoute: "/",
+      buttonIcon: "/explore.svg",
+    },
+    {
+      imgSrc: "/Step.svg",
+      imgAlt: "polynomial steps icon",
+      title: "Polynomial Steps",
+      description: "Dive deep into polynomial equations with structured step-by-step breakdowns, helping you understand each part of the problem-solving process.",
+      buttonText: "Follow Steps",
+      buttonRoute: "/",
+      buttonIcon: "/Step.svg",
+    },
+    {
+      imgSrc: "/graph.svg",
+      imgAlt: "graph icon",
+      title: "Visualize with Graph",
+      description: "Graphs are more than just lines and dots—they’re powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.",
+      buttonText: "View Graph",
+      buttonRoute: "/",
+      buttonIcon: "/graph.svg",
+    },
+    {
+      imgSrc: "/icon.svg",
+      imgAlt: "math companion icon",
+      title: "Your Essential Math Companion",
+      description: "Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you’re always prepared for your next challenge.",
+      buttonText: "Start Learning",
+      buttonRoute: "/",
+      buttonIcon: "/icon.svg",
+    },
+    {
+      imgSrc: "/globe.svg",
+      imgAlt: "practice icon",
+      title: "Practice Anywhere, Anytime",
+      description: "Take your math practice on the go! Netz empowers you to work on problems wherever you are. Whether commuting or waiting in line, your math studies never have to pause. Stay sharp and keep progressing!",
+      buttonText: "Practice Now!",
+      buttonRoute: "/",
+      buttonIcon: "/function.svg",
+    },
+  ];
+  
   return (
 
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
@@ -24,12 +100,12 @@ export default function Home() {
 
 
 
-        <div className="   space-y-4  grid grid-cols-1 lg:grid-cols-2 w-[100%]  p-14   justify-center gap-20 ml-30px">
+        <div className="   space-y-4  grid grid-cols-1 lg:grid-cols-2 w-[100%]  p-14   justify-center gap-20 ml-30px max-sm:px-1">
 
 
 
-          <div className=" order-2 lg:order-none rounded-lg lg:bg-white lg:bg-opacity-10  max-lg:max-w-[50rem] mx-auto p-5 ">
-            <h1 className="text-4xl text-white font-bold text-wrap text-center p-4">Keep Mathing with No Lag!</h1>
+          <div className=" order-2 lg:order-none rounded-lg lg:bg-white lg:bg-opacity-10  max-lg:max-w-[50rem] mx-auto sm:px-5 py-5 ">
+            <h1 className="text-4xl text-white font-bold text-wrap text-center sm:p-4">Keep Mathing with No Lag!</h1>
 
             <p className="text-xl text-gray-200 text-center m-5 p-5">Tired of clunky, slow tools holding back your math progress? Netz delivers lightning-fast problem-solving right at your fingertips. Whether you&apos;re crunching numbers on the go or leading a real-time class. No lag, no interruptions — just pure math mastery.
             </p>
@@ -42,11 +118,11 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Right Div */}<div className="order-1 lg:order-1 mt-10 pt-10   ">
+          <div className="order-1 lg:order-1 mt-10 pt-10 max-sm:scale-75  ">
             <div className=" rounded-lg   relative">
               <div className=" top-0 w-[80%] h-[310px]   lg:w-full lg:h-[410px] bg-gradient-to-r from-[#ef05ef] to-[#eacb06] rounded-lg  mx-auto justify-between"></div>
 
-              <div className="absolute [top:-10%] [left:5%] bg-opacity-70
+              <div className="absolute [top:-10%] [left:5%]  bg-opacity-70 max-md:transform max-md:skew-y-12 hover:z-50 hover:bg-opacity-100  max-sm:top-0
          bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-10 ">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
@@ -68,7 +144,7 @@ export default function Home() {
 
 
 
-              <div className="absolute [bottom:5%] [right:5%] bg-opacity-70 bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-30">
+              <div className="absolute [bottom:5%] [right:5%] bg-opacity-70 bg-gray-800  rounded-lg shadow-lg shadow-black max-w-[20rem] w-[15rem] z-30 max-md:transform max-md:skew-y-12 hover:z-50 max-sm:top-0 hover:bg-opacity-100 ">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/calculate.svg" alt="table Icon" className="mr-2" />
@@ -83,7 +159,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="absolute [top:-10%] [left:40%] bg-opacity-70 bg-gray-800  rounded-xl shadow-lg shadow-black max-w-[20rem] w-[15rem] m-5 z-5">
+              <div className="absolute [top:-10%] [left:40%] bg-opacity-70 bg-gray-800  rounded-xl shadow-lg shadow-black max-w-[20rem] w-[15rem] m-5 z-1 max-md:transform max-md:skew-y-12 hover:z-50 hover:bg-opacity-100  max-sm:top-5">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/download.svg" alt="stepsIcon" className="mr-2" />
@@ -101,7 +177,7 @@ export default function Home() {
 
 
 
-              <div className="absolute [top:50%]  [left:25%] bg-gray-800  rounded-xl shadow-xl shadow-black max-w-[20rem] w-[15rem] bg-opacity-70 z-10">
+              <div className="absolute [top:50%]  [left:25%] bg-gray-800  rounded-xl shadow-xl shadow-black max-w-[20rem] w-[15rem] bg-opacity-70 z-10 max-md:transform max-md:skew-y-12 hover:z-50 hover:bg-opacity-100 max-sm:top-0">
                 <div className="bg-gray-900   p-2 flex rounded-lg justify-between ">
                   <div className="flex items-center mr-5">
                     <img src="/Step.svg" alt="stepsIcon" className="mr-2" />
@@ -120,7 +196,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="bg-black bg-opacity-60 rounded-md w-[80%] h-20  mx-auto flex flex-row items-center px-5  gap-5 relative">
+      <div className="bg-black bg-opacity-60 rounded-md w-[80%] h-20  mx-auto flex flex-row items-center px-5  gap-5 max-sm:h-[20rem] relative">
         <div className=" text-white p-2 w-[8rem] rounded items-center active ">
           <a href="https://google.com" target="_blank" rel="noopener noreferrer">
 
@@ -138,154 +214,37 @@ export default function Home() {
 
 
 
-      <div className="grid gap-4 p-1 w-[80%] m-auto my-[7rem]
-      grid-cols-1 
-      md:grid-cols-2 md:grid-rows-[auto,repeat(4,1fr)] 
-      lg:grid-cols-3 lg:grid-rows-3">
-
-        <div className=" p-6 text-center md:col-span-2 lg:col-span-1 rounded-xl text-white ">
-          <h2 className=" text-3xl p-4 m-4">It&apos;s Free and Fun—Start Learning with Netz Today!</h2>
-          <p className="p-4 text-slate-400">
-          Join a community of math learners and teachers who are transforming the way they approach mathematics. Download solutions, create notes, and level up your math skills in a fun and intuitive environment—all for free. Get started with Netz and make learning math a truly rewarding experience.</p></div>
-
-
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/game.svg" alt="levelup icon" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Level Up</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Transform your math study sessions into an engaging experience! Sign in to Netz and start leveling up your profile. Gamify your learning and unlock new achievements as you master mathematical concepts.
-          </p>
-          <NButton
-            route="/"
-            text="SignUp"
-            svgPath="/sign-in.png"
-            className="p-4 my-4"
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] h-[4.5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/export.svg" alt="" className="w-full h-full"/>
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Export</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            With Netz, you can easily export your solutions, step-by-step processes, graphs, and tables. Share your progress and findings with classmates or keep them for your own reference—it&apos;s all just a click away!
-          </p>
-          <NButton
-            route="/"
-            text="export"
-            svgPath="/try.png"
-            className="p-4 my-4"
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/notes.svg" alt="" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Notes</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Are you a Tier 2 user? Enjoy the ability to create and share notes with your peers! Generate unique access keys to give others the opportunity to view or collaborate on your notes seamlessly.
-          </p>
-          <NButton
-            route="/"
-            text="Try Notes"
-            svgPath="/sign-in.png"
-            className="p-4 my-4"
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/page.svg" alt="" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Explore Pages</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Discover a wealth of knowledge created by us for you! Access an array of pages filled with useful information and resources to enhance your math understanding and skills.
-          </p>
-          <NButton
-            route="/"
-            text="Explore"
-            svgPath="/explore.svg"
-            className="p-4 my-4"
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/Step.svg" alt="" className="w-full f-full" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Polynomial Steps</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Dive deep into polynomial equations with structured step-by-step breakdowns, helping you understand each part of the problem-solving process.
-          </p>
-          <NButton
-            route="/"
-            text="Follow Steps"
-            svgPath="/Step.svg"
-            className="p-4 my-4"
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/graph.svg" alt=""  className="w-full f-full "/>
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Visualize with Graph</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Graphs are more than just lines and dots—they&apos;re powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.
-          </p>
-          <NButton
-            route="/"
-            text="View Graph"
-            svgPath="/graph.svg"
-            className="p-4 my-4 "
-          />
-        </div>
-
-        <div className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/icon.svg" alt="" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Your Essential Math Companion</p>
-          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
-            Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you&apos;re always prepared for your next challenge.
-          </p>
-          <NButton
-            route="/"
-            text="Start Learning"
-            svgPath="/icon.svg"
-            className="p-4 my-4"
-          />
-        </div>
-
-
-
-        <div className=" px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }} >
-
-          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <img src="/globe.svg" alt="" />
-          </div>
-          <p className="text-left text-white text-2xl font-semibold ml-1">Practice Anywhere, Anytime</p>
-
-
-          <p className="  text-left my-5 " style={{ color: '#C7C9D3' }}>
-            Take your math practice on the go! Netz empowers you to work on problems wherever you are. Whether commuting or waiting in line, your math studies never have to pause. Stay sharp and keep progressing!
-          </p>
-
-          <NButton
-            route="/"
-            text="Pratice Now!"
-            svgPath="/function.svg"
-            className="p-4 my-4"
-          />
-
-        </div>
-
+      <div className="grid gap-4 sm:p-1 sm:w-[80%] m-auto sm:my-[7rem] grid-cols-1 md:grid-cols-2 md:grid-rows-[auto,repeat(4,1fr)] lg:grid-cols-3 lg:grid-rows-3">
+      
+      {/* First Section with static content */}
+      <div className="p-6 text-center md:col-span-2 lg:col-span-1 rounded-xl text-white">
+        <h2 className="text-3xl p-4 m-4">
+          It&apos;s Free and Fun—Start Learning with Netz Today!
+        </h2>
+        <p className="p-4 text-slate-400">
+          Join a community of math learners and teachers who are transforming the way they approach mathematics. Download solutions, create notes, and level up your math skills in a fun and intuitive environment—all for free. Get started with Netz and make learning math a truly rewarding experience.
+        </p>
       </div>
+
+      {/* Dynamically render the cards */}
+      {cardsData.map((card, index) => (
+        <div key={index} className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
+          <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
+            <img src={card.imgSrc} alt={card.imgAlt} className="w-full h-full" />
+          </div>
+          <p className="text-left text-white text-2xl font-semibold ml-1">{card.title}</p>
+          <p className="text-left my-5" style={{ color: '#C7C9D3' }}>
+            {card.description}
+          </p>
+          <NButton
+            route={card.buttonRoute}
+            text={card.buttonText}
+            svgPath={card.buttonIcon}
+            className="p-4 my-4"
+          />
+        </div>
+      ))}
+    </div>
 
 
       <div className="bg-black bg-opacity-60 rounded-md w-[80%] h-[20rem]  mx-auto flex flex-row items-center px-5  gap-5 relative">

@@ -17,7 +17,7 @@ const StepInfo = () => {
 
   return (
 
-    <>
+    
          
          <div className="h-[67rem] sm:h-[75rem]  lg:h-[55rem] bg-[#0D1117] bg-opacity-60 text-white md:p-8 my-8 mx-auto space-y-2 md:w-[80%] rounded-lg">
   <div className="py-4 ">
@@ -68,7 +68,7 @@ const StepInfo = () => {
     </div>
   </div>
 </div>
-</>
+
   );
 };
 
