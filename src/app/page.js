@@ -3,6 +3,7 @@ import "katex/dist/katex.min.css";
 import NButton from "./components/NButton.js";
 import Image from "next/image.js";
 import dynamic from 'next/dynamic';
+import Head from "next/head.js";
 const InlineMath = dynamic(() => import('react-katex').then(mod => mod.InlineMath), { 
   ssr: false, 
   loading: () => <span>Loading math...</span>
@@ -27,7 +28,8 @@ export default function Home() {
     {ImageSrc: "/globe.svg",ImageAlt: "practice icon",title: "Practice Anywhere, Anytime",description: "Take your math practice on the go! Netz empowers you to work on problems wherever you are. Whether commuting or waiting in line, your math studies never have to pause. Stay sharp and keep progressing!",buttonText: "Practice Now!",buttonRoute: "/",buttonIcon: "/function.svg",},
   ];
   
-  return (
+  return (<>
+    <Head><meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" /></Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>
       <div className=" p-5 flex w-full ">
@@ -155,6 +157,6 @@ export default function Home() {
         <div className="absolute font-semibold text-gray-700 top-0 right-3"> Sponsored</div>
       </div>
 <StepInfo/>
-    </main>
+    </main></>
   );
 }
