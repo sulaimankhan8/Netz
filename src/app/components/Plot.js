@@ -5,7 +5,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 // Correctly define the Plot component
-const Plot = React.memo(({ points, xRange, darkTheme, func }) => {
+const Plot = (({ points, xRange, darkTheme, func }) => {
   // Function to perform Newton Backward Interpolation
   // Calculate interpolated values
   const interpolatedData = xRange.map(x => func(points, x).interpolatedValue);
