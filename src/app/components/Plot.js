@@ -1,16 +1,13 @@
-// Plot.js
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const Plot = ({ points, xRange, darkTheme ,func}) => {
+// Correctly define the Plot component
+const Plot = React.memo(({ points, xRange, darkTheme, func }) => {
   // Function to perform Newton Backward Interpolation
-
-
   // Calculate interpolated values
- 
   const interpolatedData = xRange.map(x => func(points, x).interpolatedValue);
 
   const data = {
@@ -42,7 +39,7 @@ const Plot = ({ points, xRange, darkTheme ,func}) => {
         position: 'top',
         labels: {
           font: {
-            size:   15, // Set font size for the legend
+            size: 15, // Set font size for the legend
           },
           color: darkTheme ? 'gray-800' : 'black',
         }
@@ -64,12 +61,13 @@ const Plot = ({ points, xRange, darkTheme ,func}) => {
           text: 'X Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size:  15, // Set font size for the legend
-          },},
+            size: 15, // Set font size for the title
+          },
+        },
         ticks: {
           color: darkTheme ? '#f3f4f6' : 'black', // Change ticks color
           font: {
-            size:   15,// Set font size for the legend
+            size: 15, // Set font size for the ticks
           },
         }
       },
@@ -79,28 +77,27 @@ const Plot = ({ points, xRange, darkTheme ,func}) => {
           text: 'Y Values',
           color: darkTheme ? '#f3f4f6' : 'black', // Change color based on theme
           font: {
-            size: 15, // Set font size for the legend
-          },},
+            size: 15, // Set font size for the title
+          },
+        },
         ticks: {
-          color: darkTheme ? '#f3f4f6': 'black', // Change ticks color
+          color: darkTheme ? '#f3f4f6' : 'black', // Change ticks color
           font: {
-            size:  15,// Set font size for the legend
-          },}
+            size: 15, // Set font size for the ticks
+          },
+        }
       }
     }
   };
- 
-
 
   return (
     <div className="plot-container">
       <Line
         data={data}
         options={options}
-        
       />
     </div>
   );
-};
+});
 
 export default Plot;

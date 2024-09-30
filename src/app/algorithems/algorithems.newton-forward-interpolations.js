@@ -455,7 +455,7 @@ export default function NewtonForwardInterpolations({ theme }) {
   
 }
 // Newton Forward Interpolation Calculation
-function newtonForwardInterpolation(points, x) {
+function  newtonForwardInterpolation(points, x) {
   const tr = [
     `y_{0}`,
     `\\frac{v}{1!} \\Delta^{1} y_{0} `,

@@ -20,7 +20,7 @@ export default function NewtonForwardInterpolation() {
        
     ];
     
-   
+    // Updated formula for Newton Forward Interpolation
     const formula = `
     P(x) = y_0 + v \\cdot \\Delta y_0 + \\frac{v(v-1)}{2!} \\cdot \\Delta^2 y_0 
     + \\frac{v(v-1)(v-2)}{3!} \\cdot \\Delta^3 y_0 

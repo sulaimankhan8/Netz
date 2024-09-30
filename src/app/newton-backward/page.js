@@ -3,6 +3,7 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import PageButton from "../components/pageButton";
 import { useState, useEffect } from "react";
+import Head from 'next/head';
 import NewtonBackwardInterpolations from "../algorithems/algorithems.newton-backward-interpolations";
 
 import FullscreenToggle from "../components/FullscreanToggle";
@@ -45,6 +46,12 @@ export default function NewtonBackwardInterpolation() {
             <FullscreenToggle className="dark:bg-neutral-700">
 
             
+<Head>
+        <title>Newton Backward Interpolation</title>
+        <meta name="description" content="Learn about Newton Backward Interpolation, its applications, and how to use it for solving mathematical problems." />
+        <meta name="keywords" content="Netz,Newton Backward Interpolation, interpolation, math, numerical methods ,backward,newton,calculator" />
+        <meta name="robots" content="index, follow" />
+      </Head>
                 
                 <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
                     <h1 className="text-2xl font-bold pb-5 inline-block

@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  images: {
-    domains: ['your-domain.com'], // Adjust as necessary
-  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.module.rules.push({
