@@ -51,6 +51,7 @@ export default function NewtonBackwardInterpolation() {
         <meta name="description" content="Learn about Newton Backward Interpolation, its applications, and how to use it for solving mathematical problems." />
         <meta name="keywords" content="Netz,Newton Backward Interpolation, interpolation, math, numerical methods ,backward,newton,calculator" />
         <meta name="robots" content="index, follow" />
+        <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
       </Head>
                 
                 <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
