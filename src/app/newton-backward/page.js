@@ -1,5 +1,5 @@
 "use client";
-import Head from 'next/head';
+
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import PageButton from "../components/pageButton";
