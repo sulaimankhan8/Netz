@@ -31,6 +31,33 @@ export default function Home() {
   return (<>
     <Head>
     <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
+    <Head>
+        <title>Netz - Math Problem Solving Platform | Interpolation Techniques</title>
+        <meta
+          name="description"
+          content="Netz is a free platform for learning mathematical concepts and solving problems efficiently. Explore various interpolation methods like Newton Forward and Newton Backward interpolation."
+        />
+        <meta
+          name="keywords"
+          content="Netz, interpolation, Newton backward, Newton forward, math problem solving, educational platform"
+        />
+        <meta name="author" content="Netz" />
+        <meta property="og:title" content="Netz - Math Problem Solving Platform" />
+        <meta
+          property="og:description"
+          content="Learn about interpolation techniques and other mathematical concepts on Netz."
+        />
+        <meta property="og:url" content="https://netz-ruby.vercel.app" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/og-image.jpeg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Netz - Math Problem Solving Platform" />
+        <meta
+          name="twitter:description"
+          content="Explore Netz for quick problem-solving techniques and a fun learning experience."
+        />
+        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/twitter-card.jpeg" />
+      </Head>
     </Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>

@@ -1,5 +1,5 @@
 "use client";
-
+import Head from 'next/head';
 import { InlineMath, BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import { useState, useEffect } from "react";
@@ -44,7 +44,34 @@ export default function NewtonForwardInterpolation() {
         document.documentElement.classList.toggle('dark', newTheme === 'dark');
     };
 
-    return (
+    return (<>
+              <Head>
+        <title>Newton Forward Interpolation | Netz</title>
+        <meta
+          name="description"
+          content="Explore Newton Forward Interpolation on Netz with comprehensive examples and explanations to deepen your understanding of interpolation methods."
+        />
+        <meta
+          name="keywords"
+          content="Newton forward interpolation, interpolation methods, Netz, math problem solving"
+        />
+        <meta name="author" content="Netz" />
+        <meta property="og:title" content="Newton Forward Interpolation | Netz" />
+        <meta
+          property="og:description"
+          content="Master the Newton Forward Interpolation method with Netz. Learn through examples and detailed explanations."
+        />
+        <meta property="og:url" content="https://netz-ruby.vercel.app/newton-foward" />
+        <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/newton-forward-og-image.jpeg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Newton Forward Interpolation | Netz" />
+        <meta
+          name="twitter:description"
+          content="Explore Newton Forward Interpolation with step-by-step guidance and examples on Netz."
+        />
+        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/newton-forward-twitter-card.jpeg" />
+      </Head>
         <FullscreenToggle className="dark:bg-neutral-700">
             <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
                 <h1 className="text-2xl font-bold pb-5 inline-block">
@@ -231,6 +258,6 @@ export default function NewtonForwardInterpolation() {
   </div>
 </section>
 
-        </FullscreenToggle>
+        </FullscreenToggle></>
     );
 }

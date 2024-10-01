@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import Head from 'next/head';
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import PageButton from "../components/pageButton";
@@ -41,18 +42,40 @@ export default function NewtonBackwardInterpolation() {
       document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
     return (
-        
+        <>
+        <Head>
+        <title>Newton Backward Interpolation | Netz</title>
+        <meta
+          name="description"
+          content="Master Newton Backward Interpolation method with step-by-step explanations and examples. Netz makes it easy to understand complex interpolation techniques."
+        />
+        <meta
+          name="keywords"
+          content="Newton backward interpolation, interpolation methods, Netz, math problem solving"
+        />
+        <meta name="author" content="Netz" />
+        <meta property="og:title" content="Newton Backward Interpolation | Netz" />
+        <meta
+          property="og:description"
+          content="Learn Newton Backward Interpolation with examples and explanations to enhance your understanding of interpolation techniques."
+        />
+        <meta property="og:url" content="https://netz-ruby.vercel.app/newton-backward" />
+        <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/newton-backward-og-image.jpeg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Newton Backward Interpolation | Netz" />
+        <meta
+          name="twitter:description"
+          content="Master Newton Backward Interpolation with easy-to-follow steps on Netz."
+        />
+        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/newton-backward-twitter-card.jpeg
+        " />
+      </Head>
 
             <FullscreenToggle className="dark:bg-neutral-700">
 
             
-<Head>
-        <title>Newton Backward Interpolation</title>
-        <meta name="description" content="Learn about Newton Backward Interpolation, its applications, and how to use it for solving mathematical problems." />
-        <meta name="keywords" content="Netz,Newton Backward Interpolation, interpolation, math, numerical methods ,backward,newton,calculator" />
-        <meta name="robots" content="index, follow" />
-        <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
-      </Head>
+
                 
                 <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
                     <h1 className="text-2xl font-bold pb-5 inline-block
@@ -257,7 +280,7 @@ export default function NewtonBackwardInterpolation() {
 </section>
 
 
-            </FullscreenToggle>
+            </FullscreenToggle></>
 
         
 
