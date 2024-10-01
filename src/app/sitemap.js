@@ -3,13 +3,13 @@ export default function sitemap() {
       {
         url: 'https://netz-ruby.vercel.app',
         lastModified: new Date(),
-        changeFrequency: 'weakly',
+        changeFrequency: 'weekly',
         priority: 1,
       },
       {
         url: 'https://netz-ruby.vercel.app/newton-backward',
         lastModified: new Date(),
-        changeFrequency: 'weakly',
+        changeFrequency: 'weekly',
         priority: 0.8,
       },
       {
