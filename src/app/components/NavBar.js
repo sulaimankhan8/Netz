@@ -39,6 +39,12 @@ const NavBar = () => {
                             >
                                 Newton Forward Interpolations
                             </button>
+                            <button
+                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
+                                onClick={() => handleNavigation('/Gauss-seidal')}
+                            >
+                                Gauss-seidal
+                            </button>
                         </div>
                     )}
                 </div>
