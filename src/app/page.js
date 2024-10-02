@@ -49,6 +49,7 @@ export default function Home() {
         />
         <meta property="og:url" content="https://netz-ruby.vercel.app" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
         <meta property="og:image" content="https://netz-ruby.vercel.app/images/og-image.jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Netz - Math Problem Solving Platform" />
@@ -56,7 +57,8 @@ export default function Home() {
           name="twitter:description"
           content="Explore Netz for quick problem-solving techniques and a fun learning experience."
         />
-        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/twitter-card.jpeg" />
+           <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
+        <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/twitter-card.jpeg" />
       </Head>
     </Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"

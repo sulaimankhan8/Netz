@@ -61,6 +61,7 @@ export default function NewtonBackwardInterpolation() {
         />
         <meta property="og:url" content="https://netz-ruby.vercel.app/newton-backward" />
         <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
         <meta property="og:image" content="https://netz-ruby.vercel.app/images/newton-backward-og-image.jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Newton Backward Interpolation | Netz" />
@@ -68,8 +69,8 @@ export default function NewtonBackwardInterpolation() {
           name="twitter:description"
           content="Master Newton Backward Interpolation with easy-to-follow steps on Netz."
         />
-        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/newton-backward-twitter-card.jpeg
-        " />
+       <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
+       <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/newton-backward-twitter-card.jpeg" />
       </Head>
 
             <FullscreenToggle className="dark:bg-neutral-700">

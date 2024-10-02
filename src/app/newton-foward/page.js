@@ -63,6 +63,7 @@ export default function NewtonForwardInterpolation() {
         />
         <meta property="og:url" content="https://netz-ruby.vercel.app/newton-foward" />
         <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
         <meta property="og:image" content="https://netz-ruby.vercel.app/images/newton-forward-og-image.jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Newton Forward Interpolation | Netz" />
@@ -70,7 +71,8 @@ export default function NewtonForwardInterpolation() {
           name="twitter:description"
           content="Explore Newton Forward Interpolation with step-by-step guidance and examples on Netz."
         />
-        <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/newton-forward-twitter-card.jpeg" />
+           <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
+        <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/newton-forward-twitter-card.jpeg" />
       </Head>
         <FullscreenToggle className="dark:bg-neutral-700">
             <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
