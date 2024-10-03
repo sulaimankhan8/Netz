@@ -186,7 +186,7 @@ export default function NewtonForwardInterpolation() {
                 <div className="p-4">
                     <p className="text-xl"><span className="font-bold  text-lg">Step 2:</span > Using the formula <InlineMath math="v = \frac{x - x_0}{h}" /> values. </p><br/>
                    
-                        <BlockMath math={"\\text{Given } x = 2.5 \\text{ and } x_0 = 1 \\text{ with } h = 1"} />
+                        <InlineMath math={"\\text{Given } x = 2.5 \\text{ and } x_0 = 1 \\text{ with } h = 1"} />
                         <BlockMath math="v = \frac{x - x_0}{h}" />
                         <BlockMath math="v = \frac{2.5 - 1}{1}" />
                         <BlockMath math="v = 1.5" />

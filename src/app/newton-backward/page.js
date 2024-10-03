@@ -190,7 +190,7 @@ export default function NewtonBackwardInterpolation() {
 
                     <div className="p-4">
                         <p className="text-xl "><span className="font-bold  text-lg">Step 2:</span> use the formula <InlineMath math="v = \frac{x - x_n}{h}" /> values.</p><br></br>
-                        <BlockMath math="\text{Given } x = 33 \text{ and } x_n = 40 \text{ with } h = 4," />
+                        <InlineMath math="\text{Given } x = 33 \text{ and } x_n = 40 \text{ with } h = 4," />
                         <BlockMath math="v = \frac{x - x_n}{h}" />
                         <BlockMath math="v = \frac{33 - 40}{4}" />
                         <BlockMath math="v = -1.75" />

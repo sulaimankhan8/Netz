@@ -17,7 +17,9 @@ const NavBar = () => {
     return (
         <nav className="bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">
             <div className="flex justify-between items-center">
-                <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}><Image src="/icon.svg" alt="icon logo" width={50} height={50}/></div>
+                <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}>
+                    <Image src="/icon.svg" alt="icon logo" width={50} height={50}/>
+                    </div>
                 <div className="relative">
                     <button
                         className="focus:outline-none"
@@ -26,7 +28,7 @@ const NavBar = () => {
                         Menu
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
+                        <div className="absolute right-0  mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
                             <button
                                 className="block px-4 py-2 text-sm hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-backward')}
@@ -40,10 +42,10 @@ const NavBar = () => {
                                 Newton Forward Interpolations
                             </button>
                             <button
-                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
+                                className="block px-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/Gauss-seidal')}
                             >
-                                Gauss-seidal
+                                Gauss - seidal approximation Method
                             </button>
                         </div>
                     )}
