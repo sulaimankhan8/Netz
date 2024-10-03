@@ -129,7 +129,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
     const minX = Math.min(...xValues) - 5;
     const maxX = Math.max(...xValues) + 5;
-    setXRange(Array.from({ length: 50 }, (_, i) => minX + i * (maxX - minX) / 99));
+    setXRange(Array.from({ length: 100 }, (_, i) => minX + i * (maxX - minX) / 99));
 
 
 

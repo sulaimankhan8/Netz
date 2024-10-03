@@ -81,7 +81,7 @@ export default function NewtonBackwardInterpolation() {
                 <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
                     <h1 className="text-2xl font-bold pb-5 inline-block
                     ">Newton Backward Interpolation Method</h1>
-     <div className="switch float-right inline-block fixed">
+     <div className="switch float-right inline-block absolute">
   <input
     type="checkbox"
     className="switch__input"
@@ -222,7 +222,7 @@ export default function NewtonBackwardInterpolation() {
                     </div>
 
 
-                    <div className="p-8">
+                    <div className="py-8">
                         <h1 className="py-5 text-lg">Step-by-step:</h1>
                         <ol className="list-decimal text-lg pl-5">
 
