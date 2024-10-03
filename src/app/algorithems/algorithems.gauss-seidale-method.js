@@ -106,7 +106,7 @@ const GaussSeidel = () => {
                     placeholder="a"
                     value={equation.a}
                     onChange={(e) => handleInputChange(index, 'a', e.target.value)}
-                    placeholder="a"
+                    
                     className="w-[50%] my-5 ml-5 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600 rounded-md hover:border hover:border-neutral-300 text-right"
                   /> <label className="ml-0 m-5 dark:text-white text-xl font-semibold">x</label>
                 </td>
