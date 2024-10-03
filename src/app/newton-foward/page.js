@@ -74,7 +74,7 @@ export default function NewtonForwardInterpolation() {
            <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
         <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/newton-forward-twitter-card.jpeg" />
       </Head>
-        <FullscreenToggle className="dark:bg-neutral-700">
+        <FullscreenToggle className="dark:bg-neutral-700 w-full">
             <section className="container mx-auto px-8 mt-10 dark:bg-neutral-700 dark:text-white">
                 <h1 className="text-2xl font-bold pb-5 inline-block">
                     Newton Forward Interpolation Method
@@ -183,7 +183,7 @@ export default function NewtonForwardInterpolation() {
                     </div>
                 </div>
 
-                <div className="p-4">
+                <div className="sm:py-4">
                     <p className="text-xl"><span className="font-bold  text-lg">Step 2:</span > Using the formula <InlineMath math="v = \frac{x - x_0}{h}" /> values. </p><br/>
                    
                         <InlineMath math={"\\text{Given } x = 2.5 \\text{ and } x_0 = 1 \\text{ with } h = 1"} />
@@ -193,7 +193,7 @@ export default function NewtonForwardInterpolation() {
                     
                 </div>
 
-                <div className="p-4">
+                <div className="sm:py-4">
                     <p className="text-xl"><span className="font-bold text-lg">Step 3:</span> Apply the Newton Forward Interpolation formula:</p><br/>
                     <div className="mb-4">
                             <p className="text-lg font-semibold mb-2"></p>
@@ -212,7 +212,7 @@ export default function NewtonForwardInterpolation() {
                     </div> </div><br/>
 
 
-                    <div className="p-8">
+                    <div className="sm:py-8">
                         <h1 className="py-5 text-lg">Step-by-step:</h1>
                         <ol className="list-decimal text-lg pl-5">
 

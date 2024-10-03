@@ -115,8 +115,8 @@ export default function NewtonBackwardInterpolation() {
                     </div>
                 </section>
 
-                <section className="container mx-auto p-8 dark:bg-neutral-700 dark:text-white">
-                    <div className="p-4 ">
+                <section className="container mx-auto sm:p-8  dark:bg-neutral-700 dark:text-white">
+                    <div className="sm:p-4 ">
                         <h1 className="text-2xl font-bold mb-4">Example of Newton Backward Interpolation</h1>
                         <h2>Let&apos;ss say we are given the following data points:</h2><br></br>
                         <div className="p-4 flex justify-center overflow-hidden">
@@ -222,7 +222,7 @@ export default function NewtonBackwardInterpolation() {
                     </div>
 
 
-                    <div className="py-8">
+                    <div className="sm:py-8">
                         <h1 className="py-5 text-lg">Step-by-step:</h1>
                         <ol className="list-decimal text-lg pl-5">
 

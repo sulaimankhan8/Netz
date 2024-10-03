@@ -28,14 +28,10 @@ export default function RootLayout({ children }) {
     <Head><meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" /></Head>
       <body>
         <NavBar/>
-      
         {children}
         <Analytics />
         <SpeedInsights />
-      
-      
       </body>
-     
     </html>
   );
 }

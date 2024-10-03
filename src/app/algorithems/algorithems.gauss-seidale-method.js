@@ -87,7 +87,7 @@ const GaussSeidel = () => {
 
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <table className="w-full m-auto table-auto md:ml-[15%] md:table-fixed p-4 shadow-md">
+        <table className="w-full m-auto table-auto  md:table-fixed p-4 shadow-md">
           <thead>
             <tr>
               <th className="border border-gray-300 p-2">A Value</th>
@@ -103,14 +103,15 @@ const GaussSeidel = () => {
                  
                   <input
                     type="number"
+                    placeholder="a"
                     value={equation.a}
                     onChange={(e) => handleInputChange(index, 'a', e.target.value)}
                     placeholder="a"
-                    className="w-[50%] p-2 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600 rounded-md hover:border hover:border-neutral-300 text-right"
+                    className="w-[50%] my-5 ml-5 text-black dark:bg-neutral-800 dark:text-white dark:border-gray-600 rounded-md hover:border hover:border-neutral-300 text-right"
                   /> <label className="ml-0 m-5 dark:text-white text-xl font-semibold">x</label>
                 </td>
                 <td className="border border-gray-300 p-2 ">
-                  <label className=" m-5 dark:text-white text-xl font-semibold">y</label>
+                  <label className=" my-5 ml-5  dark:text-white text-xl font-semibold">y</label>
                   <input
                     type="number"
                     value={equation.b}
@@ -120,7 +121,7 @@ const GaussSeidel = () => {
                   />
                 </td>
                 <td className="border border-gray-300 p-2">
-                  <label className=" m-5 dark:text-white text-xl font-semibold">z</label>
+                  <label className=" my-5 ml-5 dark:text-white text-xl font-semibold">z</label>
                   <input
                     type="number"
                     value={equation.c}
@@ -130,7 +131,7 @@ const GaussSeidel = () => {
                   />
                 </td>
                 <td className="border border-gray-300 p-2">
-                  <label className="p-5 m-5 dark:text-white text-3xl font-semibold">=</label>
+                  <label className="my-5 ml-5 dark:text-white text-2xl font-bold">=</label>
                   <input
                     type="number"
                     step="any"
