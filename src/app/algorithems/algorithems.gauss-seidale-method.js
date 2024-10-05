@@ -138,7 +138,7 @@ const GaussSeidel = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto p-4 dark:text-white dark:bg-neutral-700">
+    <div className="max-w-full mx-auto p-4 bg-white dark:text-white dark:bg-neutral-700">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold mb-4">Gauss-Seidel Method</h1>
 

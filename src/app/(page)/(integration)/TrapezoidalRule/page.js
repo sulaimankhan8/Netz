@@ -20,7 +20,7 @@ const UnderConstruction = () => {
   }, []);
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-hidden transition-all duration-300 dark:bg-neutral-700 dark:text-white">
       <section className="h-[80vh] pt-7 p-5 text-center">
         {/* Conditional Rendering of Lottie Animation */}
         <div className="w-full h-auto mb-5">
