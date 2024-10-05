@@ -30,22 +30,28 @@ const NavBar = () => {
                     {dropdownOpen && (
                         <div className="absolute right-0  mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
                             <button
-                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
+                                className="bblock w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-backward')}
                             >
                                 Newton Backward Interpolations
                             </button>
                             <button
-                                className="block px-4 py-2 text-sm hover:bg-neutral-600"
+                                className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-foward')}
                             >
                                 Newton Forward Interpolations
                             </button>
                             <button
-                                className="block px-4 py-2 text-sm text-center hover:bg-neutral-600"
+                                className="bblock w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/Gauss-seidal')}
                             >
                                 Gauss - seidal approximation Method
+                            </button>
+                            <button
+                                className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
+                                onClick={() => handleNavigation('/TrapezoidalRule')}
+                            >
+                                TrapezoidalRule
                             </button>
                         </div>
                     )}

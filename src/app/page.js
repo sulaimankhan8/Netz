@@ -31,7 +31,7 @@ export default function Home() {
   return (<>
     <Head>
     <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
-    <Head>
+    
         <title>Netz - Math Problem Solving Platform | Interpolation Techniques</title>
         <meta
           name="description"
@@ -59,7 +59,7 @@ export default function Home() {
         />
            <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
         <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/twitter-card.jpeg" />
-      </Head>
+     
     </Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>
