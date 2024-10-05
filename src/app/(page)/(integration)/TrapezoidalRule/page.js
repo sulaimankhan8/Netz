@@ -34,7 +34,7 @@ const UnderConstruction = () => {
         {/* LinkedIn Contact Section */}
         <div className="mt-5">
           <p className="text-lg text-white p-5">
-            We're working hard to bring you an amazing experience! If you'd like
+            We&apos;re working hard to bring you an amazing experience! If you&apos;d like
             a specific page to be worked on first, feel free to contact me.
           </p>
           <a
@@ -58,7 +58,7 @@ const UnderConstruction = () => {
         </h2>
 
         {/* Route Map Section */}
-        <div className={``}>
+        <div >
           {/* Display Route Map SVG */}
           <img
             src="/Routes-map.svg"
