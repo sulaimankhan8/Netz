@@ -75,7 +75,7 @@ export default function NewtonForwardInterpolation() {
         <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/newton-forward-twitter-card.jpeg" />
       </Head>
         <FullscreenToggle className="dark:bg-neutral-700 w-full">
-            <section className="container mx-auto px-8 pt-10 dark:bg-neutral-700 dark:text-white">
+        <div className="md:ml-[80px]">         <section className="container mx-auto px-8 pt-10 dark:bg-neutral-700 dark:text-white">
                 <h1 className="text-2xl font-bold pb-5 inline-block">
                     Newton Forward Interpolation Method
                 </h1>
@@ -259,7 +259,7 @@ export default function NewtonForwardInterpolation() {
     />
   </div>
 </section>
-
+</div>
         </FullscreenToggle></>
     );
 }

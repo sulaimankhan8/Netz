@@ -77,7 +77,7 @@ export default function NewtonBackwardInterpolation() {
 
             
 
-                
+                <div className="md:ml-[80px]">
                 <section className="container mx-auto px-8 pt-10 dark:bg-neutral-700 dark:text-white">
                     <h1 className="text-2xl font-bold pb-5 inline-block
                     ">Newton Backward Interpolation Method</h1>
@@ -280,6 +280,7 @@ export default function NewtonBackwardInterpolation() {
   </div>
 </section>
 
+</div>
 
             </FullscreenToggle></>
 

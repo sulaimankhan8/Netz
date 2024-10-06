@@ -138,7 +138,7 @@ const GaussSeidel = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto p-4 bg-white dark:text-white dark:bg-neutral-700">
+    <div className="w-full mx-auto p-4 bg-white dark:text-white dark:bg-neutral-700">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold mb-4">Gauss-Seidel Method</h1>
 
@@ -299,7 +299,7 @@ const GaussSeidel = () => {
         
 
 
-        <div id="diffTable"  className="my-[3rem]  md:mx-[16rem] overflow-x-auto dark:bg-neutral-700">
+        <div id="diffTable"  className="my-[3rem]  md:mx-[8rem] overflow-x-auto dark:bg-neutral-700">
           <h2 className="text-xl inline-block font-semibold">Iteration Results:</h2><TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible " altText="Export Table" imgSrc="/copy.svg" float="float-right" />
           <table className="w-full table-auto">
             <thead>
