@@ -112,7 +112,7 @@ const Sidebar = () => {
           </Link>
         </li>
         <li>
-          <Link href="/Gauss-seidal" className="icon-link" onClick={() => toggleSubMenu(0)}>
+          <Link href="/TrapezoidalRule" className="icon-link" onClick={() => toggleSubMenu(0)}>
             <img src="/page.svg" alt="Pages" />
             <span className="link-name">Pages</span>
             <img className="arrow" src="/arrow-down.svg" alt="arrow" />
