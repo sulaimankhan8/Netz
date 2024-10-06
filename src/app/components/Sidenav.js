@@ -23,6 +23,14 @@ const Sidebar = () => {
     setActiveUnit(activeUnit === unitIndex ? null : unitIndex);
   };
 
+  const pages = [
+    { title: 'Home', src: "/home.svg", route: "/" },
+    { title: 'Setting', src: "/tune.svg", route: "/" },
+    { title: 'Notes', src: "/notes.svg", route: "/" },
+    { title: 'Profile', src: "/profile.svg", route: "/" },
+    { title: 'Playground', src: "/game.svg", route: "/" }
+  ];
+
   const units = [
     {
       title: 'Unit 1',
@@ -40,7 +48,7 @@ const Sidebar = () => {
         {
           title: 'Interpolation for Equal Intervals',
           subTopics: [
-            { title: "Newton's Forward Formula", link: '/newton-foward' },
+            { title: "Newton's Forward Formula", link: '/newton-forward' },
             { title: "Newton's Backward Formula", link: '/newton-backward' },
             { title: 'Gauss Forward Formula', link: '/gauss-forward' },
             { title: 'Gauss Backward Formula', link: '/gauss-backward' },
@@ -50,7 +58,7 @@ const Sidebar = () => {
           title: 'Interpolation for Unequal Intervals',
           subTopics: [
             { title: "Newton's Divided Difference Formula", link: '/newton-divided' },
-            { title: "Lagrange's Interpolation Formula", link: '/lagrange' },
+            { title: "Lagrange's Interpolation Formula", link: '/lagrange-interpolation' },
           ],
         },
       ],
@@ -74,9 +82,9 @@ const Sidebar = () => {
     {
       title: 'Unit 4',
       subTopics: [
-        { title: "Taylor's Series Method", link: '/taylor' },
-        { title: "Euler's Method", link: '/euler' },
-        { title: "Modified Euler's Method", link: '/modified-euler' },
+        { title: "Taylor's Series Method", link: '/taylor-s-series' },
+        { title: "Euler's Method", link: '/euler-s' },
+        { title: "Modified Euler's Method", link: '/modified-euler-s' },
         { title: "Runge-Kutta Methods", link: '/runge-kutta' },
       ],
     },
@@ -106,33 +114,25 @@ const Sidebar = () => {
       </div>
       <ul className="nav-list">
         <li>
-          <Link href="#" className="icon-link">
-            <img src="/home.svg" width="24" alt="Home" />
-            <span className="link-name">Home</span>
-          </Link>
-        </li>
-        <li>
           <Link href="/TrapezoidalRule" className="icon-link" onClick={() => toggleSubMenu(0)}>
             <img src="/page.svg" alt="Pages" />
             <span className="link-name">Pages</span>
             <img className="arrow" src="/arrow-down.svg" alt="arrow" />
           </Link>
           {activeSubMenu === 0 && (
-            <ul className="sub-menu">
+            <ul className="sub-menu shadow-xl shadow-black">
               {units.map((unit, index) => (
                 <li key={index} onMouseEnter={() => toggleUnitMenu(index + 1)} onMouseLeave={() => toggleUnitMenu(null)}>
                   <Link href="#">{unit.title}</Link>
                   {activeUnit === index + 1 && (
-                    <ul className="sub-menu">
+                    <ul className="sub-menu shadow-xl shadow-black">
                       {unit.subTopics.map((subTopic, subIndex) => (
                         <li key={subIndex}>
-                          {typeof subTopic === 'string' ? (
-                            <Link href={`/${subTopic.replace(/\s+/g, '-').toLowerCase()}`}>{subTopic}</Link>
-                          ) : (
+                          {subTopic.subTopics ? (
                             <>
                               <Link href="#">{subTopic.title}</Link>
-                              {subTopic.subTopics && subTopic.subTopics.length > 0 && activeUnit === index + 1 && (
-                                <ul>
+                              {activeUnit === index + 1 && (
+                                <ul className="">
                                   {subTopic.subTopics.map((subSubTopic, subSubIndex) => (
                                     <li key={subSubIndex}>
                                       <Link href={subSubTopic.link}>{subSubTopic.title}</Link>
@@ -141,6 +141,8 @@ const Sidebar = () => {
                                 </ul>
                               )}
                             </>
+                          ) : (
+                            <Link href={subTopic.link}>{subTopic.title}</Link>
                           )}
                         </li>
                       ))}
@@ -151,48 +153,14 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        <li>
-          <Link href="#" className="icon-link" onClick={() => toggleSubMenu(1)}>
-            <img src="/setting.svg" alt="Settings" />
-            <span className="link-name">Settings</span>
-            <img className="arrow" src="/arrow-down.svg" alt="arrow" />
-          </Link>
-          {activeSubMenu === 1 && (
-            <ul className="sub-menu">
-              {/* Sub-menu items for Settings */}
-            </ul>
-          )}
-        </li>
-        <li>
-          <Link href="#" className="icon-link" onClick={() => toggleSubMenu(2)}>
-            <img src="/notes.svg" alt="Notes" />
-            <span className="link-name">Notes</span>
-            <img className="arrow" src="/arrow-down.svg" alt="arrow" />
-          </Link>
-          {activeSubMenu === 2 && (
-            <ul className="sub-menu">
-              {/* Sub-menu items for Notes */}
-            </ul>
-          )}
-        </li>
-        <li>
-          <Link href="#" className="icon-link" onClick={() => toggleSubMenu(3)}>
-            <img src="/profile.svg" alt="Profile" />
-            <span className="link-name">Profile</span>
-            <img className="arrow" src="/arrow-down.svg" alt="arrow" />
-          </Link>
-          {activeSubMenu === 3 && (
-            <ul className="sub-menu">
-              {/* Sub-menu items for Profile */}
-            </ul>
-          )}
-        </li>
-        <li>
-          <Link href="#" className="icon-link">
-            <img src="/game.svg" alt="Playground" />
-            <span className="link-name">Playground</span>
-          </Link>
-        </li>
+        {pages.map((page, index) => (
+          <li key={index}>
+            <Link href={page.route} className="icon-link">
+              <img src={page.src} width="24" alt={page.title} />
+              <span className="link-name">{page.title}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
       <div className="profile-details">
         <div className="profile-content">
@@ -202,7 +170,9 @@ const Sidebar = () => {
             <div className="job">Web Developer</div>
           </div>
         </div>
-        <img src="/go.svg" alt="LinkedIn link" />
+        <Link href="https://www.linkedin.com/in/suleman-khan-b4ab2b275/" target="_blank">
+          <img src="/go.svg" alt="LinkedIn link" />
+        </Link>
       </div>
       <div className={`menuToggle ${isClosed ? '' : 'active'}`} onClick={toggleSidebar}>
         <div className="toggle-bar"></div>
@@ -212,3 +182,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

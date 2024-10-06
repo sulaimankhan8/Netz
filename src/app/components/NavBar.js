@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation'; // Import for App Router
 
 const NavBar = () => {
+    const [isClosed, setIsClosed] = useState(true);
     const router = useRouter();
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -13,24 +14,32 @@ const NavBar = () => {
         router.push(path);
         setDropdownOpen(false); // Close dropdown after navigation
     };
+    
+    const toggleSidebar = () => {
+        setIsClosed(!isClosed);
+    };
 
     return (
         <nav className="bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">
             <div className="flex justify-between items-center">
                 <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}>
                     <Image src="/icon.svg" alt="icon logo" width={50} height={50}/>
-                    </div>
-                <div className="relative">
+                </div>
+
+                <div className="relative ml-auto">
                     <button
-                        className="focus:outline-none"
+                        className=""
                         onClick={() => setDropdownOpen(!dropdownOpen)}
                     >
-                        Menu
+                        <div className={`menuToggle2 ${isClosed ? '' : 'active'}`} onClick={toggleSidebar}>
+                            <div className="toggle-bar"></div>
+                        </div>
                     </button>
+                    
                     {dropdownOpen && (
-                        <div className="absolute right-0  mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
+                        <div className="absolute right-0 mt-2 w-48 bg-neutral-700 rounded-md shadow-lg z-10">
                             <button
-                                className="bblock w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
+                                className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/newton-backward')}
                             >
                                 Newton Backward Interpolations
@@ -42,16 +51,16 @@ const NavBar = () => {
                                 Newton Forward Interpolations
                             </button>
                             <button
-                                className="bblock w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
+                                className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/Gauss-seidal')}
                             >
-                                Gauss - seidal approximation Method
+                                Gauss-Seidal Approximation Method
                             </button>
                             <button
                                 className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
                                 onClick={() => handleNavigation('/TrapezoidalRule')}
                             >
-                                TrapezoidalRule
+                                Trapezoidal Rule
                             </button>
                         </div>
                     )}
