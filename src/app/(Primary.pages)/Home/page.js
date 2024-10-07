@@ -2,7 +2,7 @@
 
 import Home from "../page";
 
-export default function (){
+export default function test(){
 
     return(
         <Home/>

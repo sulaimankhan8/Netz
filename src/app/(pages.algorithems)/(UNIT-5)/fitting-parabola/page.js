@@ -4,7 +4,7 @@ import UnderConstruction from "@/app/utils/underconstruction";
 
 
 
-export default function (){
+export default function test(){
 
     return(
         <UnderConstruction/>

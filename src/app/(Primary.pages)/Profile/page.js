@@ -2,7 +2,7 @@
 
 import UnderConstruction from "../../utils/underconstruction";
 
-export default function (){
+export default function test(){
 
     return(
         <UnderConstruction/>
