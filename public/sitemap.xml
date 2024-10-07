@@ -7,15 +7,210 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://netz-ruby.vercel.app/newton-backward</loc>
+    <loc>https://netz-ruby.vercel.app/Algorithems</loc>
     <lastmod>2024-10-01T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://netz-ruby.vercel.app/newton-foward</loc>
+    <loc>https://netz-ruby.vercel.app/Home</loc>
     <lastmod>2024-10-01T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/Notes</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/Playground</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/Profile</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/Setting</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- UNIT 1 -->
+  <url>
+    <loc>https://netz-ruby.vercel.app/bisection-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/false-position-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/Gauss-seidal</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/iteration-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/newton-raphson-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- UNIT 2 -->
+  <url>
+    <loc>https://netz-ruby.vercel.app/gauss-backward</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/gauss-forward</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/newton-backward</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/newton-forward</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/lagrange-interpolation</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/newton-divided</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- UNIT 3 -->
+  <url>
+    <loc>https://netz-ruby.vercel.app/boole-rule</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/simpson-1-3-rule</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/simpson-3-8-rule</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/trapezoidal-rule</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/weddle-rule</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- UNIT 4 -->
+  <url>
+    <loc>https://netz-ruby.vercel.app/euler-s-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/modified-euler-s-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/runge-kutta-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/taylor-s-series-method</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+</url>
+
+<url>
+    <loc>https://netz-ruby.vercel.app/chi-square</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/f-test</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/t-test</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/test-significance</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/fitting-parabola</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/fitting-straight-lines</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://netz-ruby.vercel.app/least-squares</loc>
+    <lastmod>2024-10-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>
