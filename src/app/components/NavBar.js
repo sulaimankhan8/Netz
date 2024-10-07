@@ -63,9 +63,9 @@ const NavBar = () => {
                             </button>
                             <button
                                 className="block w-full p-4 py-2 text-sm text-center hover:bg-neutral-600"
-                                onClick={() => handleNavigation('/TrapezoidalRule')}
+                                onClick={() => handleNavigation('/')}
                             >
-                                Trapezoidal Rule
+                                Home
                             </button>
                         </div>
                     )}
