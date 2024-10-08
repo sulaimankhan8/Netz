@@ -2,7 +2,7 @@
 
 "use client"; // This makes it a client component
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState ,useEffect} from 'react';
 import { useRouter } from 'next/navigation'; // Import for App Router
 
 const NavBar = () => {
