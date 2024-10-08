@@ -1,5 +1,5 @@
 'use client';
-import { useState,useEffect } from 'react';
+import { useState,useEffect ,Suspense} from 'react';
 import React from 'react';
 import { BlockMath ,InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
@@ -82,6 +82,7 @@ const GaussSeidelPage = () => {
     }
   }, [runTour]);
     return (<>
+      <Suspense fallback={<div>Loading Tour...</div>}>
      <Joyride
         steps={steps}
         run={runTour}
@@ -111,7 +112,7 @@ const GaussSeidelPage = () => {
           next: 'Next',
           skip: 'Skip',
         }}
-      />
+      /></Suspense>
       <FullscreenToggle className="dark:bg-neutral-700 w-full">
         
        
