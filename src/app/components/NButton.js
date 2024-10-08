@@ -1,6 +1,6 @@
 // src/app/components/NButton.js
 'use client'; // Ensures this component is a client component
-import { useEffect} from 'react';
+
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import Image from 'next/image';
