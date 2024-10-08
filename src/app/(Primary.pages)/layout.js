@@ -7,7 +7,7 @@ import "./primary.css";
 import Head from 'next/head';
 import Laout from '../components/layout';
 
-
+ 
 
 
 export const metadata = {

@@ -24,7 +24,7 @@ export default function Home() {
     {ImageSrc: "/page.svg",ImageAlt: "pages icon",title: "Explore Pages",description: "Discover a wealth of knowledge created by us for you! Access an array of pages filled with useful information and resources to enhance your math understanding and skills.",buttonText: "Explore",buttonRoute: "/",buttonIcon: "/explore.svg",},
     {ImageSrc: "/Step.svg",ImageAlt: "polynomial steps icon",title: "Polynomial Steps",description: "Dive deep into polynomial equations with structured step-by-step breakdowns, helping you understand each part of the problem-solving process.",buttonText: "Follow Steps",buttonRoute: "/",buttonIcon: "/Step.svg",},
     {ImageSrc: "/graph.svg",ImageAlt: "graph icon",title: "Visualize with Graph",description: "Graphs are more than just lines and dots—they’re powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.",buttonText: "View Graph",buttonRoute: "/",buttonIcon: "/graph.svg",},
-    {ImageSrc: "/icon.svg",ImageAlt: "math companion icon",title: "Your Essential Math Companion",description: "Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you’re always prepared for your next challenge.",buttonText: "Start Learning",buttonRoute: "/",buttonIcon: "/icon.svg",},
+    {ImageSrc: "/icon.svg",ImageAlt: "math companion icon",title: "Your Essential Math Companion",description: "Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you’re always prepared for your next challenge.",buttonText: "Start Learning",buttonRoute: "/Gauss-seidal?tour=true",buttonIcon: "/icon.svg",},
     {ImageSrc: "/globe.svg",ImageAlt: "practice icon",title: "Practice Anywhere, Anytime",description: "Take your math practice on the go! Netz empowers you to work on problems wherever you are. Whether commuting or waiting in line, your math studies never have to pause. Stay sharp and keep progressing!",buttonText: "Practice Now!",buttonRoute: "/",buttonIcon: "/function.svg",},
   ];
   
@@ -159,8 +159,8 @@ export default function Home() {
       {cardsData.map((card, index) => (
         <div key={index} className="px-6 py-2 text-center rounded-xl m-4 bg-opacity-80" style={{ backgroundColor: 'rgba(44, 48, 58,0.9)' }}>
           <div className="bg-black w-[5rem] -translate-y-1/2 p-4 rounded-lg mb-[-1rem]">
-            <Image height={10}
-                    width={10} src={card.ImageSrc} alt={card.ImageAlt} className="w-full h-full" />
+            <Image height={24}
+                    width={24} src={card.ImageSrc} alt={card.ImageAlt} className="w-full h-full" />
           </div>
           <p className="text-left text-white text-2xl font-semibold ml-1">{card.title}</p>
           <p className="text-left my-5" style={{ color: '#C7C9D3' }}>

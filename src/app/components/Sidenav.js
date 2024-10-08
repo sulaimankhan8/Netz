@@ -2,18 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-
 import "../styles/sidebar.css";
 import Image from 'next/image';
+
 const Sidebar = () => {
   const [isClosed, setIsClosed] = useState(true);
-  const [activeSubMenu, setActiveSubMenu] = useState(null); // To track the main sub-menu
+  const [activeSubMenu, setActiveSubMenu] = useState(null);
   const [activeUnit, setActiveUnit] = useState(null); 
-  const [hoveredIndex ,setHoveredIndex] = useState(null);
-
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  
 
   const toggleSidebar = () => {
     setIsClosed(!isClosed);
+    setActiveUnit(null);
+    setActiveSubMenu(null);
+    
   };
 
   const toggleSubMenu = (index) => {
@@ -23,7 +26,10 @@ const Sidebar = () => {
 
   const toggleUnitMenu = (unitIndex) => {
     setActiveUnit(activeUnit === unitIndex ? null : unitIndex);
+
   };
+
+ 
 
   const pages = [
     { title: 'Home', src: "/home.svg", route: "/" },
@@ -116,31 +122,69 @@ const Sidebar = () => {
       </div>
       <ul className="nav-list">
         <li>
-          <Link href="/Algorithems" className="icon-link " onMouseEnter={() => toggleSubMenu(0)}>
-            <Image src="/page.svg" alt="Pages" width={30} height={30}/>
-            <span className="link-name">Pages</span>
-            <Image className="arrow" src="/arrow-down.svg" alt="arrow" width={30} height={30}/>
-          </Link>
+          {isClosed ? (
+            <Link href="/Algorithems" className="icon-link" onMouseEnter={() => toggleSubMenu(0)}>
+              <Image src="/page.svg" alt="Pages Icon" width={30} height={30}/>
+              <span className="link-name">Pages</span>
+            </Link>
+          ) : (
+            <div 
+              className={`icon-link clickable ${activeSubMenu === 0 ? 'active' : ''}`} 
+              onClick={() => toggleSubMenu(0)}
+            >
+              <Image src="/page.svg" alt="Pages Icon" width={30} height={30} />
+              <span className="link-name">Pages</span>
+              <Image className={`${activeSubMenu === 0 ? '-rotate-180' : ''}`} src="/arrow-down.svg" alt="Toggle Arrow" width={30} height={30} />
+            </div>
+          )}
+
           {activeSubMenu === 0 && (
             <ul className="sub-menu shadow-xl shadow-black">
               {units.map((unit, index) => (
-                <li key={index} onMouseEnter={() => toggleUnitMenu(index + 1)} onMouseLeave={() => toggleUnitMenu(null)}>
+                <li 
+                  key={index} 
+                  { ...( isClosed ? {
+                    onMouseEnter: () => toggleUnitMenu(index + 1),
+                    onMouseLeave: () => toggleUnitMenu(null)
+                  } : {
+                    onClick: () => toggleUnitMenu(index + 1),
+                    onMouseLeave: () => toggleUnitMenu(null)
+                  })}
+                >
                   <Link href="#">{unit.title}</Link>
+                  
                   {activeUnit === index + 1 && (
-                    <ul className="sub-menu shadow-xl shadow-black">
+                    <ul className="sub-menu shadow-xl shadow-black w-[250px] rounded-lg ">
                       {unit.subTopics.map((subTopic, subIndex) => (
                         <li key={subIndex}>
                           {subTopic.subTopics ? (
                             <>
-                              <Link href="#">{subTopic.title}</Link>
-                              {activeUnit === index + 1 && (
-                                <ul className="">
-                                  {subTopic.subTopics.map((subSubTopic, subSubIndex) => (
-                                    <li key={subSubIndex}>
-                                      <Link href={subSubTopic.link}>{subSubTopic.title}</Link>
-                                    </li>
-                                  ))}
-                                </ul>
+                              {isClosed ? (
+                                <>
+                                  <Link href="#">{subTopic.title}</Link>
+                                  {activeUnit === index + 1 && (
+                                    <ul className="sub-menu">
+                                      {subTopic.subTopics.map((subSubTopic, subSubIndex) => (
+                                        <li key={subSubIndex}>
+                                          <Link href={subSubTopic.link}>{subSubTopic.title}</Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <Link href="#">{subTopic.title}</Link>
+                                  {activeUnit === index + 1 && (
+                                    <ul className="">
+                                      {subTopic.subTopics.map((subSubTopic, subSubIndex) => (
+                                        <li key={subSubIndex}>
+                                          <Link href={subSubTopic.link}>{subSubTopic.title}</Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </>
                               )}
                             </>
                           ) : (
@@ -156,35 +200,35 @@ const Sidebar = () => {
           )}
         </li>
         {pages.map((page, index) => (
-          <li key={index}
-              onMouseEnter={() => setHoveredIndex(index)} // Set the hovered index
-              onMouseLeave={() => setHoveredIndex(null)}  // Remove hovered index
-              className="relative" // Add relative class for tooltip positioning
+          <li
+            key={index}
+            onMouseEnter={() => setHoveredIndex(index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            className="relative"
           >
             <Link href={page.route} className="icon-link">
-              <Image src={page.src}  alt={page.title} width={30} height={30}/>
+              <Image src={page.src} alt={`${page.title} Icon`} width={30} height={30}/>
               <span className="link-name">{page.title}</span>
               {hoveredIndex === index && isClosed && (
-  <div className="absolute left-[50px] top-1/2 transform -translate-y-1/2 bg-[#1d1b31] text-white px-3 py-3 rounded-md text-lg z-10 whitespace-nowrap  shadow-md shadow-black h-[50px]">
-    {page.title}
-  </div>
-)}
-
+                <div className="absolute left-[50px] top-1/2 transform -translate-y-1/2 bg-[#1d1b31] text-white px-3 py-3 rounded-md text-lg z-10 whitespace-nowrap shadow-md shadow-black h-[50px]">
+                  {page.title}
+                </div>
+              )}
             </Link>
           </li>
         ))}
       </ul>
       <div className="profile-details">
         <div className="profile-content">
-          <Image src="/icon.svg" alt="Profile" width={30} height={30}/>
+          <Image src="/icon.svg" alt="Profile Icon" width={30} height={30}/>
           <div className="name-job">
             <div className="name">Sulaiman Khan</div>
             <div className="job">Web Developer</div>
           </div>
         </div>
-        <Link href="https://www.linkedin.com/in/suleman-khan-b4ab2b275/" target="_blank">
-          <Image src="/go.svg" alt="LinkedIn link" width={30} height={30}/>
-        </Link>
+        <a href="https://www.linkedin.com/in/suleman-khan-b4ab2b275/" target="_blank" rel="noopener noreferrer">
+          <Image src="/go.svg" alt="LinkedIn" width={30} height={30}/>
+        </a>
       </div>
       <div className={`menuToggle ${isClosed ? '' : 'active'}`} onClick={toggleSidebar}>
         <div className="toggle-bar"></div>
