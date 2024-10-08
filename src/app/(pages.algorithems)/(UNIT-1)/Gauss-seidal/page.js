@@ -87,7 +87,7 @@ const GaussSeidelPage = () => {
               <h3 className="mt-4 font-bold text-2xl">Iterations:</h3>
               {/* First Iteration */}
               <h3 className="mt-4">First Iteration:</h3>
-              <ul className="list-disc list-inside">
+              <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_1`}</InlineMath>:
                   <BlockMath>{`x_1 = \\frac{12 - 0 - 0}{4} = 3`}</BlockMath>
@@ -121,7 +121,7 @@ const GaussSeidelPage = () => {
   
               {/* Third Iteration */}
               <h3 className="mt-4">Third Iteration:</h3>
-              <ul className="list-disc list-inside">
+              <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_3`}</InlineMath>:
                   <BlockMath>{`x_3 = \\frac{12 - 4.62 - 1.73}{4} \\approx 1.41`}</BlockMath>
@@ -138,7 +138,7 @@ const GaussSeidelPage = () => {
   
               {/* Fourth Iteration */}
               <h3 className="mt-4">Fourth Iteration:</h3>
-              <ul className="list-disc list-inside">
+              <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_4`}</InlineMath>:
                   <BlockMath>{`x_4 = \\frac{12 - 4.43 - 1.79}{4} \\approx 1.445`}</BlockMath>
