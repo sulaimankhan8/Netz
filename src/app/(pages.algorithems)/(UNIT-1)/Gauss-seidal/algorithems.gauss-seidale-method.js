@@ -5,7 +5,9 @@ import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import TButton from '../../../components/TButton';
 import Plot from './plot';
-import html2canvas from 'html2canvas';
+import ExportToPNG from "@/app/utils/ExportToPNG";
+
+
 
 const GaussSeidel = () => {
   const [equations, setEquations] = useState([
@@ -17,7 +19,6 @@ const GaussSeidel = () => {
   const [error, setError] = useState(0.0001);
   const [results, setResults] = useState([]);
   
-  const [showMessage, setShowMessage] = useState(false);
   const [iterationDetails, setIterationDetails] = useState([]);
   const [iterationDetails2, setIterationDetails2] = useState([]);
   const [iterationDetails3, setIterationDetails3] = useState([]);
@@ -36,44 +37,8 @@ const GaussSeidel = () => {
     setError(e);
   }
 
-  const exportGraphToPNG = () => {
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL("image/png");
-      link.download = 'graph.png';
-      link.click();
-    };
-    showCopied();
-  };
-
-  const exportTableToPNG = () => {
-    html2canvas(document.getElementById('diffTable')).then(canvas => {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL("image/png");
-      link.download = 'difference_table.png';
-      link.click();
-    });
-    showCopied();
-
-  };
-
-  const exportPolynomialStepsToPNG = () => {
-    html2canvas(document.getElementById('steps')).then(canvas => {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL("image/png");
-      link.download = 'polynomial_steps.png';
-      link.click();
-    }); showCopied();
-  };
   
-  const showCopied = () => {
-    setShowMessage(true);
 
-    setTimeout(() => {
-      setShowMessage(false);
-    }, 2000);
-  }
 
   // Handle form submission
   const handleSubmit = (event) => {
@@ -272,35 +237,36 @@ const GaussSeidel = () => {
 
       {results.length > 0 && (
         <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300">
-          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
+          <ExportToPNG 
+           elementId="graphCanvas"
+           fileName="graph.png"
+          tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
           color="blue"
           
            altText="Export Graph" 
-           imgSrc="/copy.svg" 
+          
            float="float-right" />
           <h2 className="text-xl font-semibold mb-2">Plot:</h2>
           <Plot iterations={results} />
         </div>
       )}
 
-<div id="messageBox" style={{
-        display: showMessage ? 'block' : 'none',
-        backgroundColor: '#4CAF50',
-        color: 'white',
-        padding: '10px',
-        position: 'fixed',
-        bottom: '30px',
-        right: '20px',
-        borderRadius: '5px',
-      }}>
-        copied
-      </div>
       {results.length > 0 && (<div>
         
 
 
         <div id="diffTable"  className="my-[3rem]  md:mx-[8rem] overflow-x-auto dark:bg-neutral-700">
-          <h2 className="text-xl inline-block font-semibold">Iteration Results:</h2><TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible " altText="Export Table" imgSrc="/copy.svg" float="float-right" />
+          <h2 className="text-xl inline-block font-semibold">Iteration Results:</h2>
+          <ExportToPNG 
+           elementId="diffTable"
+           fileName="table.png"
+          tooltipText="Export&nbsp;Table to&nbsp;PNG"
+          color="blue"
+           className="overflow-visible "
+           altText="Export Table" 
+          
+           float="float-right" />
+          
           <table className="w-full table-auto">
             <thead>
               <tr>
@@ -326,7 +292,16 @@ const GaussSeidel = () => {
         <div id="steps" className="mt-6 text-wrap dark:bg-neutral-700">
       
         <h2 className="text-xl font-semibold mb-2">Results:</h2>
-        <TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" color="blue" altText="Export&nbsp;steps" className="" float="float-right" imgSrc="/copy.svg" />
+        <ExportToPNG 
+           elementId="steps"
+           fileName="steps.png"
+          tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" 
+          color="blue" 
+          altText="Export&nbsp;steps" 
+          className="" 
+          
+           float="float-right" />
+        
         <div className="border p-4 rounded">
           {iterationDetails.length && (
             iterationDetails.map((step, index) => (
@@ -348,8 +323,6 @@ const GaussSeidel = () => {
                   <BlockMath math={`${iterationDetails3[index]}`} />
                   </pre>
                 </div>
-                  
-
                 <br />
               </div>
             ))

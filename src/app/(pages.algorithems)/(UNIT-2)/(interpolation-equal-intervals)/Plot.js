@@ -92,7 +92,7 @@ const Plot = (({ points, xRange, darkTheme, func }) => {
 
   return (
     <div className="plot-container">
-      <Line
+      <Line id="graphCanvas"
         data={data}
         options={options}
       />

@@ -4,13 +4,15 @@ import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import Plot from "../Plot";
 import TButton from "../../../../components/TButton";
-import html2canvas from "html2canvas";
+
+import ExportToPNG from "@/app/utils/ExportToPNG";
+
 
 export default function NewtonForwardInterpolations({ theme }) {
   const [vSteps, setVSteps] = useState([]);
 
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
-  const [showMessage, setShowMessage] = useState(false);
+ 
 
   const [inline, setInline] = useState(false);
   const [rows, setRows] = useState([{ x: "", y: "" }]);
@@ -25,43 +27,7 @@ export default function NewtonForwardInterpolations({ theme }) {
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
   // Function to export table to PNG
-  const exportTableToPNG = () => {
-    html2canvas(document.getElementById("diffTable")).then((canvas) => {
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = "difference_table.png";
-      link.click();
-    });
-    showCopied();
-  };
-  // Function to export graph to PNG
-  const exportGraphToPNG = () => {
-    const canvas = document.querySelector("canvas");
-    if (canvas) {
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = "graph.png";
-      link.click();
-    }
-    showCopied();
-  };
-  // Function to export polynomial steps to PNG
-  const exportPolynomialStepsToPNG = () => {
-    
-    html2canvas(document.getElementById("steps")).then((canvas) => {
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/svg+xml");
-      link.download = "polynomial_steps.png";
-      link.click();
-    });
-    showCopied();
-  };
-  const showCopied = () => {
-    setShowMessage(true);
-    setTimeout(() => {
-      setShowMessage(false);
-    }, 2000);
-  };
+ 
   const handleAddRow = () => {
     setRows([...rows, { x: "", y: "" }]);
   };
@@ -279,11 +245,14 @@ export default function NewtonForwardInterpolations({ theme }) {
 
       {xRange.length > 0 && (
         <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 ">
-          <TButton onClick={exportGraphToPNG} tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
+          <ExportToPNG 
+           elementId="graphCanvas"
+           fileName="graph.png"
+          tooltipText="Export&nbsp;Graph&nbsp;to&nbsp;PNG"
           color="blue"
           
            altText="Export Graph" 
-           imgSrc="/copy.svg" 
+         
            float="float-right" />
           <h2 className="text-xl font-semibold ">Plot:</h2>
           <Plot  points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))}
@@ -292,23 +261,19 @@ export default function NewtonForwardInterpolations({ theme }) {
               func={newtonForwardInterpolation} />
         </div>
       )} 
-      <div id="messageBox" style={{
-        display: showMessage ? 'block' : 'none',
-        backgroundColor: '#4CAF50',
-        color: 'white',
-        padding: '10px',
-        position: 'fixed',
-        bottom: '30px',
-        right: '20px',
-        borderRadius: '5px',
-      }}>
-        copied
-      </div>
+      
   
       
       {diffTable.length > 0 && (<div>
-        <TButton onClick={exportTableToPNG} tooltipText="Export&nbsp;Table to&nbsp;PNG" color="blue" className="overflow-visible " altText="Export Table" imgSrc="/copy.svg" float="float-right" />
-
+        <ExportToPNG 
+           elementId="diffTable"
+           fileName="table.png"
+          tooltipText="Export&nbsp;Table to&nbsp;PNG"
+          color="blue"
+           className="overflow-visible "
+           altText="Export Table" 
+          
+           float="float-right" />
 
         <div id="diffTable" className="mt-6 ml-8  overflow-x-auto dark:bg-neutral-700">
           <div></div><h2 className="text-xl inline-block font-semibold">Difference Table </h2>
@@ -362,15 +327,25 @@ export default function NewtonForwardInterpolations({ theme }) {
       
       {vSteps.length > 0 && (
         <div className="mt-6 overflow-visible">
-          <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2> <div className="inline-block float-right" ><TButton onClick={exportPolynomialStepsToPNG} tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" color="blue" altText="Export&nbsp;steps" className="" float="float-right" imgSrc="/copy.svg" />
-
+          <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2>
+           <div className="inline-block float-right  flex flex-row" >
+            <ExportToPNG 
+           elementId="steps"
+           fileName="steps.png"
+          tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" 
+          color="blue" 
+          altText="Export&nbsp;steps" 
+          className="inline " 
+          
+           float="float" />
+        
 
  <TButton
       onClick={() =>
         setInline(prev => !prev)}
 
          float="float-right"
-          className="mx-1 "
+          className="m-1 inline-block "
           altText="Inline"
             tooltipText="Inline&nbsp;or&nbsp;Block"
           color="red"

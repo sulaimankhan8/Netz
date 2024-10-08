@@ -91,8 +91,8 @@ const Plot = ({ iterations, darkTheme }) => {
 
   return (
     <div className="plot-container" style={{ height: '400px', width: '100%' }}>
-      <Line data={data} options={options} />
-    </div>
+        <Line id="graphCanvas" data={data} options={options} />
+        </div>
   );
 };
 

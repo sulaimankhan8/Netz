@@ -28,22 +28,9 @@ export default function NewtonForwardInterpolation() {
     + \\frac{v(v-1)(v-2)(v-3)}{4!} \\cdot \\Delta^4 y_0 + \\cdots
   `;
 
-    const [theme, setTheme] = useState('light');
-
+    
     // Load theme from local storage or default to light
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    }, []);
-
-    // Toggle the theme and store it in local storage
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    };
+   
 
     return (<>
               <Head>
