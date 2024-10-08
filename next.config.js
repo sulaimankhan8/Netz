@@ -29,6 +29,79 @@ const withPWA = require('next-pwa')({
         },
       },
     },
+    {
+      urlPattern: /\.html$/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'html-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+        },
+      },
+    },
+    {
+      urlPattern: /\.js$/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'js-cache',
+        expiration: {
+          maxEntries: 50, // Maximum number of .js files to cache
+          maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
+        },
+      },
+    },
+    {
+      urlPattern: /^https?.*\/(?!_next).*/, // Exclude internal _next routes
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'pages-cache',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+        },
+      },
+    },
+    // Caching strategy for external libraries (e.g., react-joyride)
+    {
+      urlPattern: ({ url }) =>
+        url.origin === 'https://unpkg.com' ||
+        url.origin === 'https://cdn.jsdelivr.net' ||
+        url.origin === 'https://cdnjs.cloudflare.com',
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'external-libraries',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+        },
+      },
+    },
+    {
+      urlPattern: /^https?.*\/public\/videos\/.*\.json$/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'json-data-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+        },
+      },
+    },
+    // Caching for CSS files
+    {
+      urlPattern: /\.css$/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'css-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+        },
+      },
+    },
+     
+   
   ],
 });
 
