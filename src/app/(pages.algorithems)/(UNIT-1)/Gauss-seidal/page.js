@@ -6,29 +6,37 @@ import 'katex/dist/katex.min.css';
 import FullscreenToggle from '@/app/components/FullscreanToggle';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import GaussSeidel from './algorithems.gauss-seidale-method';
-
+import { STATUS } from 'react-joyride';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-const Joyride = dynamic(
-  () => import('react-joyride'),
-  { ssr: false }
-)
-import { STATUS } from 'react-joyride';
+const Joyride = dynamic(() => import('react-joyride'),{ ssr: false });
+
+const GaussSeidelSearchParamsWrapper = ({ setRunTour }) => {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tourParam = searchParams.get('tour');
+    if (tourParam === 'true') {
+      // Check if the tour has been completed before
+      const hasCompletedTour = localStorage.getItem('gaussSeidelTourCompleted');
+      if (hasCompletedTour !== 'true') {
+        setRunTour(true);
+      }
+    }
+  }, [searchParams, setRunTour]);
+
+  return null; // This component doesn't render anything
+};
 
 const GaussSeidelPage = () => {
-  const searchParams = useSearchParams();
   const [runTour, setRunTour] = useState(false);
 
   useEffect(() => {
     // Clear the specific localStorage item on reload
     localStorage.removeItem('gaussSeidelTourCompleted');
   }, []);
-  useEffect(() => {
-    const tourParam = searchParams.get('tour');
-    if (tourParam === 'true') {
-      setRunTour(true);
-    }
-  }, [searchParams]);
+
+ 
 
   const steps = [
     {
@@ -82,6 +90,9 @@ const GaussSeidelPage = () => {
     }
   }, [runTour]);
     return (<>
+    <Suspense fallback={<div>Loading Search Params...</div>}>
+        <GaussSeidelSearchParamsWrapper setRunTour={setRunTour} />
+      </Suspense>
       <Suspense fallback={<div>Loading Tour...</div>}>
      <Joyride
         steps={steps}
