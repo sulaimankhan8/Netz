@@ -68,13 +68,15 @@ const GaussSeidelPage = () => {
               <h3 className="mt-4">1. Rearranging the Equations:</h3>
               <ul className="list-none list-inside">
                 <li>
-                  <BlockMath>{`x = \\frac{12 - y - z}{4}`}</BlockMath>
+                  <BlockMath math={"x = \\frac{12 - y - z}{4}"}/>
                 </li>
                 <li>
-                  <BlockMath>{`y = \\frac{27 - x - 2z}{5}`}</BlockMath>
+                <BlockMath math={"y = \\frac{27 - x - 2z}{5}"}/>
+                 
                 </li>
                 <li>
-                  <BlockMath>{`z = \\frac{18 - 2x - y}{6}`}</BlockMath>
+                <BlockMath math={"z = \\frac{18 - 2x - y}{6}"}/>
+                  
                 </li>
               </ul>
   
@@ -90,15 +92,18 @@ const GaussSeidelPage = () => {
               <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_1`}</InlineMath>:
-                  <BlockMath>{`x_1 = \\frac{12 - 0 - 0}{4} = 3`}</BlockMath>
+                  <BlockMath math={"x_1 = \\frac{12 - 0 - 0}{4} = 3"}/>
+                
                 </li>
                 <li>
                   Calculate <InlineMath>{`y_1`}</InlineMath>:
-                  <BlockMath>{`y_1 = \\frac{27 - 3 - 0}{5} = 4.8`}</BlockMath>
+                  <BlockMath math={"y_1 = \\frac{27 - 3 - 0}{5} = 4.8"}/>
+               
                 </li>
                 <li>
                   Calculate <InlineMath>{`z_1`}</InlineMath>:
-                  <BlockMath>{`z_1 = \\frac{18 - 2(3) - 4.8}{6} = 1.2`}</BlockMath>
+                  <BlockMath math={"z_1 = \\frac{18 - 2(3) - 4.8}{6} = 1.2"}/>
+                
                 </li>
               </ul>
   
@@ -124,7 +129,7 @@ const GaussSeidelPage = () => {
               <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_3`}</InlineMath>:
-                  <BlockMath>{`x_3 = \\frac{12 - 4.62 - 1.73}{4} \\approx 1.41`}</BlockMath>
+                  <BlockMath math={"x_3 = \\frac{12 - 4.62 - 1.73}{4} \\approx 1.41"}/>
                 </li>
                 <li>
                   Calculate <InlineMath>{`y_3`}</InlineMath>:
