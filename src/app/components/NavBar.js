@@ -20,6 +20,12 @@ const NavBar = () => {
     const toggleSidebar = () => {
         setIsClosed(!isClosed); // Toggle the sidebar
     };
+    useEffect(() => {
+        router.prefetch('/newton-backward');
+        router.prefetch('/newton-forward');
+        router.prefetch('/Gauss-seidal');
+        router.prefetch('/'); // Prefetch the home page
+    }, [router]);
 
     return (
         <nav className="bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">

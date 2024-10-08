@@ -19,6 +19,11 @@ export default function NButton({
 }) {
   const router = useRouter();
 
+  useEffect(() => {
+    if (route) {
+      router.prefetch(route);
+    }
+  }, [route, router]);
   const handleClick = () => {
     if (!isLoading && !isDisabled) {
       router.push(route); // Navigate to the provided route
