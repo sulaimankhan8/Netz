@@ -112,15 +112,18 @@ const GaussSeidelPage = () => {
               <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_2`}</InlineMath>:
-                  <BlockMath>{`x_2 = \\frac{12 - 4.8 -1.2 }{4} \\approx 1.5`}</BlockMath>
+                  <BlockMath math={"x_2 = \\frac{12 - 4.8 -1.2 }{4} \\approx 1.5"}/>
+                  
                 </li>
                 <li>
                   Calculate <InlineMath>{`y_2`}</InlineMath>:
-                  <BlockMath>{`y_2 = \\frac{27 - 1.5 - 2(1.2)}{5} \\approx 4.62`}</BlockMath>
+                  <BlockMath math={"y_2 = \\frac{27 - 1.5 - 2(1.2)}{5} \\approx 4.62"}/>
+                  
                 </li>
                 <li>
                   Calculate <InlineMath>{`z_2`}</InlineMath>:
-                  <BlockMath>{`z_2 = \\frac{18 − 2(1.5) − 4.62}{6} \\approx 1.73`}</BlockMath>
+                  <BlockMath math={"z_2 = \\frac{18 − 2(1.5) − 4.62}{6} \\approx 1.73"}/>
+                  
                 </li>
               </ul>
   
@@ -133,11 +136,11 @@ const GaussSeidelPage = () => {
                 </li>
                 <li>
                   Calculate <InlineMath>{`y_3`}</InlineMath>:
-                  <BlockMath>{`y_3 = \\frac{27 - 1.41 - 2(1.73)}{5} \\approx 4.43`}</BlockMath>
+                  <BlockMath math={"y_3 = \\frac{27 - 1.41 - 2(1.73)}{5} \\approx 4.43"}/>
                 </li>
                 <li>
                   Calculate <InlineMath>{`z_3`}</InlineMath>:
-                  <BlockMath>{`z_3 = \\frac{18 - 2(1.41) - 4.43}{6} \\approx 1.79`}</BlockMath>
+                  <BlockMath math={"z_3 = \\frac{18 - 2(1.41) - 4.43}{6} \\approx 1.79"}/>
                 </li>
               </ul>
   
@@ -146,14 +149,15 @@ const GaussSeidelPage = () => {
               <ul className="list-none list-inside">
                 <li>
                   Calculate <InlineMath>{`x_4`}</InlineMath>:
-                  <BlockMath>{`x_4 = \\frac{12 - 4.43 - 1.79}{4} \\approx 1.445`}</BlockMath>
+                  <BlockMath math={"x_4 = \\frac{12 - 4.43 - 1.79}{4} \\approx 1.445"}/>
                 </li>
                 <li>
                   Calculate <InlineMath>{`y_4`}</InlineMath>:
-                  <BlockMath>{`y_4 = \\frac{27 - 1.445 - 2(1.79)}{5} \\approx 4.395`}</BlockMath>
+                  <BlockMath math={"y_4 = \\frac{27 - 1.445 - 2(1.79)}{5} \\approx 4.395"}/>
                 </li>
                 <li>
                   Calculate <InlineMath>{`z_4`}</InlineMath>:
+                  
                   <BlockMath math="z_4 = \frac{18 - 2(1.445) - 4.395}{6} \approx 1.785"/>
                 </li>
               </ul>
