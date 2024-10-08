@@ -1,5 +1,4 @@
-// pages/gauss-seidel.js
-
+'use client';
 import React from 'react';
 import { BlockMath ,InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
@@ -19,7 +18,7 @@ const GaussSeidelPage = () => {
             </div>
             <p className="text-base pl-1">
               The Gauss-Seidel method is an iterative technique used to solve a system of linear equations.
-              It's particularly useful for large systems where direct methods may be computationally expensive.
+              It&apos;s particularly useful for large systems where direct methods may be computationally expensive.
               The method uses the most recent values of the variables as soon as they are available,
               allowing for potentially faster convergence.
             </p>

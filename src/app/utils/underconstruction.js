@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import LottieAnimation from '@/app/components/Animation';
 import Link from 'next/link';
+import Image from 'next/image';
+
 
 const UnderConstruction = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -28,7 +30,7 @@ const UnderConstruction = () => {
           {isMobile ? (
             <LottieAnimation src="/videos/construction-mobile.json" height={320} width={320} />
           ) : (
-            <LottieAnimation src="/videos/construction-pc.json" height={500} width={500} />
+            <LottieAnimation src="/videos/construction-mobile.json" height={500} width={500} />
           )}
         </div>
 
@@ -66,10 +68,12 @@ const UnderConstruction = () => {
         {/* Route Map Section */}
         <div >
           {/* Display Route Map SVG */}
-          <img
+          <Image
             src="/Routes-map.svg"
             alt="Routes Map"
             className=" h-auto mx-auto sm:p-4 overflow-auto"
+            width={1600}
+            height={1600}
           />
         </div>
         

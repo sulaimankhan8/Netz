@@ -1,11 +1,11 @@
 'use client';
- import { useState, useEffect, useRef } from "react";
+ import { useState, useEffect, useRef, useCallback } from "react";
 
 const FullscreenToggle = ({ children }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
  
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
       if (containerRef.current.requestFullscreen) {
         containerRef.current.requestFullscreen();
@@ -29,20 +29,20 @@ const FullscreenToggle = ({ children }) => {
       }
       setIsFullscreen(false);
     }
-  };
+  }, [isFullscreen]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape' && isFullscreen) {
       toggleFullscreen();
     }
-  };
+  }, [isFullscreen, toggleFullscreen]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen]);
+  },[handleKeyDown]);
 
   useEffect(() => {
     if (isFullscreen) {

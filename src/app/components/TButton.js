@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import { useState } from 'react';
+
 
 const TButton = ({ tooltipText, onClick, imgSrc, altText, color, className, type = "button", float }) => {
   const [hovered, setHovered] = useState(false);
@@ -28,13 +30,13 @@ const TButton = ({ tooltipText, onClick, imgSrc, altText, color, className, type
     <div className={`relative inline-block ${float}`}>
       <button
         type={type}
-        className={`text-white px-2 py-2 sm:px-4 rounded ${className} ${colorClasses} ${hovered ? 'opacity-75' : ''} focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 transition-shadow duration-200`}
+        className={`text-white px-2 py-2 sm:px-5 rounded ${className} ${colorClasses} ${hovered ? 'opacity-75' : ''} focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 transition-shadow duration-200`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={handleClick}
       >
         {imgSrc ? (
-          <img src={imgSrc} alt={altText} />
+          <Image src={imgSrc} alt={altText} width={24} height={24} className="ml-2"/>
         ) : (
           <span>{altText}</span>
         )}

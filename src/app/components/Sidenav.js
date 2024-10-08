@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+
 import "../styles/sidebar.css";
+import Image from 'next/image';
 const Sidebar = () => {
   const [isClosed, setIsClosed] = useState(true);
   const [activeSubMenu, setActiveSubMenu] = useState(null); // To track the main sub-menu
@@ -115,9 +117,9 @@ const Sidebar = () => {
       <ul className="nav-list">
         <li>
           <Link href="/Algorithems" className="icon-link " onMouseEnter={() => toggleSubMenu(0)}>
-            <img src="/page.svg" alt="Pages" />
+            <Image src="/page.svg" alt="Pages" width={30} height={30}/>
             <span className="link-name">Pages</span>
-            <img className="arrow" src="/arrow-down.svg" alt="arrow" />
+            <Image className="arrow" src="/arrow-down.svg" alt="arrow" width={30} height={30}/>
           </Link>
           {activeSubMenu === 0 && (
             <ul className="sub-menu shadow-xl shadow-black">
@@ -160,7 +162,7 @@ const Sidebar = () => {
               className="relative" // Add relative class for tooltip positioning
           >
             <Link href={page.route} className="icon-link">
-              <img src={page.src} width="24" alt={page.title} />
+              <Image src={page.src}  alt={page.title} width={30} height={30}/>
               <span className="link-name">{page.title}</span>
               {hoveredIndex === index && isClosed && (
   <div className="absolute left-[50px] top-1/2 transform -translate-y-1/2 bg-[#1d1b31] text-white px-3 py-3 rounded-md text-lg z-10 whitespace-nowrap  shadow-md shadow-black h-[50px]">
@@ -174,14 +176,14 @@ const Sidebar = () => {
       </ul>
       <div className="profile-details">
         <div className="profile-content">
-          <img src="/icon.svg" alt="Profile" />
+          <Image src="/icon.svg" alt="Profile" width={30} height={30}/>
           <div className="name-job">
             <div className="name">Sulaiman Khan</div>
             <div className="job">Web Developer</div>
           </div>
         </div>
         <Link href="https://www.linkedin.com/in/suleman-khan-b4ab2b275/" target="_blank">
-          <img src="/go.svg" alt="LinkedIn link" />
+          <Image src="/go.svg" alt="LinkedIn link" width={30} height={30}/>
         </Link>
       </div>
       <div className={`menuToggle ${isClosed ? '' : 'active'}`} onClick={toggleSidebar}>

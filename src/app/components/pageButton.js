@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {useState}   from 'react';
 
@@ -49,7 +50,7 @@ const PageButton = ({ route, float, st }) => {
     >
       
       {imgSrc ? (
-          <img src={imgSrc} alt={st} />
+          <Image src={imgSrc} alt={st} width={25} height={25}/>
         ) : (
           <span>{st}</span>
         )}
