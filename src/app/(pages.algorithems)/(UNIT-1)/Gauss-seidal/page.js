@@ -149,7 +149,7 @@ const GaussSeidelPage = () => {
                 </li>
                 <li>
                   Calculate <InlineMath>{`z_4`}</InlineMath>:
-                  <BlockMath>{`z_4 = \\frac{18 - 2(1.445) - 4.395}{6} \\approx 1.785`}</BlockMath>
+                  <BlockMath math="z_4 = \frac{18 - 2(1.445) - 4.395}{6} \approx 1.785"/>
                 </li>
               </ul>
             </div>
