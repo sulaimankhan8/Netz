@@ -2,10 +2,10 @@
 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import "../styles/globals.css";
-import "./alg.css";
+import '../styles/globals.css';
+import '../app/styles/globals.css';
 import Head from 'next/head';
-import Laout from '../components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
+import Layout from '../app/components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
@@ -18,9 +18,7 @@ export const metadata = {
     default: APP_DEFAULT_TITLE,
     template: APP_TITLE_TEMPLATE,
   },
-  verification: {
-    google: 'WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU',
-  },
+  description: APP_DESCRIPTION,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -47,7 +45,9 @@ export const metadata = {
     },
     description: APP_DESCRIPTION,
   },
-  description: "current objective: survive", // Moved here for clarity
+  verification: {
+    google: 'WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU',
+  },
   icons: {
     icon: ['/favicon.ico?v=4'],
     apple: ['/apple-touch-icon.png?v=4'],
@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
       </Head>
       <body>
-        <Laout /> {/* Ensure the component name is spelled correctly */}
+        <Layout />
         {children}
         <Analytics />
         <SpeedInsights />

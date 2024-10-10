@@ -3,131 +3,105 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  scope: "/app",
+  reloadOnOnline: true,
   fallbacks: {
-    //image: "/static/images/fallback.png",
-    document: "/offline", // if you want to fallback to a custom page rather than /_offline
-    // font: '/static/font/fallback.woff2',
-    // audio: ...,
-    // video: ...,
+    document: "/offline", // Fallback to a custom offline page
   },
-  runtimeCaching: [
-    {
-      // Cache for static assets such as JS, CSS, and fonts
-      urlPattern: /\.(?:js|css|woff2|woff|eot|ttf|otf|svg|png|jpg|jpeg|gif|webp|ico|mp4|json)$/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-assets',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
+  workboxOptions: {
+    runtimeCaching: [
+      {
+        // Cache for static assets such as JS, CSS, and fonts
+        urlPattern: /\.(?:js|css|woff2|woff|eot|ttf|otf|svg|png|jpg|jpeg|gif|webp|ico|mp4|json)$/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'static-assets',
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
+          },
         },
       },
-    },
-    {
-      // Cache for all HTML pages (all routes)
-      urlPattern: /^https?.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'html-pages-cache',
-        networkTimeoutSeconds: 15,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // Cache for 7 days
+      {
+        // Caching strategy for JS files
+        urlPattern: /\.(?:js)$/i,
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "static-js-assets",
+          expiration: {
+            maxEntries: 48,
+            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          },
         },
       },
-    },
-    {
-      urlPattern: /\.html$/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'html-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+      {
+        // Caching strategy for Next.js static assets
+        urlPattern: /\/_next\/static.+\.js$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "next-static-js-assets",
+          expiration: {
+            maxEntries: 64,
+            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          },
         },
       },
-    },
-    {
-      urlPattern: /\.js$/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'js-cache',
-        expiration: {
-          maxEntries: 50, // Maximum number of .js files to cache
-          maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
+      {
+        // Caching for external resources (excluding internal _next routes)
+        urlPattern: /^https?.*\/(?!_next).*/,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+          },
         },
       },
-    },
-    {
-      urlPattern: /^https?.*\/(?!_next).*/, // Exclude internal _next routes
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'pages-cache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+      {
+        // Caching strategy for JSON data
+        urlPattern: /^https?.*\/public\/videos\/.*\.json$/,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'json-data-cache',
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+          },
         },
       },
-    },
-    // Caching strategy for external libraries (e.g., react-joyride)
-    {
-      urlPattern: ({ url }) =>
-        url.origin === 'https://unpkg.com' ||
-        url.origin === 'https://cdn.jsdelivr.net' ||
-        url.origin === 'https://cdnjs.cloudflare.com',
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'external-libraries',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+      {
+        // Caching for CSS files
+        urlPattern: /\.css$/,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'css-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+          },
         },
       },
-    },
-    {
-      urlPattern: /^https?.*\/public\/videos\/.*\.json$/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'json-data-cache',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+      {
+        // Caching for the offline page
+        urlPattern: /^\/offline$/,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'offline-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
+          },
         },
       },
-    },
-    // Caching for CSS files
-    {
-      urlPattern: /\.css$/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'css-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
-        },
-      },
-    },
-    {
-      // Caching for the offline page
-      urlPattern: /^\/offline$/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'offline-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
-        },
-      },
-    },
-    // Other caching strategies...
-  ],
-
+      // Add other caching strategies here...
+    ],
+  },
 });
 
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  fallback:""
 };
 
 module.exports = withPWA(nextConfig);
