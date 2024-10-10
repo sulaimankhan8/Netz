@@ -10,7 +10,7 @@ import Script from 'next/script';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
-const APP_TITLE_TEMPLATE = "%s - PWA App";
+const APP_TITLE_TEMPLATE = "%s";
 const APP_DESCRIPTION = "Best PWA app in the world!";
 
 export const metadata = {
@@ -61,14 +61,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <Head>
        
-       <Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
-<Script id="netz"> {`
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-MH5QX2N0Q0');`}
-</Script>
+      
     
      
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
