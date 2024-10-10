@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')({
   dest: 'public',
-  register: true,       // Automatically registers the service worker
-  skipWaiting: true,  
-  generateSw: {
-    fallback: '/offline',
-  },
+  register: true,
+  skipWaiting: true,
   runtimeCaching: [
     {
       // Cache for static assets such as JS, CSS, and fonts
@@ -103,26 +100,21 @@ const withPWA = require('next-pwa')({
         },
       },
     },
-   
-      {
-        // Caching for the offline page
-        urlPattern: /^\/offline$/,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'offline-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
-          },
+    {
+      // Caching for the offline page
+      urlPattern: /^\/offline$/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'offline-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // Cache for 30 days
         },
       },
-      // Other caching strategies...
-    
-    
-    
-   
+    },
+    // Other caching strategies...
   ],
-  
+  fallback: '/offline', // Set the fallback option here
 });
 
 const nextConfig = {
