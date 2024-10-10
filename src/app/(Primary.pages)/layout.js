@@ -60,16 +60,16 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <Head>
-        {`
+       
        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
-<Script id="netz">
+<Script id="netz"> {`
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-MH5QX2N0Q0');
+  gtag('config', 'G-MH5QX2N0Q0');`}
 </Script>
-      `}
+    
      
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
       </Head>
