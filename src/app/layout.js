@@ -3,7 +3,7 @@
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import '../styles/globals.css';
-import '../app/styles/globals.css';
+import './styles/globals.css';
 import Head from 'next/head';
 import Layout from '../app/components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
 
