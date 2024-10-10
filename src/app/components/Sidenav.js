@@ -12,6 +12,8 @@ const Sidebar = () => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   
 
+
+
   const toggleSidebar = () => {
     setIsClosed(!isClosed);
     setActiveUnit(null);
