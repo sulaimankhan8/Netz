@@ -59,6 +59,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <Head>
+        
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
       </Head>
       <body>
@@ -67,6 +68,6 @@ export default function RootLayout({ children }) {
         <Analytics />
         <SpeedInsights />
       </body>
-    </html>
+      </html>
   );
 }
