@@ -3,6 +3,13 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  fallbacks: {
+    //image: "/static/images/fallback.png",
+    document: "/offline", // if you want to fallback to a custom page rather than /_offline
+    // font: '/static/font/fallback.woff2',
+    // audio: ...,
+    // video: ...,
+  },
   runtimeCaching: [
     {
       // Cache for static assets such as JS, CSS, and fonts
@@ -114,12 +121,13 @@ const withPWA = require('next-pwa')({
     },
     // Other caching strategies...
   ],
-  fallback: '/offline', // Set the fallback option here
+
 });
 
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  fallback:""
 };
 
 module.exports = withPWA(nextConfig);
