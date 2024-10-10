@@ -9,8 +9,8 @@ import Layout from '../app/components/layout'; // Ensure the spelling is correct
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
-const APP_TITLE_TEMPLATE = "%s - PWA App";
-const APP_DESCRIPTION = "Best PWA app in the world!";
+const APP_TITLE_TEMPLATE = "%s";
+const APP_DESCRIPTION = "current objective :survive";
 
 export const metadata = {
   applicationName: APP_NAME,
