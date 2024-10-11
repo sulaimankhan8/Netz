@@ -4,7 +4,6 @@ import NButton from "../components/NButton.js";
 import Image from "next/image.js";
 import dynamic from 'next/dynamic';
 import Head from "next/head.js";
-
 import { useState,useEffect  } from 'react';
 import Ad from '../components/Ad';
 
@@ -25,14 +24,50 @@ export default function Home() {
 
   const [showAd, setShowAd] = useState(false);
 
+  // Show ad after 30 seconds
   useEffect(() => {
-    // Display ad after 10 seconds
     const timer = setTimeout(() => {
       setShowAd(true);
-    }, 10000);
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, []);
+
+  const closeAd = () => {
+    setShowAd(false);
+  };
+
+
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showButton, setShowButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault(); // Prevent the mini info bar from appearing on mobile
+      setDeferredPrompt(event); // Stash the event so it can be triggered later.
+      setShowButton(true); // Show the install button
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt(); // Show the install prompt
+      const { outcome } = await deferredPrompt.userChoice; // Wait for the user to respond to the prompt
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null); // Clear the deferred prompt
+      setShowButton(false); // Hide the install button
+    }
+  };
 
   const cardsData = [
     {ImageSrc: "/game.svg",ImageAlt: "levelup icon",title: "Level Up",description: "Transform your math study sessions into an engaging experience! Sign in to Netz and start leveling up your profile. Gamify your learning and unlock new achievements as you master mathematical concepts.", buttonText: "SignUp",buttonRoute: "/",buttonIcon: "/sign-in.png", },
@@ -80,7 +115,7 @@ export default function Home() {
     </Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>
-     {showAd && <Ad/>}
+     {showAd && <Ad onClose={closeAd} />}
      
       <div className=" p-5 flex w-full ">
         <div className="text-6xl mx-auto  font-bold text-white">NETZ</div>
@@ -92,9 +127,16 @@ export default function Home() {
             <p className="text-xl text-gray-200 text-center m-5 p-5">Tired of clunky, slow tools holding back your math progress? Netz delivers lightning-fast problem-solving right at your fingertips. Whether you&apos;re crunching numbers on the go or leading a real-time class. No lag, no interruptions — just pure math mastery.</p>
             <p className="text-lg text-gray-400 text-center p-5 px-10 m-5">
               Download Netz today and experience smooth, seamless learning like never before!</p>
-            <button className="px-5 py-3 mx-auto bg-violet-600 hover:bg-purple-700 active:text-black rounded-xl mt-4 flex  items-center">
+            
+            
+            <button onClick={handleInstallClick} className="px-5 py-3 mx-auto bg-violet-600 hover:bg-purple-700 active:text-black rounded-xl mt-4 flex  items-center">
               <Image src="/download.svg" alt="download"   width={24}
-                height={24} /><p className="pl-2 text-white active:text-black"> Let&#39;s keep Mathing</p></button></div>
+                height={24} /><p className="pl-2 text-white active:text-black"> Let&#39;s keep Mathing</p>
+                </button>
+                </div>
+
+
+
           <div className="order-1 lg:order-1 mt-10 pt-10 max-sm:scale-75  ">
             <div className=" rounded-lg   relative">
               <div className=" top-0 w-[80%] h-[310px]   lg:w-full lg:h-[410px] bg-gradient-to-r from-[#ef05ef] to-[#eacb06] rounded-lg  mx-auto justify-between"></div>

@@ -10,16 +10,17 @@ import Ad from "@/app/components/Ad";
 
 
 const GaussSeidel = () => {
-
-  const [clickCount, setClickCount] = useState(0);
   const [showAd, setShowAd] = useState(false);
+  const [count, setCount] = useState(0);
 
-  const handleClick = () => {
-    setClickCount((prev) => prev + 1);
+  const handleButtonClick = () => {
+    setCount(prevCount => prevCount + 1);
+    if(count%5===0)
+    setShowAd(true); // Show ad on button click
+  };
 
-    if (clickCount + 1 >= 5) {
-      setShowAd(true);  // Show ad after 5 button clicks
-    }
+  const closeAd = () => {
+    setShowAd(false);
   };
   const [equations, setEquations] = useState([
     { a: 4, b: -1, c: 1, constant: 8 },
@@ -220,16 +221,16 @@ const GaussSeidel = () => {
 
         <div className="flex justify-between">
           <button
-           onClick={handleClick}
+           onClick={handleButtonClick}
             type="submit"
             id="Calculate"
             className="focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 text-white px-4 py-2 rounded hover:bg-green-400 bg-green-500 active:bg-green-700 focus:ring-green-700"
           >
             Calculate
-            <p>Clicks: {clickCount}</p>
+            <p>Count: {count}</p>
           </button>
          
-          {showAd && <Ad />}
+          {showAd && <Ad onClose={closeAd} />}
 
           <TButton
             tooltipText="Reset"

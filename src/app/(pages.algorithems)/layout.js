@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../styles/globals.css";
 import "./alg.css";
-import Head from 'next/head';
+import Script from 'next/script';
 import Laout from '../components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
 
 const APP_NAME = "Netz";
@@ -58,9 +58,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <Head>
+       <head><Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
+<Script id="netz"> {`
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MH5QX2N0Q0');`}
+</Script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3746721364737268" crossOrigin="anonymous"></script>
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
-      </Head>
+        <meta name="google-adsense-account" content="ca-pub-3746721364737268"></meta>
+        </head>
       <body>
         <Laout /> {/* Ensure the component name is spelled correctly */}
         {children}
