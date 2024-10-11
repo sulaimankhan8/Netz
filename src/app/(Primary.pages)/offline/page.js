@@ -1,4 +1,4 @@
-import Home from "../(Primary.pages)/page";
+import Home from "../page";
 export default function OfflinePage() {
     return (
       <Home/>

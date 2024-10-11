@@ -39,13 +39,12 @@ export default function Home() {
 
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showButton, setShowButton] = useState(false);
+  
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault(); // Prevent the mini info bar from appearing on mobile
-      setDeferredPrompt(event); // Stash the event so it can be triggered later.
-      setShowButton(true); // Show the install button
+      event.preventDefault(); 
+      setDeferredPrompt(event); 
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -65,7 +64,7 @@ export default function Home() {
         console.log('User dismissed the install prompt');
       }
       setDeferredPrompt(null); // Clear the deferred prompt
-      setShowButton(false); // Hide the install button
+     // Hide the install button
     }
   };
 
