@@ -4,6 +4,11 @@ import NButton from "../components/NButton.js";
 import Image from "next/image.js";
 import dynamic from 'next/dynamic';
 import Head from "next/head.js";
+
+import { useState,useEffect  } from 'react';
+import Ad from '../components/Ad';
+
+
 const InlineMath = dynamic(() => import('react-katex').then(mod => mod.InlineMath), { 
   ssr: false, 
   loading: () => <span>Loading math...</span>
@@ -17,6 +22,18 @@ const StepInfo = dynamic(() => import('../components/steps.js'), {
   loading: () => <p>Loading steps...</p>
 });
 export default function Home() {
+
+  const [showAd, setShowAd] = useState(false);
+
+  useEffect(() => {
+    // Display ad after 10 seconds
+    const timer = setTimeout(() => {
+      setShowAd(true);
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const cardsData = [
     {ImageSrc: "/game.svg",ImageAlt: "levelup icon",title: "Level Up",description: "Transform your math study sessions into an engaging experience! Sign in to Netz and start leveling up your profile. Gamify your learning and unlock new achievements as you master mathematical concepts.", buttonText: "SignUp",buttonRoute: "/",buttonIcon: "/sign-in.png", },
     {ImageSrc: "/export.svg",ImageAlt: "export icon",title: "Export",description: "With Netz, you can easily export your solutions, step-by-step processes, graphs, and tables. Share your progress and findings with classmates or keep them for your own reference—it's all just a click away!",buttonText: "Export",buttonRoute: "/",buttonIcon: "/download.svg",},
@@ -63,6 +80,8 @@ export default function Home() {
     </Head>
     <main className="bg-neutral-950  h-[1000vh] w-full bg-center top-0"
       style={{ backgroundImage: "url('/bg1.png')", backgroundSize: "contain" }}>
+     {showAd && <Ad/>}
+     
       <div className=" p-5 flex w-full ">
         <div className="text-6xl mx-auto  font-bold text-white">NETZ</div>
       </div>

@@ -6,10 +6,21 @@ import React, { useState } from 'react';
 import TButton from '../../../components/TButton';
 import Plot from './plot';
 import ExportToPNG from "@/app/utils/ExportToPNG";
-
+import Ad from "@/app/components/Ad";
 
 
 const GaussSeidel = () => {
+
+  const [clickCount, setClickCount] = useState(0);
+  const [showAd, setShowAd] = useState(false);
+
+  const handleClick = () => {
+    setClickCount((prev) => prev + 1);
+
+    if (clickCount + 1 >= 5) {
+      setShowAd(true);  // Show ad after 5 button clicks
+    }
+  };
   const [equations, setEquations] = useState([
     { a: 4, b: -1, c: 1, constant: 8 },
     { a: -1, b: 3, c: 2, constant: 20 },
@@ -209,12 +220,16 @@ const GaussSeidel = () => {
 
         <div className="flex justify-between">
           <button
+           onClick={handleClick}
             type="submit"
             id="Calculate"
             className="focus:outline-none focus:ring-2 focus:ring-offset-2 active:bg-opacity-80 text-white px-4 py-2 rounded hover:bg-green-400 bg-green-500 active:bg-green-700 focus:ring-green-700"
           >
             Calculate
+            <p>Clicks: {clickCount}</p>
           </button>
+         
+          {showAd && <Ad />}
 
           <TButton
             tooltipText="Reset"
