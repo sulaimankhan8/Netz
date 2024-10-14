@@ -76,15 +76,15 @@ export default function BisectionMethods() {
               <div className="ml-5 space-y-5">
                 <p>To apply the Bisection Method, we first need to choose two initial points <InlineMath math="a"/> and <InlineMath math="b"/> such that:</p>
                 
-                <BlockMath math={`f(a) \\text{ and } f(b) \\text{ have opposite signs.}`}/>
+                <BlockMath math="f(a) \text{ and } f(b) \text{ have opposite signs.}"/>
 
-                <p>lets&apos;s choose <InlineMath math={`a = 0 \\text{ and } b = 3`} /></p>
+                <p>lets&apos;s choose <InlineMath math="a = 0 \text{ and } b = 3"/></p>
 
-                <BlockMath math={`f(0) = 0^2 - 4 = -4 \\text{ (negative)}`}/>
+                <BlockMath math="f(0) = 0^2 - 4 = -4 \text{ (negative)}"/>
 
-                <BlockMath math={`f(3) = 3^2 - 4 = 5\\text{ (positive)}`}/>
+                <BlockMath math="f(3) = 3^2 - 4 = 5\text{ (positive)}"/>
 
-                <p>Since <InlineMath math={`f(0) < 0 \\text{ and } f(3) > 0 , `}/> we can proceed. </p>
+                <p>Since <InlineMath math="f(0) < 0 \text{ and } f(3) > 0 , "/> we can proceed. </p>
               </div>
 
 
