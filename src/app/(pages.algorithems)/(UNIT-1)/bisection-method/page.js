@@ -92,14 +92,14 @@ export default function BisectionMethods() {
               <div className="ml-5">
                 <p>Next, we calculate the midpoint <InlineMath math={`C`}/> of the interval [ a , b ] :</p>   
 
-                <BlockMath math={` C = \\frac{ a + b }{2} = \\frac{ 0 + 3 }{2} = 1.5`}/>             
+                <BlockMath math=" C = \frac{ a + b }{2} = \frac{ 0 + 3 }{2} = 1.5"/>             
               </div>
              
               <h3 className="mt-4 font-semibold">Step 4 : Update the Interval</h3>
               <div className="ml-5 space-y-4">
-              <p>Since <InlineMath math={`f(a) < 0 \\text{ and } f(C) < 0 , `}/> we know that the root must lie in the interval [ C , b ] : </p>   
+              <p>Since <InlineMath math="f(a) < 0 \text{ and } f(C) < 0 ,"/> we know that the root must lie in the interval [ C , b ] : </p>   
 
-                <BlockMath math={` \\text{Set } a = C = 1.5 `}/>             
+                <BlockMath math="\text{Set } a = C = 1.5"/>             
               </div>
 
               <h3 className="mt-4 font-semibold">Step 5 : Repeat the Process</h3>
@@ -109,16 +109,16 @@ export default function BisectionMethods() {
                 <ol className="list-inside  list-decimal ml-5 space-y-5">
                   <li className="font-semibold">
                     Calculate new midpoint:
-                  <BlockMath math={`C = \\frac{1.5 + 3 }{2} = 2.25`}/>  
+                  <BlockMath math="C = \frac{1.5 + 3 }{2} = 2.25"/>  
                   </li>  
                   <li className="font-semibold">
                   Evaluate function:  
-                  <BlockMath math={`f(2.25) = (2.25)^2 -  4 = 5.0625 - 4 = 1.0625`}/>  
+                  <BlockMath math="f(2.25) = (2.25)^2 -  4 = 5.0625 - 4 = 1.0625"/>  
                   </li>  
                   <li className="font-semibold">
                   Update interval:
                   <div>
-                    <p> Since <InlineMath math={` f(1.5) < 0 \\text{ and } f(2.25) > 0 ,`}/> set <InlineMath math=" b = C = 2.25"/></p>
+                    <p> Since <InlineMath math="f(1.5) < 0 \text{ and } f(2.25) > 0 "/> set <InlineMath math=" b = C = 2.25"/></p>
                   </div>
                   </li>  
                 
@@ -132,16 +132,16 @@ export default function BisectionMethods() {
                 <ol className="list-inside  list-decimal ml-5 space-y-5">
                   <li className="font-semibold">
                     Calculate new midpoint:
-                  <BlockMath math={`C = \\frac{1.5 + 2.25 }{2} = 1.875`}/>  
+                  <BlockMath math="C = \frac{1.5 + 2.25 }{2} = 1.875"/>  
                   </li>  
                   <li className="font-semibold">
                   Evaluate function:  
-                  <BlockMath math={`f(1.875) = (1.875)^2 -  4 = 3.515625 - 4 = −0.484375`}/>  
+                  <BlockMath math="f(1.875) = (1.875)^2 -  4 = 3.515625 - 4 = −0.484375"/>  
                   </li>  
                   <li className="font-semibold">
                   Update interval:
                   <div>
-                    <p> Since <InlineMath math={` f(1.875) < 0 \\text{ and } f(2.25) > 0 ,`}/> set <InlineMath math=" a = 2.25"/></p>
+                    <p> Since <InlineMath math="f(1.875) < 0 \text{ and } f(2.25) > 0 ,"/> set <InlineMath math=" a = 2.25"/></p>
                   </div>
                   </li>  
                 
@@ -149,7 +149,7 @@ export default function BisectionMethods() {
                 <h3 className="mt-4 font-semibold">Continue until Desired Accuracy</h3>
                 <p>Continue this process until the difference between 𝑎 and 𝑏 is less than a desired tolerance (for example,0.01).</p>
                 <p>Eventually, you will converge on the root:</p>
-                 <BlockMath math={`\\sqrt{4} = 2`}/>
+                 <BlockMath math="\sqrt{4} = 2"/>
                  </div>
              
              
