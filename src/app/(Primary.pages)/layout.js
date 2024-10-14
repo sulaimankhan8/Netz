@@ -4,8 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import '../styles/globals.css';
 import './primary.css';
-import Head from 'next/head';
-import Layout from '../components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
+import Layout from '../components/layout'; 
 import Script from 'next/script';
 
 const APP_NAME = "Netz";

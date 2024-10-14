@@ -42,7 +42,7 @@ const TButton = ({ tooltipText, onClick, imgSrc, altText, color, className, type
         )}
       </button>
       {hovered && tooltipText && (
-        <div className="absolute overflow-visible bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-700 text-white text-sm rounded shadow-lg">
+        <div className="absolute overflow-visible bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-700 text-white text-sm rounded shadow-lg ">
           {tooltipText}
         </div>
       )}

@@ -56,15 +56,14 @@ export default function Home() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt(); // Show the install prompt
-      const { outcome } = await deferredPrompt.userChoice; // Wait for the user to respond to the prompt
+      deferredPrompt.prompt(); 
+      const { outcome } = await deferredPrompt.userChoice; 
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt');
       } else {
         console.log('User dismissed the install prompt');
       }
-      setDeferredPrompt(null); // Clear the deferred prompt
-     // Hide the install button
+      setDeferredPrompt(null); 
     }
   };
 
