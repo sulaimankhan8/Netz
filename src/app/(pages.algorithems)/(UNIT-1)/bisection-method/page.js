@@ -8,7 +8,7 @@ import BisectionMethod from "./algorithems.bisection-method";
 
 export default function BisectionMethods() {
   return (
-    <>
+    
       <FullscreenToggle className="dark:bg-neutral-700 w-full">
         <div className="md:ml-[80px]">
           <section className="container mx-auto px-8 pt-10 dark:bg-neutral-700 dark:text-white space-y-4">
@@ -44,7 +44,7 @@ export default function BisectionMethods() {
                 </li>
                 <li>
                   <strong>Midpoint Calculation:</strong> Compute the midpoint{" "}
-                  <InlineMath math={`c = \\frac{a + b}{2}`} />.
+                  <InlineMath math="c = \\frac{a + b}{2}" />.
                 </li>
                 <li>
                   <strong>Evaluate:</strong> Check the sign of{" "}
@@ -154,7 +154,7 @@ export default function BisectionMethods() {
              
              
             <div className="space-y-5 pb-8">
-              <h2 className="text-xl font-semibold mt-6 font-semibold">Conclusion</h2>
+              <h2 className="text-xl  mt-6 font-semibold">Conclusion</h2>
               <p>
               The Bisection Method is an efficient way to find the root of a function defined by a continuous equation. In this case, we demonstrated it for <InlineMath math={` x^2 = 4  `}/>&nbsp;
               and found that the root is <InlineMath math={` x = 2 `}/>&nbsp;
@@ -168,6 +168,6 @@ export default function BisectionMethods() {
         </div>
         
       </FullscreenToggle>
-    </>
+    
   );
 }
