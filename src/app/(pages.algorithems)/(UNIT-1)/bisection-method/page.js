@@ -44,7 +44,7 @@ export default function BisectionMethods() {
                 </li>
                 <li>
                   <strong>Midpoint Calculation:</strong> Compute the midpoint{" "}
-                  <InlineMath math="c = \\frac{a + b}{2}" />.
+                  <InlineMath >{`C = \\frac{a + b}{2} `} </InlineMath>.
                 </li>
                 <li>
                   <strong>Evaluate:</strong> Check the sign of{" "}
