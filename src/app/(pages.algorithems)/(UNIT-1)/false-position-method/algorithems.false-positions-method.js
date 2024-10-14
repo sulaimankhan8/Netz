@@ -1,27 +1,20 @@
-
-
 'use client';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import TButton from '../../../components/TButton';
-import Plot from './Plot';
+import Plot from '../bisection-method/Plot';
 import ExportToPNG from "@/app/utils/ExportToPNG";
 
-
-const BisectionMethod = () => {
+const FalsePositionMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
 
-
-
- 
-
-  const [functionInput, setFunctionInput] = useState("x * x *x - 4*x -9"); // Default function
+  const [functionInput, setFunctionInput] = useState("x ** 2 - 4"); // Default function
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
   const [intervalSteps, setIntervalSteps] = useState([]);
-  const [bisectionIterations, setBisectionIterations] = useState([]);
+  const [falsePositionIterations, setFalsePositionIterations] = useState([]);
   const [error, setError] = useState('');
   const [iterationsCount, setIterationsCount] = useState(0);
 
@@ -45,7 +38,7 @@ const BisectionMethod = () => {
     setError('');
     setResult(null);
     setIntervalSteps([]);
-    setBisectionIterations([]);
+    setFalsePositionIterations([]);
     setIterationsCount(0);
 
     // Convert user input to a function
@@ -70,15 +63,16 @@ const BisectionMethod = () => {
 
     const [a, b] = interval;
 
-    // Perform Bisection Method
-    const { message, iterations } = bisectionMethod(f, a, b, tolerance);
+    // Perform False Position Method
+    const { message, iterations } = falsePositionMethod(f, a, b, tolerance);
 
     setResult(message);
-    setBisectionIterations(iterations);
+    setFalsePositionIterations(iterations);
     setIterationsCount(iterations.length);
   };
 
   // Function to find interval automatically
+  
   const findInterval = (f, maxRange = 1000, step = 1) => {
     const steps = [];
     let fa, fb, a, b;
@@ -112,8 +106,7 @@ const BisectionMethod = () => {
 
         if (fx === 0) {
           // Exact root found
-          steps.push(`Exact root found at x = ${x},\n
-             Sign change detected between x = ${x-1} and x = ${x+1}`);
+          steps.push(`Exact root found at x = ${x},\n Sign change detected between x = ${x-1} and x = ${x+1}`);
           return { interval: [x-1, x+1], steps };
         }
 
@@ -174,16 +167,15 @@ const BisectionMethod = () => {
     steps.push(`No valid interval found in both positive and negative directions within the range [-${maxRange}, ${maxRange}].`);
     return { interval: null, steps };
   };
-
-  // Bisection Method Implementation
-  const bisectionMethod = (f, a, b, tolerance = 1e-5, maxIterations = 1000) => {
+  // False Position Method Implementation
+  const falsePositionMethod = (f, a, b, tolerance = 1e-5, maxIterations = 1000) => {
     const iterations = [];
 
     let fa = f(a);
     let fb = f(b);
 
     if (fa * fb >= 0) {
-      return { message: "Bisection method fails. f(a) and f(b) must have opposite signs.", iterations };
+        return { message: "False Position method fails. f(a) and f(b) must have opposite signs.", iterations };
     }
 
     let c = a;
@@ -191,45 +183,49 @@ const BisectionMethod = () => {
     let iteration = 0;
 
     while (iteration < maxIterations) {
-      c = (a + b) / 2;
-      try {
-        fc = f(c);
-      } catch (err) {
-        return { message: `Error evaluating function at c = ${c}.`, iterations };
-      }
+        // Calculate the false position using the new formula
+        c = (a * fb - b * fa) / (fb - fa);
+        try {
+            fc = f(c);
+        } catch (err) {
+            return { message: `Error evaluating function at c = ${c}.`, iterations };
+        }
 
-      iterations.push({
-        iteration: iteration + 1,
-        a: a,
-        b: b,
-        c: c,
-        fa: fa,
-        fb: fb,
-        fc: fc
-      });
+        iterations.push({
+            iteration: iteration + 1,
+            a: a,
+            b: b,
+            c: c,
+            fa: fa,
+            fb: fb,
+            fc: fc
+        });
 
-      if (Math.abs(fc) < tolerance || Math.abs(b - a) < tolerance) {
-        return { message: `Root found at x = ${c.toFixed(6)} after ${iteration + 1} iterations.`, iterations };
-      }
+        // Check for convergence
+        if (Math.abs(fc) < tolerance || Math.abs(b - a) < tolerance) {
+            return { message: `Root found at x = ${c.toFixed(6)} after ${iteration + 1} iterations.`, iterations };
+        }
 
-      if (fa * fc < 0) {
-        b = c;
-        fb = fc;
-      } else {
-        a = c;
-        fa = fc;
-      }
+        // Decide the side to repeat the steps
+        if (fa * fc < 0) {
+            b = c;
+            fb = fc;
+        } else {
+            a = c;
+            fa = fc;
+        }
 
-      iteration++;
+        iteration++;
     }
 
     return { message: `Maximum iterations reached. Approximate root at x = ${c.toFixed(6)}.`, iterations };
-  };
+};
+
 
   // Handle Demo button click
   const handleDemo = async () => {
     setDemoInProgress(true);
-    setFunctionInput("x * x *x - 4*x -9");
+    setFunctionInput("x ** 2 - 4"); // Example function f(x) = x^2 - 4
     setTolerance(0.0001);
 
     // Wait for state to update
@@ -247,7 +243,7 @@ const BisectionMethod = () => {
     setTolerance(0.0001);
     setResult(null);
     setIntervalSteps([]);
-    setBisectionIterations([]);
+    setFalsePositionIterations([]);
     setError('');
     setIterationsCount(0);
   };
@@ -255,7 +251,7 @@ const BisectionMethod = () => {
   return (
     <div className="w-full mx-auto p-4 bg-white dark:text-white dark:bg-neutral-700">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
-        <h1 className="text-2xl font-bold mb-4">Bisection Method Solver</h1>
+        <h1 className="text-2xl font-bold mb-4">False Position Method Solver</h1>
 
         <TButton
           tooltipText="Demo"
@@ -280,7 +276,7 @@ const BisectionMethod = () => {
             id="function"
             value={functionInput}
             onChange={handleFunctionChange}
-            placeholder="e.g., x * x - 4"
+            placeholder="e.g., x ** 2 - 4"
             required
             className="w-full p-2 border dark:border-gray-600 rounded-md dark:bg-neutral-800 dark:text-white"
           />
@@ -309,7 +305,6 @@ const BisectionMethod = () => {
             Calculate
           </button>
 
-
           <TButton
             tooltipText="Reset"
             onClick={handleReset}
@@ -337,7 +332,7 @@ const BisectionMethod = () => {
         </div>
       )}
 
-      {bisectionIterations.length > 0 && (
+      {falsePositionIterations.length > 0 && (
         <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl hover:border hover:border-neutral-300">
           <ExportToPNG 
             elementId="graphCanvas"
@@ -349,15 +344,15 @@ const BisectionMethod = () => {
           />
           <h2 className="text-xl font-semibold mb-2">Plot:</h2>
           <Plot 
-            iterations={bisectionIterations} 
+            iterations={falsePositionIterations} 
             functionInput={functionInput}  
           />
         </div>
       )}
 
-      {bisectionIterations.length > 0 && (
-        <div  className="my-6   md:mx-[8rem]  overflow-x-auto">
-          <h2 className="text-xl inline-block font-semibold">Bisection Method Iterations:</h2>
+      {falsePositionIterations.length > 0 && (
+        <div className="my-6 md:mx-[8rem] overflow-x-auto">
+          <h2 className="text-xl inline-block font-semibold">False Position Method Iterations:</h2>
           <ExportToPNG 
             elementId="Table"
             fileName="table.png"
@@ -373,15 +368,15 @@ const BisectionMethod = () => {
                 <th className="border border-gray-300 p-2">Iteration</th>
                 <th className="border border-gray-300 p-2">a</th>
                 <th className="border border-gray-300 p-2">b</th>
-                <th className="border border-gray-300 p-2">c(mid)</th>
+                <th className="border border-gray-300 p-2">c</th>
                 <th className="border border-gray-300 p-2">f(a)</th>
                 <th className="border border-gray-300 p-2">f(b)</th>
                 <th className="border border-gray-300 p-2">f(c)</th>
               </tr>
             </thead>
             <tbody>
-              {bisectionIterations.map((iter, index) => (
-                <tr key={index} className={index === bisectionIterations.length - 1 ? 'bg-red-700 text-white' : ''}>
+              {falsePositionIterations.map((iter, index) => (
+                <tr key={index} className={index === falsePositionIterations.length - 1 ? 'bg-red-700 text-white' : ''}>
                   <td className="border border-gray-300 p-2">{iter.iteration}</td>
                   <td className="border border-gray-300 p-2">{iter.a.toFixed(6)}</td>
                   <td className="border border-gray-300 p-2">{iter.b.toFixed(6)}</td>
@@ -396,8 +391,8 @@ const BisectionMethod = () => {
         </div>
       )}
 
-      {bisectionIterations.length > 0 && (
-        <div  className="mt-6 text-wrap dark:bg-neutral-700 p-4 rounded">
+      {falsePositionIterations.length > 0 && (
+        <div className="mt-6 text-wrap dark:bg-neutral-700 p-4 rounded">
           <h2 className="text-xl font-semibold mb-2 inline-block">Detailed Steps:</h2>
           <ExportToPNG 
             elementId="steps"
@@ -408,16 +403,19 @@ const BisectionMethod = () => {
             float="float-right" 
           />
           <div id="steps" className="space-y-4">
-            {bisectionIterations.map((iter, index) => (
-              <div key={index}>
-                <h3 className="text-lg font-semibold">Iteration {iter.iteration}</h3>
-                <BlockMath math={`a^{(${iter.iteration})} = ${iter.a.toFixed(6)}`} />
-                <BlockMath math={`b^{(${iter.iteration})} = ${iter.b.toFixed(6)}`} />
-                <BlockMath math={`c^{(${iter.iteration})} = \\frac{a + b}{2} = \\frac{${iter.a.toFixed(6)} + ${iter.b.toFixed(6)}}{2} = ${iter.c.toFixed(6)}`} />
-                <BlockMath math={`f(c^{(${iter.iteration})}) = ${iter.fc.toFixed(6)}`} />
-                <hr />
-              </div>
-            ))}
+          {falsePositionIterations.map((iter, index) => (
+  <div key={index}>
+    <h3 className="text-lg font-semibold">Iteration {iter.iteration}</h3>
+    <BlockMath math={`a^{(${iter.iteration})} = ${iter.a.toFixed(6)}`} />
+    <BlockMath math={`b^{(${iter.iteration})} = ${iter.b.toFixed(6)}`} />
+    <BlockMath 
+      math={`c^{(${iter.iteration})} = \\frac{a \\cdot f(b) - b \\cdot f(a)}{f(b) - f(a)} = \\frac{${iter.a.toFixed(6)} \\cdot ${iter.fb.toFixed(6)} - ${iter.b.toFixed(6)} \\cdot ${iter.fa.toFixed(6)}}{${iter.fb.toFixed(6)} - ${iter.fa.toFixed(6)}} = ${iter.c.toFixed(6)}`} 
+    />
+    <BlockMath math={`f(c^{(${iter.iteration})}) = ${iter.fc.toFixed(6)}`} />
+    <hr />
+  </div>
+))}
+
           </div>
         </div>
       )}
@@ -425,5 +423,4 @@ const BisectionMethod = () => {
   );
 };
 
-
-export default BisectionMethod;
+export default FalsePositionMethod;
