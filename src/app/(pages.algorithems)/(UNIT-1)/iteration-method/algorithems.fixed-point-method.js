@@ -209,9 +209,9 @@ const FixedPointMethod = () => {
   };
 
   return (
-    <div className="w-full mx-auto p-4 bg-white dark:text-white dark:bg-neutral-700">
+    <div className="w-full mx-auto p-4 text-black bg-white dark:text-white dark:bg-neutral-700">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
-        <h1 className="text-2xl font-bold mb-4">Fixed-Point Iteration Method Solver</h1>
+        <h1 className="text-2xl font-bold mb-4">Fixed-Point (Iteration) Method Solver</h1>
 
         <div className="flex space-x-2">
           <TButton
@@ -323,7 +323,7 @@ const FixedPointMethod = () => {
       )}
 
       {iterationSteps.length > 0 && (
-        <div className="my-6 overflow-x-auto">
+        <div className="my-6 overflow-x-auto text-black dark:text-white ">
           <h2 className="text-xl inline-block font-semibold">Fixed-Point Iteration Steps:</h2>
           <ExportToPNG 
             elementId="Table"
@@ -334,7 +334,7 @@ const FixedPointMethod = () => {
             float="float-right" 
             className="mb-4"
           />
-          <table id="Table" className="w-full table-auto mt-4 border-collapse">
+          <table id="Table" className="w-full table-auto mt-4 border-collapse dark:bg-neutral-700">
             <thead>
               <tr>
                 <th className="border border-gray-300 p-2">Iteration</th>
@@ -374,7 +374,7 @@ const FixedPointMethod = () => {
             altText="Export Steps" 
             float="float-right" 
           />
-          <div id="steps" className="space-y-4">
+          <div id="steps" className="space-y-4 dark:bg-neutral-700 md:p-4">
             {iterationSteps.map((step, index) => (
               <div key={index}>
                 <h3 className="text-lg font-semibold">Iteration {step.iter}:</h3>

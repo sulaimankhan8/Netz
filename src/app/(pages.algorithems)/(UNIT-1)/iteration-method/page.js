@@ -48,7 +48,7 @@ export default function test(){
                                 Repeat until convergence.
                             </li>
                             <li>
-                                <strong>Convergence Check:</strong> Stop when <InlineMath math={ "|x_{n+1} - x_n| < \epsilon" } />.
+                                <strong>Convergence Check:</strong> Stop when <InlineMath math={ "|x_{n+1} - x_n| < \text{Error margin}" } />.
                             </li>
                         </ol>
                     </div>
