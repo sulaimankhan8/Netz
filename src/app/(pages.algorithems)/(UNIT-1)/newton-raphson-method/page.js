@@ -19,7 +19,7 @@ export default function NewtonRaphsonMethods() {
           <p className="text-base pl-1 ">
             The Newton-Raphson method is a powerful numerical technique for
             finding the roots of a real-valued function. It is based on
-            iteratively refining guesses for the root by using the function's
+            iteratively refining guesses for the root by using the function&apos;s
             derivative.
           </p>
           <br />
@@ -68,7 +68,7 @@ export default function NewtonRaphsonMethods() {
               <p>Initial guess: <InlineMath math={`x_0 = 1`} /></p>
             </div>
             <div className="text-lg  ml-5  space-y-4">
-          <p>Let's solve <InlineMath math=" f(x) = x^2 - 2 = 0 "/> using the Newton-Raphson method, which seeks to find the square.</p>
+          <p>Let&apos;s solve <InlineMath math=" f(x) = x^2 - 2 = 0 "/> using the Newton-Raphson method, which seeks to find the square.</p>
           <ol className="text-lg list-item list-decimal ml-5">
             <li> Function: <InlineMath math=" f(x) = x^2 - 2 "/> </li>
             <li> Derivative: <InlineMath math=" f'(x) = 2x "/> </li>

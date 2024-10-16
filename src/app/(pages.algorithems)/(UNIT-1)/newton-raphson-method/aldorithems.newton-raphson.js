@@ -5,11 +5,27 @@ import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import { BlockMath } from 'react-katex'; // Import react-katex
 
 const NewtonRaphsonMethod = () => {
+    
+  const [demoInProgress, setDemoInProgress] = useState(false);
     const [expression, setExpression] = useState('-4x + cos(x) + 2');
     const [initialGuess, setInitialGuess] = useState('');
     const [tolerance, setTolerance] = useState(1e-7);
     const [results, setResults] = useState([]);
 
+    const handleDemo = async () => {
+        setDemoInProgress(true);
+        setExpression("x * x *x - 4*x -9");
+        setTolerance(0.0001);
+    
+        // Wait for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+    
+        // Trigger calculation
+        document.getElementById("Calculate").click();
+    
+        setDemoInProgress(false);
+      };
+    
     const evaluateFunction = (f, x) => {
         try {
             return parseFloat(nerdamer(f, { x }).evaluate().text());
@@ -210,7 +226,7 @@ const NewtonRaphsonMethod = () => {
                                 <th className="border border-gray-300 p-2">Iteration</th>
                                 <th className="border border-gray-300 p-2">x</th>
                                 <th className="border border-gray-300 p-2">f(x)</th>
-                                <th className="border border-gray-300 p-2">f'(x)</th>
+                                <th className="border border-gray-300 p-2">f&apos;(x)</th>
                                 <th className="border border-gray-300 p-2">x_n+1</th>
                             </tr>
                         </thead>
