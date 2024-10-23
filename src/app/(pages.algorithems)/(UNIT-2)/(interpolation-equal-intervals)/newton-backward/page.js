@@ -3,7 +3,6 @@
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import PageButton from "../../../../components/pageButton";
-import { useState, useEffect } from "react";
 import Head from 'next/head';
 import NewtonBackwardInterpolations from "./algorithems.newton-backward-interpolations";
 import ThemeToggle from "../../../../components/ThemeToggle";

@@ -2,8 +2,6 @@
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
-import PageButton from "../../../../components/PageButton";
-import { useState, useEffect } from "react";
 
 import Head from 'next/head';
 import ThemeToggle from "../../../../components/ThemeToggle";
