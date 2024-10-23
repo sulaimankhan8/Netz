@@ -2,14 +2,14 @@
 import { useState, useRef } from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
-import Plot from "../Plot";
+import Plot from "../../(interpolation-equal-intervals)/Plot";
 import TButton from "../../../../components/TButton";
 
 import ExportToPNG from "@/app/utils/ExportToPNG";
 
 
 
-export default function NewtonBackwardInterpolations({ theme }) {
+export default function NewtonDividedDifference({ theme }) {
   const [vSteps, setVSteps] = useState([]);
 
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
@@ -27,7 +27,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
 
-
+ let st = '';
   // Function to export table to PNG
  
 
@@ -87,7 +87,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
       stepSubstituted,
       stepCalculated,
       vSteps,
-    } = newtonBackwardInterpolation(points, x);
+    } = newtonDividedDifference(points, x);
 
     const minX = Math.min(...xValues) - 5;
     const maxX = Math.max(...xValues) + 5;
@@ -101,15 +101,15 @@ export default function NewtonBackwardInterpolations({ theme }) {
       formulas: stepFormulas,
       substituted: stepSubstituted,
       calculated: stepCalculated,
-      final: `Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`,
+      final: `Interpolated value at x = ${x}: f(${x}) = ${interpolatedValue}`,
     });
-    setOutput(`Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`);
+    setOutput(`Interpolated value at x = ${x}: f(${x}) = ${interpolatedValue}`);
   };
 
   const handleDemo = async () => {
-    const demoX = [24, 28, 32, 36, 40];
-    const demoY = [28.06, 30.19, 32.75, 34.94, 40];
-    const demoInterpolateX = 33;
+    const demoX = [ 300, 304,305,307];
+  const demoY = [ 2.4771,2.4829,2.4843,2.4871];
+  const demoInterpolateX = 301;
 
     setDemoInProgress(true);
 
@@ -142,7 +142,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
     <div className="container mx-auto md:p-8  transition-all duration-300 dark:bg-neutral-700 dark:text-white">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold">
-          Newton Backward Interpolation Calculator
+        Newton&apos;s Divided Difference Interpolation Calculator
         </h1>
 
 
@@ -270,13 +270,13 @@ export default function NewtonBackwardInterpolations({ theme }) {
           <Plot  points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))}
               xRange={xRange} 
               darkTheme={theme}
-              func={newtonBackwardInterpolation} />
+              func={newtonDividedDifference} />
         </div>
       )}
      
 
 
-      {diffTable.length > 0 && (<div>
+      {diffTable && (<div>
         <ExportToPNG 
            elementId="diffTable"
            fileName="table.png"
@@ -294,34 +294,35 @@ export default function NewtonBackwardInterpolations({ theme }) {
             <thead>
               <tr>
                 <th className="border border-gray-300 p-2">x</th>
-                {Array.from({ length: diffTable.length }).map((_, i) => (
-                  <th key={i} className="border border-gray-300 p-2">
-                    Δ<sup>{i}</sup>Y
-                  </th>
+                {Array.from({ length: diffTable.length }).map((_, i) =>  (
+                    
+                      <th key={i} className="border border-gray-300 p-2">
+                  { i===0 ? < InlineMath math={`y_0`}/> :
+                  < InlineMath math={`${i}^{st} order `}/>}
+                  </th>                  
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="font-thin text-sm">
               {diffTable.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
                   className={
-                    rowIndex === diffTable.length - 1 ? "bg-red-500" : ""
+                    rowIndex === 0 ? "bg-red-500" : ""
                   }
                 >
                   <td className="border border-gray-300 p-2">
                     {xValues[rowIndex]}
                   </td>
 
-                  {row.map((value, colIndex) => (
+                  {row.map((value, colIndex) => {
+                    const stringValue = value.toString(); console.log(value);
+                    return (
                     <td key={colIndex} className="border border-gray-300 p-2">
-                      {value !== undefined
-                        ? value.toFixed(4) !== "0.0000"
-                          ? value.toFixed(4)
-                          : ""
-                        : ""}
+                      {<InlineMath math={stringValue}/> 
+                      }
                     </td>
-                  ))}
+                  );})}
                 </tr>
               ))}
             </tbody>
@@ -334,52 +335,21 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
 
       <div id="steps" className="mt-6 text-wrap dark:bg-neutral-700">
-      
-        {vSteps.length > 0 && (
-          <div className="mt-6 overflow-visible">
-            <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2> <div className="inline-block float-right" >
-            <ExportToPNG 
+        <div>
+          {polynomialSteps.formulas.length > 0 && (
+            <div className="mt-6">
+              <div>
+              <h2 className="text-xl font-semibold inline-block">Polynomial Steps</h2>
+              <ExportToPNG 
            elementId="steps"
            fileName="steps.png"
           tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" 
           color="blue" 
           altText="Export&nbsp;steps" 
-          className="" 
+          className="inline m-3" 
           
            float="float-right" />
-        
-            
-
-
-   <TButton
-        onClick={() =>
-          setInline(prev => !prev)}
-                                                        
-           float="float-right"
-            className="m-1 inline-block absolute
-          top-0 left-[-70px] "
-            altText="Inline"
-              tooltipText="Inline&nbsp;or&nbsp;Block"
-            color="red"
-/>
-</div></div>
-
-            <div className="mt-2 p-4 border border-gray-300 rounded-lg">
-
-              <pre className="overflow-x-auto">
-                <BlockMath math={vSteps.join(",")} />
-              </pre>
-
-            </div>
-          </div>
-        )}
-
-
-
-        <div className="space-y-4 ">
-          {polynomialSteps.formulas.length > 0 && (
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold">Polynomial Steps</h2>
+     </div>
               <div className="mt-2 p-4 border border-gray-300 rounded-lg">
                 <div className="">
                   <h3 className="text-lg font-semibold p-5">Formulas:</h3>
@@ -440,90 +410,64 @@ export default function NewtonBackwardInterpolations({ theme }) {
   );
 }
 
-function newtonBackwardInterpolation(points, x) {
-  const tr = [
-    `y_{n}`,
-    `\\frac{v}{1!} \\Delta^{1} y_{n-1} `,
-    `\\frac{v(v+1)}{2!} \\Delta^{2} y_{n-2}`,
-    `\\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3}`,
-    `\\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)}{5!} \\Delta^{5} y_{n-5}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)}{6!} \\Delta^{6} y_{n-6}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)}{7!} \\Delta^{7} y_{n-7}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)}{8!} \\Delta^{8} y_{n-8}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)}{9!} \\Delta^{9} y_{n-9}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9)}{10!} \\Delta^{10} y_{n-10}`
-  ];
 
+function newtonDividedDifference(points, x) {
+  // Implementation of Newton Divided Difference interpolation
   const n = points.length;
-  const xi = points.map((p) => p.x);
-  const yi = points.map((p) => p.y);
+  const diffTable = new Array(n).fill(0).map(() => new Array(n).fill(0));
+  const diffTable2 = new Array(n).fill(0).map(() => new Array(n).fill(0));
+  const stepFormulas = [];
+  const stepSubstituted = [];
+  const stepCalculated = [];
 
- 
-
-  let diffTable = Array.from({ length: n }, (_, i) => Array(n).fill(0));
   for (let i = 0; i < n; i++) {
-    diffTable[i][0] = yi[i];
+    diffTable[i][0] = points[i].y;
+    diffTable2[i][0] = points[i].y;
   }
 
-  // Building the difference table
   for (let j = 1; j < n; j++) {
-    for (let i = n - 1; i >= j; i--) {
-      diffTable[i][j] = diffTable[i][j - 1] - diffTable[i - 1][j - 1];
+    for (let i = 0; i < n - j; i++) {
+      diffTable2[i][j] = (diffTable2[i + 1][j - 1] - diffTable2[i][j - 1]) / (points[i + j].x - points[i].x);
+
+      diffTable[i][j] = `\\frac{(${diffTable2[i + 1][j - 1].toFixed(4)} - ${diffTable2[i][j - 1].toFixed(4)}) }{(${points[i + j].x.toFixed(2)} - ${points[i].x.toFixed(2)})} = ${diffTable2[i][j].toFixed(4)}`;
     }
   }
-  const h = xi[1] - xi[0];
-  let u = (x - xi[n - 1]) / (xi[1] - xi[0]); // Calculate 'u'
-  let interpolatedValue = diffTable[n - 1][0]; // Starting with the last y-value
-  console.log(xi);
-  let uProduct = 1;
-  let factorial = 1;
 
-  let stepFormulas = [`P(x) = ${tr[0]}`]; // Step for polynomial formula
-  let stepSubstituted = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Substituted step
-  let stepCalculated = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Initial calculated step
-
-  // Adding step for calculating 'v'
-  let vSteps = [];
-  vSteps.push(`h = x₂ - x₁`);
-  vSteps.push(`v =\\frac{(x - x_n)}{ h}`);
-  vSteps.push(`v =\\frac{(${x} - ${xi[n - 1]})}{ ${h}}`);
-
-  vSteps.push(`v = ${(x - xi[n - 1]) / h}`);
-
-  // Building the polynomial step by step
-  for (let i = 1; i < n; i++) {
-    uProduct *= u + i - 1;
-    factorial *= i;
-    let term = (uProduct * diffTable[n - 1][i]) / factorial;
-
-    // Adding this term to the interpolated value
-    interpolatedValue += term;
-
-    // Formula steps
-    stepFormulas.push(`${tr[i]}`);
-
-    // Substituted steps
-    let stepMid = [` `];
-    for (let ij = 2; ij <= i; ij++) {
-      stepMid.push(` (${u} + ${ij-1})`);
-    }
-    let stepMidString = stepMid.join(" * ");
-
-    stepSubstituted.push(
-      `\\frac{(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)})}{ ${i}!}`
-    );
-
-    // Calculated steps
-    stepCalculated.push(`(${term})`);
-  }
-
+  const interpolatedValue = calculateNewtonPolynomial(points, diffTable2, x, stepFormulas, stepSubstituted, stepCalculated);
   return {
     interpolatedValue,
     diffTable,
     stepFormulas,
     stepSubstituted,
     stepCalculated,
-    vSteps,
+    vSteps: [], // Add your steps if needed
   };
+}
+
+function calculateNewtonPolynomial(points, diffTable, x, stepFormulas, stepSubstituted, stepCalculated) {
+  const n = points.length;
+  let result = diffTable[0][0]; // P(0)
+  let step='' ;
+  let step2=`x_0` ;
+  let step3=`` ;
+    stepFormulas.push(`f(${x}) = y_0`);
+    stepSubstituted.push(`f(${x})= ${diffTable[0][0]}`);
+    stepCalculated.push(`f(${x}) =  ${diffTable[0][0]}`);
+  let product = 1;
+  for (let i = 1; i < n; i++) {
+    product = 1;
+    for (let j = 0; j < i; j++) {
+      product *= (x - points[j].x);
+     
+    }
+    step += `(x - x_${i-1})`;
+    step2 += `x_${i}`;
+    step3 += `(${x} - ${points[i-1].x})`;
+    result += (product * diffTable[0][i]);
+    stepFormulas.push(` ${step} f [${step2}]`);
+    stepSubstituted.push(`(${step3}*${diffTable[0][i].toFixed(4)}  )`);
+    stepCalculated.push(` ${diffTable[0][i].toFixed(4) * product}`);
+  }
+
+  return result;
 }

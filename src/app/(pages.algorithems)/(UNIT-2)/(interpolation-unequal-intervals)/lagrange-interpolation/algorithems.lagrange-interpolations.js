@@ -2,14 +2,14 @@
 import { useState, useRef } from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
-import Plot from "../Plot";
+import Plot from "../../(interpolation-equal-intervals)/Plot";
 import TButton from "../../../../components/TButton";
 
 import ExportToPNG from "@/app/utils/ExportToPNG";
 
 
 
-export default function NewtonBackwardInterpolations({ theme }) {
+export default function LagrangeInterpolations({ theme }) {
   const [vSteps, setVSteps] = useState([]);
 
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
@@ -82,12 +82,11 @@ export default function NewtonBackwardInterpolations({ theme }) {
     const points = xValues.map((xi, i) => ({ x: xi, y: yValues[i] }));
     const {
       interpolatedValue,
-      diffTable,
       stepFormulas,
       stepSubstituted,
       stepCalculated,
-      vSteps,
-    } = newtonBackwardInterpolation(points, x);
+      diffTable
+    } = lagrangeInterpolation(points, x);
 
     const minX = Math.min(...xValues) - 5;
     const maxX = Math.max(...xValues) + 5;
@@ -107,9 +106,9 @@ export default function NewtonBackwardInterpolations({ theme }) {
   };
 
   const handleDemo = async () => {
-    const demoX = [24, 28, 32, 36, 40];
-    const demoY = [28.06, 30.19, 32.75, 34.94, 40];
-    const demoInterpolateX = 33;
+    const demoX = [0,2,3,5,6];
+    const demoY = [5,7,8,10,12];
+    const demoInterpolateX = 4;
 
     setDemoInProgress(true);
 
@@ -142,7 +141,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
     <div className="container mx-auto md:p-8  transition-all duration-300 dark:bg-neutral-700 dark:text-white">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
         <h1 className="text-2xl font-bold">
-          Newton Backward Interpolation Calculator
+        Lagrange Interpolation Method Calculator
         </h1>
 
 
@@ -270,7 +269,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
           <Plot  points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))}
               xRange={xRange} 
               darkTheme={theme}
-              func={newtonBackwardInterpolation} />
+              func={lagrangeInterpolation} />
         </div>
       )}
      
@@ -294,32 +293,21 @@ export default function NewtonBackwardInterpolations({ theme }) {
             <thead>
               <tr>
                 <th className="border border-gray-300 p-2">x</th>
-                {Array.from({ length: diffTable.length }).map((_, i) => (
-                  <th key={i} className="border border-gray-300 p-2">
-                    Δ<sup>{i}</sup>Y
-                  </th>
-                ))}
+                <th className="border border-gray-300 p-2">y</th>
+                
+                <th className="border border-gray-300 p-2"><InlineMath math=" L_n(x)"/></th>
+                
               </tr>
             </thead>
             <tbody>
               {diffTable.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className={
-                    rowIndex === diffTable.length - 1 ? "bg-red-500" : ""
-                  }
-                >
+                <tr key={rowIndex} >
                   <td className="border border-gray-300 p-2">
                     {xValues[rowIndex]}
                   </td>
 
                   {row.map((value, colIndex) => (
-                    <td key={colIndex} className="border border-gray-300 p-2">
-                      {value !== undefined
-                        ? value.toFixed(4) !== "0.0000"
-                          ? value.toFixed(4)
-                          : ""
-                        : ""}
+                    <td key={colIndex} className="border border-gray-300 p-2"><InlineMath math={value.toString()}/>
                     </td>
                   ))}
                 </tr>
@@ -334,52 +322,35 @@ export default function NewtonBackwardInterpolations({ theme }) {
 
 
       <div id="steps" className="mt-6 text-wrap dark:bg-neutral-700">
-      
-        {vSteps.length > 0 && (
-          <div className="mt-6 overflow-visible">
-            <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2> <div className="inline-block float-right" >
-            <ExportToPNG 
-           elementId="steps"
-           fileName="steps.png"
-          tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG" 
-          color="blue" 
-          altText="Export&nbsp;steps" 
-          className="" 
-          
-           float="float-right" />
-        
-            
-
-
-   <TButton
-        onClick={() =>
-          setInline(prev => !prev)}
-                                                        
-           float="float-right"
-            className="m-1 inline-block absolute
-          top-0 left-[-70px] "
-            altText="Inline"
-              tooltipText="Inline&nbsp;or&nbsp;Block"
-            color="red"
-/>
-</div></div>
-
-            <div className="mt-2 p-4 border border-gray-300 rounded-lg">
-
-              <pre className="overflow-x-auto">
-                <BlockMath math={vSteps.join(",")} />
-              </pre>
-
-            </div>
-          </div>
-        )}
-
-
-
         <div className="space-y-4 ">
           {polynomialSteps.formulas.length > 0 && (
             <div className="mt-6">
-              <h2 className="text-xl font-semibold">Polynomial Steps</h2>
+              <h2 className="text-xl font-semibold ">Polynomial Steps</h2>
+              <div className="grid grid-cols-2 gap-4">
+  <div>
+    <TButton
+      onClick={() => setInline((prev) => !prev)}
+      className="m-1 inline-block"
+      altText="Inline"
+      tooltipText="Inline&nbsp;or&nbsp;Block"
+      color="red"
+    />
+  </div>
+
+  <div className="text-right">
+    <ExportToPNG
+      elementId="steps"
+      fileName="steps.png"
+      tooltipText="Export&nbsp;Polynomial Steps&nbsp;to&nbsp;PNG"
+      color="blue"
+      altText="Export&nbsp;steps"
+      className=""
+    />
+  </div>
+</div>
+
+
+              
               <div className="mt-2 p-4 border border-gray-300 rounded-lg">
                 <div className="">
                   <h3 className="text-lg font-semibold p-5">Formulas:</h3>
@@ -440,90 +411,51 @@ export default function NewtonBackwardInterpolations({ theme }) {
   );
 }
 
-function newtonBackwardInterpolation(points, x) {
-  const tr = [
-    `y_{n}`,
-    `\\frac{v}{1!} \\Delta^{1} y_{n-1} `,
-    `\\frac{v(v+1)}{2!} \\Delta^{2} y_{n-2}`,
-    `\\frac{v(v+1)(v+2)}{3!} \\Delta^{3} y_{n-3}`,
-    `\\frac{v(v+1)(v+2)(v+3)}{4!} \\Delta^{4} y_{n-4}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)}{5!} \\Delta^{5} y_{n-5}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)}{6!} \\Delta^{6} y_{n-6}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)}{7!} \\Delta^{7} y_{n-7}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)}{8!} \\Delta^{8} y_{n-8}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)}{9!} \\Delta^{9} y_{n-9}`,
-    `\\frac{v(v+1)(v+2)(v+3)(v+4)(v+5)(v+6)(v+7)(v+8)(v+9)}{10!} \\Delta^{10} y_{n-10}`
-  ];
-
+function lagrangeInterpolation(points, x) {
   const n = points.length;
-  const xi = points.map((p) => p.x);
-  const yi = points.map((p) => p.y);
+  let interpolatedValue = 0; // Resulting interpolated value
+  const stepFormulas = []; // Step formulas
+  const stepSubstituted = []; // Substituted steps
+  const stepCalculated = []; // Calculated steps
+  stepFormulas.push(`P(${x}) =`);
+  stepSubstituted.push(`P(${x}) =`);
+  stepCalculated.push(`P(${x}) =`);
+  // Build the Lagrange interpolation
 
- 
-
-  let diffTable = Array.from({ length: n }, (_, i) => Array(n).fill(0));
+  const diffTable = new Array(n).fill(0).map(() => new Array(2).fill(0));
   for (let i = 0; i < n; i++) {
-    diffTable[i][0] = yi[i];
+    diffTable[i][0] = points[i].y;
   }
-
-  // Building the difference table
-  for (let j = 1; j < n; j++) {
-    for (let i = n - 1; i >= j; i--) {
-      diffTable[i][j] = diffTable[i][j - 1] - diffTable[i - 1][j - 1];
+  for (let i = 0; i < n; i++) {
+    
+    let term = 1; 
+    let step1 = ` ${points[i].y}*`;
+    let step = ` `;
+    let step2 = ` `;
+    let formula =`y_${i}`;
+    for (let j = 0; j < n; j++) {
+      if (j !== i) {
+        term *= (x - points[j].x) / (points[i].x - points[j].x); 
+        step += `  \\frac{(${x} - ${points[j].x})}{(${points[i].x} - ${points[j].x})}`; 
+        formula +=`* \\frac{(x - x_${j})}{x_${i} - x_${j}}`;
+      }
     }
-  }
-  const h = xi[1] - xi[0];
-  let u = (x - xi[n - 1]) / (xi[1] - xi[0]); // Calculate 'u'
-  let interpolatedValue = diffTable[n - 1][0]; // Starting with the last y-value
-  console.log(xi);
-  let uProduct = 1;
-  let factorial = 1;
-
-  let stepFormulas = [`P(x) = ${tr[0]}`]; // Step for polynomial formula
-  let stepSubstituted = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Substituted step
-  let stepCalculated = [`P(${x}) = ${diffTable[n - 1][0]}`]; // Initial calculated step
-
-  // Adding step for calculating 'v'
-  let vSteps = [];
-  vSteps.push(`h = x₂ - x₁`);
-  vSteps.push(`v =\\frac{(x - x_n)}{ h}`);
-  vSteps.push(`v =\\frac{(${x} - ${xi[n - 1]})}{ ${h}}`);
-
-  vSteps.push(`v = ${(x - xi[n - 1]) / h}`);
-
-  // Building the polynomial step by step
-  for (let i = 1; i < n; i++) {
-    uProduct *= u + i - 1;
-    factorial *= i;
-    let term = (uProduct * diffTable[n - 1][i]) / factorial;
-
-    // Adding this term to the interpolated value
-    interpolatedValue += term;
-
-    // Formula steps
-    stepFormulas.push(`${tr[i]}`);
-
-    // Substituted steps
-    let stepMid = [` `];
-    for (let ij = 2; ij <= i; ij++) {
-      stepMid.push(` (${u} + ${ij-1})`);
-    }
-    let stepMidString = stepMid.join(" * ");
-
-    stepSubstituted.push(
-      `\\frac{(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)})}{ ${i}!}`
-    );
-
-    // Calculated steps
-    stepCalculated.push(`(${term})`);
+   step1 += step;
+   step2 += step;
+    interpolatedValue += term*points[i].y; // Add to the interpolated value
+    stepFormulas.push(formula); // Add the formula step
+    stepSubstituted.push(` ${step1}`); // Add the substituted step
+    stepCalculated.push(` ${(term*points[i].y).toFixed(4)}`); // Add the calculated step
+    
+    diffTable[i][1] = `${step2} = ${term.toFixed(4)}`;
   }
 
   return {
-    interpolatedValue,
-    diffTable,
+    interpolatedValue: interpolatedValue.toFixed(4), 
     stepFormulas,
     stepSubstituted,
     stepCalculated,
-    vSteps,
+    diffTable
   };
 }
+

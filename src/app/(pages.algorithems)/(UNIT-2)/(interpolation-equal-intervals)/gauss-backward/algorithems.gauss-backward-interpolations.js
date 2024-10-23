@@ -2,23 +2,20 @@
 import { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
-import Plot from "../Plot";
+import Plot from "../gauss-forward/Plot";
 import TButton from "../../../../components/TButton";
-
 import ExportToPNG from "@/app/utils/ExportToPNG";
 
-
-export default function NewtonForwardInterpolations({ theme }) {
+export default function GaussBackwardInterpolation({ theme }) {
   const [vSteps, setVSteps] = useState([]);
-
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
- 
-
   const [inline, setInline] = useState(false);
-  const [rows, setRows] = useState([{ x: "", y: "" }]);
+  const [rows, setRows] = useState([{ x: "0", y: "0" }]);
   const [interpolateX, setInterpolateX] = useState("");
   const [output, setOutput] = useState("");
   const [diffTable, setDiffTable] = useState([]);
+  const [mid, setMid] = useState(0);
+  const [interpolatedValue, setInterpolatedValue] = useState(0);
   const [polynomialSteps, setPolynomialSteps] = useState({
     formulas: [],
     substituted: [],
@@ -26,25 +23,39 @@ export default function NewtonForwardInterpolations({ theme }) {
     final: "",
   });
   const [demoInProgress, setDemoInProgress] = useState(false);
-  // Function to export table to PNG
+  
+  if (typeof window !== "undefined") {
+    let keysDown = {};
+    window.onkeydown = function(e) {
+      keysDown[e.key] = true;
+    
+      if (keysDown["Control"] &&  keysDown["c"]) {
+        //do what you want when control and a is pressed for example
+        handleAddRow();
+      }
+    }
+    
+    window.onkeyup = function(e) {
+      keysDown[e.key] = false;
+    }
+  }
  
   const handleAddRow = () => {
     setRows([...rows, { x: "", y: "" }]);
-  };
-  const handleDeleteRow = (index) => {
-    if (rows.length === 1) {
-      setRows([{ x: "", y: "" }]);
-    } else {
-      const newRows = rows.filter((_, i) => i !== index);
-      setRows(newRows);
-    }
-  };
 
-  const handleInputChange = (index, type, value) => {
+  };
+  const handleInputChange = (index, field, value) => {
     const newRows = [...rows];
-    newRows[index][type] = value;
+    newRows[index][field] = value;
     setRows(newRows);
   };
+
+  const handleDeleteRow = (index) => {
+    const newRows = rows.length > 1 ? rows.filter((_, i) => i !== index) : [{ x: "", y: "" }];
+    setRows(newRows);
+  };
+  const xValues = rows.map((row) => parseFloat(row.x));
+
 
   const handleReset = () => {
     setRows([{ x: "", y: "" }]);
@@ -59,6 +70,7 @@ export default function NewtonForwardInterpolations({ theme }) {
       final: "",
     });
   };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const xValues = rows.map((row) => parseFloat(row.x));
@@ -71,6 +83,10 @@ export default function NewtonForwardInterpolations({ theme }) {
     }
 
     const points = xValues.map((xi, i) => ({ x: xi, y: yValues[i] }));
+    const midp=midPoint(points,x);
+    setMid(midp);
+    
+    
     const {
       interpolatedValue,
       diffTable,
@@ -78,7 +94,7 @@ export default function NewtonForwardInterpolations({ theme }) {
       stepSubstituted,
       stepCalculated,
       vSteps,
-    } = newtonForwardInterpolation(points, x);
+    } = gaussianBackwardInterpolation(points, x ,midp);  
 
     const minX = Math.min(...xValues) - 5;
     const maxX = Math.max(...xValues) + 5;
@@ -95,20 +111,19 @@ export default function NewtonForwardInterpolations({ theme }) {
       final: `Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`,
     });
     setOutput(`Interpolated value at x = ${x}: P(${x}) = ${interpolatedValue}`);
+    setInterpolatedValue(interpolatedValue);
   };
-  const xValues = rows.map((row) => parseFloat(row.x));
 
   const handleDemo = async () => {
-    const demoX = [ 1, 2, 3, 4];
-    const demoY = [ 2, 5, 10, 17];
-    const demoInterpolateX = 2.5;
-  
+    const demoX = [1931, 1941 ,1951, 1961, 1971];
+    const demoY = [15,20,27,39,52];
+    const demoInterpolateX = 1946;
+
     setDemoInProgress(true);
-  
-    // Simulate filling the rows with demo data
+
     for (let i = 0; i < demoX.length; i++) {
       await new Promise((resolve) => setTimeout(resolve, 500));
-  
+
       setRows((prevRows) => {
         const newRows = [...prevRows];
         if (newRows[i]) {
@@ -120,24 +135,22 @@ export default function NewtonForwardInterpolations({ theme }) {
         return newRows;
       });
     }
-  
+
     await new Promise((resolve) => setTimeout(resolve, 500));
     setInterpolateX(demoInterpolateX);
 
     await new Promise((resolve) => setTimeout(resolve, 500));
     document.getElementById("interpolateButton").click();
-   
+
     handleSubmit({ preventDefault: () => {} });
-  
-    setDemoInProgress(false);
+    document.getElementById("interpolateButton").click();
+     setDemoInProgress(false);
   };
-  
+
   return (
     <div className="container mx-auto md:p-8 transition-all duration-300 dark:bg-neutral-700 dark:text-white">
       <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
-        <h1 className="text-2xl font-bold">
-          Newton Forward Interpolation Calculator
-        </h1>
+        <h1 className="text-2xl font-bold">Gauss Backward Interpolation Calculator</h1>
         <TButton
           tooltipText="Demo"
           onClick={handleDemo}
@@ -146,15 +159,14 @@ export default function NewtonForwardInterpolations({ theme }) {
           altText={demoInProgress ? "Demo Running..." : "Demo"}
         />
       </div>
-  
+
       <form onSubmit={handleSubmit} className="space-y-4">
-      <table className="w-[80%] m-auto table-auto md:ml-[15%] md:table-fixed   p-4 shadow-md ">
+        <table className="w-[80%] m-auto table-auto md:ml-[15%] md:table-fixed   p-4 shadow-md ">
           <thead>
             <tr >
               <th className="border border-gray-300 p-2">X Value</th>
+              <th className="border border-gray-300 p-2">Y Value</th>
 
-              <th className="border border-gray-300z p-2">Y Value</th>
-              <th className="w-[100px]"></th>
             </tr>
           </thead>
           <tbody >
@@ -204,14 +216,14 @@ export default function NewtonForwardInterpolations({ theme }) {
           </tbody>
         </table>
         <TButton
-          tooltipText="add&nbsp;row"
+          tooltipText="add&nbsp;row&nbsp;(Ctrl+C)"
           onClick={handleAddRow}
           imgSrc="/add-row-below.svg"
           altText="add row"
           color="blue"
           className="text-lg"
         />
-        <div className="space-y-2 shadow-lg border p-2">
+        <div className="space-y-2 shadow-lg border p-2 rounded-xl">
           <label htmlFor="interpolateX" className="font-bold">Interpolate at X:</label>
           <input
             type="number"
@@ -244,7 +256,12 @@ export default function NewtonForwardInterpolations({ theme }) {
 
 
       </form> 
-
+      {output && (
+      <div className="mt-4 p-4 border rounded shadow-md bg-gray-100 dark:bg-neutral-800">
+        <h3 className="font-bold">Output:</h3>
+        <p>{output}</p>
+      </div>
+    )}
       {xRange.length > 0 && (
         <div className="mt-6 mx-auto dark:bg-neutral-600 p-8 rounded-2xl  hover:border hover:border-neutral-300 ">
           <ExportToPNG 
@@ -257,10 +274,11 @@ export default function NewtonForwardInterpolations({ theme }) {
          
            float="float-right" />
           <h2 className="text-xl font-semibold ">Plot:</h2>
-          <Plot  points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))}
-              xRange={xRange} 
-              darkTheme={theme}
-              func={newtonForwardInterpolation} />
+          <Plot   points={rows.map(row => ({ x: parseFloat(row.x), y: parseFloat(row.y) }))} 
+  xRange={xRange} 
+  darkTheme={theme} 
+  func={gaussianBackwardInterpolation}
+  helpfunc={midPoint} />
         </div>
       )} 
       
@@ -285,6 +303,7 @@ export default function NewtonForwardInterpolations({ theme }) {
             <thead>
               <tr>
                 <th className="border border-gray-300 p-2">x</th>
+                <th className="border border-gray-300 p-2">p</th>
                 {Array.from({ length: diffTable.length }).map((_, i) => (
                   <th key={i} className="border border-gray-300 p-2">
                     Δ<sup>{i}</sup>Y
@@ -297,11 +316,14 @@ export default function NewtonForwardInterpolations({ theme }) {
                 <tr
                   key={rowIndex}
                   className={
-                    rowIndex ===  0 ? "bg-red-500" : ""
+                    xValues[rowIndex]-mid ===  0 ? "bg-red-500" : ""
                   }
                 >
                   <td className="border border-gray-300 p-2">
                     {xValues[rowIndex]}
+                  </td>
+                  <td className="border border-gray-300 p-2">
+                    {xValues[rowIndex]-mid}
                   </td>
 
                   {row.map((value, colIndex) => (
@@ -329,7 +351,7 @@ export default function NewtonForwardInterpolations({ theme }) {
       
       {vSteps.length > 0 && (
         <div className="mt-6 overflow-visible">
-          <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">V Calculation Steps</h2>
+          <div className=" py-4"><h2 className="text-xl font-semibold inline-block ">p Calculation Steps</h2>
            <div className="inline-block float-right  flex flex-row" >
             <ExportToPNG 
            elementId="steps"
@@ -340,8 +362,7 @@ export default function NewtonForwardInterpolations({ theme }) {
           className="inline " 
           
            float="float" />
-        
-
+     
 
 </div></div>
 
@@ -366,7 +387,7 @@ export default function NewtonForwardInterpolations({ theme }) {
         setInline(prev => !prev)}
 
          float="float-right"
-          className="pb-2 inline-block "
+          className=" inline-block "
           altText="Inline"
             tooltipText="Inline&nbsp;or&nbsp;Block"
           color="red"
@@ -427,97 +448,155 @@ export default function NewtonForwardInterpolations({ theme }) {
 
       </div>
     </div>
-    
-  </div>
+    </div>
   );
-  
 }
-// Newton Forward Interpolation Calculation
-function  newtonForwardInterpolation(points, x) {
+function gaussianBackwardInterpolation(points, x ,mid) {
   const tr = [
-    `y_{0}`,
-    `\\frac{v}{1!} \\Delta^{1} y_{0} `,
-    `\\frac{v(v-1)}{2!} \\Delta^{2} y_{0}`,
-    `\\frac{v(v-1)(v-2)}{3!} \\Delta^{3} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)}{4!} \\Delta^{4} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)}{5!} \\Delta^{5} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)(v-5)}{6!} \\Delta^{6} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)(v-5)(v-6)}{7!} \\Delta^{7} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)(v-5)(v-6)(v-7)}{8!} \\Delta^{8} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)(v-5)(v-6)(v-7)(v-8)}{9!} \\Delta^{9} y_{0}`,
-    `\\frac{v(v-1)(v-2)(v-3)(v-4)(v-5)(v-6)(v-7)(v-8)(v-9)}{10!} \\Delta^{10} y_{0}`
-  ];
+    `y_n`,
+    `\\frac{p}{1!} \\Delta y_{n-1}`,
+    `\\frac{(p+1)p}{2!} \\Delta^2 y_{n-1}`,
+    `\\frac{(p+1)p(p-1)}{3!} \\Delta^3 y_{n-2}`,
+    `\\frac{(p+2)(p+1)p(p-1)}{4!} \\Delta^4 y_{n-3}`,
+    `\\frac{(p+2)(p+1)p(p-1)(p-2)}{5!} \\Delta^5 y_{n-4}`,
+    `\\frac{(p+3)(p+2)(p+1)p(p-1)(p-2)}{6!} \\Delta^6 y_{n-5}`,
+    `\\frac{(p+3)(p+2)(p+1)p(p-1)(p-2)(p-3)}{7!} \\Delta^7 y_{n-6}`,
+    `\\frac{(p+4)(p+3)(p+2)(p+1)p(p-1)(p-2)(p-3)}{8!} \\Delta^8 y_{n-7}`,
+    `\\frac{(p+4)(p+3)(p+2)(p+1)p(p-1)(p-2)(p-3)(p-4)}{9!} \\Delta^9 y_{n-8}`,
+    `\\frac{(p+5)(p+4)(p+3)(p+2)(p+1)p(p-1)(p-2)(p-3)(p-4)}{10!} \\Delta^{10} y_{n-9}`
+];
 
-  const n = points.length;
-  const xi = points.map((p) => p.x);
-  const yi = points.map((p) => p.y);
 
-  // Initialize the difference table as a 2D array (n x n)
-  const diffTable = Array.from({ length: n }, () => Array(n).fill(0));
+    
+   
+    const n = points.length;
+    const xi = points.map((p) => p.x);
+    const yi = points.map((p) => p.y);
+    const closestMid = xi.reduce((prev, curr) => (Math.abs(curr - mid) < Math.abs(prev - mid) ? curr : prev));
+    const midpoint = xi.indexOf(closestMid);
+    console.log(midpoint);
+    const diffTable2 = Array.from({ length: n }, () => Array(n).fill(0));
+    const diffTable = Array.from({ length: n }, () => Array(n).fill(0));
 
-  // Populate the first column of the difference table with y-values
-  for (let i = 0; i < n; i++) {
-    diffTable[i][0] = yi[i];
-  }
+    for (let i = 0; i < n; i++) {
+        diffTable2[i][0] = yi[i];
+        diffTable[i][0] = yi[i];
+      }
+    
+    for (let j = 1; j < n; j++) {
+        let start = 0;
+        for (let i = start; i < n - j+start; i++ ) {
+          diffTable2[i][j] = (diffTable2[i + 1][j - 1] - diffTable2[i][j - 1]) ;
+         
+          
+        }
+      }
 
-  // Calculate the forward differences for the rest of the table
-  for (let j = 1; j < n; j++) {
-    for (let i = 0; i < n - j; i++) {
-      diffTable[i][j] = diffTable[i + 1][j - 1] - diffTable[i][j - 1];
+    for (let j = 1; j < n; j++) {
+        let start = Math.floor((j+1)/2) ,k=0;
+        for (let i = start; i < n - j+start; i++ ,k++) {
+          diffTable[i][j] =  diffTable2[k][j];
+        }
+      }
+   
+    const h = xi[1] - xi[0];
+    let p = (x - mid) / h; 
+    
+    let interpolatedValue = yi[midpoint]; 
+    let uProduct ; 
+    let factorial = 1; 
+
+    let stepFormulas = [`P(x) = ${tr[0]}`];
+    let stepSubstituted = [`P(${x}) = ${yi[midpoint]}`];
+    let stepCalculated = [`P(${x}) = ${yi[midpoint]}`];
+
+    let vSteps = [];
+    vSteps.push(`h = x - x_0 = ${h}`);
+    vSteps.push(`p = \\frac{(x - x₀)}{ h}`);
+    vSteps.push(`p = \\frac{(${x} - ${mid})}{ ${h}}`);
+    vSteps.push(`p = ${(x - mid) / h}`);
+
+
+    for (let i = 1; i < n; i++) {
+
+        if (typeof diffTable[midpoint][i] === 'undefined') {
+            break;
+        }
+
+        uProduct = p; 
+        for (let ij = 2; ij <= i; ij++) {
+            if (ij % 2 === 0) {
+                uProduct *= p + Math.floor(ij / 2); console.log("ll",uProduct);
+            } else {
+                uProduct *= p - Math.floor(ij / 2); console.log("ll",uProduct);
+            }
+
+        }
+        
+        
+        factorial *= i; 
+        let term = (uProduct * diffTable[midpoint][i]) / factorial;
+        console.log("Term for step", i, ":", term);
+        interpolatedValue += term;
+        console.log("Term for step", i, ":", interpolatedValue);
+        stepCalculated.push(`(${term.toFixed(4)})`);
+        stepFormulas.push(`${tr[i]}`);
+
+        let stepMid = [` `];
+        let stepMidr = [` `];
+
+        for (let ij = 2; ij <= i; ij++) {
+            if (ij%2===0){
+          stepMidr.push(` (${p} + ${Math.floor((ij)/2)})`);}
+          else{
+          stepMid.push(` (${p} - ${Math.floor((ij)/2)})`);}
+        }
+
+        let stepMidString = stepMid.join(" * ");    
+        let stepMidStringr = stepMidr.join(" * ").trim().slice(1); 
+        if(stepMidStringr)   
+        stepMidStringr +="*";
+        stepSubstituted.push(
+            `\\frac{(${stepMidStringr}${p} ${stepMidString}) * ${diffTable[midpoint][i].toFixed(4)}}{${factorial}}`
+        );
+        
     }
-  }
 
-  // Calculate h (the interval size)
-  const h = xi[1] - xi[0];
-  let v = (x - xi[0]) / h; // Calculate the u-value
-
-  let interpolatedValue = yi[0]; // Start with y_0
-  let uProduct = 1; // To hold the product of u terms
-  let factorial = 1; // To hold the factorial values
-
-  // Steps for detailed explanation
-  let stepFormulas = [`P(x) = ${tr[0]}`];
-  let stepSubstituted = [`P(${x}) = ${yi[0]}`];
-  let stepCalculated = [`P(${x}) = ${yi[0]}`];
-
-  // Adding steps for calculating 'v'
-  let vSteps = [];
-  vSteps.push(`h = x₂ - x₁`);
-  vSteps.push(`v = \\frac{(x - x₀)}{ h}`);
-  vSteps.push(`v = \\frac{(${x} - ${xi[0]})}{ ${h}}`);
-  vSteps.push(`v = ${(x - xi[0]) / h}`);
-
-  // Building the polynomial step by step
-  for (let i = 1; i < n; i++) {
-    uProduct *= v - (i - 1); // Update uProduct for each term
-    factorial *= i; // Calculate factorial
-
-    // Calculate the ith term
-    let term = (uProduct * diffTable[0][i]) / factorial;
-    interpolatedValue += term; // Add the term to the final value
-
-    // Formula steps
-    stepFormulas.push(`${tr[i]}`);
-
-    let stepMid = [``];
-    for (let ij = 2; ij <= i; ij++) {
-      
-      stepMid.push(` (${v} - ${ij-1})`);
-    }
-    let stepMidString = stepMid.join(" * ");
-
-    stepSubstituted.push(
-      `\\frac{(${v} ${stepMidString}) * ${diffTable[0][i].toFixed(4)})}{ ${i}!}`
-    );
-    stepCalculated.push(`(${term.toFixed(4)})`);
-  }
-
-  return {
-    interpolatedValue,
-    diffTable,
-    stepFormulas,
-    stepSubstituted,
-    stepCalculated,
-    vSteps,
-  };
+    return {
+        interpolatedValue,
+        diffTable,
+        stepFormulas,
+        stepSubstituted,
+        stepCalculated,
+        vSteps,
+    };
 }
+ 
+  
+  
+  function midPoint(points, x) {
+    const xi = points.map((p) => p.x);
+  
+    if (x < xi[0]) {
+      console.warn('x is less than the minimum value of xi. Using the first point as the midpoint.');
+      return xi[0];
+    }
+    if (x > xi[xi.length - 1]) {
+      console.warn('x is greater than the maximum value of xi. Using the last point as the midpoint.');
+      return xi[xi.length - 1];
+    }
+  
+    let p = 0;
+    for (let i = 0 ; i < xi.length; i++) {
+      if (xi[i] >= x) {
+        p = i;
+        break;
+      }
+    }
+    console.log("Midpoint index:", xi[p]);
+    return xi[p];
+  }
+  const factorial = (n) => {
+    if (n === 0 || n === 1) return 1;
+    return n * factorial(n - 1);
+  };
