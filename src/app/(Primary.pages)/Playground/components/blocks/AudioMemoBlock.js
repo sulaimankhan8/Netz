@@ -175,19 +175,19 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
   };
 
   return (
-    <div className="p-3.5 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-xl border border-zinc-800 shadow-xl space-y-2.5 select-none">
-      <audio ref={audioRef} src={audioSrc} preload="metadata" />
+    <div className="w-full h-full flex flex-col justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/95 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-800 shadow-sm select-none gap-2">
+      {audioSrc ? <audio ref={audioRef} src={audioSrc} preload="metadata" /> : null}
 
       {/* Top Header & Duration Info */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-blue-500 text-white shadow-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 rounded-lg bg-blue-500 text-white shadow-sm shrink-0">
             <FiMic className="w-3.5 h-3.5" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-xs text-zinc-100">{title}</span>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">{title}</span>
             {tracks.length > 1 && (
-              <span className="text-[10px] text-blue-400 font-mono">
+              <span className="text-[10px] text-blue-500 dark:text-blue-400 font-mono">
                 Auto 15m Chunks ({tracks.length} Tracks)
               </span>
             )}
@@ -195,20 +195,20 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
         </div>
 
         {/* Safe Duration Display (No Infinity/NaN) */}
-        <div className="flex items-center gap-1 text-[11px] font-mono text-zinc-400">
-          <FiVolume2 className="w-3.5 h-3.5 text-blue-400" />
+        <div className="flex items-center gap-1 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">
+          <FiVolume2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
           <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
         </div>
       </div>
 
       {/* Playback Controls & Progress Scrubber */}
-      <div className="flex items-center gap-2.5 pt-1">
+      <div className="flex items-center gap-2 pt-0.5">
         {/* Track Skip Prev */}
         {tracks.length > 1 && (
           <button
             onClick={() => selectTrack(Math.max(0, activeTrackIndex - 1), isPlaying)}
             disabled={activeTrackIndex === 0}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             <FiSkipBack className="w-4 h-4" />
           </button>
@@ -227,14 +227,14 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
           <button
             onClick={() => selectTrack(Math.min(tracks.length - 1, activeTrackIndex + 1), isPlaying)}
             disabled={activeTrackIndex === tracks.length - 1}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             <FiSkipForward className="w-4 h-4" />
           </button>
         )}
 
         {/* Progress Scrubber Bar */}
-        <div className="flex-1 relative flex items-center">
+        <div className="flex-1 relative flex items-center px-1">
           <input
             type="range"
             min={activeTrack.startSec}
@@ -245,7 +245,7 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
               setCurrentTime(newTime);
               if (audioRef.current) audioRef.current.currentTime = newTime;
             }}
-            className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
           />
         </div>
 
@@ -259,7 +259,7 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
             }}
             title={`Loop Mode: ${loopMode}`}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              loopMode !== 'none' ? 'bg-blue-500/20 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'
+              loopMode !== 'none' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
             }`}
           >
             <FiRepeat className="w-3.5 h-3.5" />
@@ -268,7 +268,7 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
             onClick={() => setIsShuffle(!isShuffle)}
             title={isShuffle ? 'Shuffle Enabled' : 'Shuffle Disabled'}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              isShuffle ? 'bg-purple-500/20 text-purple-400' : 'text-zinc-500 hover:text-zinc-300'
+              isShuffle ? 'bg-purple-500/20 text-purple-500 dark:text-purple-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
             }`}
           >
             <FiShuffle className="w-3.5 h-3.5" />
@@ -278,7 +278,7 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
               onClick={() => setShowPlaylist(!showPlaylist)}
               title="Toggle Track Playlist"
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                showPlaylist ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                showPlaylist ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
               }`}
             >
               <FiList className="w-3.5 h-3.5" />
@@ -289,35 +289,35 @@ export default function AudioMemoBlock({ block, onUpdateContent, onDeleteBlock }
 
       {/* 15-Min Chunk Tracks Playlist Dropdown */}
       {(showPlaylist || tracks.length > 1) && (
-        <div className="pt-1 border-t border-zinc-800 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-zinc-400">
+        <div className="pt-1 border-t border-zinc-200 dark:border-zinc-800 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
             <span>Playlist ({tracks.length} Tracks)</span>
             <button
               onClick={() => setAutoPlayNext(!autoPlayNext)}
-              className={`hover:text-blue-400 transition-colors cursor-pointer ${
-                autoPlayNext ? 'text-blue-400 font-semibold' : 'text-zinc-500'
+              className={`hover:text-blue-500 dark:hover:text-blue-400 transition-colors cursor-pointer ${
+                autoPlayNext ? 'text-blue-500 dark:text-blue-400 font-semibold' : 'text-zinc-400'
               }`}
             >
               {autoPlayNext ? '✓ Auto-Play Next ON' : 'Auto-Play Next OFF'}
             </button>
           </div>
 
-          <div className="flex flex-col gap-1 max-h-28 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-1 max-h-24 overflow-y-auto pr-1">
             {tracks.map((track, idx) => (
               <button
                 key={track.id}
                 onClick={() => selectTrack(idx, true)}
                 className={`w-full flex items-center justify-between px-2.5 py-1 rounded-lg text-xs font-mono transition-colors text-left cursor-pointer ${
                   activeTrackIndex === idx
-                    ? 'bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/40'
-                    : 'bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300'
+                    ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/40'
+                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 <div className="flex items-center gap-1.5">
                   <span>{activeTrackIndex === idx && isPlaying ? '▶' : `#${idx + 1}`}</span>
                   <span className="truncate">{track.name}</span>
                 </div>
-                <span className="text-[10px] text-zinc-500">{formatTime(track.durationSec)}</span>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{formatTime(track.durationSec)}</span>
               </button>
             ))}
           </div>

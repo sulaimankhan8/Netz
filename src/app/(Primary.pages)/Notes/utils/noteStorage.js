@@ -15,11 +15,52 @@ export function getNotes() {
   if (typeof window === "undefined") return INITIAL_SAMPLE_NOTES;
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SAMPLE_NOTES));
-      return INITIAL_SAMPLE_NOTES;
+    const legacyData = localStorage.getItem("netz_notes");
+    let legacyNotes = [];
+    if (legacyData) {
+      try {
+        const parsed = JSON.parse(legacyData);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          legacyNotes = parsed.map((item) => ({
+            ...item,
+            id: item.id || `note-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            title: item.title || 'Untitled Math Note',
+            subtitle: item.subtitle || '',
+            tags: Array.isArray(item.tags) ? item.tags : ['Playground'],
+            accessKey: item.accessKey || generateAccessKey(),
+            blocks: Array.isArray(item.blocks) && item.blocks.length > 0 
+              ? item.blocks 
+              : [{ id: `b-${Date.now()}`, type: 'paragraph', content: item.content || '' }]
+          }));
+        }
+      } catch (e) {
+        console.error("Error parsing legacy notes:", e);
+      }
     }
-    return JSON.parse(data);
+
+    if (!data) {
+      const mergedInitial = legacyNotes.length > 0 ? [...legacyNotes, ...INITIAL_SAMPLE_NOTES] : INITIAL_SAMPLE_NOTES;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedInitial));
+      localStorage.setItem("netz_notes", JSON.stringify(mergedInitial));
+      return mergedInitial;
+    }
+
+    let parsedNotes = JSON.parse(data);
+    if (!Array.isArray(parsedNotes)) {
+      parsedNotes = INITIAL_SAMPLE_NOTES;
+    }
+
+    // Merge any external/legacy notes (e.g. from Playground Whiteboard)
+    if (legacyNotes.length > 0) {
+      const existingIds = new Set(parsedNotes.map((n) => n.id));
+      const newItems = legacyNotes.filter((n) => !existingIds.has(n.id));
+      if (newItems.length > 0) {
+        parsedNotes = [...newItems, ...parsedNotes];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedNotes));
+      }
+    }
+
+    return parsedNotes;
   } catch (err) {
     console.error("Failed to load notes from localStorage:", err);
     return INITIAL_SAMPLE_NOTES;
@@ -29,7 +70,9 @@ export function getNotes() {
 export function saveNotes(notes) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    const stringified = JSON.stringify(notes);
+    localStorage.setItem(STORAGE_KEY, stringified);
+    localStorage.setItem("netz_notes", stringified); // Keep Playground synced
   } catch (err) {
     console.error("Failed to save notes to localStorage:", err);
   }

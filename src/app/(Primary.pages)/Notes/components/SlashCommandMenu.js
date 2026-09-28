@@ -108,18 +108,18 @@ export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
   return (
     <div
       ref={menuRef}
-      className="absolute left-0 top-full mt-1 z-[100] w-72 max-h-64 bg-[#202020] border border-[#333333] rounded-xl shadow-2xl overflow-hidden flex flex-col font-sans text-slate-100 animate-fadeIn"
+      className="absolute left-0 top-full mt-1 z-[100] w-72 max-h-64 bg-white dark:bg-[#202020] border border-neutral-200 dark:border-[#333333] rounded-xl shadow-2xl overflow-hidden flex flex-col font-sans text-neutral-900 dark:text-slate-100 animate-fadeIn"
     >
       {/* Header */}
-      <div className="px-3 py-2 border-b border-[#2e2e2e] bg-[#181818] flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+      <div className="px-3 py-2 border-b border-neutral-200 dark:border-[#2e2e2e] bg-neutral-50 dark:bg-[#181818] flex items-center justify-between text-[11px] text-neutral-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
         <span>Slash Commands</span>
-        <span className="text-[10px] text-slate-500 font-mono">esc to close</span>
+        <span className="text-[10px] text-neutral-400 dark:text-slate-500 font-mono">esc to close</span>
       </div>
 
       {/* Item List */}
       <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 custom-notion-scrollbar">
         {filteredItems.length === 0 ? (
-          <div className="p-4 text-center text-xs text-slate-500">
+          <div className="p-4 text-center text-xs text-neutral-500 dark:text-slate-500">
             No block matching "/{query}"
           </div>
         ) : (
@@ -131,17 +131,19 @@ export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
                 onClick={() => onSelect(item)}
                 onMouseEnter={() => setSelectedIndex(idx)}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  isSelected ? 'bg-[#2e2e2e] text-white' : 'hover:bg-[#282828] text-slate-300'
+                  isSelected 
+                    ? 'bg-indigo-50 dark:bg-[#2e2e2e] text-indigo-700 dark:text-white font-medium' 
+                    : 'hover:bg-neutral-100 dark:hover:bg-[#282828] text-neutral-700 dark:text-slate-300'
                 }`}
               >
-                <div className="p-1.5 rounded-md bg-[#181818] border border-[#333333] shrink-0">
+                <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-[#181818] border border-neutral-200 dark:border-[#333333] shrink-0">
                   {item.icon}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-xs font-semibold truncate">{item.title}</h4>
-                  <p className="text-[10px] text-slate-400 truncate">{item.subtitle}</p>
+                  <p className="text-[10px] text-neutral-500 dark:text-slate-400 truncate">{item.subtitle}</p>
                 </div>
-                {isSelected && <FaCheck className="w-3 h-3 text-indigo-400 shrink-0" />}
+                {isSelected && <FaCheck className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />}
               </div>
             );
           })
@@ -149,7 +151,7 @@ export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
       </div>
 
       {/* Footer hint */}
-      <div className="px-3 py-1 border-t border-[#2e2e2e] bg-[#181818] text-[10px] text-slate-500 flex items-center justify-between">
+      <div className="px-3 py-1 border-t border-neutral-200 dark:border-[#2e2e2e] bg-neutral-50 dark:bg-[#181818] text-[10px] text-neutral-500 dark:text-slate-500 flex items-center justify-between">
         <span>↑↓ Navigate</span>
         <span>↵ Select</span>
       </div>

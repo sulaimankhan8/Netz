@@ -536,7 +536,7 @@ export default function PlaygroundCanvasContainer() {
             },
             linkedBlockIds: [],
             position: { x: spawnX, y: spawnY },
-            size: { width: 320, height: 110 },
+            size: { width: 360, height: 180 },
             status: 'active',
             isMinimal: false,
           };
@@ -1067,7 +1067,7 @@ export default function PlaygroundCanvasContainer() {
       ))}
 
       {/* Top Floating Page Manager (Multi-Page Notebook) */}
-      <div className="fixed top-4 left-4 z-40">
+      <div className="fixed top-4 left-16 md:left-[96px] z-40 transition-all">
         <PageManager
           pages={pages}
           currentPageIndex={currentPageIndex}
@@ -1103,6 +1103,8 @@ export default function PlaygroundCanvasContainer() {
         onConfirmSync={(payload) => {
           // Save to Notes workspace via localStorage
           try {
+            const rawV2 = localStorage.getItem('netz_notes_v2_data');
+            const existingV2 = rawV2 ? JSON.parse(rawV2) : [];
             const existingNotes = JSON.parse(localStorage.getItem('netz_notes') || '[]');
             const newNote = {
               id: `note_${Date.now()}`,
@@ -1121,7 +1123,9 @@ export default function PlaygroundCanvasContainer() {
               })),
             };
             existingNotes.unshift(newNote);
+            existingV2.unshift(newNote);
             localStorage.setItem('netz_notes', JSON.stringify(existingNotes));
+            localStorage.setItem('netz_notes_v2_data', JSON.stringify(existingV2));
           } catch (err) {
             console.error('Failed to sync to Notes workspace:', err);
           }

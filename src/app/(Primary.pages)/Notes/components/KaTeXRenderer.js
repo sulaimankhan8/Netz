@@ -32,7 +32,7 @@ export default function KaTeXRenderer({ math, blockMode = false }) {
 
   return (
     <span
-      className="katex-rendered-output text-slate-100"
+      className="katex-rendered-output text-neutral-900 dark:text-slate-100"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

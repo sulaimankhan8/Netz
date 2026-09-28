@@ -1,5 +1,11 @@
 import { evaluateMath, parseUserFunction, getSymbolicDerivative, sanitizeMathString } from '../../../utils/evaluateMath';
 
+export function parseNum(val, fallback) {
+  if (val === undefined || val === null || val === '') return fallback;
+  const parsed = parseFloat(val);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 export const ALGORITHMS_CATALOG = [
   // UNIT 1: ALGEBRAIC & TRANSCENDENTAL EQUATIONS
   {
@@ -12,8 +18,8 @@ export const ALGORITHMS_CATALOG = [
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x^3 - 4*x - 9');
       const derivExpr = getSymbolicDerivative(expr);
-      let currentX = parseFloat(params.x0) || 2.5;
-      const tol = parseFloat(params.tolerance) || 0.0001;
+      let currentX = parseNum(params.x0, 2.5);
+      const tol = parseNum(params.tolerance, 0.0001);
       const steps = [];
 
       for (let i = 0; i < 8; i++) {
@@ -46,9 +52,9 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: 'x^3 - 4*x - 9', a: 2, b: 3, tolerance: 0.0001 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x^3 - 4*x - 9');
-      let a = parseFloat(params.a) || 2;
-      let b = parseFloat(params.b) || 3;
-      const tol = parseFloat(params.tolerance) || 0.0001;
+      let a = parseNum(params.a, 2);
+      let b = parseNum(params.b, 3);
+      const tol = parseNum(params.tolerance, 0.0001);
       const steps = [];
       let c = a;
 
@@ -79,8 +85,8 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: 'x^3 - 4*x - 9', a: 2, b: 3, tolerance: 0.0001 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x^3 - 4*x - 9');
-      let a = parseFloat(params.a) || 2;
-      let b = parseFloat(params.b) || 3;
+      let a = parseNum(params.a, 2);
+      let b = parseNum(params.b, 3);
       let c = a;
       const steps = [];
 
@@ -112,7 +118,7 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: '(4*x + 9)^(1/3)', x0: 2.5, maxIter: 6 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || '(4*x + 9)^(1/3)');
-      let currentX = parseFloat(params.x0) || 2.5;
+      let currentX = parseNum(params.x0, 2.5);
       const steps = [];
 
       for (let i = 0; i < 6; i++) {
@@ -140,7 +146,7 @@ export const ALGORITHMS_CATALOG = [
     solve: (params) => {
       const xArr = (params.xValues || '10, 20, 30, 40').split(',').map((v) => parseFloat(v.trim()));
       const yArr = (params.yValues || '46, 66, 81, 93').split(',').map((v) => parseFloat(v.trim()));
-      const targetX = parseFloat(params.targetX) || 15;
+      const targetX = parseNum(params.targetX, 15);
       const n = Math.min(xArr.length, yArr.length);
       const h = xArr[1] - xArr[0];
       const u = (targetX - xArr[0]) / h;
@@ -188,7 +194,7 @@ export const ALGORITHMS_CATALOG = [
     solve: (params) => {
       const xArr = (params.xValues || '10, 20, 30, 40').split(',').map((v) => parseFloat(v.trim()));
       const yArr = (params.yValues || '46, 66, 81, 93').split(',').map((v) => parseFloat(v.trim()));
-      const targetX = parseFloat(params.targetX) || 38;
+      const targetX = parseNum(params.targetX, 38);
       const n = Math.min(xArr.length, yArr.length);
       const h = xArr[1] - xArr[0];
       const v = (targetX - xArr[n - 1]) / h;
@@ -237,7 +243,7 @@ export const ALGORITHMS_CATALOG = [
     solve: (params) => {
       const xArr = (params.xValues || '5, 6, 9, 11').split(',').map((v) => parseFloat(v.trim()));
       const yArr = (params.yValues || '12, 13, 14, 16').split(',').map((v) => parseFloat(v.trim()));
-      const targetX = parseFloat(params.targetX) || 10;
+      const targetX = parseNum(params.targetX, 10);
       const n = Math.min(xArr.length, yArr.length);
       let totalY = 0;
       const steps = [];
@@ -274,7 +280,7 @@ export const ALGORITHMS_CATALOG = [
     solve: (params) => {
       const xArr = (params.xValues || '5, 7, 11, 13').split(',').map((v) => parseFloat(v.trim()));
       const yArr = (params.yValues || '150, 392, 1452, 2366').split(',').map((v) => parseFloat(v.trim()));
-      const targetX = parseFloat(params.targetX) || 9;
+      const targetX = parseNum(params.targetX, 9);
       const n = Math.min(xArr.length, yArr.length);
 
       const div = Array.from({ length: n }, () => Array(n).fill(0));
@@ -319,8 +325,8 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: '1 / (1 + x^2)', a: 0, b: 1, n: 6 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || '1 / (1 + x^2)');
-      const a = parseFloat(params.a) || 0;
-      const b = parseFloat(params.b) || 1;
+      const a = parseNum(params.a, 0);
+      const b = parseNum(params.b, 1);
       const n = parseInt(params.n) || 6;
       const h = (b - a) / n;
       let sum = 0;
@@ -346,8 +352,8 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: '1 / (1 + x)', a: 0, b: 1, n: 6 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || '1 / (1 + x)');
-      const a = parseFloat(params.a) || 0;
-      const b = parseFloat(params.b) || 1;
+      const a = parseNum(params.a, 0);
+      const b = parseNum(params.b, 1);
       const n = parseInt(params.n) || 6;
       const h = (b - a) / n;
       let sum = 0;
@@ -375,8 +381,8 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: '1 / (1 + x^2)', a: 0, b: 1, n: 6 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || '1 / (1 + x^2)');
-      const a = parseFloat(params.a) || 0;
-      const b = parseFloat(params.b) || 1;
+      const a = parseNum(params.a, 0);
+      const b = parseNum(params.b, 1);
       const n = parseInt(params.n) || 6;
       const h = (b - a) / n;
       let sum = 0;
@@ -406,10 +412,10 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: 'x + y', x0: 0, y0: 1, h: 0.1, targetX: 0.5 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x + y');
-      let currX = parseFloat(params.x0) || 0;
-      let currY = parseFloat(params.y0) || 1;
-      const h = parseFloat(params.h) || 0.1;
-      const targetX = parseFloat(params.targetX) || 0.5;
+      let currX = parseNum(params.x0, 0);
+      let currY = parseNum(params.y0, 1);
+      const h = parseNum(params.h, 0.1);
+      const targetX = parseNum(params.targetX, 0.5);
       const steps = [];
       let stepIdx = 0;
 
@@ -439,10 +445,10 @@ export const ALGORITHMS_CATALOG = [
     defaultParams: { expression: 'x + y', x0: 0, y0: 1, h: 0.1, targetX: 0.2 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x + y');
-      let currX = parseFloat(params.x0) || 0;
-      let currY = parseFloat(params.y0) || 1;
-      const h = parseFloat(params.h) || 0.1;
-      const targetX = parseFloat(params.targetX) || 0.2;
+      let currX = parseNum(params.x0, 0);
+      let currY = parseNum(params.y0, 1);
+      const h = parseNum(params.h, 0.1);
+      const targetX = parseNum(params.targetX, 0.2);
       const steps = [];
       let stepIdx = 0;
 
@@ -480,11 +486,11 @@ export const ALGORITHMS_CATALOG = [
     description: 'Tests mean difference for large samples (N ≥ 30) with population standard deviation σ.',
     defaultParams: { sampleMean: 68.5, popMean: 67.0, popStd: 2.5, sampleSize: 100, alpha: 0.05 },
     solve: (params) => {
-      const xbar = parseFloat(params.sampleMean) || 68.5;
-      const mu = parseFloat(params.popMean) || 67.0;
-      const sigma = parseFloat(params.popStd) || 2.5;
-      const n = parseFloat(params.sampleSize) || 100;
-      const alpha = parseFloat(params.alpha) || 0.05;
+      const xbar = parseNum(params.sampleMean, 68.5);
+      const mu = parseNum(params.popMean, 67.0);
+      const sigma = parseNum(params.popStd, 2.5);
+      const n = parseNum(params.sampleSize, 100);
+      const alpha = parseNum(params.alpha, 0.05);
 
       const se = sigma / Math.sqrt(n);
       const zStat = (xbar - mu) / se;
@@ -512,10 +518,10 @@ export const ALGORITHMS_CATALOG = [
     description: 'Tests mean difference for small samples (N < 30) where population standard deviation is unknown.',
     defaultParams: { sampleMean: 22.4, popMean: 20.0, sampleStd: 3.2, sampleSize: 16 },
     solve: (params) => {
-      const xbar = parseFloat(params.sampleMean) || 22.4;
-      const mu = parseFloat(params.popMean) || 20.0;
-      const s = parseFloat(params.sampleStd) || 3.2;
-      const n = parseFloat(params.sampleSize) || 16;
+      const xbar = parseNum(params.sampleMean, 22.4);
+      const mu = parseNum(params.popMean, 20.0);
+      const s = parseNum(params.sampleStd, 3.2);
+      const n = parseNum(params.sampleSize, 16);
       const df = n - 1;
 
       const se = s / Math.sqrt(n);

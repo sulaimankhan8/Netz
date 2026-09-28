@@ -27,16 +27,28 @@ export default function NoteBlockItem({
   const [isSlashOpen, setIsSlashOpen] = useState(false);
 
   const handleContentChange = (val) => {
-    if (val.includes('/')) {
-      const slashIndex = val.lastIndexOf('/');
-      const query = val.slice(slashIndex + 1);
-      setSlashQuery(query);
+    // Only trigger slash menu if slash is at line start or preceded by a whitespace
+    const slashMatch = val.match(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/);
+    if (slashMatch) {
+      setSlashQuery(slashMatch[1]);
       setIsSlashOpen(true);
     } else {
       setIsSlashOpen(false);
     }
 
     onUpdate({ ...block, content: val });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onInsertBlockAfter(index);
+    } else if (e.key === 'Backspace' && (!block.content || block.content.trim() === '')) {
+      if (totalBlocks > 1) {
+        e.preventDefault();
+        onDelete(block.id);
+      }
+    }
   };
 
   const handlePlusClick = (e) => {
@@ -51,7 +63,8 @@ export default function NoteBlockItem({
 
   const handleSelectSlashItem = (item) => {
     setIsSlashOpen(false);
-    let cleanContent = block.content ? block.content.split('/')[0].trim() : '';
+    // Remove only the triggering slash command pattern
+    let cleanContent = block.content ? block.content.replace(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/, '').trim() : '';
 
     if (item.type === 'open-picker') {
       onOpenPicker(block.id);
@@ -69,9 +82,9 @@ export default function NoteBlockItem({
       // Set empty string for heading1, heading2, heading3, callout, and paragraph so placeholders show
       let defaultContent = cleanContent;
       if (['heading1', 'heading2', 'heading3', 'callout', 'paragraph'].includes(item.type)) {
-        defaultContent = '';
+        defaultContent = cleanContent;
       } else if (item.type === 'math') {
-        defaultContent = 'e^{i\\pi} + 1 = 0';
+        defaultContent = cleanContent || 'e^{i\\pi} + 1 = 0';
       }
 
       onUpdate({
@@ -86,17 +99,17 @@ export default function NoteBlockItem({
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative my-1 font-sans text-slate-100 transition-colors w-full rounded-lg"
+      className="group relative my-2 font-sans text-neutral-900 dark:text-slate-100 transition-colors w-full rounded-lg"
     >
-      {/* Clean Hover Controls */}
+      {/* Clean Hover Controls (Positioned responsively on mobile and desktop) */}
       <div
-        className={`absolute -left-20 sm:-left-24 top-0.5 flex items-center space-x-1 transition-opacity duration-150 z-30 shrink-0 bg-[#202020]/90 backdrop-blur-sm border border-[#333333] rounded-lg px-1.5 py-0.5 shadow-lg ${
+        className={`absolute sm:-left-24 sm:top-1 -top-7 left-0 flex items-center space-x-1 transition-opacity duration-150 z-30 shrink-0 bg-white/95 dark:bg-[#202020]/95 backdrop-blur-sm border border-neutral-200 dark:border-[#333333] rounded-lg px-1.5 py-0.5 shadow-md ${
           isHovered ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <button
           onClick={handlePlusClick}
-          className="p-1 rounded text-slate-400 hover:text-white hover:bg-[#2e2e2e] transition-colors"
+          className="p-1 rounded text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-[#2e2e2e] transition-colors"
           title="Add block / open '/' commands"
         >
           <FaPlus className="w-2.5 h-2.5" />
@@ -105,7 +118,7 @@ export default function NoteBlockItem({
         <button
           onClick={() => onMove(index, index - 1)}
           disabled={index === 0}
-          className="p-1 text-slate-400 hover:text-white disabled:opacity-20 hover:bg-[#2e2e2e] rounded transition-colors"
+          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white disabled:opacity-20 dark:hover:bg-[#2e2e2e] rounded transition-colors"
           title="Move Up"
         >
           <FaArrowUp className="w-2.5 h-2.5" />
@@ -114,7 +127,7 @@ export default function NoteBlockItem({
         <button
           onClick={() => onMove(index, index + 1)}
           disabled={index === totalBlocks - 1}
-          className="p-1 text-slate-400 hover:text-white disabled:opacity-20 hover:bg-[#2e2e2e] rounded transition-colors"
+          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white disabled:opacity-20 dark:hover:bg-[#2e2e2e] rounded transition-colors"
           title="Move Down"
         >
           <FaArrowDown className="w-2.5 h-2.5" />
@@ -122,7 +135,7 @@ export default function NoteBlockItem({
 
         <button
           onClick={() => onDelete(block.id)}
-          className="p-1 text-slate-400 hover:text-red-400 hover:bg-[#2e2e2e] rounded transition-colors"
+          className="p-1 text-neutral-500 hover:text-red-500 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-[#2e2e2e] rounded transition-colors"
           title="Delete Block"
         >
           <FaTrash className="w-2.5 h-2.5" />
@@ -136,7 +149,8 @@ export default function NoteBlockItem({
             type="text"
             value={block.content}
             onChange={(e) => handleContentChange(e.target.value)}
-            className="w-full text-2xl sm:text-3xl font-bold bg-transparent text-white focus:outline-none placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
+            onKeyDown={handleKeyDown}
+            className="w-full text-2xl sm:text-3xl font-bold bg-transparent text-neutral-900 dark:text-white focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
             placeholder="Heading 1..."
           />
         )}
@@ -146,7 +160,8 @@ export default function NoteBlockItem({
             type="text"
             value={block.content}
             onChange={(e) => handleContentChange(e.target.value)}
-            className="w-full text-lg sm:text-xl font-semibold bg-transparent text-slate-200 focus:outline-none placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
+            onKeyDown={handleKeyDown}
+            className="w-full text-lg sm:text-xl font-semibold bg-transparent text-neutral-800 dark:text-slate-200 focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
             placeholder="Heading 2..."
           />
         )}
@@ -156,7 +171,8 @@ export default function NoteBlockItem({
             type="text"
             value={block.content}
             onChange={(e) => handleContentChange(e.target.value)}
-            className="w-full text-base font-semibold bg-transparent text-indigo-300 focus:outline-none placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
+            onKeyDown={handleKeyDown}
+            className="w-full text-base font-semibold bg-transparent text-indigo-600 dark:text-indigo-300 focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
             placeholder="Heading 3..."
           />
         )}
@@ -165,39 +181,49 @@ export default function NoteBlockItem({
           <textarea
             value={block.content}
             onChange={(e) => handleContentChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace' && (!block.content || block.content === '')) {
+                if (totalBlocks > 1) {
+                  e.preventDefault();
+                  onDelete(block.id);
+                }
+              }
+            }}
             rows={Math.max(1, (block.content.match(/\n/g) || []).length + 1)}
-            className="w-full bg-transparent text-sm text-slate-300 focus:outline-none resize-none leading-relaxed placeholder-slate-600 focus:placeholder-slate-500"
-            placeholder="Press '/' for commands..."
+            className="w-full bg-transparent text-sm text-neutral-800 dark:text-slate-300 focus:outline-none resize-none leading-relaxed placeholder-neutral-400 dark:placeholder-slate-600 focus:placeholder-neutral-500 dark:focus:placeholder-slate-500"
+            placeholder="Type your notes or press '/' for commands..."
           />
         )}
 
         {block.type === 'math' && (
-          <div className="space-y-2 p-3.5 rounded-xl bg-[#202020] border border-[#333333] w-full">
-            <div className="flex items-center justify-between text-[11px] text-purple-400 font-mono">
+          <div className="space-y-2 p-3.5 rounded-xl bg-neutral-100/90 dark:bg-[#202020] border border-neutral-200 dark:border-[#333333] w-full transition-colors">
+            <div className="flex items-center justify-between text-[11px] text-purple-600 dark:text-purple-400 font-mono font-semibold">
               <span>LaTeX Math Code</span>
-              <span className="text-[10px] text-slate-500">Live KaTeX Render</span>
+              <span className="text-[10px] text-neutral-500 dark:text-slate-500">Live KaTeX Render</span>
             </div>
             <input
               type="text"
               value={block.content}
               onChange={(e) => handleContentChange(e.target.value)}
-              className="w-full bg-[#181818] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500"
+              onKeyDown={handleKeyDown}
+              className="w-full bg-white dark:bg-[#181818] border border-neutral-300 dark:border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs font-mono text-purple-700 dark:text-purple-300 focus:outline-none focus:border-purple-500 transition-colors"
               placeholder="e.g. Z = \frac{\bar{X} - \mu}{\sigma/\sqrt{n}}"
             />
-            <div className="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-center">
+            <div className="p-3 rounded-lg bg-white/80 dark:bg-[#141414] border border-neutral-200 dark:border-[#262626] flex items-center justify-center transition-colors">
               <KaTeXRenderer math={block.content || 'e^{i\\pi} + 1 = 0'} blockMode={true} />
             </div>
           </div>
         )}
 
         {block.type === 'callout' && (
-          <div className="flex items-start space-x-3 p-4 rounded-xl bg-[#25231c] border border-amber-500/30 text-amber-200 text-xs w-full">
-            <FaLightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex items-start space-x-3 p-4 rounded-xl bg-amber-50/90 dark:bg-[#25231c] border border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs w-full transition-colors">
+            <FaLightbulb className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
             <input
               type="text"
               value={block.content}
               onChange={(e) => handleContentChange(e.target.value)}
-              className="w-full bg-transparent text-amber-100 focus:outline-none placeholder-amber-500/50"
+              onKeyDown={handleKeyDown}
+              className="w-full bg-transparent text-amber-950 dark:text-amber-100 focus:outline-none placeholder-amber-600/50 dark:placeholder-amber-500/50 font-medium"
               placeholder="Callout note or key rule..."
             />
           </div>

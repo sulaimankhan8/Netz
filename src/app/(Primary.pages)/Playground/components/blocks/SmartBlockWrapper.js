@@ -107,8 +107,13 @@ export default function SmartBlockWrapper({
   const screenX = position.x * zoomLevel + panOffset.x;
   const screenY = position.y * zoomLevel + panOffset.y;
 
-  const blockWidth = size?.width || (type === 'graph' ? 440 : 360);
-  const blockHeight = size?.height ? `${size.height}px` : (type === 'graph' ? '320px' : 'auto');
+  const minHeightForType = type === 'audio' ? 180 : type === 'graph' ? 320 : 100;
+  const blockWidth = size?.width 
+    ? (type === 'audio' ? Math.max(size.width, 360) : size.width)
+    : (type === 'graph' ? 440 : type === 'audio' ? 360 : 360);
+  const blockHeight = size?.height 
+    ? `${Math.max(size.height, minHeightForType)}px` 
+    : (type === 'graph' ? '320px' : type === 'audio' ? '180px' : 'auto');
 
   // ----------------------------------------------------
   // MODE 1: DONE / VIEW MODE (Clean, lightweight card)
