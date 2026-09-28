@@ -26,47 +26,93 @@ export function extractExpressionFromLatex(latexStr) {
 
   let str = latexStr.trim();
 
-  // Strip leading variable assignment: "y =", "f(x) =", "g(x) =", "z ="
+  // Strip equation LHS assignments: "y =", "f(x) =", "g(x) =", "z =", "y(x) ="
   if (str.includes('=')) {
     const parts = str.split('=');
     const left = parts[0].trim();
-    if (/^(y|f\(x\)|g\(x\)|z)$/i.test(left)) {
+    if (/^(y|f\(x\)|g\(x\)|h\(x\)|z|y\(x\))$/i.test(left)) {
       str = parts.slice(1).join('=').trim();
     } else {
       str = parts[0].trim();
     }
   }
 
-  // Convert LaTeX fractions \frac{a}{b} -> ((a)/(b))
-  while (/\\frac\{([^{}]+)\}\{([^{}]+)\}/.test(str)) {
+  // Remove LaTeX formatting commands like \displaystyle, \text{...}, \mathrm{...}
+  str = str.replace(/\\displaystyle/g, '');
+  str = str.replace(/\\text\{([^{}]+)\}/g, '$1');
+  str = str.replace(/\\mathrm\{([^{}]+)\}/g, '$1');
+
+  // Strip \left and \right delimiters
+  str = str.replace(/\\left\s*([(\[{|])/g, '$1');
+  str = str.replace(/\\right\s*([)\]}|])/g, '$1');
+  str = str.replace(/\\left\./g, '');
+  str = str.replace(/\\right\./g, '');
+
+  // Convert LaTeX fractions recursively to handle nested fractions \frac{a}{b} -> ((a)/(b))
+  let fractionMatched = true;
+  let safetyCount = 0;
+  while (fractionMatched && safetyCount < 10) {
+    safetyCount++;
+    const prevStr = str;
     str = str.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '(($1)/($2))');
+    fractionMatched = str !== prevStr;
   }
 
-  // Convert LaTeX square roots \sqrt{x} -> sqrt(x)
+  // Convert LaTeX roots: \sqrt[n]{x} -> (x)^(1/n), \sqrt{x} -> sqrt(x)
+  str = str.replace(/\\sqrt\[([^\]]+)\]\{([^{}]+)\}/g, '(($2)^(1/($1)))');
   str = str.replace(/\\sqrt\{([^{}]+)\}/g, 'sqrt($1)');
-  str = str.replace(/\\sqrt/g, 'sqrt');
+  str = str.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, 'sqrt($1)');
+
+  // Convert LaTeX absolute value \abs{x} -> abs(x) or |x| -> abs(x)
+  str = str.replace(/\\abs\{([^{}]+)\}/g, 'abs($1)');
+  str = str.replace(/\|([^|]+)\|/g, 'abs($1)');
+
+  // Convert trig function powers: \sin^2(x) -> (sin(x))^2, \cos^{2}(x) -> (cos(x))^2
+  str = str.replace(/\\?(sin|cos|tan|sec|csc|cot)\^\{?(\d+)\}?\s*\(([^)]+)\)/gi, '($1($3))^$2');
+  str = str.replace(/\\?(sin|cos|tan|sec|csc|cot)\^\{?(\d+)\}?\s*([a-zA-Z0-9]+)/gi, '($1($3))^$2');
 
   // Convert LaTeX trig & function symbols
-  str = str.replace(/\\sin/g, 'sin');
-  str = str.replace(/\\cos/g, 'cos');
-  str = str.replace(/\\tan/g, 'tan');
-  str = str.replace(/\\log/g, 'log10');
-  str = str.replace(/\\ln/g, 'log');
-  str = str.replace(/\\abs\{([^{}]+)\}/g, 'abs($1)');
+  str = str.replace(/\\sin/gi, 'sin');
+  str = str.replace(/\\cos/gi, 'cos');
+  str = str.replace(/\\tan/gi, 'tan');
+  str = str.replace(/\\sec/gi, 'sec');
+  str = str.replace(/\\csc/gi, 'csc');
+  str = str.replace(/\\cot/gi, 'cot');
+  str = str.replace(/\\arcsin/gi, 'asin');
+  str = str.replace(/\\arccos/gi, 'acos');
+  str = str.replace(/\\arctan/gi, 'atan');
+  str = str.replace(/\\exp/gi, 'exp');
+  str = str.replace(/\\log/gi, 'log10');
+  str = str.replace(/\\ln/gi, 'log');
+
+  // Convert raw user-typed ln(x) -> log(x) (MathJS uses log for natural log)
+  str = str.replace(/\bln\s*\(/gi, 'log(');
+  str = str.replace(/\bln\s*([a-zA-Z0-9])/gi, 'log($1)');
+
+  // Convert user-typed log10(x) or log(x)
   str = str.replace(/\\cdot/g, '*');
   str = str.replace(/\\times/g, '*');
   str = str.replace(/\\pi/gi, 'pi');
+  str = str.replace(/\\theta/gi, 'theta');
 
   // Convert exponent notation x^{2} -> x^(2)
   str = str.replace(/\^\{([^}]+)\}/g, '^($1)');
 
-  // Fix implicit multiplication: 2x -> 2*x, 3.5x -> 3.5*x, 4(x) -> 4*(x), x(x) -> x*(x)
-  str = str.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
-  str = str.replace(/(\d+)\(/g, '$1*(');
-  str = str.replace(/([a-zA-Z0-9])(sin|cos|tan|log|ln|sqrt|abs)\b/g, '$1*$2');
-  str = str.replace(/\)([\(a-zA-Z0-9])/g, ')*$1');
+  // Fix implicit multiplication:
+  // 1. Number followed by variable / function: 2x -> 2*x, 3.5pi -> 3.5*pi, 4sin(x) -> 4*sin(x)
+  str = str.replace(/(\d+(?:\.\d+)?)\s*([a-zA-Z]|pi|sqrt|sin|cos|tan|log|exp|abs)\b/g, '$1*$2');
+  // 2. Number followed by parenthesis: 2(x+1) -> 2*(x+1)
+  str = str.replace(/(\d+(?:\.\d+)?)\s*\(/g, '$1*(');
+  // 3. Variable followed by parenthesis: x(x+1) -> x*(x+1) (except for known functions)
+  str = str.replace(/\b(?!(?:sin|cos|tan|asin|acos|atan|sec|csc|cot|sqrt|log|log10|exp|abs)\b)([a-zA-Z])\s*\(/g, '$1*(');
+  // 4. Closing parenthesis followed by opening parenthesis or variable: (x+1)(x-1) -> (x+1)*(x-1), (x+1)x -> (x+1)*x
+  str = str.replace(/\)\s*\(/g, ')*(');
+  str = str.replace(/\)\s*([a-zA-Z0-9])/g, ')*$1');
+  // 5. Variable followed by another variable or constant: e.g. pi x -> pi*x
+  str = str.replace(/\b(pi|e)\s+([a-zA-Z])/g, '$1*$2');
+  str = str.replace(/\b([a-zA-Z])\s+(pi|e)\b/g, '$1*$2');
 
-  return str;
+  return str.trim();
 }
 
 /**
@@ -106,9 +152,9 @@ export function generateGraphDatasetFromLatex(latexStr, label = '', domain = [-1
         yVal = Math.abs(yVal.im) < 1e-9 ? yVal.re : NaN;
       }
 
-      if (typeof yVal === 'number' && !isNaN(yVal) && isFinite(yVal) && Math.abs(yVal) <= 1000) {
-        // Asymptote / Singularity Detection (e.g. tan(x) or 1/x jumping from +1000 to -1000)
-        if (prevY !== null && Math.abs(yVal - prevY) > 80) {
+      if (typeof yVal === 'number' && !isNaN(yVal) && isFinite(yVal) && Math.abs(yVal) <= 500) {
+        // Asymptote / Singularity Detection (e.g. tan(x) or 1/x jumping between extreme limits)
+        if (prevY !== null && Math.abs(yVal - prevY) > 60) {
           points.push({ x, y: null });
         } else {
           points.push({ x, y: Number(yVal.toFixed(4)) });
@@ -134,7 +180,7 @@ export function generateGraphDatasetFromLatex(latexStr, label = '', domain = [-1
     data: points,
     borderColor: strokeColor,
     backgroundColor: strokeColor + '15',
-    borderWidth: 3,
+    borderWidth: 2.5,
     tension: 0.2,
     pointRadius: 0,
     pointHoverRadius: 6,
@@ -144,10 +190,10 @@ export function generateGraphDatasetFromLatex(latexStr, label = '', domain = [-1
 /**
  * Appends a new curve dataset to an existing GraphBlock content payload.
  */
-export function appendCurveToGraphBlock(existingGraphData, newLatexStr, label) {
+export function appendCurveToGraphBlock(existingGraphData, newLatexStr, label, domain = [-10, 10]) {
   const currentDatasets = existingGraphData?.datasets || [];
   const colorIndex = currentDatasets.length;
-  const newDataset = generateGraphDatasetFromLatex(newLatexStr, label, [-10, 10], colorIndex);
+  const newDataset = generateGraphDatasetFromLatex(newLatexStr, label || newLatexStr, domain, colorIndex);
 
   if (!newDataset) return existingGraphData;
 

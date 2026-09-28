@@ -415,15 +415,54 @@ export default function PlaygroundCanvasContainer() {
     }
   }, []);
 
-  // Spawn New Smart Block
+  // Unified Block Content Update Handler with Reactive Link Propagation
+  const handleUpdateBlockContent = useCallback((blockId, content) => {
+    dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } });
+
+    // If an equation block updates its LaTeX formula, reactively update any linked graph blocks
+    if (content && content.latex !== undefined) {
+      const currentBlocks = blockStateRef.current.blocks;
+      const currentLinks = blockStateRef.current.links;
+
+      const linkedGraphIds = currentLinks
+        .filter((l) => l.sourceBlockId === blockId || l.targetBlockId === blockId)
+        .map((l) => (l.sourceBlockId === blockId ? l.targetBlockId : l.sourceBlockId))
+        .filter((otherId) => {
+          const otherBlock = currentBlocks.find((b) => b.blockId === otherId);
+          return otherBlock && otherBlock.type === 'graph';
+        });
+
+      if (linkedGraphIds.length > 0) {
+        const newDataset = generateGraphDatasetFromLatex(content.latex, content.latex, [-10, 10], 0);
+        if (newDataset) {
+          linkedGraphIds.forEach((graphId) => {
+            dispatch({
+              type: 'UPDATE_BLOCK_CONTENT',
+              payload: {
+                blockId: graphId,
+                content: {
+                  graphData: { datasets: [newDataset] },
+                },
+              },
+            });
+          });
+        }
+      }
+    }
+  }, []);
+
+  // Spawn New Smart Block with Compact Type-Specific Dimensions
   const handleAddBlock = (type) => {
     const newBlockId = `block_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const spawnX = Math.round((-panOffset.x + dimensions.width / 2 - 190) / zoomLevel);
     const spawnY = Math.round((-panOffset.y + dimensions.height / 2 - 100) / zoomLevel);
 
     let defaultContent = {};
+    let defaultSize = { width: 360, height: 140 };
+
     if (type === 'equation') {
       defaultContent = { latex: 'y = x^2 - 4x + 3' };
+      defaultSize = { width: 360, height: 140 };
     } else if (type === 'graph') {
       const graphDataset = generateGraphDatasetFromLatex('y = x^2 - 4x + 3', 'f(x) = x² - 4x + 3', [-10, 10], 0);
       defaultContent = {
@@ -431,8 +470,10 @@ export default function PlaygroundCanvasContainer() {
           datasets: graphDataset ? [graphDataset] : [],
         },
       };
+      defaultSize = { width: 440, height: 320 };
     } else if (type === 'theory') {
       defaultContent = { text: 'Class Notes: Tap anywhere on this text to edit or correct words.' };
+      defaultSize = { width: 380, height: 220 };
     }
 
     const newBlock = {
@@ -441,7 +482,7 @@ export default function PlaygroundCanvasContainer() {
       content: defaultContent,
       linkedBlockIds: [],
       position: { x: spawnX, y: spawnY },
-      size: { width: 380, height: 260 },
+      size: defaultSize,
       status: 'active',
       isMinimal: false,
     };
@@ -716,11 +757,35 @@ export default function PlaygroundCanvasContainer() {
     setSelectedClusterId(null);
   };
 
-  // Plot Graph from Equation Block
+  // Plot Graph from Equation Block (Reuses or Appends if Already Linked)
   const handlePlotGraph = (equationBlock, latexStr) => {
-    const dataset = generateGraphDatasetFromLatex(latexStr, latexStr || 'f(x)', [-10, 10], 0);
-    const graphBlockId = `block_graph_${Date.now()}`;
+    const currentBlocks = blockStateRef.current.blocks;
+    const currentLinks = blockStateRef.current.links;
 
+    const existingLinkedGraph = currentLinks
+      .filter((l) => l.sourceBlockId === equationBlock.blockId || l.targetBlockId === equationBlock.blockId)
+      .map((l) => (l.sourceBlockId === equationBlock.blockId ? l.targetBlockId : l.sourceBlockId))
+      .map((id) => currentBlocks.find((b) => b && b.blockId === id && b.type === 'graph'))
+      .find(Boolean);
+
+    const dataset = generateGraphDatasetFromLatex(latexStr, latexStr || 'f(x)', [-10, 10], 0);
+
+    if (existingLinkedGraph) {
+      if (dataset) {
+        dispatch({
+          type: 'UPDATE_BLOCK_CONTENT',
+          payload: {
+            blockId: existingLinkedGraph.blockId,
+            content: {
+              graphData: { datasets: [dataset] },
+            },
+          },
+        });
+      }
+      return;
+    }
+
+    const graphBlockId = `block_graph_${Date.now()}`;
     const graphBlock = {
       blockId: graphBlockId,
       type: 'graph',
@@ -731,7 +796,7 @@ export default function PlaygroundCanvasContainer() {
       },
       linkedBlockIds: [equationBlock.blockId],
       position: {
-        x: equationBlock.position.x + 420,
+        x: equationBlock.position.x + 400,
         y: equationBlock.position.y,
       },
       size: { width: 440, height: 320 },
@@ -760,8 +825,8 @@ export default function PlaygroundCanvasContainer() {
         type: 'equation',
         content: { latex: derivLatex },
         linkedBlockIds: [block.blockId],
-        position: { x: block.position.x + 400, y: block.position.y },
-        size: { width: 380, height: 180 },
+        position: { x: block.position.x + 390, y: block.position.y },
+        size: { width: 360, height: 140 },
         status: 'active',
         isMinimal: false,
       };
@@ -775,8 +840,8 @@ export default function PlaygroundCanvasContainer() {
         type: 'equation',
         content: { latex: integLatex },
         linkedBlockIds: [block.blockId],
-        position: { x: block.position.x + 400, y: block.position.y + 120 },
-        size: { width: 380, height: 180 },
+        position: { x: block.position.x + 390, y: block.position.y + 110 },
+        size: { width: 360, height: 140 },
         status: 'active',
         isMinimal: false,
       };
@@ -797,8 +862,8 @@ export default function PlaygroundCanvasContainer() {
         type: 'theory',
         content: { text: rootsText },
         linkedBlockIds: [block.blockId],
-        position: { x: block.position.x + 400, y: block.position.y },
-        size: { width: 440, height: 160 },
+        position: { x: block.position.x + 390, y: block.position.y },
+        size: { width: 380, height: 160 },
         status: 'active',
         isMinimal: false,
       };
@@ -945,7 +1010,7 @@ export default function PlaygroundCanvasContainer() {
           {block.type === 'equation' && (
             <EquationBlock
               block={block}
-              onUpdateContent={(blockId, content) => dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } })}
+              onUpdateContent={handleUpdateBlockContent}
               onPlotGraph={handlePlotGraph}
             />
           )}
@@ -953,14 +1018,14 @@ export default function PlaygroundCanvasContainer() {
           {block.type === 'graph' && (
             <GraphBlock
               block={block}
-              onUpdateContent={(blockId, content) => dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } })}
+              onUpdateContent={handleUpdateBlockContent}
             />
           )}
 
           {block.type === 'theory' && (
             <TheoryBlock
               block={block}
-              onUpdateContent={(blockId, content) => dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } })}
+              onUpdateContent={handleUpdateBlockContent}
             />
           )}
 
@@ -975,7 +1040,7 @@ export default function PlaygroundCanvasContainer() {
                   content: { latex: latexStr },
                   linkedBlockIds: [],
                   position: { x: sketchBlock.position.x + 400, y: sketchBlock.position.y },
-                  size: { width: 380, height: 180 },
+                  size: { width: 360, height: 140 },
                   status: 'active',
                   isMinimal: false,
                 };
@@ -987,7 +1052,7 @@ export default function PlaygroundCanvasContainer() {
           {block.type === 'audio' && (
             <AudioMemoBlock
               block={block}
-              onUpdateContent={(blockId, content) => dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } })}
+              onUpdateContent={handleUpdateBlockContent}
               onDeleteBlock={(blockId) => dispatch({ type: 'REMOVE_BLOCK', payload: blockId })}
             />
           )}
@@ -995,7 +1060,7 @@ export default function PlaygroundCanvasContainer() {
           {block.type === 'image' && (
             <ImageBlock
               block={block}
-              onUpdateContent={(blockId, content) => dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } })}
+              onUpdateContent={handleUpdateBlockContent}
             />
           )}
         </SmartBlockWrapper>

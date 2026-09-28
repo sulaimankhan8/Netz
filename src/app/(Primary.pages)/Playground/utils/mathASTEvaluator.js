@@ -6,6 +6,7 @@
  */
 
 import { getSymbolicDerivative, sanitizeMathString } from '../../../utils/evaluateMath';
+import { extractExpressionFromLatex } from './equationToGraph';
 import nerdamer from 'nerdamer';
 import 'nerdamer/Calculus';
 import 'nerdamer/Solve';
@@ -60,11 +61,18 @@ export function formatRawMathToTeX(mathStr) {
 export function differentiateExpression(latexStr, variable = 'x') {
   if (!latexStr) return '';
   try {
-    const cleanExpr = sanitizeMathString(latexStr.replace(/^[yf]\(x\)\s*=\s*/i, ''));
-    const derivative = getSymbolicDerivative(cleanExpr, variable);
+    const cleanExpr = extractExpressionFromLatex(latexStr);
+    const sanitized = sanitizeMathString(cleanExpr);
+    const derivative = getSymbolicDerivative(sanitized, variable);
     return `f'(${variable}) = ${formatRawMathToTeX(derivative)}`;
   } catch (err) {
-    return `f'(${variable}) = \\frac{d}{d${variable}}(${latexStr})`;
+    try {
+      const cleanExpr = extractExpressionFromLatex(latexStr);
+      const deriv = nerdamer(`diff(${cleanExpr}, ${variable})`).toTeX();
+      return `f'(${variable}) = ${deriv}`;
+    } catch {
+      return `f'(${variable}) = \\frac{d}{d${variable}}(${latexStr})`;
+    }
   }
 }
 
@@ -74,7 +82,7 @@ export function differentiateExpression(latexStr, variable = 'x') {
 export function integrateExpression(latexStr, variable = 'x') {
   if (!latexStr) return '';
   try {
-    const cleanExpr = sanitizeMathString(latexStr.replace(/^[yf]\(x\)\s*=\s*/i, ''));
+    const cleanExpr = extractExpressionFromLatex(latexStr);
     let integralTeX = '';
     try {
       integralTeX = nerdamer(`integrate(${cleanExpr}, ${variable})`).toTeX();
@@ -93,7 +101,7 @@ export function integrateExpression(latexStr, variable = 'x') {
 export function simplifyExpression(latexStr) {
   if (!latexStr) return '';
   try {
-    const cleanExpr = sanitizeMathString(latexStr.replace(/^[yf]\(x\)\s*=\s*/i, ''));
+    const cleanExpr = extractExpressionFromLatex(latexStr);
     let simplifiedTeX = '';
     try {
       simplifiedTeX = nerdamer(`simplify(${cleanExpr})`).toTeX();
@@ -113,7 +121,7 @@ export function simplifyExpression(latexStr) {
 export function solveRootsExpression(latexStr, variable = 'x') {
   if (!latexStr) return [];
   try {
-    const cleanExpr = sanitizeMathString(latexStr.replace(/^[yf]\(x\)\s*=\s*/i, ''));
+    const cleanExpr = extractExpressionFromLatex(latexStr);
     const solutions = nerdamer.solve(cleanExpr, variable);
 
     if (solutions && solutions.elements) {

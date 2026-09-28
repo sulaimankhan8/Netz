@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
-import { FiEdit2, FiCheck, FiBarChart2 } from 'react-icons/fi';
+import { FiEdit2, FiBarChart2, FiCornerDownLeft } from 'react-icons/fi';
 import { scopeManager } from '../../utils/scopeManager';
 
 // Safe KaTeX Renderer component to prevent invalid user inputs from crashing the component
@@ -15,7 +15,7 @@ function SafeInlineMath({ math }) {
   }, [math]);
 
   if (!math || !math.trim()) {
-    return <span className="text-zinc-400 italic">Empty equation</span>;
+    return <span className="text-zinc-400 italic text-sm">Empty equation</span>;
   }
 
   if (hasError) {
@@ -71,43 +71,58 @@ export default function EquationBlock({
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group w-full h-full flex flex-col justify-center">
       {isEditing ? (
-        <div className="space-y-2.5 animate-in fade-in duration-150">
-          <input
-            type="text"
-            value={latex}
-            onChange={(e) => handleLatexChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setIsEditing(false);
-            }}
-            autoFocus
-            placeholder="Type equation (e.g. y = x^2 - 4x + 3)..."
-            className="w-full px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-blue-500"
-          />
-          {onPlotGraph && (
-            <div className="flex items-center pt-0.5">
+        <div className="space-y-2 animate-in fade-in duration-150">
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={latex}
+              onChange={(e) => handleLatexChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setIsEditing(false);
+              }}
+              autoFocus
+              placeholder="Type equation (e.g. y = x^2 - 4x + 3, \sin(x))..."
+              className="w-full px-3 py-2 pr-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-blue-500 shadow-inner"
+            />
+            <button
+              onClick={() => setIsEditing(false)}
+              title="Press Enter to finish editing"
+              className="absolute right-2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+            >
+              <FiCornerDownLeft className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Live KaTeX Rendered Preview Strip */}
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/80 dark:border-zinc-800/80 min-h-[38px] overflow-x-auto">
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+              <SafeInlineMath math={latex} />
+            </div>
+
+            {onPlotGraph && (
               <button
                 onClick={() => onPlotGraph(block, latex)}
-                className="flex items-center gap-1.5 py-1.5 px-3 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-1 py-1 px-2 text-[11px] font-semibold rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all cursor-pointer flex-shrink-0 ml-2"
               >
-                <FiBarChart2 className="w-4 h-4" />
+                <FiBarChart2 className="w-3.5 h-3.5" />
                 <span>Plot Graph</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ) : (
         <div
           onClick={() => setIsEditing(true)}
-          className="group/eq relative px-2.5 py-1.5 rounded-xl bg-transparent hover:bg-zinc-100/40 dark:hover:bg-zinc-800/30 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 transition-all cursor-pointer flex items-center justify-between gap-3 select-none"
+          className="group/eq relative px-3 py-2.5 rounded-xl bg-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 transition-all cursor-pointer flex items-center justify-between gap-3 select-none"
         >
-          <div className="text-base text-zinc-900 dark:text-zinc-100 font-medium">
+          <div className="text-base text-zinc-900 dark:text-zinc-100 font-medium overflow-x-auto py-1">
             <SafeInlineMath math={latex} />
           </div>
 
           {/* Semi-transparent hover edit & plot icons */}
-          <div className="opacity-0 group-hover/eq:opacity-100 flex items-center gap-1 transition-opacity">
+          <div className="opacity-0 group-hover/eq:opacity-100 flex items-center gap-1 transition-opacity flex-shrink-0">
             {onPlotGraph && (
               <button
                 onClick={(e) => {
@@ -115,9 +130,9 @@ export default function EquationBlock({
                   onPlotGraph(block, latex);
                 }}
                 title="Plot Graph"
-                className="p-1 text-zinc-400 hover:text-blue-500 rounded transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
-                <FiBarChart2 className="w-3.5 h-3.5" />
+                <FiBarChart2 className="w-4 h-4" />
               </button>
             )}
             <button
@@ -126,9 +141,9 @@ export default function EquationBlock({
                 setIsEditing(true);
               }}
               title="Edit Equation"
-              className="p-1 text-zinc-400 hover:text-blue-500 rounded transition-colors"
+              className="p-1.5 text-zinc-400 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
             >
-              <FiEdit2 className="w-3.5 h-3.5" />
+              <FiEdit2 className="w-4 h-4" />
             </button>
           </div>
         </div>
