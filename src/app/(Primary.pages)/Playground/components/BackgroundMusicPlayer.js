@@ -14,38 +14,55 @@ import {
   FiDisc,
   FiX,
 } from 'react-icons/fi';
-import { getAmbientEngine } from '../utils/ambientAudioEngine';
 
 const BUILTIN_AMBIENT_PRESETS = [
   {
-    id: 'lofi_rain',
-    name: 'Lo-Fi Rain & Chill',
-    icon: '🌧️',
-    description: 'Rain, vinyl & lofi chords',
+    id: 'lofi_chill',
+    name: 'Lo-Fi Chill & Focus',
+    icon: '🎧',
+    src: '/audio/ambient/lofi-relax.mp3',
+    description: 'Warm mellow beats & Rhodes keys',
   },
   {
-    id: 'forest_breeze',
+    id: 'rain_window',
+    name: 'Rain on Window',
+    icon: '🌧️',
+    src: '/audio/ambient/rain.mp3',
+    description: 'Gentle steady rainfall & droplets',
+  },
+  {
+    id: 'forest_birds',
     name: 'Forest Birds & Breeze',
     icon: '🌲',
-    description: 'Tree wind & sweet chirps',
+    src: '/audio/ambient/forest-birds.mp3',
+    description: 'Natural birdsong & rustling trees',
   },
   {
-    id: 'cafe_study',
-    name: 'Cafe Study Ambience',
+    id: 'cozy_cafe',
+    name: 'Cozy Study Cafe',
     icon: '☕',
-    description: 'Warm chatter & jazz keys',
+    src: '/audio/ambient/cafe.mp3',
+    description: 'Coffee shop chatter & warm vibes',
   },
   {
     id: 'ocean_waves',
-    name: 'Deep Focus Ocean Waves',
+    name: 'Deep Ocean Waves',
     icon: '🌊',
-    description: 'Rhythmic rolling swells',
+    src: '/audio/ambient/ocean-waves.mp3',
+    description: 'Rhythmic rolling coastal surf',
+  },
+  {
+    id: 'campfire',
+    name: 'Night Campfire',
+    icon: '🔥',
+    src: '/audio/ambient/campfire.mp3',
+    description: 'Crackling firewood & evening calm',
   },
 ];
 
 export default function BackgroundMusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.35); // Default comfortable 35% ambient level
+  const [volume, setVolume] = useState(0.65); // Default 65% clear audible volume
   const [isMuted, setIsMuted] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
   const [activePreset, setActivePreset] = useState(BUILTIN_AMBIENT_PRESETS[0]);
@@ -57,66 +74,43 @@ export default function BackgroundMusicPlayer() {
   const fileInputRef = useRef(null);
 
   const effectiveVolume = isMuted ? 0 : volume;
+  const currentSrc = customAudioUrl || activePreset.src;
   const currentTitle = customAudioName || activePreset.name;
 
-  // Sync volume with both Web Audio engine and HTML5 audio element
+  // Sync volume & loop settings with HTML5 audio element
   useEffect(() => {
-    const engine = getAmbientEngine();
-    if (engine) {
-      engine.setVolume(effectiveVolume);
-    }
     if (audioRef.current) {
       audioRef.current.volume = effectiveVolume;
       audioRef.current.loop = isLooping;
     }
   }, [effectiveVolume, isLooping]);
 
-  // Clean stop when component unmounts
+  // Clean pause on unmount
   useEffect(() => {
     return () => {
-      const engine = getAmbientEngine();
-      if (engine) engine.stop();
-    };
-  }, []);
-
-  const startPlayback = useCallback(() => {
-    if (customAudioUrl) {
-      // Custom audio file playback via standard audio element
-      const engine = getAmbientEngine();
-      if (engine) engine.stop();
-      if (audioRef.current) {
-        audioRef.current.volume = effectiveVolume;
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      }
-    } else {
-      // Synthesized continuous generative ambient soundscape
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      const engine = getAmbientEngine();
-      if (engine) {
-        engine.play(activePreset.id, effectiveVolume);
-        setIsPlaying(true);
-      }
-    }
-  }, [customAudioUrl, activePreset, effectiveVolume]);
-
-  const pausePlayback = useCallback(() => {
-    setIsPlaying(false);
-    const engine = getAmbientEngine();
-    if (engine) {
-      engine.stop();
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    };
   }, []);
 
   const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
     if (isPlaying) {
-      pausePlayback();
+      audio.pause();
+      setIsPlaying(false);
     } else {
-      startPlayback();
+      audio.volume = effectiveVolume;
+      audio.loop = isLooping;
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          console.warn('Playback error:', err);
+          setIsPlaying(false);
+        });
     }
   };
 
@@ -125,52 +119,52 @@ export default function BackgroundMusicPlayer() {
     setCustomAudioUrl(null);
     setCustomAudioName('');
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    const engine = getAmbientEngine();
-    if (engine) {
-      engine.play(preset.id, effectiveVolume);
-      setIsPlaying(true);
-    }
+    audio.src = preset.src;
+    audio.volume = effectiveVolume;
+    audio.loop = isLooping;
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch(() => setIsPlaying(false));
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Stop procedural engine
-    const engine = getAmbientEngine();
-    if (engine) engine.stop();
-
     const fileUrl = URL.createObjectURL(file);
     setCustomAudioUrl(fileUrl);
     setCustomAudioName(file.name.replace(/\.[^/.]+$/, ''));
-    setIsPlaying(true);
 
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.volume = effectiveVolume;
-        audioRef.current.play().catch(() => setIsPlaying(false));
-      }
-    }, 100);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.src = fileUrl;
+    audio.volume = effectiveVolume;
+    audio.loop = isLooping;
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch(() => setIsPlaying(false));
   };
 
   return (
     <div className="fixed bottom-20 right-6 z-50 select-none">
-      {/* Fallback audio element for custom uploaded files */}
-      {customAudioUrl ? (
-        <audio
-          ref={audioRef}
-          src={customAudioUrl}
-          loop={isLooping}
-          onEnded={() => {
-            if (!isLooping) setIsPlaying(false);
-          }}
-        />
-      ) : null}
+      {/* Real HTML5 Audio Player */}
+      <audio
+        ref={audioRef}
+        src={currentSrc}
+        loop={isLooping}
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => {
+          if (!isLooping) setIsPlaying(false);
+        }}
+      />
 
       {/* Main Compact Player Pill */}
       <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-xl border border-zinc-700/80 shadow-2xl transition-all">
@@ -184,7 +178,7 @@ export default function BackgroundMusicPlayer() {
             className={`p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md ${
               isPlaying ? 'animate-spin' : ''
             }`}
-            style={{ animationDuration: '4s' }}
+            style={{ animationDuration: '3.5s' }}
           >
             <FiDisc className="w-4 h-4 text-white" />
           </div>
@@ -211,7 +205,7 @@ export default function BackgroundMusicPlayer() {
         {/* Play/Pause Button */}
         <button
           onClick={togglePlay}
-          title={isPlaying ? 'Pause Background Music' : 'Play Background Music'}
+          title={isPlaying ? 'Pause Ambient Sound' : 'Play Ambient Sound'}
           className="p-2 rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-md transition-all cursor-pointer"
         >
           {isPlaying ? <FiPause className="w-3.5 h-3.5" /> : <FiPlay className="w-3.5 h-3.5 ml-0.5" />}
@@ -229,14 +223,14 @@ export default function BackgroundMusicPlayer() {
 
       {/* Expanded Controls Popover */}
       {isExpanded && (
-        <div className="absolute bottom-14 right-0 w-[345px] p-3.5 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-2xl border border-zinc-700/80 shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute bottom-14 right-0 w-[360px] p-3.5 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-2xl border border-zinc-700/80 shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
             <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
               <div className="p-1 rounded-md bg-blue-500/20 text-blue-400">
                 <FiMusic className="w-3.5 h-3.5" />
               </div>
-              <span>Background Ambient Music</span>
+              <span>Background Ambient Soundscapes</span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -288,14 +282,14 @@ export default function BackgroundMusicPlayer() {
             </span>
           </div>
 
-          {/* Preset Options Grid - Wide and comfortable, no truncated text */}
+          {/* Preset Options Grid - Clean 2-column layout with 6 high-fidelity soundscapes */}
           <div className="space-y-1.5 pt-0.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                Study Ambience Presets
+                Study Ambience Soundscapes
               </span>
               <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
-                100% Offline
+                Studio Quality
               </span>
             </div>
 
