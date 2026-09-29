@@ -15,23 +15,154 @@ const RASTER_STROKE_COLOR = '#000000';
 const RASTER_BG_COLOR = '#FFFFFF';
 
 /**
+ * Computes tight bounding box across an array of InkStroke objects.
+ */
+export function getStrokesBBox(strokes) {
+  if (!strokes || strokes.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+  for (let i = 0; i < strokes.length; i++) {
+    const s = strokes[i];
+    if (s.bbox) {
+      minX = Math.min(minX, s.bbox.minX);
+      minY = Math.min(minY, s.bbox.minY);
+      maxX = Math.max(maxX, s.bbox.maxX);
+      maxY = Math.max(maxY, s.bbox.maxY);
+    } else if (s.points && s.points.length > 0) {
+      for (let j = 0; j < s.points.length; j++) {
+        const p = s.points[j];
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+    }
+  }
+
+  if (!isFinite(minX)) return null;
+  return { minX, minY, maxX, maxY };
+}
+
+/**
+ * Segments an array of strokes into horizontal lines and discrete words based on spatial gaps.
+ * Essential for Vision Transformers (TrOCR) so attention is focused on individual words.
+ *
+ * @param {Array} strokes - Array of InkStroke objects
+ * @returns {Array<{ lineIndex: number, words: Array<Array<InkStroke>> }>}
+ */
+export function segmentStrokesIntoWords(strokes) {
+  if (!strokes || strokes.length === 0) return [];
+  if (strokes.length === 1) {
+    return [{ lineIndex: 0, words: [strokes] }];
+  }
+
+  // Ensure each stroke has a bounding box
+  const strokeList = strokes.map((s) => {
+    const bbox = s.bbox || getStrokesBBox([s]) || { minX: 0, minY: 0, maxX: 10, maxY: 10 };
+    return {
+      stroke: s,
+      bbox,
+      centerY: (bbox.minY + bbox.maxY) / 2,
+      height: Math.max(bbox.maxY - bbox.minY, 15),
+    };
+  });
+
+  // Calculate average stroke height across cluster
+  const totalHeight = strokeList.reduce((sum, item) => sum + item.height, 0);
+  const avgHeight = Math.max(totalHeight / strokeList.length, 20);
+
+  // Group strokes into horizontal lines based on baseline/centerY
+  strokeList.sort((a, b) => a.centerY - b.centerY);
+
+  const lines = [];
+  for (const item of strokeList) {
+    let matchedLine = null;
+    for (const line of lines) {
+      if (Math.abs(line.centerY - item.centerY) < Math.max(avgHeight * 0.7, 30)) {
+        matchedLine = line;
+        break;
+      }
+    }
+
+    if (matchedLine) {
+      matchedLine.items.push(item);
+      const sumY = matchedLine.items.reduce((s, it) => s + it.centerY, 0);
+      matchedLine.centerY = sumY / matchedLine.items.length;
+    } else {
+      lines.push({
+        centerY: item.centerY,
+        items: [item],
+      });
+    }
+  }
+
+  // Sort lines top-to-bottom
+  lines.sort((a, b) => a.centerY - b.centerY);
+
+  // Dynamic word gap threshold: ~40% of stroke height, minimum 26px, maximum 55px
+  const wordGapThreshold = Math.min(Math.max(avgHeight * 0.45, 26), 55);
+
+  const result = [];
+
+  for (let lIdx = 0; lIdx < lines.length; lIdx++) {
+    const line = lines[lIdx];
+    // Sort strokes in line left-to-right
+    line.items.sort((a, b) => a.bbox.minX - b.bbox.minX);
+
+    const words = [];
+    let currentWordStrokes = [line.items[0].stroke];
+    let currentWordMaxX = line.items[0].bbox.maxX;
+
+    for (let i = 1; i < line.items.length; i++) {
+      const item = line.items[i];
+      const gap = item.bbox.minX - currentWordMaxX;
+
+      if (gap <= wordGapThreshold) {
+        // Same word: merge
+        currentWordStrokes.push(item.stroke);
+        currentWordMaxX = Math.max(currentWordMaxX, item.bbox.maxX);
+      } else {
+        // New word: push completed word and start next
+        words.push(currentWordStrokes);
+        currentWordStrokes = [item.stroke];
+        currentWordMaxX = item.bbox.maxX;
+      }
+    }
+
+    if (currentWordStrokes.length > 0) {
+      words.push(currentWordStrokes);
+    }
+
+    result.push({
+      lineIndex: lIdx,
+      words,
+    });
+  }
+
+  return result;
+}
+
+/**
  * Rasterizes an array of InkStroke objects to a base64-encoded PNG data URL.
  *
  * @param {Array} strokes - Array of InkStroke objects with .points[], .width, .color
- * @param {Object} bbox - Bounding box { minX, minY, maxX, maxY } of the cluster
- * @param {Object} options - Optional overrides: { padding, targetHeight }
- * @returns {{ dataUrl: string, width: number, height: number }} Rasterized image result
+ * @param {Object} [bbox] - Optional bounding box { minX, minY, maxX, maxY } (auto-calculated if omitted)
+ * @param {Object} [options] - Optional overrides: { padding, targetHeight }
+ * @returns {{ dataUrl: string, width: number, height: number } | null} Rasterized image result
  */
-export function rasterizeStrokesToDataUrl(strokes, bbox, options = {}) {
+export function rasterizeStrokesToDataUrl(strokes, bbox = null, options = {}) {
   const padding = options.padding ?? RASTER_PADDING;
 
-  if (!strokes || strokes.length === 0 || !bbox) {
+  if (!strokes || strokes.length === 0) {
     return null;
   }
 
+  const effectiveBBox = bbox || getStrokesBBox(strokes);
+  if (!effectiveBBox) return null;
+
   // Calculate raw cluster dimensions
-  const rawWidth = Math.max(bbox.maxX - bbox.minX, 20);
-  const rawHeight = Math.max(bbox.maxY - bbox.minY, 20);
+  const rawWidth = Math.max(effectiveBBox.maxX - effectiveBBox.minX, 20);
+  const rawHeight = Math.max(effectiveBBox.maxY - effectiveBBox.minY, 20);
 
   // Calculate scaling factor so handwriting is at optimal OCR resolution (height ~180-240px)
   let scale = 1.0;

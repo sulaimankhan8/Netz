@@ -333,7 +333,7 @@ export default function PlaygroundCanvasContainer() {
       return;
     }
 
-    const rawClusters = clusterStrokes(allStrokes, 90);
+    const rawClusters = clusterStrokes(allStrokes, 32);
     const hasInstantEquals = rawClusters.some((c) => c.hasEqualsGesture);
     const delay = hasInstantEquals ? 100 : 800;
 

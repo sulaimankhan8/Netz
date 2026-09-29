@@ -15,7 +15,7 @@ import { intersectsBBox } from './spatialIndexRTree';
 /**
  * Expands bounding box by margin.
  */
-function expandBBox(bbox, margin = 90) {
+function expandBBox(bbox, margin = 32) {
   return {
     minX: bbox.minX - margin,
     minY: bbox.minY - margin,
@@ -25,10 +25,9 @@ function expandBBox(bbox, margin = 90) {
 }
 
 /**
- * Expands bounding box horizontally more than vertically for text line detection.
- * Text tends to flow horizontally, so use a wider horizontal margin.
+ * Expands bounding box horizontally for same-line text connection within a word/phrase.
  */
-function expandBBoxForLine(bbox, hMargin = 120, vMargin = 50) {
+function expandBBoxForLine(bbox, hMargin = 45, vMargin = 20) {
   return {
     minX: bbox.minX - hMargin,
     minY: bbox.minY - vMargin,
@@ -201,7 +200,7 @@ export function detectEqualsGesture(strokes) {
  * @param {number} proximityMargin - Pixel margin for spatial proximity grouping (default 90)
  * @returns {Array} Array of StrokeCluster objects
  */
-export function clusterStrokes(strokes, proximityMargin = 90) {
+export function clusterStrokes(strokes, proximityMargin = 32) {
   if (!strokes || strokes.length === 0) return [];
 
   const clusters = [];
@@ -222,8 +221,8 @@ export function clusterStrokes(strokes, proximityMargin = 90) {
     while (expanded) {
       expanded = false;
 
-      // Use line-aware expansion: wider horizontal margin for strokes on the same baseline
-      const lineSearchBox = expandBBoxForLine(clusterBox, proximityMargin + 30, proximityMargin - 40);
+      // Use line-aware expansion: modest horizontal margin for strokes within the same word/symbol
+      const lineSearchBox = expandBBoxForLine(clusterBox, proximityMargin + 12, Math.max(proximityMargin - 12, 10));
       const standardSearchBox = expandBBox(clusterBox, proximityMargin);
 
       for (let j = 0; j < sortedStrokes.length; j++) {

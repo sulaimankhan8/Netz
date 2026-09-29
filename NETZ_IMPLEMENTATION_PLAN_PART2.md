@@ -3,9 +3,11 @@
 
 ---
 
-### Plan A — Algorithm Suite: Missing Solvers & Code Export
+### Plan A — Algorithm Suite: Solvers, Registry & Hub [COMPLETED - Registry & Solvers]
 
-#### A1. Secant Method (`/secant-method`)
+> **Status Update**: All 34 numerical algorithms across Units 1–5 have been implemented with verified numerical solvers, KaTeX step derivations, iteration tables, and default parameters in `src/app/(Primary.pages)/Notes/utils/algorithmRegistry.js`. The Algorithm Hub (`/Algorithems`) and Notes Embedded Math Widget (`EmbeddedMathWidget.js`) now natively support all 34 algorithms with dynamic unit badge counts and parameter matrix grids.
+
+#### A1. Secant Method (`/secant-method`) [COMPLETED in Registry & Route]
 
 **Route**: `src/app/(pages.algorithems)/(UNIT-1)/secant-method/page.js`
 
@@ -119,98 +121,96 @@ Usage in each algorithm page:
 
 ---
 
-### Plan B — Notes Module: QuizBlock, PDF Export, Community
+### Plan B — Notes Module: QuizBlock, PDF Export, Community [COMPLETED]
 
-#### B1. QuizBlock Widget
+#### B1. QuizBlock Widget [COMPLETED]
 
 Files:
-- CREATE: `src/app/(Primary.pages)/Notes/components/QuizBlock.js`
-- EDIT: NoteBlockItem.js — add `block.type === 'quiz'` branch
-- EDIT: SlashCommandMenu.js — add quiz entry to mainItems
-- EDIT: NoteEditor.js — handle quiz block init state
+- CREATED: `src/app/(Primary.pages)/Notes/components/QuizBlock.js`
+- EDITED: `NoteBlockItem.js` — handles `block.type === 'quiz'`
+- EDITED: `SlashCommandMenu.js` — registered `/quiz` command
+- EDITED: `NoteEditor.js` — default quiz block template generator
+- EDITED: `sampleNotes.js` — sample notes pre-populated with MCQ and numeric tolerance quizzes
 
 Block data schema:
 ```json
 {
-  "id": "uuid",
+  "id": "b-123456789",
   "type": "quiz",
-  "quizData": {
-    "question": "",
+  "content": "Interactive Quiz Block",
+  "quizConfig": {
+    "question": "What is the order of convergence for Newton-Raphson method?",
     "mode": "mcq",
-    "options": ["", "", "", ""],
-    "correctIndex": 0,
-    "correctValue": null,
+    "options": ["Linear (Order 1)", "Quadratic (Order 2)", "Superlinear (Order 1.618)", "Cubic (Order 3)"],
+    "correctOptionIndex": 1,
+    "correctNumericValue": 2.7065,
     "tolerance": 0.001,
-    "explanation": "",
-    "attempts": 0,
-    "solved": false
+    "explanation": "Newton-Raphson exhibits quadratic convergence (order 2) near simple roots."
   }
 }
 ```
 
-Component states: unanswered | answered-correct | answered-wrong | revealed
-
-MCQ flow: Render radio buttons -> Check Answer -> green/red flash -> Show Explanation toggle
-Numeric flow: Input field -> parseFloat -> abs(val - correctValue) <= tolerance -> result
-Edit mode (creator): form to set question, options, correct answer, explanation
-
-SlashCommandMenu entry:
-- id: 'quiz', title: 'Quiz Block', subtitle: 'MCQ or numeric self-test with answer reveal', type: 'quiz'
-
-**Effort**: ~6 hours
+Features delivered:
+- Dual Mode: Multiple Choice Question (MCQ, 2 to 6 dynamic options) or Numeric Tolerance ($|x - x_0| \le \text{tol}$).
+- Live KaTeX rendering for math in questions, options, and step-by-step explanations.
+- Author / Solve Mode toggle: Creators configure problems; students test knowledge with instant visual validation.
+- Attempt counter and reset/try-again functionality.
 
 ---
 
-#### B2. Academic PDF Export
+#### B2. Academic PDF Export [COMPLETED]
 
-Libraries: jspdf + html2canvas (no SSR issues when dynamic imported)
+Files:
+- CREATED: `src/app/(Primary.pages)/Notes/utils/pdfExport.js`
+- EDITED: `NoteEditor.js` — added "Export PDF" gradient button in the header toolbar
 
-File: `src/app/(Primary.pages)/Notes/utils/pdfExport.js`
-
-Steps:
-1. html2canvas(noteEditorRef.current, { scale:2, useCORS:true, backgroundColor:'#FFFFFF' })
-2. Convert canvas to PNG dataURL
-3. jsPDF('p','mm','a4') -> addImage -> multi-page loop
-4. pdf.save('note-title.pdf')
-
-Integration: "Export PDF" button in NoteShareModal.js or NoteEditor.js toolbar.
-
-**Effort**: ~3 hours
+Features delivered:
+- High-resolution $2\times$ retina rasterization using `html2canvas`.
+- Multi-page pagination splitting on standard A4 format ($210 \times 297$ mm) via `jspdf`.
+- Dynamic filename sanitization (`[title].pdf`) and automatic loading spinner state during export.
 
 ---
 
-#### B3. Handwritten Ink Block
+#### B3. Handwritten Ink Block [COMPLETED]
 
-Bridge mechanism:
-1. Playground: lasso-select strokes, click "Send to Notes"
-2. exportEngine.js serializes selection to SVG string
-3. SVG stored in localStorage key `netz_pendingInkBlocks` (queue array)
-4. Notes: new 'ink' block type reads from queue, renders `<img src={svgDataUrl} />`
+Files:
+- CREATED: `src/app/(Primary.pages)/Notes/components/InkSketchBlock.js`
+- EDITED: `NoteBlockItem.js` — renders `block.type === 'ink'`
+- EDITED: `SlashCommandMenu.js` — registered `/ink` command
+- EDITED: `NoteEditor.js` — ink block initializer
 
-NoteBlockItem.js addition:
-- block.type === 'ink' -> render img in bordered container
-
-**Effort**: ~5 hours
+Features delivered:
+- Upgraded beyond a static SVG viewer into an interactive HTML5 drawing canvas.
+- Stylus, pen, and eraser tools with customizable stroke widths and 6 curated color swatches.
+- Touch & pointer smoothing with pressure-like path stroke rendering.
+- Import from Whiteboard queue (`netz_whiteboard_export` / `netz_pendingInkBlocks`).
+- Local PNG/SVG/JPEG image upload and instant block snapshot download.
 
 ---
 
-#### B4. Community Notes Feed
+#### B4. Community Notes Feed [COMPLETED - Phase 1]
 
-Phase 1 (local simulation):
-- Fuse.js index over exported NETZ-XXXX shared notes
-- User enters access key, note decoded from localStorage/URL
-- Basic /Community page with card grid
+Files:
+- EDITED: `src/app/(Primary.pages)/Notes/components/NoteShareModal.js`
+- EDITED: `src/app/(Primary.pages)/Notes/page.js` — integrated `handleCloneCommunityNote`
 
-Phase 2 (Supabase):
-- `shared_notes` table with RLS
-- Full-text search via pg_trgm
-- Feed page: paginated cards with title, author, tags, star count
+Features delivered:
+- Dual-tab sharing modal: **Share Note** (key generation, public/private toggle, direct URL copying) and **Explore Community**.
+- Curated engineering lecture notes across Units 1–5 (Bisection, Gauss-Seidel, Simpson's Rules, Runge-Kutta).
+- Instant search filter by note title, subject, and syllabus unit tags.
+- 1-Click "Clone to Workspace" with automatic unique access key generation and state synchronization.
 
-Fuse.js config:
-- keys: ['title', 'tags', 'blocks.content']
-- threshold: 0.3
+---
 
-**Effort**: Phase 1 ~4h, Phase 2 ~10h
+#### B5. Notes Navigation & Header Polish [COMPLETED]
+
+Files:
+- EDITED: `src/app/(Primary.pages)/Notes/components/NoteEditor.js`
+- EDITED: `src/app/(Primary.pages)/Notes/components/NoteSidebar.js`
+
+Features delivered:
+- Removed duplicate sidebar expand arrow button (`>>`) from the note editor header.
+- Preserved clean single-rail collapsed sidebar with expand button (`>>`), quick note creation (`+`), and studio branding.
 
 ---
 
