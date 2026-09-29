@@ -3,9 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import NoteBlockItem from './NoteBlockItem';
 import { exportNoteAsMarkdown } from '../utils/noteStorage';
+import { exportNoteToPdf } from '../utils/pdfExport';
 import { 
   FaShareAlt, 
   FaDownload, 
+  FaFilePdf,
+  FaQuestionCircle,
+  FaPen,
   FaHeading, 
   FaParagraph, 
   FaSquareRootAlt, 
@@ -16,8 +20,7 @@ import {
   FaTag,
   FaClock,
   FaFileAlt,
-  FaCheckCircle,
-  FaAngleDoubleRight
+  FaCheckCircle
 } from 'react-icons/fa';
 
 export default function NoteEditor({
@@ -32,6 +35,7 @@ export default function NoteEditor({
   const [title, setTitle] = useState(note?.title || '');
   const [subtitle, setSubtitle] = useState(note?.subtitle || '');
   const [tagsInput, setTagsInput] = useState(note?.tags ? note.tags.join(', ') : '');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -120,6 +124,41 @@ export default function NoteEditor({
       return;
     }
 
+    if (type === 'quiz') {
+      const newBlock = {
+        id: 'b-' + Date.now(),
+        type: 'quiz',
+        content: 'Interactive Quiz Block',
+        quizConfig: {
+          question: 'What is the order of convergence for Newton-Raphson method?',
+          mode: 'mcq',
+          options: [
+            'Linear (Order 1)',
+            'Quadratic (Order 2)',
+            'Superlinear (Order 1.618)',
+            'Cubic (Order 3)'
+          ],
+          correctOptionIndex: 1,
+          correctNumericValue: 2.7065,
+          tolerance: 0.001,
+          explanation: 'Newton-Raphson exhibits quadratic convergence (order 2) near simple roots.'
+        }
+      };
+      onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
+      return;
+    }
+
+    if (type === 'ink') {
+      const newBlock = {
+        id: 'b-' + Date.now(),
+        type: 'ink',
+        content: '',
+        caption: 'Figure: Handwritten calculation sketch'
+      };
+      onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
+      return;
+    }
+
     let content = '';
     if (type === 'math') {
       content = 'e^{i\\pi} + 1 = 0';
@@ -134,21 +173,23 @@ export default function NoteEditor({
     onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
   };
 
+  const handleExportPdf = async () => {
+    if (!note) return;
+    setIsExportingPdf(true);
+    try {
+      await exportNoteToPdf(note, 'note-printable-area');
+    } catch (err) {
+      alert('Could not export PDF: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#191919] text-neutral-900 dark:text-neutral-100 font-sans overflow-hidden min-w-0 transition-colors duration-200">
       {/* Top Header */}
       <div className="h-14 px-4 md:px-6 border-b border-neutral-200 dark:border-[#2d2d2d] bg-white dark:bg-[#191919] flex items-center justify-between shrink-0 gap-3 z-10">
         <div className="flex items-center space-x-3 text-xs text-neutral-600 dark:text-neutral-300 min-w-0">
-          {!isSidebarOpen && (
-            <button
-              onClick={onToggleSidebar}
-              className="p-1.5 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white rounded-lg hover:bg-neutral-100 dark:hover:bg-[#2b2b2b] border border-neutral-200 dark:border-[#333333] transition-colors shrink-0"
-              title="Expand Notes Sidebar"
-            >
-              <FaAngleDoubleRight className="w-3.5 h-3.5 text-neutral-800 dark:text-white" />
-            </button>
-          )}
-
           <span className="flex items-center space-x-1.5 bg-neutral-100 dark:bg-[#242424] px-3 py-1 rounded-lg border border-neutral-200 dark:border-[#333333] text-xs font-semibold">
             {note.isPublic ? (
               <>
@@ -185,6 +226,17 @@ export default function NoteEditor({
           </button>
 
           <button
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Download un-watermarked high-resolution academic PDF report"
+          >
+            <FaFilePdf className="w-3 h-3" />
+            <span className="hidden sm:inline">{isExportingPdf ? 'Exporting...' : 'Export PDF'}</span>
+            <span className="sm:hidden">{isExportingPdf ? '...' : 'PDF'}</span>
+          </button>
+
+          <button
             onClick={() => exportNoteAsMarkdown(note)}
             className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-[#292929] dark:hover:bg-[#333333] text-neutral-900 dark:text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-neutral-300 dark:border-[#383838] transition-all shadow-sm active:scale-95"
           >
@@ -196,7 +248,7 @@ export default function NoteEditor({
 
       {/* Editor Main Scroll Area */}
       <div className="flex-1 overflow-y-auto custom-notion-scrollbar">
-        <div className="max-w-4xl w-full mx-auto px-4 sm:px-8 md:pl-16 md:pr-12 py-8 space-y-6">
+        <div id="note-printable-area" className="max-w-4xl w-full mx-auto px-4 sm:px-8 md:pl-16 md:pr-12 py-8 space-y-6">
           {/* Title, Subtitle, Tags Header */}
           <div className="space-y-4 border-b border-neutral-200 dark:border-[#2d2d2d] pb-6 w-full">
             <input
@@ -304,6 +356,22 @@ export default function NoteEditor({
               >
                 <FaLightbulb className="w-3.5 h-3.5 text-amber-500" />
                 <span>Callout</span>
+              </button>
+
+              <button
+                onClick={() => handleAddBlock('quiz')}
+                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
+              >
+                <FaQuestionCircle className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Quiz Block</span>
+              </button>
+
+              <button
+                onClick={() => handleAddBlock('ink')}
+                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
+              >
+                <FaPen className="w-3.5 h-3.5 text-pink-500" />
+                <span>Ink Sketch</span>
               </button>
 
               <button

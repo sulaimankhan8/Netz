@@ -137,6 +137,23 @@ export default function NotesPage() {
     }
   };
 
+  const handleCloneCommunityNote = (commNote) => {
+    const cloned = {
+      ...commNote,
+      id: 'note-' + Date.now(),
+      title: `${commNote.title} (Clone)`,
+      accessKey: 'NETZ-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isPublic: false
+    };
+    const saved = saveSingleNote(cloned);
+    const updated = getNotes();
+    setNotes(updated);
+    setActiveNoteId(saved.id);
+    setIsShareModalOpen(false);
+  };
+
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
   if (!isLoaded) {
@@ -180,6 +197,7 @@ export default function NotesPage() {
         onClose={() => setIsShareModalOpen(false)}
         onUpdateNote={handleUpdateNote}
         onImportKey={handleImportByKey}
+        onCloneNote={handleCloneCommunityNote}
       />
 
       <AlgorithmPickerModal

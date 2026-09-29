@@ -37,6 +37,23 @@ export const INITIAL_SAMPLE_NOTES = [
           algorithmId: 'newton-raphson',
           params: { expression: 'x^3 - 4*x - 9', x0: 2.5, tolerance: 0.0001 }
         }
+      },
+      {
+        id: 'b6-quiz',
+        type: 'quiz',
+        content: 'Newton-Raphson Knowledge Check',
+        quizConfig: {
+          question: 'What is the rate / order of convergence for Newton-Raphson method near a simple root?',
+          mode: 'mcq',
+          options: [
+            'Order 1 (Linear convergence)',
+            'Order 2 (Quadratic convergence)',
+            'Order 1.618 (Superlinear)',
+            'Order 3 (Cubic convergence)'
+          ],
+          correctOptionIndex: 1,
+          explanation: 'Newton-Raphson converges quadratically (order 2) because error term e_{n+1} \\propto e_n^2.'
+        }
       }
     ]
   },
@@ -113,6 +130,18 @@ export const INITIAL_SAMPLE_NOTES = [
         widgetConfig: {
           algorithmId: 'z-test',
           params: { sampleMean: 68.5, popMean: 67.0, popStd: 2.5, sampleSize: 100, alpha: 0.05 }
+        }
+      },
+      {
+        id: 'b3-6-quiz',
+        type: 'quiz',
+        content: 'Numeric Check: Z-Score Calculation',
+        quizConfig: {
+          question: 'Using formula Z = (X̄ - μ) / (σ / √n) with X̄ = 68.5, μ = 67.0, σ = 2.5, n = 100: what is the calculated value of Z?',
+          mode: 'numeric',
+          correctNumericValue: 6.0,
+          tolerance: 0.05,
+          explanation: 'Standard Error SE = \\sigma / \\sqrt{n} = 2.5 / \\sqrt{100} = 0.25. Therefore Z = (68.5 - 67.0) / 0.25 = 1.5 / 0.25 = 6.0.'
         }
       }
     ]

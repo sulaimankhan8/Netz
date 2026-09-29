@@ -63,6 +63,20 @@ export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
       subtitle: '🧮 Embed solvers (Bisection, Newton, Euler, Z-Test...)',
       icon: <FaCalculator className="w-4 h-4 text-indigo-400" />,
       type: 'open-picker'
+    },
+    {
+      id: 'quiz',
+      title: 'Interactive Quiz Block',
+      subtitle: 'Self-assessment check (MCQ or numeric with tolerance)',
+      icon: <FaLightbulb className="w-4 h-4 text-emerald-400" />,
+      type: 'quiz'
+    },
+    {
+      id: 'ink',
+      title: 'Handwritten Ink / Sketch',
+      subtitle: 'Vector strokes or diagram from Whiteboard',
+      icon: <FaSquareRootAlt className="w-4 h-4 text-pink-400" />,
+      type: 'ink'
     }
   ];
 

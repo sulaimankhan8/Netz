@@ -4,6 +4,8 @@ import { useState } from 'react';
 import EmbeddedMathWidget from './EmbeddedMathWidget';
 import KaTeXRenderer from './KaTeXRenderer';
 import SlashCommandMenu from './SlashCommandMenu';
+import QuizBlock from './QuizBlock';
+import InkSketchBlock from './InkSketchBlock';
 import { 
   FaPlus,
   FaArrowUp,
@@ -77,6 +79,37 @@ export default function NoteBlockItem({
         type: 'widget',
         content: item.title,
         widgetConfig: item.widgetConfig
+      });
+    } else if (item.type === 'quiz') {
+      onUpdate({
+        ...block,
+        type: 'quiz',
+        content: 'Interactive Quiz Block',
+        quizConfig: {
+          question: 'What is the order of convergence for the Newton-Raphson method?',
+          mode: 'mcq',
+          options: [
+            'Linear (Order 1)',
+            'Quadratic (Order 2)',
+            'Superlinear (Order 1.618)',
+            'Cubic (Order 3)'
+          ],
+          correctOptionIndex: 1,
+          correctNumericValue: 2.7065,
+          tolerance: 0.001,
+          explanation: 'The Newton-Raphson method exhibits quadratic convergence (order 2) near a simple root.'
+        }
+      });
+    } else if (item.type === 'ink') {
+      let initialInk = '';
+      if (typeof window !== 'undefined') {
+        initialInk = localStorage.getItem('netz_pending_ink_clip') || '';
+      }
+      onUpdate({
+        ...block,
+        type: 'ink',
+        content: initialInk,
+        caption: 'Figure: Handwritten calculation sketch'
       });
     } else {
       // Set empty string for heading1, heading2, heading3, callout, and paragraph so placeholders show
@@ -234,6 +267,20 @@ export default function NoteBlockItem({
             config={block.widgetConfig}
             onChange={(newConfig) => onUpdate({ ...block, widgetConfig: newConfig })}
             onOpenPicker={() => onOpenPicker(block.id)}
+          />
+        )}
+
+        {block.type === 'quiz' && (
+          <QuizBlock
+            block={block}
+            onUpdate={onUpdate}
+          />
+        )}
+
+        {block.type === 'ink' && (
+          <InkSketchBlock
+            block={block}
+            onUpdate={onUpdate}
           />
         )}
 

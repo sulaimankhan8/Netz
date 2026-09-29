@@ -1,4 +1,5 @@
 import { INITIAL_SAMPLE_NOTES } from "./sampleNotes";
+import { CURATED_COMMUNITY_NOTES } from "../components/NoteShareModal";
 
 const STORAGE_KEY = "netz_notes_v2_data";
 
@@ -165,6 +166,19 @@ export function importNoteByKey(key) {
       ...sampleMatch,
       id: "imported-" + Date.now(),
       title: `${sampleMatch.title} (Imported)`,
+      updatedAt: new Date().toISOString()
+    };
+    saveSingleNote(imported);
+    return imported;
+  }
+
+  // Search curated community notes fallback
+  const commMatch = (CURATED_COMMUNITY_NOTES || []).find((n) => n.accessKey === cleanKey);
+  if (commMatch) {
+    const imported = {
+      ...commMatch,
+      id: "imported-" + Date.now(),
+      title: `${commMatch.title} (Imported)`,
       updatedAt: new Date().toISOString()
     };
     saveSingleNote(imported);
