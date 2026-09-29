@@ -54,20 +54,31 @@ export default function AlgorithmPickerModal({ isOpen, onClose, onSelectAlgorith
             />
           </div>
 
-          <div className="flex items-center space-x-1.5 overflow-x-auto text-xs scrollbar-none">
-            {units.map((unit) => (
-              <button
-                key={unit}
-                onClick={() => setSelectedUnit(unit)}
-                className={`px-3 py-1 rounded-xl shrink-0 font-medium transition-all ${
-                  selectedUnit === unit
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
-                }`}
-              >
-                {unit === 'All' ? 'All Algorithms' : unit}
-              </button>
-            ))}
+          <div className="flex items-center space-x-1.5 overflow-x-auto text-xs scrollbar-none pb-0.5">
+            {units.map((unit) => {
+              const count = unit === 'All'
+                ? ALGORITHMS_CATALOG.length
+                : ALGORITHMS_CATALOG.filter((a) => a.unit.toLowerCase().includes(unit.toLowerCase())).length;
+
+              return (
+                <button
+                  key={unit}
+                  onClick={() => setSelectedUnit(unit)}
+                  className={`px-3 py-1 rounded-xl shrink-0 font-medium transition-all flex items-center space-x-1.5 ${
+                    selectedUnit === unit
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{unit === 'All' ? 'All Algorithms' : unit}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                    selectedUnit === unit ? 'bg-indigo-700/80 text-white' : 'bg-neutral-200 dark:bg-slate-700 text-neutral-700 dark:text-slate-300'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

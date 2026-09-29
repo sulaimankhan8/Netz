@@ -58,38 +58,76 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker }) {
           </span>
         </div>
 
-        <button
-          onClick={onOpenPicker}
-          className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-indigo-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-indigo-300 text-xs px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 transition-colors font-medium"
-        >
-          <FaExchangeAlt className="w-3 h-3" />
-          <span>Change Algorithm</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          {currentAlg.route && (
+            <a
+              href={currentAlg.route}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 transition-colors font-medium"
+              title="Open full dedicated page"
+            >
+              <span>Dedicated Page</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+          )}
+          <button
+            onClick={onOpenPicker}
+            className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 transition-colors font-medium"
+          >
+            <FaExchangeAlt className="w-3 h-3" />
+            <span>Change Algorithm</span>
+          </button>
+        </div>
       </div>
 
       {/* Dynamic Input Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        {Object.keys(currentAlg.defaultParams).map((key) => (
-          <div
-            key={key}
-            className={
-              key === 'expression' || key === 'observed' || key === 'expected' || key === 'xValues' || key === 'yValues'
-                ? 'sm:col-span-2'
-                : ''
-            }
-          >
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 capitalize">
-              {key.replace(/([A-Z])/g, ' $1')}
-            </label>
-            <input
-              type={typeof currentAlg.defaultParams[key] === 'number' ? 'number' : 'text'}
-              step="any"
-              value={params[key] !== undefined ? params[key] : currentAlg.defaultParams[key]}
-              onChange={(e) => handleParamChange(key, e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
-            />
-          </div>
-        ))}
+        {Object.keys(currentAlg.defaultParams).map((key) => {
+          const isWide = [
+            'expression',
+            'observed',
+            'expected',
+            'xValues',
+            'yValues',
+            'row1',
+            'row2',
+            'row3',
+            'sample1',
+            'sample2'
+          ].includes(key);
+
+          const getLabel = (k) => {
+            if (k === 'row1') return 'Matrix Row 1: [a11, a12, a13, b1]';
+            if (k === 'row2') return 'Matrix Row 2: [a21, a22, a23, b2]';
+            if (k === 'row3') return 'Matrix Row 3: [a31, a32, a33, b3]';
+            if (k === 'xValues') return 'X Values (comma-separated)';
+            if (k === 'yValues') return 'Y Values (comma-separated)';
+            if (k === 'sample1') return 'Sample 1 Data (comma-separated)';
+            if (k === 'sample2') return 'Sample 2 Data (comma-separated)';
+            if (k === 'observed') return 'Observed Frequencies O_i';
+            if (k === 'expected') return 'Expected Frequencies E_i';
+            return k.replace(/([A-Z])/g, ' $1');
+          };
+
+          return (
+            <div
+              key={key}
+              className={isWide ? 'sm:col-span-2 lg:col-span-3' : ''}
+            >
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 capitalize">
+                {getLabel(key)}
+              </label>
+              <input
+                type={typeof currentAlg.defaultParams[key] === 'number' ? 'number' : 'text'}
+                step="any"
+                value={params[key] !== undefined ? params[key] : currentAlg.defaultParams[key]}
+                onChange={(e) => handleParamChange(key, e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Solve Button & Result Summary */}

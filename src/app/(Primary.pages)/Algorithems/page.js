@@ -93,20 +93,47 @@ export default function AlgorithmsPage() {
 
           {/* Unit Filter Tabs */}
           <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto custom-notion-scrollbar pb-1 md:pb-0">
-            {units.map((unit) => (
-              <button
-                key={unit}
-                onClick={() => setActiveUnit(unit)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
-                  activeUnit === unit
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                    : 'bg-[#181818] text-slate-400 hover:text-slate-200 border border-[#2e2e2e]'
-                }`}
-              >
-                {unit === 'All' ? 'All Units (1-5)' : unit}
-              </button>
-            ))}
+            {units.map((unit) => {
+              const count = unit === 'All'
+                ? ALGORITHMS_CATALOG.length
+                : ALGORITHMS_CATALOG.filter((a) => a.unit.toLowerCase().includes(unit.toLowerCase())).length;
+
+              return (
+                <button
+                  key={unit}
+                  onClick={() => setActiveUnit(unit)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all flex items-center space-x-1.5 ${
+                    activeUnit === unit
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 border border-[#2e2e2e]'
+                  }`}
+                >
+                  <span>{unit === 'All' ? 'All Units' : unit}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                    activeUnit === unit ? 'bg-indigo-700/80 text-white' : 'bg-[#2a2a2a] text-slate-400'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
+        </div>
+
+        {/* Results summary bar */}
+        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+          <span>
+            Showing <strong className="text-white">{filteredAlgorithms.length}</strong> of{' '}
+            <strong className="text-white">{ALGORITHMS_CATALOG.length}</strong> algorithms across all units
+          </span>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-indigo-400 hover:text-indigo-300 underline text-[11px]"
+            >
+              Clear search filter
+            </button>
+          )}
         </div>
 
         {/* Algorithms Grid & Active Solver Split View */}
@@ -197,17 +224,32 @@ export default function AlgorithmsPage() {
                 {/* Dynamic Parameter Inputs */}
                 <div className="space-y-3 bg-[#181818] p-4 rounded-xl border border-[#2e2e2e]">
                   <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Algorithm Inputs</h4>
-                  {Object.keys(activeAlgorithm.defaultParams || {}).map((key) => (
-                    <div key={key} className="flex flex-col space-y-1">
-                      <label className="text-[11px] font-mono text-indigo-300 uppercase">{key}</label>
-                      <input
-                        type="text"
-                        value={inputs[key] !== undefined ? inputs[key] : activeAlgorithm.defaultParams[key]}
-                        onChange={(e) => setInputs({ ...inputs, [key]: e.target.value })}
-                        className="bg-[#141414] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      />
-                    </div>
-                  ))}
+                  {Object.keys(activeAlgorithm.defaultParams || {}).map((key) => {
+                    const getLabel = (k) => {
+                      if (k === 'row1') return 'Matrix Row 1: [a11, a12, a13, b1]';
+                      if (k === 'row2') return 'Matrix Row 2: [a21, a22, a23, b2]';
+                      if (k === 'row3') return 'Matrix Row 3: [a31, a32, a33, b3]';
+                      if (k === 'xValues') return 'X Values (comma-separated)';
+                      if (k === 'yValues') return 'Y Values (comma-separated)';
+                      if (k === 'sample1') return 'Sample 1 Data (comma-separated)';
+                      if (k === 'sample2') return 'Sample 2 Data (comma-separated)';
+                      if (k === 'observed') return 'Observed Frequencies O_i';
+                      if (k === 'expected') return 'Expected Frequencies E_i';
+                      return k.replace(/([A-Z])/g, ' $1');
+                    };
+
+                    return (
+                      <div key={key} className="flex flex-col space-y-1">
+                        <label className="text-[11px] font-mono text-indigo-300 uppercase">{getLabel(key)}</label>
+                        <input
+                          type="text"
+                          value={inputs[key] !== undefined ? inputs[key] : activeAlgorithm.defaultParams[key]}
+                          onChange={(e) => setInputs({ ...inputs, [key]: e.target.value })}
+                          className="bg-[#141414] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                        />
+                      </div>
+                    );
+                  })}
 
                   <button
                     onClick={handleRunSolve}
