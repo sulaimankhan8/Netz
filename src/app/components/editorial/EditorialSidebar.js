@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
@@ -39,10 +39,10 @@ const UNITS_DATA = [
     description: 'Root Finding & Linear Systems',
     subTopics: [
       { title: 'Bisection Method', link: '/bisection-method' },
+      { title: 'Secant Method', link: '/secant-method' },
       { title: 'Iteration Method', link: '/iteration-method' },
       { title: 'False Position Method', link: '/false-position-method' },
       { title: 'Newton-Raphson Method', link: '/newton-raphson-method' },
-      { title: 'Gauss Seidel Method', link: '/Gauss-seidal' },
     ]
   },
   {
@@ -84,20 +84,36 @@ const UNITS_DATA = [
           { title: "Simpson's 3/8 Rule", link: '/simpson-3-8-Rule' },
           { title: "Boole's Rule", link: '/boole-Rule' },
           { title: "Weddle's Rule", link: '/weddle-Rule' },
+          { title: 'Gauss Quadrature', link: '/gauss-quadrature' },
         ],
       },
     ],
   },
   {
     id: 'unit-4',
-    title: 'Unit 4: Differential Equations',
+    title: 'Unit 4: Matrix Methods & ODEs',
     shortTitle: 'Unit 4',
-    description: 'Initial Value ODE Solvers',
+    description: 'Linear Algebra & Differential Equations',
     subTopics: [
-      { title: "Taylor's Series Method", link: '/taylor-s-series-method' },
-      { title: "Euler's Method", link: '/euler-s-method' },
-      { title: "Modified Euler's Method", link: '/modified-euler-s-method' },
-      { title: 'Runge-Kutta Methods', link: '/runge-kutta-method' },
+      {
+        title: 'Matrix Methods',
+        subTopics: [
+          { title: 'Gauss Seidel Method', link: '/Gauss-seidal' },
+          { title: 'Gauss Elimination', link: '/gauss-elimination' },
+          { title: 'Gauss-Jordan Elimination', link: '/gauss-jordan' },
+          { title: 'LU Decomposition', link: '/lu-decomposition' },
+          { title: 'Jacobi Method', link: '/jacobi-method' },
+        ],
+      },
+      {
+        title: 'ODE Methods',
+        subTopics: [
+          { title: "Taylor's Series Method", link: '/taylor-s-series-method' },
+          { title: "Euler's Method", link: '/euler-s-method' },
+          { title: "Modified Euler's Method", link: '/modified-euler-s-method' },
+          { title: 'Runge-Kutta Methods', link: '/runge-kutta-method' },
+        ],
+      },
     ],
   },
   {
@@ -123,9 +139,9 @@ const UNITS_DATA = [
 ];
 
 /**
- * Editorial Sidebar Toggle — Exact replica of original Netz menuToggle animation.
+ * Editorial Sidebar Toggle â€” Exact replica of original Netz menuToggle animation.
  * Uses CSS ::before/::after pseudo-elements with box-shadow middle-bar trick.
- * Yellow 3-bars (closed) → Purple X cross (open), 0.5s smooth transition.
+ * Yellow 3-bars (closed) â†’ Purple X cross (open), 0.5s smooth transition.
  */
 function HamburgerToggle({ isOpen, onClick }) {
   return (
@@ -299,13 +315,13 @@ export default function EditorialSidebar({ className = '' }) {
           <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-20 editorial-dots-bg" />
 
           <div className="relative z-10 flex items-center gap-3">
-            {/* Toggle always visible — Yellow (closed) or Purple X (open) */}
+            {/* Toggle always visible â€” Yellow (closed) or Purple X (open) */}
             <HamburgerToggle
               isOpen={!isCollapsed}
               onClick={() => setIsCollapsed(prev => !prev)}
             />
 
-            {/* Branding — fades in when expanded */}
+            {/* Branding â€” fades in when expanded */}
             {!isCollapsed && (
               <div className="flex flex-col justify-center min-w-0 animate-in fade-in duration-200">
                 <div className="flex items-center gap-1.5">
@@ -532,7 +548,7 @@ export default function EditorialSidebar({ className = '' }) {
                     }}
                     onMouseLeave={scheduleHoverClose}
                   >
-                    {/* Rail Icon Button for Pages — with label */}
+                    {/* Rail Icon Button for Pages â€” with label */}
                     <div className="flex flex-col items-center gap-1">
                       <div
                         className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all cursor-pointer ${
@@ -732,7 +748,7 @@ export default function EditorialSidebar({ className = '' }) {
                         )}
                       </Link>
 
-                      {/* Rail Flyout Tooltip — Centered vertically with exact arrow pointer */}
+                      {/* Rail Flyout Tooltip â€” Centered vertically with exact arrow pointer */}
                       {isCollapsed && hoveredFlyoutItem === nav.title && (
                         <div className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs font-mono font-bold px-3 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-neutral-700 dark:border-neutral-300 pointer-events-none flex items-center animate-in fade-in zoom-in-95 duration-100">
                           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-neutral-900 dark:bg-neutral-100 rotate-45 border-l border-b border-neutral-700 dark:border-neutral-300" />

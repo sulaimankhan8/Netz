@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export const ALGORITHMS_REGISTRY = [
-  // Unit 1
+  // Unit 1 — Roots of Equations
   { title: 'Bisection Method', path: '/bisection-method', unit: 'Unit 1' },
   { title: 'False Position Method', path: '/false-position-method', unit: 'Unit 1' },
+  { title: 'Secant Method', path: '/secant-method', unit: 'Unit 1' },
   { title: 'Iteration Method', path: '/iteration-method', unit: 'Unit 1' },
   { title: 'Newton-Raphson Method', path: '/newton-raphson-method', unit: 'Unit 1' },
-  { title: 'Gauss-Seidel Method', path: '/Gauss-seidal', unit: 'Unit 1' },
 
-  // Unit 2
+  // Unit 2 — Interpolation & Curve Fitting
   { title: 'Newton Forward Interpolation', path: '/newton-forward', unit: 'Unit 2' },
   { title: 'Newton Backward Interpolation', path: '/newton-backward', unit: 'Unit 2' },
   { title: 'Gauss Forward Interpolation', path: '/gauss-forward', unit: 'Unit 2' },
@@ -20,21 +20,27 @@ export const ALGORITHMS_REGISTRY = [
   { title: 'Lagrange Interpolation', path: '/lagrange-interpolation', unit: 'Unit 2' },
   { title: 'Newton Divided Difference', path: '/newton-divided', unit: 'Unit 2' },
 
-  // Unit 3
+  // Unit 3 — Numerical Integration & Differentiation
   { title: 'Trapezoidal Rule', path: '/trapezoidal-Rule', unit: 'Unit 3' },
   { title: 'Simpson 1/3 Rule', path: '/simpson-1-3-Rule', unit: 'Unit 3' },
   { title: 'Simpson 3/8 Rule', path: '/simpson-3-8-Rule', unit: 'Unit 3' },
   { title: 'Boole\'s Rule', path: '/boole-Rule', unit: 'Unit 3' },
   { title: 'Weddle\'s Rule', path: '/weddle-Rule', unit: 'Unit 3' },
+  { title: 'Gauss Quadrature', path: '/gauss-quadrature', unit: 'Unit 3' },
   { title: 'Numerical Differentiation', path: '/numerical-differentiation', unit: 'Unit 3' },
 
-  // Unit 4
-  { title: 'Taylor\'s Series Method', path: '/taylor-s-series-method', unit: 'Unit 4' },
-  { title: 'Euler\'s Method', path: '/euler-s-method', unit: 'Unit 4' },
-  { title: 'Modified Euler\'s Method', path: '/modified-euler-s-method', unit: 'Unit 4' },
-  { title: 'Runge-Kutta Method', path: '/runge-kutta-method', unit: 'Unit 4' },
+  // Unit 4 — Linear Algebra & Matrix Methods
+  { title: 'Gauss-Seidel Method', path: '/Gauss-seidal', unit: 'Unit 4' },
+  { title: 'Gauss Elimination', path: '/gauss-elimination', unit: 'Unit 4' },
+  { title: 'Gauss-Jordan Elimination', path: '/gauss-jordan', unit: 'Unit 4' },
+  { title: 'LU Decomposition', path: '/lu-decomposition', unit: 'Unit 4' },
+  { title: 'Jacobi Method', path: '/jacobi-method', unit: 'Unit 4' },
 
-  // Unit 5
+  // Unit 5 — ODEs & Statistics
+  { title: 'Taylor\'s Series Method', path: '/taylor-s-series-method', unit: 'Unit 5' },
+  { title: 'Euler\'s Method', path: '/euler-s-method', unit: 'Unit 5' },
+  { title: 'Modified Euler\'s Method', path: '/modified-euler-s-method', unit: 'Unit 5' },
+  { title: 'Runge-Kutta Method', path: '/runge-kutta-method', unit: 'Unit 5' },
   { title: 'Fitting Straight Lines', path: '/fitting-straight-lines', unit: 'Unit 5' },
   { title: 'Fitting Parabola', path: '/fitting-parabola', unit: 'Unit 5' },
   { title: 'Least Squares Method', path: '/least-squares', unit: 'Unit 5' },

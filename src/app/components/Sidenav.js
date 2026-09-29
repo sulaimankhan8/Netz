@@ -19,10 +19,10 @@ const UNITS = [
     title: 'Unit 1',
     subTopics: [
       { title: 'Bisection Method', link: '/bisection-method' },
+      { title: 'Secant Method', link: '/secant-method' },
       { title: 'Iteration Method', link: '/iteration-method' },
       { title: 'False Position Method', link: '/false-position-method' },
       { title: 'Newton-Raphson Method', link: '/newton-raphson-method' },
-      { title: 'Gauss Seidel Method', link: '/Gauss-seidal' },
     ],
   },
   {
@@ -58,6 +58,7 @@ const UNITS = [
           { title: "Simpson's 3/8 Rule", link: '/simpson-3-8-Rule' },
           { title: "Boole's Rule", link: '/boole-Rule' },
           { title: "Weddle's Rule", link: '/weddle-Rule' },
+          { title: 'Gauss Quadrature', link: '/gauss-quadrature' },
         ],
       },
     ],
@@ -65,10 +66,25 @@ const UNITS = [
   {
     title: 'Unit 4',
     subTopics: [
-      { title: "Taylor's Series Method", link: '/taylor-s-series-method' },
-      { title: "Euler's Method", link: '/euler-s-method' },
-      { title: "Modified Euler's Method", link: '/modified-euler-s-method' },
-      { title: "Runge-Kutta Methods", link: '/runge-kutta-method' },
+      {
+        title: 'Matrix Methods',
+        subTopics: [
+          { title: 'Gauss Seidel Method', link: '/Gauss-seidal' },
+          { title: 'Gauss Elimination', link: '/gauss-elimination' },
+          { title: 'Gauss-Jordan Elimination', link: '/gauss-jordan' },
+          { title: 'LU Decomposition', link: '/lu-decomposition' },
+          { title: 'Jacobi Method', link: '/jacobi-method' },
+        ],
+      },
+      {
+        title: 'ODE Methods',
+        subTopics: [
+          { title: "Taylor's Series Method", link: '/taylor-s-series-method' },
+          { title: "Euler's Method", link: '/euler-s-method' },
+          { title: "Modified Euler's Method", link: '/modified-euler-s-method' },
+          { title: 'Runge-Kutta Methods', link: '/runge-kutta-method' },
+        ],
+      },
     ],
   },
   {
