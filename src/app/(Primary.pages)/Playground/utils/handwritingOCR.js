@@ -34,20 +34,7 @@ function classifyClusterMode(cluster) {
     return 'math';
   }
 
-  // Heuristic: check stroke density and aspect ratio
-  const strokes = cluster.strokes || [];
-  if (strokes.length === 0) return 'auto';
-
-  const bbox = cluster.bbox;
-  const width = bbox.maxX - bbox.minX;
-  const height = bbox.maxY - bbox.minY;
-
-  // Very tall, narrow clusters (like integrals, fractions) tend to be math
-  if (height > width * 2 && strokes.length <= 5) {
-    return 'math';
-  }
-
-  // Default: let the API auto-classify
+  // Default: let the recognition engine auto-classify based on recognized content
   return 'auto';
 }
 

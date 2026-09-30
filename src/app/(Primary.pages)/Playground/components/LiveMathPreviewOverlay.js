@@ -124,7 +124,7 @@ export default function LiveMathPreviewOverlay({
                 {/* Recognized Text or KaTeX Math Formula */}
                 <div className="flex items-center gap-1.5 font-medium text-zinc-900 dark:text-zinc-100 max-w-[280px]">
                   {isMath ? (
-                    <InlineMath math={detectedText} />
+                    <InlineMath math={detectedText} renderError={(error) => <span className="font-mono text-xs">{detectedText}</span>} />
                   ) : (
                     <span className="font-sans text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                       {detectedText}

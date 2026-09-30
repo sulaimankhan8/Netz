@@ -189,18 +189,37 @@ export function detectEqualsGesture(strokes) {
 }
 
 /**
+ * Checks if two bounding boxes are vertically stacked (e.g. question mark hook + dot,
+ * exclamation point stem + dot, colon dots, equals bars, theta crossbar, pi roof/legs, fraction).
+ */
+function isVerticallyStacked(boxA, boxB, maxVDist = 55) {
+  const xOverlap = Math.min(boxA.maxX, boxB.maxX) - Math.max(boxA.minX, boxB.minX);
+  const widthA = Math.max(boxA.maxX - boxA.minX, 1);
+  const widthB = Math.max(boxB.maxX - boxB.minX, 1);
+  const centerA = (boxA.minX + boxA.maxX) / 2;
+  const centerB = (boxB.minX + boxB.maxX) / 2;
+  const centerDist = Math.abs(centerA - centerB);
+
+  const horizontallyAligned = xOverlap > -10 || centerDist <= Math.max(Math.max(widthA, widthB) * 0.7, 30);
+  const yDist = Math.max(0, Math.max(boxA.minY, boxB.minY) - Math.min(boxA.maxY, boxB.maxY));
+
+  return horizontallyAligned && yDist <= maxVDist;
+}
+
+/**
  * Clusters strokes on canvas into spatial groups.
  *
  * Uses a hybrid approach:
  * 1. Baseline-aware grouping: strokes on the same horizontal line are clustered with wider horizontal margin
- * 2. Proximity grouping: remaining strokes use the standard proximity margin
- * 3. Temporal ordering: strokes within each cluster are sorted by timestamp for reading order
+ * 2. Vertical-stack grouping: strokes stacked vertically (like '?', '!', ':', '=', '\pm', '\theta') are bound together
+ * 3. Proximity grouping: remaining strokes use the standard proximity margin
+ * 4. Temporal ordering: strokes within each cluster are sorted by timestamp for reading order
  *
  * @param {Array} strokes - Array of InkStroke objects
- * @param {number} proximityMargin - Pixel margin for spatial proximity grouping (default 90)
+ * @param {number} proximityMargin - Pixel margin for spatial proximity grouping (default 36)
  * @returns {Array} Array of StrokeCluster objects
  */
-export function clusterStrokes(strokes, proximityMargin = 32) {
+export function clusterStrokes(strokes, proximityMargin = 36) {
   if (!strokes || strokes.length === 0) return [];
 
   const clusters = [];
@@ -221,8 +240,9 @@ export function clusterStrokes(strokes, proximityMargin = 32) {
     while (expanded) {
       expanded = false;
 
-      // Use line-aware expansion: modest horizontal margin for strokes within the same word/symbol
-      const lineSearchBox = expandBBoxForLine(clusterBox, proximityMargin + 12, Math.max(proximityMargin - 12, 10));
+      // Generous search boxes for line and vertical stacking
+      const lineSearchBox = expandBBoxForLine(clusterBox, proximityMargin + 16, Math.max(proximityMargin - 8, 16));
+      const verticalSearchBox = expandBBox(clusterBox, Math.max(proximityMargin + 16, 48));
       const standardSearchBox = expandBBox(clusterBox, proximityMargin);
 
       for (let j = 0; j < sortedStrokes.length; j++) {
@@ -231,11 +251,12 @@ export function clusterStrokes(strokes, proximityMargin = 32) {
 
         // Check if candidate is on the same baseline as any stroke in the cluster
         const onSameLine = currentClusterStrokes.some((s) => sharesBaseline(s, candidate));
+        // Check if candidate is vertically stacked (question mark dot, exclamation dot, colon, equals, etc.)
+        const isStacked = isVerticallyStacked(clusterBox, candidate.bbox);
 
-        // Use wider search box for same-line strokes (catches words in a sentence)
-        const searchBox = onSameLine ? lineSearchBox : standardSearchBox;
+        const searchBox = onSameLine ? lineSearchBox : (isStacked ? verticalSearchBox : standardSearchBox);
 
-        if (intersectsBBox(searchBox, candidate.bbox)) {
+        if (intersectsBBox(searchBox, candidate.bbox) || isStacked) {
           visited.add(candidate.id);
           currentClusterStrokes.push(candidate);
           clusterBox = mergeBBoxes(clusterBox, candidate.bbox);

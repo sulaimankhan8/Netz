@@ -7,6 +7,7 @@
 > 3. `PLAYGROUND_FEATURE_TECH_SPEC.md`
 > 4. `NOTES_FEATURE_TECH_SPEC.md`
 > 5. `SAAS_STATE_MANAGEMENT_AND_GROWTH_PLAN.md`
+> 6. `NETZ_BACKEND_IMPLEMENTATION_PLAN.md`
 
 ---
 
@@ -14,12 +15,12 @@
 
 | Pillar / Module | Completion Status | What's Working Today | Key Missing / Pending Features |
 | :--- | :---: | :--- | :--- |
-| **Module A: Algorithm Suite (Units 1-5)** | **~85%** | 22 numerical solvers fully interactive with KaTeX derivations, steps tables, & Chart.js plots. | Secant Method, Gauss Quadrature, full Matrix operations (LU, Jacobi, Eigenvalues), 1-click code export generator (Python/MATLAB/C++). |
-| **Module B: Notion-Style Notes Workspace** | **~75%** | Block editor (H1/H2/Text/KaTeX/Callout), live embedded math solver widgets, tags, search, access key sharing. | Interactive QuizBlock widgets (MCQ/numeric tolerance), direct ink-to-block auto-sync, public cloud community feed. |
-| **Module C: Smart Whiteboard Playground** | **~80%** | Hardware-accelerated canvas, Catmull-Rom smoothing, Smart Blocks (Equation, Graph, Theory, Sketch, Audio, Image), Bezier links, offline ambient audio. | Quantized INT8 ONNX WebWorker OCR, live auto-evaluator overlay, drag-drop multi-curve graph layering, sketch-to-equation reverse fitting. |
-| **Module D: Gamification & Community** | **~10%** | Dark/Light editorial theme toggle, static sitemaps, offline PWA caching. | /Profile is UnderConstruction. Streaks, XP system, badges, leaderboard, and viral classroom sharing loop are pending. |
-| **Module E: AI Tutor & Solver** | **~20%** | Floating CAS action button, MathJS/Nerdamer symbol operations, OCR scaffolding. | Step-by-step AI problem tutor sidebar, photo textbook scanner, live multimodal chat assistant. |
-| **Platform Infrastructure & Monetization** | **~25%** | Next.js 16 App Router, Workbox PWA service worker, static pre-rendering, responsive mobile dock. | Zustand stores + TanStack Query v5 migration, Supabase backend + Cloudflare R2, Stripe Pro billing ($1.99/mo), navigation ad counter. |
+| **Module A: Algorithm Suite (Units 1-5)** | **~95%** | 34 numerical solvers across Units 1–5 with KaTeX derivations, iteration steps tables, Chart.js plots, and Algorithm Hub. | 1-click polyglot code export generator (Python/MATLAB/C++/JS), WebWorker calculation offloading. |
+| **Module B: Notion-Style Notes Workspace** | **~95%** | Block editor (H1/H2/Text/KaTeX/Callout), live embedded 34-algo math solver widgets, QuizBlock (MCQ+Numeric), Ink drawing pad, 2x Academic PDF Export, Community Feed. | Notion-style public notes hosting (`/p/[slug]` with ISR), cloud persistence via Neon PostgreSQL, note forking. |
+| **Module C: Smart Whiteboard Playground** | **~95%** | Hardware-accelerated canvas, Catmull-Rom smoothing, Smart Blocks (Equation, Graph, Theory, Sketch, Audio, Image), Bezier links, offline ambient audio, **4-Tier Hybrid Handwriting Recognition (Google Ink + W3C Native OS + Word-Segmented TrOCR + Tesseract)**, live '=' math auto-eval, R-Tree spatial indexing. | Drag-drop multi-curve graph layering, sketch-to-equation reverse fitting, global CAS scope manager. |
+| **Module D: Gamification & Community** | **~10%** | Dark/Light editorial theme toggle, static sitemaps, offline PWA caching. | /Profile is UnderConstruction. Quadratic XP ledger, academic leveling system ($\text{Level} = \lfloor \sqrt{\text{XP}/75} \rfloor + 1$), badges, and auth (streaks explicitly omitted). |
+| **Module E: AI Tutor & Solver** | **~35%** | Floating CAS action button, MathJS/Nerdamer symbol operations, on-device handwriting neural network. | Step-by-step AI problem tutor sidebar, photo textbook scanner, live multimodal chat assistant. |
+| **Platform Infrastructure & Monetization** | **~25%** | Next.js 16 App Router, Workbox PWA service worker, static pre-rendering, responsive mobile dock. | Single affordable Linux VPS ($4-$7/mo) hosting Dockerized NETZ, Signaturely & Discord app; containerized Redis + PostgreSQL/Neon; Dual Stripe & Razorpay billing; navigation ad counter. |
 
 ---
 
@@ -93,16 +94,21 @@
   - Note export to Markdown (`.md`) and formatted printing.
 
 #### Pending Deliverables for Module B:
-- [ ] **Interactive QuizBlock Widgets**:
+- [x] **Interactive QuizBlock Widgets**:
   - Multiple Choice Questions (MCQ) with 2-4 options and answer explanation toggle.
-  - Short Answer / Numerical Input evaluating answers within math tolerance (Â±0.001).
+  - Short Answer / Numerical Input evaluating answers within math tolerance (±0.001).
   - Self-check reveal step-by-step KaTeX solutions.
+- [x] **Academic PDF & Clean Vector SVG Export**:
+  - High-resolution academic PDF lab report generation via `jspdf` + `html2canvas` (`src/app/(Primary.pages)/Notes/utils/pdfExport.js`).
+- [ ] **Notion-Style Public Notes Hosting Engine**:
+  - Public web links at `https://netz.app/p/[slug]` rendered with Next.js App Router and Incremental Static Regeneration (ISR).
+  - Read-only interactive sandbox allowing visitors to execute embedded math widgets and answer quizzes.
+  - One-click "Duplicate / Fork to My Notebook" button.
+  - Public note quotas enforced by SaaS tier (Free: 2, Pro: 10, Lifetime: 60).
 - [ ] **Handwritten Ink Blocks**:
   - Ability to embed raw vector sketches from the whiteboard directly into notes.
-- [ ] **Academic PDF & Clean Vector SVG Export**:
-  - High-resolution, un-watermarked academic PDF lab report generation via `jspdf`.
 - [ ] **Global Community Notes Feed**:
-  - Public note repository where students and teachers publish study notes with client-side indexing (FlexSearch / Fuse.js).
+  - Cloud-synced public note discovery with Neon PostgreSQL search, tags, and unit filters.
 
 ---
 
@@ -131,20 +137,26 @@
   - Non-clipping popover, animated equalizer bars, loop mode, and custom MP3 file upload support.
 - [x] **Export Capabilities** (`exportEngine.js`):
   - Export canvas to PNG, SVG, and JSON session state.
+- [x] **4-Tier Hybrid Handwriting Recognition Engine** (`localOCRService.js`, `trocrService.js`, `strokeRasterizer.js`):
+  - **Tier 0 (Online)**: Google Digital Ink vector IME (99% cursive/equation accuracy, free, untethered).
+  - **Tier 1 (Offline Native)**: W3C Handwriting Recognition API (`navigator.createHandwritingRecognizer`) tapping native OS neural networks (Windows Ink / Android ML Kit) in compiled C++ (<15ms, 0 MB download).
+  - **Tier 2 (Offline WASM/WebGPU)**: Word-Segmented TrOCR Vision Transformer (`@xenova/transformers/dist/transformers.js` + `Xenova/trocr-small-handwritten`) with tight bounding box crops and inter-word whitespace gap detection (`segmentStrokesIntoWords`).
+  - **Tier 3 (Offline Emergency)**: Tesseract.js WASM single-line worker fallback.
+  - Offline cache warmer (`preloadOCREngine`) and dev testing harness (`window.__FORCE_OFFLINE_OCR = true`).
+- [x] **R-Tree Spatial Indexing & Scratch-Out Erase** (`spatialIndexRTree.js`, `spatialClusterer.js`):
+  - Fast $O(\log N)$ 2D bounding-box spatial indexing.
+  - Natural scribble/scratch-out erase gesture detection: 10+ rapid directional reversals pack high path density over target strokes to automatically delete handwriting.
+- [x] **Live Handwritten Math Auto-Evaluation (Apple Math Notes Parity)**:
+  - Trailing equals sign (`=`) gesture detection (`detectEqualsGesture` in `spatialClusterer.js`).
+  - Evaluates arithmetic and algebraic equations (`evaluateLatexExpression` in `handwritingOCR.js`) displaying live computed results.
 
 #### Pending Deliverables for Module C:
-- [ ] **Quantized INT8 ONNX WebWorker OCR**:
-  - Client-side stroke-to-LaTeX recognition running in background WebWorkers without external API latency.
-- [ ] **Live Handwritten Math Auto-Evaluation (Apple Math Notes Parity)**:
-  - Writing `24 * 5 =` or `d/dx(x^3)=` automatically evaluates and displays the result directly next to the `=` sign.
 - [ ] **Drag-to-Connect Multi-Curve Graph Layering**:
   - Dragging an Equation Block over an existing Graph Block appends a secondary curve dataset to the same chart instead of creating duplicate widgets.
 - [ ] **Reverse Sketch-to-Equation Fitting** (`graphToEquation.js` & `sketchShapeAnalyzer.js`):
   - Analyzing hand-drawn curves to classify candidate models (Linear, Polynomial, Sinusoidal, Exponential) and generating the best-fit equation with an R^2 confidence score.
 - [ ] **Global CAS Symbol Scope Manager** (`scopeManager.js`):
   - Auto-propagating variable definitions across multiple blocks (a = 5 implies f(a) updates live).
-- [ ] **R-Tree Spatial Indexing** (`spatialIndexRTree.js`):
-  - Sub-8ms O(log N) hit-testing for scratch-out erasing and lasso selection across thousands of strokes.
 
 ---
 
@@ -158,11 +170,10 @@
 #### Pending Deliverables for Module D:
 - [ ] **Profile Page Implementation (`/Profile`)**:
   - Currently renders placeholder `<UnderConstruction />`.
-  - Needs user statistics dashboard, solved algorithms tally, saved notebooks count, and activity graphs.
-- [ ] **LeetCode-Style Gamification**:
-  - **Daily Streaks**: Streak counter tracking consecutive days of problem solving.
-  - **XP & Leveling System**: Earn XP for running algorithm calculations, creating study notes, and taking quizzes.
-  - **Achievement Badges**: Unlock badges (e.g., "Numerical Wizard", "Matrix Master", "Calculus Architect").
+- [ ] **Academic Gamification (XP & Leveling System)**:
+  - **XP Ledger**: Earn XP for solving algorithm calculations (+15 XP), creating study notes (+30 XP), publishing to web (+50 XP), and solving quizzes (+25 XP). *(Daily streaks explicitly omitted).*
+  - **Leveling Engine**: Quadratic level formula ($\text{Level} = \lfloor \sqrt{\text{XP}/75} \rfloor + 1$) with 6 rank titles from *Novice Calculator* to *Fields Pioneer*.
+  - **Achievement Badges**: Unlock academic badges (e.g., "Roots Conqueror", "Matrix Master", "Calculus Architect").
 - [ ] **Community Sharing & Discovery Feed**:
   - Public showcase of shared study notes, interactive quizzes, and custom algorithm presets.
 
@@ -197,39 +208,55 @@
   - Installing and setting up **Zustand stores** (`useAuthStore`, `useSubscriptionStore`, `useGamificationStore`, `useQuizEngineStore`, `useCanvasStore`, `useUIStore`).
   - Implementing **TanStack Query v5** for optimistic server state and cloud synchronization.
   - Implementing **Dexie.js (IndexedDB)** for local canvas session persistence bypassing 5MB `localStorage` limits.
-- [ ] **Monetization & Tiered Paywalls**:
-  - Stripe / Razorpay checkout integration for:
+- [ ] **Monetization & Dual-Gateway Tiered Paywalls**:
+  - **Stripe Integration (Global)**:
     - Free Tier ($0)
-    - Pro Monthly ($1.99 / mo)
-    - Pro Yearly ($12.99 / yr)
-    - Lifetime Access ($49.99)
+    - Pro Monthly ($2.99 / mo)
+    - Pro Yearly ($19.99 / yr)
+    - Lifetime Access ($49.99 once)
+  - **Razorpay Integration (India - UPI / Netbanking / Cards)**:
+    - Free Tier (₹0)
+    - Pro Monthly (₹199 / mo)
+    - Pro Yearly (₹1,499 / yr)
+    - Lifetime Access (₹3,499 once)
 - [ ] **Smart Navigation-Based Ad Engine**:
   - Implementing `useAdNavigationTracker` hook to trigger interstitial ads only every 4 page transitions on the Free Tier (zero mid-stroke ads).
-- [ ] **Cloud Backend Integration**:
-  - Supabase PostgreSQL for user accounts, public shared notes, and RLS data security.
-  - Cloudflare R2 bucket for zero-egress asset storage.
+- [ ] **Multi-Project VPS & Docker Infrastructure (Predictable Flat Billing)**:
+  - **Single Affordable Linux VPS** (Hetzner / Contabo / DigitalOcean, ~4-8GB RAM, ~$4-$7/mo) hosting 3 colocated production containers:
+    - **NETZ** (Next.js 16 Full-Stack & Notion-Style public page ISR engine)
+    - **Signaturely** (Signature service backend)
+    - **Discord Application** (Bot worker & webhooks)
+  - **Caddy Reverse Proxy**: Automatic Let's Encrypt SSL certificates & domain routing (`netz.app`, `signaturely.domain`, `discord.domain`).
+  - **Shared Redis Container** (`redis:7-alpine`): In-memory cache, sliding-window XP anti-cheat rate limiting, and webhook idempotency across DB 0, DB 1, DB 2.
+  - **PostgreSQL 16 Container** (or hybrid Neon connection): Relational schema for `users`, `profiles`, `notes`, `note_forks`, `xp_transactions`, and `subscriptions`.
+  - **Notion-Style Public Page Hosting Engine**: Incremental Static Regeneration (ISR) at `/p/[slug]` with interactive sandbox widgets.
 
 ---
 
 ## 3. Prioritized Implementation Roadmap
 
-### Phase 1: High-Impact Core Features (Immediate Priority)
-1. **Implement QuizBlock Widget in Notes**: Add MCQ and numeric tolerance question blocks with answer explanations.
-2. **Build /Profile Dashboard**: Replace `<UnderConstruction />` with active user stats, saved notes count, and local streak tracker.
-3. **Live Handwritten Math Auto-Evaluation**: Connect `=` gesture detection to background MathJS evaluator in Playground canvas.
-4. **Missing Numerical Algorithms**: Implement the Secant Method and Gauss Elimination.
+### Phase 1: High-Impact Core Features
+1. [x] **Implement QuizBlock Widget in Notes**: Added MCQ and numeric tolerance question blocks with live KaTeX step explanations and Author/Solve modes.
+2. [x] **Live Handwritten Math Auto-Evaluation**: Connected `=` gesture detection to background MathJS evaluator in Playground canvas.
+3. [x] **Numerical Algorithm Suite Completeness**: Implemented Secant Method, Gauss Elimination, Gauss-Jordan, LU Decomposition, Jacobi Method, and Gauss Quadrature.
+4. [x] **4-Tier Hybrid Handwriting Recognition Engine**: Integrated Google Digital Ink Online, W3C Native OS API, Word-Segmented TrOCR Vision Transformer, and Tesseract WASM.
+5. [ ] **Build /Profile Dashboard**: Replace `<UnderConstruction />` with active user stats, total XP, current academic rank title, quadratic level progress bar ($\text{Level} = \lfloor \sqrt{\text{XP}/75} \rfloor + 1$), published notes manager, and auth login/signup modal (streaks explicitly omitted).
 
-### Phase 2: Platform Maturation (Medium Priority)
-1. **Drag-to-Connect Multi-Curve Plotting**: Allow dragging an Equation Block over a Graph Block to plot multiple curves on one chart.
-2. **Polyglot Code Generator**: Add Python, MATLAB, and C++ code export tabs to all algorithm pages.
-3. **Zustand + Dexie State Migration**: Unify canvas state, undo/redo delta history, and notes storage into persistent IndexedDB stores.
-4. **Academic PDF Lab Report Export**: Implement clean multi-page PDF generation in Notes and Playground.
+### Phase 2: Platform Maturation
+1. [x] **Academic PDF Lab Report Export**: Implemented clean high-DPI $2\times$ multi-page PDF generation in Notes via `jspdf` + `html2canvas`.
+2. [ ] **Drag-to-Connect Multi-Curve Plotting**: Allow dragging an Equation Block over a Graph Block to plot multiple curves on one chart.
+3. [ ] **Polyglot Code Generator**: Add Python, MATLAB, and C++ code export tabs to all algorithm pages.
+4. [ ] **Zustand + Dexie State Migration**: Unify canvas state, undo/redo delta history, and notes storage into persistent IndexedDB stores.
+5. [ ] **Reverse Sketch-to-Equation Fitting**: Curve classification (linear/poly/sinusoidal/exp) with $R^2$ confidence fitting.
 
-### Phase 3: SaaS & Cloud Scale (Final Stage)
-1. **Stripe Subscription Billing**: Pro Monthly, Yearly, and Lifetime tier paywalls.
-2. **Supabase Cloud Sync & Public Notes Feed**: Global search and cloud sharing permalinks.
-3. **Smart Navigation Ad Frequency Counter**: Non-intrusive page-transition ads for free-tier users.
-4. **Multimodal AI Homework Assistant**: Cloud-assisted step-by-step problem solver.
+### Phase 3: SaaS, Cloud Backend & Public Scale
+1. [ ] **VPS Setup & Docker Compose Orchestration**: Deploy `docker-compose.yml` on single Linux VPS running Caddy, containerized Redis, PostgreSQL, and containers for NETZ, Signaturely, and Discord bot with memory caps and 4GB swapfile.
+2. [ ] **Database Migration & Auth Endpoints**: Execute DDL schema (`users`, `profiles`, `notes`, `xp_transactions`, `subscriptions`), build `/api/auth/register`, `/api/auth/login`, and connect Zustand `useAuthStore`.
+3. [ ] **Notion-Style Public Notes Hosting Engine**: Implement `/api/notes/publish`, dynamic Next.js App Router route `src/app/p/[slug]/page.js` with ISR, OpenGraph card generation, and read-only interactive sandbox with "Fork to My Notebook" CTA.
+4. [ ] **Gamification Engine & XP Ledger**: Server-side XP calculation and atomic rate-limited transaction logging (streaks omitted).
+5. [ ] **Dual Payment Gateway (Stripe + Razorpay)**: Global checkout with Stripe and Indian UPI/Card checkout with Razorpay; enforce public note quotas (Free: 2, Pro: 10, Lifetime: 60).
+6. [ ] **Smart Navigation Ad Frequency Counter**: Non-intrusive page-transition ads for free-tier users.
+7. [ ] **Multimodal AI Homework Assistant**: Cloud-assisted step-by-step problem solver.
 
 ---
 
@@ -259,21 +286,22 @@
 | Quiz Completion Rate | (Quizzes submitted) / (Quizzes rendered) | >= 70% |
 | Audio Soundscape Activation Rate | (Users who start ambient audio) / (Playground sessions) | >= 25% |
 
-**Implementation**: Store events in `localStorage` under `netz_analytics_events[]`. Flush to a serverless analytics endpoint (Vercel Analytics, Plausible, or Supabase `events` table) on page unload via `navigator.sendBeacon()`.
+**Implementation**: Store events in `localStorage` under `netz_analytics_events[]`. Flush to the serverless analytics endpoint or Neon PostgreSQL `events` table on page unload via `navigator.sendBeacon()`.
 
 ---
 
-### 4.3 Retention & Streak Analytics
+### 4.3 Retention & XP Progression Analytics (Streaks Omitted)
 
 | Metric | Formula | Target |
 | :--- | :--- | :--- |
 | Day-1 Retention | Users active on Day 1 after first visit / New users | >= 40% |
 | Day-7 Retention | Users active on Day 7 / New users on Day 0 | >= 20% |
 | Day-30 Retention | Users active on Day 30 / New users on Day 0 | >= 10% |
-| Median Streak Length | Median of `netz_streak.current` across all users | >= 3 days at 60-day mark |
-| Streak Reset Rate | Users who reset streak (miss day) / Total streaking users | <= 30% daily |
+| Daily Active XP Earners (DAX) | Users earning >= 15 XP per day / Daily active users | >= 55% |
+| Median User Level | Median of `profiles.current_level` across all registered users | >= Level 5 within 30 days |
+| Rank Velocity | Days required for an active user to advance from Novice to Math Explorer | <= 7 days |
 
-**Streak engagement loop**: Daily login -> +20 XP -> streak counter update -> badge unlock toast -> re-engagement the next day.
+**Academic progression loop**: Solve algorithm (+15 XP) / Complete Quiz (+25 XP) / Publish Note (+50 XP) -> Instant XP gain toast -> Level progress bar advancement -> Academic rank promotion (*Novice* -> *Math Explorer* -> *Algorithm Architect*).
 
 ---
 
@@ -283,7 +311,7 @@
 | :--- | :--- | :--- |
 | Algorithm Compute Latency | `performance.now()` from Run click to table render | <= 200ms for n <= 100 iterations |
 | Canvas Frame Rate | `requestAnimationFrame` FPS during active drawing | >= 60 FPS on mid-range hardware |
-| OCR Recognition Latency | Image capture to LaTeX string output (Tesseract) | <= 3,000ms |
+| OCR Recognition Latency | Image capture to LaTeX string output (Tesseract / TrOCR) | <= 3,000ms |
 | Note Load Time | Time to render a 50-block note from IndexedDB | <= 400ms |
 | PWA Offline Load Time | Full interactive from service worker cache | <= 1,500ms |
 | Largest Contentful Paint | Core Web Vital (LCP) | <= 2,500ms |
@@ -293,7 +321,7 @@
 
 ---
 
-### 4.5 Monetization Funnel Metrics
+### 4.5 Monetization Funnel Metrics (Dual Stripe + Razorpay)
 
 | Funnel Stage | Metric | Target |
 | :--- | :--- | :--- |
@@ -307,9 +335,11 @@
 | Ad Revenue per Free User | Navigation ad CPM x impressions / free users | $0.50/user/month target |
 
 **Paywall trigger logic**:
-- Free tier limits: 3 Playground sessions/day, 5 notes total, no PDF export
-- Show upgrade modal when limit is hit: "Upgrade to Pro â€” $1.99/mo"
-- Track encounters via `useAdNavigationTracker` (counts page transitions)
+- Free tier limits: Max 2 public shared notes, view-only quiz access, standard PNG export.
+- Upgrade modal:
+  - Global Users: "Upgrade to Pro — $2.99/mo or $49.99 Lifetime via Stripe"
+  - Indian Users: "Upgrade to Pro — ₹199/mo or ₹3,499 Lifetime via UPI / Razorpay"
+- Track encounters via `useAdNavigationTracker` (counts page transitions).
 
 ---
 
@@ -317,31 +347,30 @@
 
 | Metric | Definition | Target |
 | :--- | :--- | :--- |
-| Shared Note Clicks | Clicks on `NETZ-XXXX` access key links | 500/month by Month 2 |
-| Notes Published to Feed | Community notes published per week | >= 50/week at 90-day mark |
-| Viral Coefficient (K-Factor) | (Invites sent per user) x (Invite acceptance rate) | K >= 0.5 (strong if K >= 1.0) |
+| Shared Note Clicks | Clicks on public URLs (`netz.app/p/[slug]`) | 500/month by Month 2 |
+| Notes Published to Web | Public notes published per week | >= 50/week at 90-day mark |
+| Note Fork Rate | (Public notes duplicated) / (Public note views) | >= 12% |
+| Viral Coefficient (K-Factor) | (Invites/shares sent per user) x (Acceptance rate) | K >= 0.5 (strong if K >= 1.0) |
 | Teacher Adoption Rate | Educators using Quiz Blocks in notes | Target 10% of power users |
-| Cross-Device Sync Usage | Users who access notes on 2+ devices | >= 15% of active users |
 
 ---
 
 ### 4.7 Feature Rollout Success Gates
 
-Each Phase 1 feature is considered successfully shipped when it meets the following analytics gate:
-
 | Feature | Success Criterion |
 | :--- | :--- |
 | QuizBlock | >= 30% of note-creating users add >= 1 quiz block within 14 days |
-| Profile Dashboard | >= 50% of users visit `/Profile` at least once per week |
+| Profile Dashboard | >= 50% of active users visit `/Profile` at least once per week |
 | Live Math Auto-Eval | >= 40% of Playground sessions include >= 1 auto-evaluation event |
 | Secant Method | Page gets >= 200 unique solves in first 30 days |
 | PDF Export | >= 20% of note sessions end with a PDF export within 30 days |
+| Notion Public Notes | >= 25% of users with >= 2 notes publish at least 1 note to the web |
 
 ---
 
 ### 4.8 Analytic Data Collection Architecture
 
-**Phase 1 â€” Client-only** (`src/app/utils/analytics.js`):
+**Phase 1 — Client-only** (`src/app/utils/analytics.js`):
 
 ```js
 export function trackEvent(eventName, properties = {}) {
@@ -356,15 +385,24 @@ export function trackEvent(eventName, properties = {}) {
   if (events.length > 500) events.splice(0, events.length - 500);
   localStorage.setItem('netz_events', JSON.stringify(events));
 }
-
-// Usage examples:
-// trackEvent('ALGORITHM_SOLVED', { algorithm: 'bisection', iterations: 8 });
-// trackEvent('NOTE_CREATED', { blockCount: 5 });
-// trackEvent('QUIZ_COMPLETED', { correct: true, mode: 'mcq' });
-// trackEvent('PAYWALL_HIT', { feature: 'pdf_export' });
 ```
 
-**Phase 2 â€” Supabase backend**:
-- Batch-flush `netz_events[]` to Supabase `events` table via `navigator.sendBeacon()` on `visibilitychange`.
-- Supabase dashboard or Metabase/Grafana for KPI visualization.
-- `GET /api/analytics/dashboard` route returning aggregated KPIs for admin view.
+**Phase 2 — Neon Serverless PostgreSQL & Redis Backend**:
+- Batch-flush `netz_events[]` to backend `/api/analytics/events` endpoint via `navigator.sendBeacon()` on `visibilitychange`.
+- Stored in Neon PostgreSQL `analytics_events` table with partitioned daily indexing.
+- Redis-cached dashboard stats for administrative health checks.
+
+---
+
+## 5. Immediate Implementation Backlog & Next Steps
+
+Based on the architectural blueprints and pending roadmap, here is the prioritized execution sequence for the engineering team:
+
+| Priority | Feature / Task | File / Path | Action Items |
+| :---: | :--- | :--- | :--- |
+| **P0** | **Build `/Profile` Dashboard** | `src/app/(Primary.pages)/Profile/page.js` | Replace `<UnderConstruction />` with active user profile: display name, level progress bar ($\text{Level} = \lfloor \sqrt{\text{XP}/75} \rfloor + 1$), rank badge, solved counters, published notes list, and auth modal trigger. |
+| **P0** | **Backend Setup & Neon Migration** | `backend/` or `src/app/api/` | Execute DDL schema on Neon PostgreSQL (`users`, `profiles`, `notes`, `note_forks`, `xp_transactions`, `subscriptions`) and configure Redis connection pool. |
+| **P1** | **Notion-Style Public Notes Hosting** | `src/app/p/[slug]/page.js` | Implement "Publish to Web" toggle in `NoteShareModal.js`, public slug generator, and ISR public reader page with embedded read-only solvers and "Fork Note" CTA. |
+| **P1** | **User Authentication & Auth Store** | `src/app/store/useAuthStore.js` & `src/app/components/auth/` | Create login/signup modal dialogs, JWT cookie handling, and profile state sync. |
+| **P2** | **Gamification Engine & XP Ledger** | `backend/modules/gamification` | Implement `/api/gamification/award-xp` with Redis sliding-window daily rate limits (+15 solver, +25 quiz, +30 note, +50 publish). |
+| **P2** | **Dual Payment Integration** | `backend/modules/billing` | Implement Stripe checkout for global cards and Razorpay checkout for Indian UPI/Netbanking with signature verification. |
