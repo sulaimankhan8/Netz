@@ -67,9 +67,16 @@ export default function LiveMathPreviewOverlay({
         // Show pill if live OCR is toggled ON, if cluster is selected, or if it is a manual Lasso selection cluster
         const isSelectionCluster = cluster.clusterId && cluster.clusterId.startsWith('selection_');
         const isSelected = selectedClusterId === cluster.clusterId;
-        if (!showLiveOcr && !isSelected && !isSelectionCluster) return null;
 
-        const { bbox, detectedText, isMath, evaluatedResult } = cluster;
+        // If not explicitly selected or lassoed:
+        if (!isSelected && !isSelectionCluster) {
+          if (!showLiveOcr) return null;
+          // Suppress conversion pills for unselected strokes marked shouldConvert === false (e.g. normal handwriting or diagrams)
+          // UNLESS there is an instant '=' calculation gesture
+          if (cluster.shouldConvert === false && !cluster.hasEqualsGesture) return null;
+        }
+
+        const { bbox, detectedText, isMath, evaluatedResult, action } = cluster;
         const isEditing = editingClusterId === cluster.clusterId;
 
         // Position pill floating cleanly ABOVE the top of the stroke bounding box
@@ -102,8 +109,37 @@ export default function LiveMathPreviewOverlay({
               </div>
             )}
 
+            {/* ── STATE: NOTES MODE DIAGRAM / DRAWING (Preserved as Ink) ── */}
+            {action === 'keep_diagram' && (
+              <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-semibold text-[11px] text-emerald-600 dark:text-emerald-400">
+                  Diagram / Drawing (Preserved as Ink)
+                </span>
+              </div>
+            )}
+
+            {/* ── STATE: NORMAL MODE HANDWRITING (Raw Ink) ── */}
+            {action === 'keep_ink' && !cluster.hasEqualsGesture && (
+              <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="font-semibold text-[11px]">
+                  {detectedText || 'Handwriting (Raw Ink)'}
+                </span>
+                {onConvertCluster && (
+                  <button
+                    onClick={() => onConvertCluster(cluster)}
+                    title="Force convert to typed block"
+                    className="ml-1 px-2 py-0.5 text-[10px] font-semibold rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
+                  >
+                    Convert
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* ── STATE: ERROR ── */}
-            {(ocrStatus === 'error' || ocrStatus === 'raster_failed') && (
+            {action !== 'keep_diagram' && action !== 'keep_ink' && (ocrStatus === 'error' || ocrStatus === 'raster_failed') && (
               <div className="flex items-center gap-2">
                 <FiAlertCircle className="w-3.5 h-3.5 text-rose-500" />
                 <span className="text-[11px] font-medium text-rose-500">
@@ -119,8 +155,8 @@ export default function LiveMathPreviewOverlay({
               </div>
             )}
 
-            {/* ── STATE: RECOGNIZED (text detected) ── */}
-            {(ocrStatus === 'recognized' || ocrStatus === 'empty') && detectedText && !isEditing && (
+            {/* ── STATE: RECOGNIZED (text or equation detected) ── */}
+            {action !== 'keep_diagram' && !(action === 'keep_ink' && !cluster.hasEqualsGesture) && (ocrStatus === 'recognized' || ocrStatus === 'empty') && detectedText && !isEditing && (
               <>
                 {/* Recognized Text or KaTeX Math Formula */}
                 <div className="flex items-center gap-1.5 font-medium text-zinc-900 dark:text-zinc-100 max-w-[280px]">

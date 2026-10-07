@@ -70,9 +70,10 @@ function softmax(logits) {
  * @param {Array<Object>} strokes - Array of stroke objects with .points
  * @param {Array<string>} [strokeIds=[]] - Source stroke IDs
  * @param {Object} [bbox={ minX: 0, maxX: 100, minY: 0, maxY: 100 }] - Bounding box
+ * @param {'normal'|'notes'} [mode='normal'] - Canvas operating mode
  * @returns {Promise<RecognitionResult>}
  */
-export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null) {
+export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, mode = 'normal') {
   const startTime = performance.now();
   const rawRows = strokesToArray(strokes);
 
@@ -88,6 +89,9 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null) 
       bbox: bbox || { minX: 0, maxX: 0, minY: 0, maxY: 0 },
       modelVersion: '1.0.0',
       processingTimeMs: 0,
+      mode,
+      shouldConvert: false,
+      action: 'none',
     };
   }
 
@@ -184,9 +188,17 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null) 
 
     if (decoded && decoded.latex) {
       const semE = evaluateSemanticCoherence(decoded.latex, 'MATH');
+      const hasMathSyntax = /[\\^_{}+=><\-]/.test(decoded.latex);
+
       // Continuous composite prior: P(MATH) + P(NUMBER) from router + vinculum energy
-      const mathPrior = Math.max(0.05, (routerProbs[1] + routerProbs[2]) * 0.7 + maxVinculumEnergy * 0.3);
-      const totalScore = mathPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3;
+      // On short clusters (<= 2 strokes) or when explicit math syntax is found, avoid sequence router text bias
+      const effectiveRouterMath = (strokes.length <= 2 || hasMathSyntax)
+        ? Math.max(routerProbs[1] + routerProbs[2], 0.5)
+        : (routerProbs[1] + routerProbs[2]);
+
+      const mathPrior = Math.max(0.05, effectiveRouterMath * 0.7 + maxVinculumEnergy * 0.3);
+      const syntaxBonus = hasMathSyntax ? 0.25 : 0;
+      const totalScore = mathPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3 + syntaxBonus;
 
       let ast = null;
       try {
@@ -302,6 +314,42 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null) 
   const structConfidence = rawAst ? 0.9 : 0.6;
   const processingTimeMs = Math.round(performance.now() - startTime);
 
+  // Dual-Mode Clean Routing Decision Matrix per Section 2 of Master Specification
+  let shouldConvert = true;
+  let action = 'convert_equation';
+
+  if (mode === 'normal') {
+    // Normal Mode (Whiteboard Canvas):
+    // - TEXT -> Do not convert (remain raw handwritten ink)
+    // - OBJECT -> Do not convert to block (snap shape / fit curve / keep ink)
+    // - MATH / NUMBER / MIXED -> Convert to interactive equation block / graph
+    if (chosenType === 'TEXT') {
+      shouldConvert = false;
+      action = 'keep_ink';
+    } else if (chosenType === 'OBJECT') {
+      shouldConvert = false;
+      action = 'snap_shape';
+    } else {
+      shouldConvert = true;
+      action = 'convert_equation';
+    }
+  } else {
+    // Notes Mode (Academic Lined Notebook):
+    // - TEXT -> Convert to printed notes snapped to 32px guidelines
+    // - OBJECT -> Strictly preserved as raw ink diagram (NEVER converted)
+    // - MATH / NUMBER / MIXED -> Convert to inline equation block
+    if (chosenType === 'OBJECT') {
+      shouldConvert = false;
+      action = 'keep_diagram';
+    } else if (chosenType === 'TEXT') {
+      shouldConvert = true;
+      action = 'convert_text';
+    } else {
+      shouldConvert = true;
+      action = 'convert_equation';
+    }
+  }
+
   return {
     id: `rec_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     type: chosenType,
@@ -318,5 +366,8 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null) 
     bbox: clusterBBox,
     modelVersion: '1.0.0',
     processingTimeMs,
+    mode,
+    shouldConvert,
+    action,
   };
 }

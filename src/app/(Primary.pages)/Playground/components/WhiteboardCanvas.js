@@ -7,6 +7,26 @@ import { SpatialStrokeIndex, intersectsBBox } from '../utils/spatialIndexRTree';
 import { detectScratchOutGesture } from '../utils/spatialClusterer';
 import { recognizeAndSnapShape } from '../utils/shapeRecognizer';
 
+/**
+ * Ray-casting algorithm to test whether a 2D point is enclosed in a polygon.
+ * Correctly supports non-convex, arbitrary, and L-shaped selection loops.
+ */
+function isPointInPolygon(point, polygon) {
+  if (!polygon || polygon.length < 3) return false;
+  let inside = false;
+  const x = point.x;
+  const y = point.y;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x;
+    const yi = polygon[i].y;
+    const xj = polygon[j].x;
+    const yj = polygon[j].y;
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
 const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   {
     activeTool = 'pen',
@@ -188,16 +208,16 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
         if (pts.length > 1) {
           ctx.save();
           ctx.beginPath();
-          ctx.setLineDash([6, 4]);
+          ctx.setLineDash([6, 5]);
           ctx.strokeStyle = '#8B5CF6';
-          ctx.fillStyle = 'rgba(139, 92, 246, 0.08)';
           ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
           ctx.moveTo(pts[0].x, pts[0].y);
           for (let i = 1; i < pts.length; i++) {
             ctx.lineTo(pts[i].x, pts[i].y);
           }
-          ctx.closePath();
-          ctx.fill();
+          // Pure open line lasso while actively drawing — no premature loop closure or fill
           ctx.stroke();
           ctx.restore();
         }
@@ -236,21 +256,53 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       const pts = activePointsRef.current;
       const selectionBbox = calculateBoundingBox(pts);
 
-      // Find all strokes intersecting or enclosed in selection area
+      // Ray-Casting Point-in-Polygon Selection (Supports non-convex and L-shaped selections)
       const selectedStrokes = strokesRef.current.filter((s) => {
-        const isEnclosed =
-          s.bbox.minX >= selectionBbox.minX - 30 &&
-          s.bbox.maxX <= selectionBbox.maxX + 30 &&
-          s.bbox.minY >= selectionBbox.minY - 30 &&
-          s.bbox.maxY <= selectionBbox.maxY + 30;
-        return isEnclosed || intersectsBBox(selectionBbox, s.bbox);
+        // Fast AABB broad-phase rejection
+        if (!intersectsBBox(selectionBbox, s.bbox)) {
+          return false;
+        }
+
+        const strokePts = s.points || [];
+        if (strokePts.length === 0) return false;
+
+        let insideCount = 0;
+        const step = strokePts.length > 20 ? 2 : 1;
+        let totalTested = 0;
+        for (let i = 0; i < strokePts.length; i += step) {
+          totalTested++;
+          if (isPointInPolygon(strokePts[i], pts)) {
+            insideCount++;
+          }
+        }
+
+        const ratio = insideCount / totalTested;
+        const centroid = {
+          x: (s.bbox.minX + s.bbox.maxX) / 2,
+          y: (s.bbox.minY + s.bbox.maxY) / 2,
+        };
+        const centroidInside = isPointInPolygon(centroid, pts);
+
+        // Include stroke if majority of points or centroid is strictly inside the lasso polygon
+        return ratio >= 0.50 || (ratio >= 0.30 && centroidInside);
       });
+
+      // Clear the temporary lasso selection line from active canvas
+      const canvas = activeCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, width, height);
+        }
+      }
 
       if (onSelectionCompleted && selectedStrokes.length > 0) {
         onSelectionCompleted({
           strokes: selectedStrokes,
           strokeIds: selectedStrokes.map((s) => s.id),
           bbox: selectionBbox,
+          lassoPolygon: pts,
         });
       }
     } else if (activeTool !== 'eraser' && activeTool !== 'lasso' && activePointsRef.current.length > 0) {

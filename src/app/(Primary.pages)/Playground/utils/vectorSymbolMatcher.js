@@ -359,13 +359,23 @@ function matchTwoStrokes(strokes, bbox) {
     }
   }
 
-  // 10. Approximately Equal '\approx' (Two wavy lines)
+  // 10. Approximately Equal '\approx' (Two horizontally overlapping wavy lines)
   const t1 = analyzeStrokeTrajectory(s1);
   const t2 = analyzeStrokeTrajectory(s2);
-  if (t1 && t2 && t1.xDirectionChanges >= 1 && t2.xDirectionChanges >= 1 && t1.width >= 16 && t2.width >= 16) {
-    const yDist = Math.abs(b1.minY - b2.minY);
-    if (yDist >= 6 && yDist <= 35) {
-      return { text: '\\approx ', isMath: true, confidence: 0.94, symbol: 'approx' };
+  if (t1 && t2 && t1.xDirectionChanges >= 1 && t2.xDirectionChanges >= 1) {
+    const isWavyH1 = b1.width >= 16 && (b1.width / Math.max(b1.height, 1)) >= 1.8;
+    const isWavyH2 = b2.width >= 16 && (b2.width / Math.max(b2.height, 1)) >= 1.8;
+    if (isWavyH1 && isWavyH2) {
+      const overlapMinX = Math.max(b1.minX, b2.minX);
+      const overlapMaxX = Math.min(b1.maxX, b2.maxX);
+      const overlapWidth = Math.max(0, overlapMaxX - overlapMinX);
+      const minW = Math.min(b1.width, b2.width);
+      if (minW > 0 && (overlapWidth / minW) >= 0.65) {
+        const yDist = Math.abs(b1.minY - b2.minY);
+        if (yDist >= 6 && yDist <= 35) {
+          return { text: '\\approx ', isMath: true, confidence: 0.94, symbol: 'approx' };
+        }
+      }
     }
   }
 

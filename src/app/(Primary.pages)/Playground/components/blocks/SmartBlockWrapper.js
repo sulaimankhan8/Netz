@@ -129,7 +129,11 @@ export default function SmartBlockWrapper({
         }}
         className="absolute top-0 left-0 z-40 group"
       >
-        <div className="relative w-full h-full p-2 rounded-2xl bg-white/70 dark:bg-zinc-900/70 hover:bg-white/95 dark:hover:bg-zinc-900/95 border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-lg backdrop-blur-md transition-all flex flex-col justify-between">
+        <div className={`relative w-full h-full p-2 rounded-2xl ${
+          block.isRuledLineAligned
+            ? 'bg-transparent hover:bg-white/85 dark:hover:bg-zinc-900/85 border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 shadow-none hover:shadow-lg'
+            : 'bg-white/70 dark:bg-zinc-900/70 hover:bg-white/95 dark:hover:bg-zinc-900/95 border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-lg backdrop-blur-md'
+        } transition-all flex flex-col justify-between`}>
           {/* Top Grab & Action Toolbar */}
           <div className="flex items-center justify-between w-full pb-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {/* Grab Handle */}

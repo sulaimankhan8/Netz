@@ -1,21 +1,19 @@
 /**
- * Hybrid Digital Ink & Local WASM Handwriting Recognition Service
+ * Clean Lightweight Digital Ink & Vector Handwriting Recognition Service
  *
- * Combines:
- *   1. Vector Stroke Recognition (Google Digital Ink API - 100% Free, No API Key, sub-60ms, 99% accuracy on cursive/print/math)
- *   2. Offline Fallback (Tesseract.js WASM inside WebWorker with character height scaling & PSM.SINGLE_LINE)
+ * Streamlined production engine:
+ *   Layer 0: Instant Vector Topology Matcher (sub-1ms punctuation, Greek, calculus & math primitives)
+ *   Layer 1: Google Digital Ink Vector Engine (Online, 0 API keys required)
+ *   Layer 2: Native W3C OS Handwriting API (Native OS offline engine on Chromium)
  *
- * Zero server cost, zero API keys required, works seamlessly online and offline.
+ * Decommissioned:
+ *   - Legacy Tesseract.js (removed 15MB WASM download & printed-OCR hallucinations)
+ *   - Legacy TrOCR Vision Transformer (removed 150MB third-party model download)
+ *   - Replaced by native NETZ ONNX Neural Pipeline (Router, HMER, HTR).
  */
 
-import Tesseract from 'tesseract.js';
-import { recognizeWithTrOCR, getTrOCRPipeline } from './trocrService';
-import { rasterizeStrokesToDataUrl, getStrokesBBox, segmentStrokesIntoWords } from './strokeRasterizer';
-import { matchVectorSymbol } from './vectorSymbolMatcher';
-
-let workerInstance = null;
-let workerInitPromise = null;
-let workerStatus = 'idle'; // 'idle' | 'initializing' | 'ready' | 'error'
+import { getStrokesBBox } from './strokeRasterizer.js';
+import { matchVectorSymbol } from './vectorSymbolMatcher.js';
 
 /**
  * Recognition result cache.
@@ -49,7 +47,6 @@ const GREEK_MATH_MAP = {
   'Λ': '\\Lambda ',
   'μ': '\\mu ',
   'mu': '\\mu ',
-  'π': '\\pi ',
   'pi': '\\pi ',
   'Pi': '\\Pi ',
   'Π': '\\Pi ',
@@ -61,131 +58,98 @@ const GREEK_MATH_MAP = {
   'omega': '\\omega ',
   'Omega': '\\Omega ',
   'Ω': '\\Omega ',
-  'φ': '\\phi ',
   'phi': '\\phi ',
   'Phi': '\\Phi ',
   'Φ': '\\Phi ',
-  'ψ': '\\psi ',
   'psi': '\\psi ',
   'Psi': '\\Psi ',
   'Ψ': '\\Psi ',
-  '∫': '\\int ',
-  'integral': '\\int ',
-  'int': '\\int ',
-  '∑': '\\sum ',
-  'sum': '\\sum ',
-  '∏': '\\prod ',
-  'prod': '\\prod ',
-  '∂': '\\partial ',
-  'partial': '\\partial ',
-  '∇': '\\nabla ',
-  'nabla': '\\nabla ',
-  'del': '\\nabla ',
-  '∞': '\\infty ',
-  'infinity': '\\infty ',
+  'sqrt': '\\sqrt{',
   'infty': '\\infty ',
-  '√': '\\sqrt{}',
-  'sqrt': '\\sqrt{}',
-  '±': '\\pm ',
-  'pm': '\\pm ',
-  '≠': '\\neq ',
-  'neq': '\\neq ',
-  '≈': '\\approx ',
+  'infinity': '\\infty ',
+  'sum': '\\sum ',
+  'int': '\\int ',
   'approx': '\\approx ',
-  '≤': '\\le ',
-  'le': '\\le ',
-  '≥': '\\ge ',
-  'ge': '\\ge ',
-  '×': '\\times ',
-  '÷': '\\div ',
-  '∈': '\\in ',
-  '∉': '\\notin ',
-  '⊂': '\\subset ',
-  '∪': '\\cup ',
-  '∩': '\\cap ',
-  '∅': '\\emptyset ',
-  '∀': '\\forall ',
-  '∃': '\\exists ',
-  '→': '\\to ',
-  '⇒': '\\implies ',
+  'pm': '\\pm ',
+  'times': '\\times ',
+  'div': '\\div ',
 };
 
 /**
- * Recognizes strokes using Google Digital Ink IME API with Multi-Candidate Inspection.
- * Free public endpoint, no API key needed, takes raw stroke trajectories.
+ * Converts ink strokes into Google Digital Ink API payload format.
  */
-async function recognizeOnlineDigitalInk(strokes, bbox, signal) {
-  if (!strokes || strokes.length === 0 || !bbox) return null;
-
-  const width = Math.max(bbox.maxX - bbox.minX + 60, 200);
-  const height = Math.max(bbox.maxY - bbox.minY + 60, 150);
-
-  // Normalize ink points
+function convertStrokesToInkPayload(strokes, width = 800, height = 600) {
   const ink = [];
-  for (let i = 0; i < strokes.length; i++) {
-    const stroke = strokes[i];
-    const points = stroke.points;
-    if (!points || points.length === 0) continue;
 
-    const xs = [];
-    const ys = [];
-    const ts = [];
+  for (const stroke of strokes) {
+    const pts = stroke.points || [];
+    if (pts.length === 0) continue;
 
-    const baseTime = points[0].timestamp || Date.now();
+    const xArr = [];
+    const yArr = [];
+    const tArr = [];
 
-    for (let j = 0; j < points.length; j++) {
-      xs.push(Math.round(points[j].x - bbox.minX + 20));
-      ys.push(Math.round(points[j].y - bbox.minY + 20));
-      ts.push(Math.round((points[j].timestamp || (baseTime + j * 16)) - baseTime));
+    const baseTime = pts[0].timestamp || 0;
+    for (let i = 0; i < pts.length; i++) {
+      xArr.push(Math.round(pts[i].x));
+      yArr.push(Math.round(pts[i].y));
+      tArr.push(Math.round((pts[i].timestamp || i * 16) - baseTime));
     }
 
-    ink.push([xs, ys, ts]);
+    ink.push([xArr, yArr, tArr]);
   }
 
-  if (ink.length === 0) return null;
-
-  const payload = {
-    options: 'enable_pre_space',
+  return {
+    input_type: 0,
     requests: [
       {
+        language: 'en',
         writing_guide: {
           writing_area_width: width,
           writing_area_height: height,
         },
         ink,
-        language: 'en',
+        pre_context: '',
+        max_num_results: 5,
+        max_completions: 0,
       },
     ],
   };
+}
 
-  const response = await fetch(
-    'https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal,
-    }
-  );
+/**
+ * Recognizes strokes using Google Digital Ink API.
+ */
+async function recognizeOnlineDigitalInk(strokes, bbox, signal = null) {
+  const width = Math.max(300, Math.ceil(bbox.maxX - bbox.minX + 100));
+  const height = Math.max(200, Math.ceil(bbox.maxY - bbox.minY + 100));
 
-  if (!response.ok) return null;
+  const payload = convertStrokesToInkPayload(strokes, width, height);
 
-  const data = await response.json();
-  if (data && data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
+  const res = await fetch('https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Google IME HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
     const candidates = data[1][0][1];
     if (candidates.length > 0) {
-      // Check top 5 alternatives for mathematical/Greek symbols
-      for (let cIdx = 0; cIdx < Math.min(candidates.length, 5); cIdx++) {
-        const cand = candidates[cIdx].trim();
-        if (GREEK_MATH_MAP[cand]) {
+      for (const cand of candidates) {
+        const lower = cand.toLowerCase().trim();
+        if (GREEK_MATH_MAP[lower]) {
           return {
-            text: GREEK_MATH_MAP[cand],
+            text: GREEK_MATH_MAP[lower],
             confidence: 0.98,
-            isMath: true,
           };
         }
       }
-
       return {
         text: candidates[0],
         confidence: 0.95,
@@ -197,193 +161,12 @@ async function recognizeOnlineDigitalInk(strokes, bbox, signal) {
 }
 
 /**
- * Initializes the Tesseract WASM worker (singleton pattern).
- */
-async function getWorker() {
-  if (workerInstance && workerStatus === 'ready') {
-    return workerInstance;
-  }
-
-  if (workerInitPromise) {
-    return workerInitPromise;
-  }
-
-  workerStatus = 'initializing';
-
-  workerInitPromise = (async () => {
-    try {
-      const worker = await Tesseract.createWorker('eng', 1, {
-        logger: () => {},
-      });
-
-      // PSM 7 = Treat the image as a single text line (vastly superior for words/equations)
-      await worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 +-*/=()^.,;:!?\'\"{}[]<>|\\@#$%&_~`αβγδεζηθικλμνξπρστυφχψωΓΔΘΛΞΠΣΦΨΩ∫∑∏√±∞≠≈≤≥×÷',
-      });
-
-      workerInstance = worker;
-      workerStatus = 'ready';
-      workerInitPromise = null;
-      return worker;
-    } catch (err) {
-      console.error('[LocalOCR] Failed to initialize Tesseract worker:', err);
-      workerStatus = 'error';
-      workerInitPromise = null;
-      throw err;
-    }
-  })();
-
-  return workerInitPromise;
-}
-
-/**
- * Regex patterns for detecting math content in recognized text.
- */
-const MATH_PATTERNS = [
-  /^\s*[\d\s+\-*/^=().]+\s*$/,                          // Pure arithmetic: "12 + 45 ="
-  /[a-zA-Z]\s*=\s*[\d\s+\-*/^().]+/,                    // Variable assignment: "a = 5"
-  /[a-zA-Z]\s*\(\s*[a-zA-Z]\s*\)/,                      // Function notation: "f(x)"
-  /\b(sin|cos|tan|cot|sec|csc|log|ln|sqrt|lim|sum|int|theta|alpha|beta|gamma|delta|lambda|sigma|pi|mu|phi|psi|omega|infty)\b/i, // Math functions & Greek
-  /[∫∑∏√±∞πθαβγδεζηλμσϕψωΓΔΘΛΣΦΩ≠≈≤≥×÷∂∇∈∉⊂∪∩∅∀∃→⇒]/, // Math Unicode symbols
-  /\d+\s*[+\-*/^]\s*\d+/,                                // Binary operation: "3 + 5"
-  /[a-zA-Z]\^[\d{]/,                                     // Exponent: "x^2"
-  /\d+\s*\/\s*\d+/,                                      // Fraction: "1/3"
-  /\\(int|sum|prod|sqrt|frac|theta|alpha|beta|gamma|delta|lambda|pi|sigma|omega|partial|nabla|infty|pm|times|div|approx|neq|le|ge)/, // LaTeX macros
-];
-
-export function classifyAsMath(text) {
-  if (!text || text.trim().length === 0) return false;
-  const trimmed = text.trim();
-
-  // If already starts with LaTeX slash or has math symbols
-  if (trimmed.startsWith('\\') || /[∫∑∏√±∞πθαβγδεζηλμσϕψωΓΔΘΛΣΦΩ≠≈≤≥×÷∂∇]/.test(trimmed)) {
-    return true;
-  }
-
-  const mathChars = trimmed.replace(/[\d\s+\-*/^=().{}[\]<>]/g, '');
-  const nonMathRatio = mathChars.length / trimmed.length;
-  if (nonMathRatio < 0.2 && trimmed.length > 1) return true;
-
-  for (const pattern of MATH_PATTERNS) {
-    if (pattern.test(trimmed)) return true;
-  }
-
-  return false;
-}
-
-function postProcessText(rawText) {
-  if (!rawText) return '';
-  let text = rawText.trim();
-  text = text.replace(/\s+/g, ' ');
-  text = text.replace(/^[|_\~`]+/, '').replace(/[|_\~`]+$/, '');
-  return text.trim();
-}
-
-/**
- * Translates recognized plain text and Unicode symbols into clean KaTeX LaTeX syntax.
- */
-export function textToRichLatex(text) {
-  if (!text) return '';
-  let latex = text.trim();
-
-  // Operations & Relations
-  latex = latex.replace(/×/g, '\\times ');
-  latex = latex.replace(/÷/g, '\\div ');
-  latex = latex.replace(/·/g, '\\cdot ');
-  latex = latex.replace(/√/g, '\\sqrt{');
-  latex = latex.replace(/±/g, '\\pm ');
-  latex = latex.replace(/∓/g, '\\mp ');
-  latex = latex.replace(/≠/g, '\\neq ');
-  latex = latex.replace(/≈/g, '\\approx ');
-  latex = latex.replace(/≤/g, '\\le ');
-  latex = latex.replace(/≥/g, '\\ge ');
-  latex = latex.replace(/≡/g, '\\equiv ');
-  latex = latex.replace(/∝/g, '\\propto ');
-
-  // Calculus & Analysis
-  latex = latex.replace(/∫/g, '\\int ');
-  latex = latex.replace(/∑/g, '\\sum ');
-  latex = latex.replace(/∏/g, '\\prod ');
-  latex = latex.replace(/∂/g, '\\partial ');
-  latex = latex.replace(/∇/g, '\\nabla ');
-  latex = latex.replace(/∞/g, '\\infty ');
-  latex = latex.replace(/→/g, '\\to ');
-  latex = latex.replace(/⇒/g, '\\implies ');
-
-  // Set Theory & Logic
-  latex = latex.replace(/∈/g, '\\in ');
-  latex = latex.replace(/∉/g, '\\notin ');
-  latex = latex.replace(/⊂/g, '\\subset ');
-  latex = latex.replace(/∪/g, '\\cup ');
-  latex = latex.replace(/∩/g, '\\cap ');
-  latex = latex.replace(/∅/g, '\\emptyset ');
-  latex = latex.replace(/∀/g, '\\forall ');
-  latex = latex.replace(/∃/g, '\\exists ');
-
-  // Greek Alphabet (Lowercase)
-  latex = latex.replace(/α/g, '\\alpha ');
-  latex = latex.replace(/β/g, '\\beta ');
-  latex = latex.replace(/γ/g, '\\gamma ');
-  latex = latex.replace(/δ/g, '\\delta ');
-  latex = latex.replace(/ε|ϵ/g, '\\epsilon ');
-  latex = latex.replace(/ζ/g, '\\zeta ');
-  latex = latex.replace(/η/g, '\\eta ');
-  latex = latex.replace(/θ|ϑ/g, '\\theta ');
-  latex = latex.replace(/ι/g, '\\iota ');
-  latex = latex.replace(/κ/g, '\\kappa ');
-  latex = latex.replace(/λ/g, '\\lambda ');
-  latex = latex.replace(/μ/g, '\\mu ');
-  latex = latex.replace(/ν/g, '\\nu ');
-  latex = latex.replace(/ξ/g, '\\xi ');
-  latex = latex.replace(/π|ϖ/g, '\\pi ');
-  latex = latex.replace(/ρ|ϱ/g, '\\rho ');
-  latex = latex.replace(/σ|ς/g, '\\sigma ');
-  latex = latex.replace(/τ/g, '\\tau ');
-  latex = latex.replace(/υ/g, '\\upsilon ');
-  latex = latex.replace(/φ|ϕ/g, '\\phi ');
-  latex = latex.replace(/χ/g, '\\chi ');
-  latex = latex.replace(/ψ/g, '\\psi ');
-  latex = latex.replace(/ω/g, '\\omega ');
-
-  // Greek Alphabet (Uppercase)
-  latex = latex.replace(/Γ/g, '\\Gamma ');
-  latex = latex.replace(/Δ/g, '\\Delta ');
-  latex = latex.replace(/Θ/g, '\\Theta ');
-  latex = latex.replace(/Λ/g, '\\Lambda ');
-  latex = latex.replace(/Ξ/g, '\\Xi ');
-  latex = latex.replace(/Π/g, '\\Pi ');
-  latex = latex.replace(/Σ/g, '\\Sigma ');
-  latex = latex.replace(/Φ/g, '\\Phi ');
-  latex = latex.replace(/Ψ/g, '\\Psi ');
-  latex = latex.replace(/Ω/g, '\\Omega ');
-
-  // Spelled-out Greek names when recognized as whole words in math
-  latex = latex.replace(/\btheta\b/gi, '\\theta ');
-  latex = latex.replace(/\balpha\b/gi, '\\alpha ');
-  latex = latex.replace(/\bbeta\b/gi, '\\beta ');
-  latex = latex.replace(/\bgamma\b/gi, '\\gamma ');
-  latex = latex.replace(/\bdelta\b/gi, '\\delta ');
-  latex = latex.replace(/\blambda\b/gi, '\\lambda ');
-  latex = latex.replace(/\bsigma\b/gi, '\\sigma ');
-  latex = latex.replace(/\bomega\b/gi, '\\omega ');
-  latex = latex.replace(/\bpi\b/gi, '\\pi ');
-  latex = latex.replace(/\binfty\b/gi, '\\infty ');
-  latex = latex.replace(/\bpartial\b/gi, '\\partial ');
-  latex = latex.replace(/\bnabla\b/gi, '\\nabla ');
-
-  return latex.trim();
-}
-
-/**
- * Tier 1 Offline: Native W3C Handwriting Recognition API
- * Supported in Chromium browsers (Chrome, Edge, ChromeOS, Android).
- * Uses the OS's native handwriting neural network (Windows Ink / Google on-device ML Kit).
- * 0 MB download, sub-15ms latency, ~98% accuracy.
+ * Recognizes strokes via native W3C Handwriting Recognition API (Chromium).
  */
 async function recognizeWithNativeHandwritingAPI(strokes, bbox) {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return null;
-  if (!('createHandwritingRecognizer' in navigator)) return null;
+  if (typeof navigator === 'undefined' || !navigator.queryHandwritingRecognizer) {
+    return null;
+  }
 
   try {
     const recognizer = await navigator.createHandwritingRecognizer({
@@ -392,137 +175,92 @@ async function recognizeWithNativeHandwritingAPI(strokes, bbox) {
     });
     if (!recognizer) return null;
 
+    const strokeList = strokes.map((s) => ({
+      pointList: (s.points || []).map((p) => ({ x: p.x, y: p.y, t: p.timestamp || 0 })),
+    }));
+
     const drawing = recognizer.startDrawing();
-
-    // Sort strokes temporally
-    const sortedStrokes = [...strokes].sort((a, b) => {
-      const tA = a.points?.[0]?.timestamp || 0;
-      const tB = b.points?.[0]?.timestamp || 0;
-      return tA - tB;
-    });
-
-    const baseTime = sortedStrokes[0]?.points?.[0]?.timestamp || Date.now();
-
-    for (const stroke of sortedStrokes) {
-      if (!stroke.points || stroke.points.length === 0) continue;
-      const nativePoints = stroke.points.map((p, idx) => ({
-        x: Math.round(p.x - bbox.minX + 20),
-        y: Math.round(p.y - bbox.minY + 20),
-        t: Math.round((p.timestamp || (baseTime + idx * 16)) - baseTime),
-      }));
-      drawing.addStroke(nativePoints);
+    for (const st of strokeList) {
+      drawing.addStroke(st);
     }
 
-    const predictions = await drawing.getPrediction({ maxAlternatives: 3 });
-    if (predictions && predictions.length > 0) {
-      for (const pred of predictions) {
-        const text = pred.text?.trim();
-        if (text && GREEK_MATH_MAP[text]) {
-          return {
-            text: GREEK_MATH_MAP[text],
-            confidence: 0.98,
-            engine: 'native-w3c-os',
-            isMath: true,
-          };
-        }
-      }
-
-      if (predictions[0].text) {
-        return {
-          text: predictions[0].text.trim(),
-          confidence: 0.98,
-          engine: 'native-w3c-os',
-        };
-      }
+    const predictions = await drawing.getPrediction();
+    if (predictions && predictions.length > 0 && predictions[0].text) {
+      return {
+        text: predictions[0].text.trim(),
+        confidence: 0.98,
+        engine: 'native-w3c-os',
+      };
     }
   } catch (err) {
-    console.warn('[LocalOCR] Native W3C handwriting recognizer failed:', err);
+    // Silent
   }
 
   return null;
 }
 
 /**
- * Tier 2 Offline: Word-Segmented TrOCR Vision Transformer
- * Segments the stroke cluster into discrete words, extracts a tight bounding-box
- * crop with padding for each word, and runs TrOCR individually.
- * This prevents Vision Transformer patch drowning and correctly recognizes multi-word sentences.
+ * Regex patterns for detecting math content in recognized text.
  */
-async function recognizeStrokesWithWordTrOCR(strokes, bbox, signal) {
-  if (!strokes || strokes.length === 0) return null;
+const MATH_PATTERNS = [
+  /^\s*[\d\s+\-*/^=().]+\s*$/,
+  /[a-zA-Z]\s*=\s*[\d\s+\-*/^().]+/,
+  /[a-zA-Z]\s*\(\s*[a-zA-Z]\s*\)/,
+  /\b(sin|cos|tan|cot|sec|csc|log|ln|sqrt|lim|sum|int|theta|alpha|beta|gamma|delta|lambda|sigma|pi|mu|phi|psi|omega|infty)\b/i,
+  /[∫∑∏√±∞πθαβγδεζηλμσϕψωΓΔΘΛΣΦΩ≠≈≤≥×÷∂∇∈∉⊂∪∩∅∀∃→⇒]/,
+  /\d+\s*[+\-*/^]\s*\d+/,
+  /[a-zA-Z]\^[\d{]/,
+];
 
-  const lines = segmentStrokesIntoWords(strokes);
-  if (!lines || lines.length === 0) return null;
+export function classifyAsMath(text) {
+  if (!text || typeof text !== 'string') return false;
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return MATH_PATTERNS.some((pat) => pat.test(trimmed));
+}
 
-  const recognizedLines = [];
+export function textToRichLatex(text) {
+  if (!text) return text;
+  let s = text.trim();
 
-  for (const line of lines) {
-    if (signal?.aborted) return null;
-    const recognizedWords = [];
+  s = s.replace(/([a-zA-Z])\s*\^\s*(\d+)/g, '$1^{$2}');
+  s = s.replace(/(?<=[0-9a-zA-Z])\s*\/\s*(?=[0-9a-zA-Z])/g, ' \\div ');
+  s = s.replace(/(?<=[0-9a-zA-Z])\s*\*\s*(?=[0-9a-zA-Z])/g, ' \\times ');
 
-    for (const wordStrokes of line.words) {
-      if (signal?.aborted) return null;
+  s = s.replace(/\bsqrt\(([^)]+)\)/gi, '\\sqrt{$1}');
+  s = s.replace(/\bsqrt\s*\{([^}]+)\}/gi, '\\sqrt{$1}');
+  s = s.replace(/\bsqrt\s+([0-9a-zA-Z]+)/gi, '\\sqrt{$1}');
 
-      // Check fast vector matcher for single word/symbol first
-      const quickMatch = matchVectorSymbol(wordStrokes, getStrokesBBox(wordStrokes));
-      if (quickMatch && quickMatch.confidence >= 0.95) {
-        recognizedWords.push(quickMatch.text);
-        continue;
-      }
+  s = s.replace(/\b(sin|cos|tan|cot|sec|csc|log|ln|lim)\b/gi, '\\$1');
+  s = s.replace(/\b(theta|alpha|beta|gamma|delta|lambda|sigma|pi|mu|phi|psi|omega)\b/gi, '\\$1');
+  s = s.replace(/\b(Gamma|Delta|Lambda|Sigma|Phi|Psi|Omega)\b/g, '\\$1');
+  s = s.replace(/\b(int|sum|prod|infty)\b/gi, '\\$1');
 
-      const wordBBox = getStrokesBBox(wordStrokes);
-      if (!wordBBox) continue;
+  return s;
+}
 
-      // Rasterize tight individual word crop with optimal padding for TrOCR
-      const raster = rasterizeStrokesToDataUrl(wordStrokes, wordBBox, { padding: 24 });
-      if (!raster || !raster.dataUrl) continue;
+export function postProcessText(rawText) {
+  if (!rawText) return '';
+  let cleaned = rawText
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-      const trocrRes = await recognizeWithTrOCR(raster.dataUrl);
-      if (trocrRes && trocrRes.text) {
-        const raw = trocrRes.text.trim();
-        // Guard against TrOCR hallucinations on tiny strokes/symbols
-        if (wordStrokes.length <= 2 && raw.length > 20) {
-          continue;
-        }
-        const cleaned = postProcessText(raw);
-        if (cleaned) {
-          recognizedWords.push(cleaned);
-        }
-      }
-    }
-
-    if (recognizedWords.length > 0) {
-      recognizedLines.push(recognizedWords.join(' '));
-    }
-  }
-
-  if (recognizedLines.length === 0) return null;
-
-  return {
-    text: recognizedLines.join('\n'),
-    confidence: 0.94,
-    engine: 'trocr-word-segmented',
-  };
+  cleaned = cleaned.replace(/^['"`~|\\]+|['"`~|\\]+$/g, '');
+  return cleaned;
 }
 
 /**
- * Main handwriting recognition entry point.
- *
+ * Main handwriting fallback recognition entry point.
  * Layer 0: High-speed Vector Topological Matcher (deterministic 0ms symbol recognition).
- * Layer 1 (Online): Google Digital Ink vector engine with candidate disambiguation.
- * Layer 2 (Offline Native): W3C Handwriting Recognition API.
- * Layer 3 (Offline WASM): Word-Segmented TrOCR Transformer with hallucination guards.
- * Layer 4 (Offline Fallback): Tesseract.js WASM single-line OCR.
+ * Layer 1 (Online): Google Digital Ink vector engine.
+ * Layer 2 (Native): W3C Handwriting Recognition API.
  */
 export async function recognizeHandwriting(base64Image, mode = 'auto', signal = null, strokeData = null) {
-  const isForceOffline = typeof window !== 'undefined' && Boolean(window.__FORCE_OFFLINE_OCR);
-
-  // Layer 0: High-speed Vector Geometry & Topological Matcher
-  // Instantly resolves punctuation ('.', '-', '?', '!', ':', '=') and math/Greek primitives (\int, \theta, \gamma, \alpha, \beta, \pi, \sqrt{}, \sum, \pm)
+  // Layer 0: Fast Vector Geometry & Topological Matcher
   if (strokeData && strokeData.strokes && strokeData.strokes.length > 0) {
     const vectorMatch = matchVectorSymbol(strokeData.strokes, strokeData.bbox || getStrokesBBox(strokeData.strokes));
     if (vectorMatch && vectorMatch.confidence >= 0.90) {
-      console.log(`%c[Handwriting OCR] Recognized: "${vectorMatch.text}" via Fast Vector Geometry Matcher`, 'color: #8b5cf6; font-weight: bold;');
       const isMath = vectorMatch.isMath;
       return {
         text: isMath ? textToRichLatex(vectorMatch.text) : vectorMatch.text,
@@ -534,15 +272,14 @@ export async function recognizeHandwriting(base64Image, mode = 'auto', signal = 
     }
   }
 
-  // Layer 1: Try Google Digital Ink vector engine (Online, unless force-offline testing is active)
-  if (!isForceOffline && strokeData && strokeData.strokes && strokeData.strokes.length > 0 && strokeData.bbox) {
+  // Layer 1: Google Digital Ink online vector engine
+  if (strokeData && strokeData.strokes && strokeData.strokes.length > 0 && strokeData.bbox) {
     try {
       const onlineResult = await recognizeOnlineDigitalInk(strokeData.strokes, strokeData.bbox, signal);
       if (onlineResult && onlineResult.text) {
         const cleanedText = postProcessText(onlineResult.text);
         const isMath = onlineResult.isMath || mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
 
-        console.log(`%c[Handwriting OCR] Recognized: "${cleanedText}" via Google Digital Ink (Online)`, 'color: #3b82f6; font-weight: bold;');
         return {
           text: isMath ? textToRichLatex(cleanedText) : cleanedText,
           isMath,
@@ -552,15 +289,11 @@ export async function recognizeHandwriting(base64Image, mode = 'auto', signal = 
         };
       }
     } catch {
-      // Network error / offline: continue to offline pipeline
+      // Offline fallback
     }
   }
 
-  if (isForceOffline) {
-    console.log('%c[Handwriting OCR] Testing Local Offline Engine (window.__FORCE_OFFLINE_OCR is active)', 'color: #10b981; font-weight: bold;');
-  }
-
-  // Layer 2 Offline: Native W3C Handwriting Recognition API (Zero download, native OS speed & accuracy)
+  // Layer 2: Native W3C OS API
   if (strokeData && strokeData.strokes && strokeData.strokes.length > 0 && strokeData.bbox) {
     try {
       if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
@@ -569,7 +302,6 @@ export async function recognizeHandwriting(base64Image, mode = 'auto', signal = 
         const cleanedText = postProcessText(nativeResult.text);
         const isMath = nativeResult.isMath || mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
 
-        console.log(`%c[Handwriting OCR] Recognized: "${cleanedText}" via Native W3C Engine (Offline)`, 'color: #10b981; font-weight: bold;');
         return {
           text: isMath ? textToRichLatex(cleanedText) : cleanedText,
           isMath,
@@ -578,120 +310,23 @@ export async function recognizeHandwriting(base64Image, mode = 'auto', signal = 
           error: null,
         };
       }
-    } catch (err) {
-      console.warn('[LocalOCR] Native W3C offline recognition failed, falling to Layer 3:', err);
-    }
+    } catch {}
   }
 
-  // Layer 3 Offline: Word-Segmented TrOCR Transformer (On-device WASM)
-  if (strokeData && strokeData.strokes && strokeData.strokes.length > 0) {
-    try {
-      if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-      const trocrWordResult = await recognizeStrokesWithWordTrOCR(strokeData.strokes, strokeData.bbox, signal);
-      if (trocrWordResult && trocrWordResult.text) {
-        const cleanedText = postProcessText(trocrWordResult.text);
-        const isMath = mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
-
-        console.log(`%c[Handwriting OCR] Recognized: "${cleanedText}" via TrOCR Word-Segmented Transformer (Offline WASM)`, 'color: #10b981; font-weight: bold;');
-        return {
-          text: isMath ? textToRichLatex(cleanedText) : cleanedText,
-          isMath,
-          confidence: trocrWordResult.confidence || 0.94,
-          engine: 'trocr-word-segmented',
-          error: null,
-        };
-      }
-    } catch (err) {
-      console.warn('[LocalOCR] Word-segmented TrOCR failed, falling to full image:', err);
-    }
-  }
-
-  // Ensure dataUrl is available for image-based fallbacks
-  const dataUrl = base64Image ? `data:image/png;base64,${base64Image}` : null;
-
-  // Layer 3B: Full-Image TrOCR fallback (if stroke vectors are unavailable)
-  if (dataUrl) {
-    try {
-      if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-      const trocrResult = await recognizeWithTrOCR(dataUrl);
-
-      if (trocrResult && trocrResult.text) {
-        const cleanedText = postProcessText(trocrResult.text);
-        const isMath = mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
-
-        return {
-          text: isMath ? textToRichLatex(cleanedText) : cleanedText,
-          isMath,
-          confidence: trocrResult.confidence || 0.90,
-          engine: 'trocr-transformer-wasm',
-          error: null,
-        };
-      }
-    } catch (err) {
-      console.warn('[LocalOCR] Image TrOCR failed, trying Tesseract WASM:', err);
-    }
-  }
-
-  // Layer 4: Local Tesseract.js WASM Fallback
-  if (!dataUrl) {
-    return { text: '', isMath: false, confidence: 0, error: 'EMPTY_IMAGE' };
-  }
-
-  try {
-    if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-
-    const worker = await getWorker();
-    if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-
-    const result = await worker.recognize(dataUrl);
-
-    if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-
-    const rawText = result?.data?.text || '';
-    const ocrConfidence = (result?.data?.confidence || 0) / 100;
-    const cleanedText = postProcessText(rawText);
-
-    if (!cleanedText) {
-      return { text: '', isMath: false, confidence: ocrConfidence, error: null };
-    }
-
-    const isMath = mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
-    const finalText = isMath ? textToRichLatex(cleanedText) : cleanedText;
-
-    return {
-      text: finalText,
-      isMath,
-      confidence: ocrConfidence,
-      error: null,
-    };
-  } catch (err) {
-    if (err.name === 'AbortError' || signal?.aborted) {
-      return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };
-    }
-
-    console.error('[LocalOCR] Recognition error:', err);
-    return {
-      text: '',
-      isMath: false,
-      confidence: 0,
-      error: workerStatus === 'error' ? 'WASM_LOAD_FAILED' : 'RECOGNITION_ERROR',
-    };
-  }
+  return {
+    text: '',
+    isMath: false,
+    confidence: 0,
+    error: null,
+  };
 }
 
 export function getOCREngineStatus() {
-  return workerStatus;
+  return 'ready';
 }
 
-export async function preloadOCREngine() {
-  if (typeof window === 'undefined') return;
-  try {
-    // Preload TrOCR Vision Transformer & WASM into browser cache in the background
-    getTrOCRPipeline().catch(() => {});
-    getWorker().catch(() => {});
-  } catch {
-    // Silent
-  }
+export function preloadOCREngine() {
+  // Legacy stub retained for backward compatibility with no-op execution
 }
 
 export function generateCacheKey(strokeIds) {
@@ -719,14 +354,6 @@ export function clearRecognitionCache() {
   recognitionCache.clear();
 }
 
-export async function terminateOCREngine() {
-  if (workerInstance) {
-    try {
-      await workerInstance.terminate();
-    } catch {
-      // Silent
-    }
-    workerInstance = null;
-    workerStatus = 'idle';
-  }
+export function terminateOCREngine() {
+  // No workers to terminate
 }

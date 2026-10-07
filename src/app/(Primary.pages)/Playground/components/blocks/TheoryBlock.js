@@ -38,6 +38,7 @@ export default function TheoryBlock({
 }) {
   const [text, setText] = useState(block.content?.text || '');
   const [localIsEditing, setLocalIsEditing] = useState(() => !block.content?.text);
+  const isRuledLineAligned = Boolean(block?.isRuledLineAligned);
 
   const isEditing = propIsEditing !== undefined ? propIsEditing : localIsEditing;
   const setIsEditing = propSetIsEditing || setLocalIsEditing;
@@ -415,7 +416,14 @@ export default function TheoryBlock({
 
       // Regular text line
       return (
-        <div key={lineIdx} className="py-0.5 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
+        <div
+          key={lineIdx}
+          className={
+            isRuledLineAligned
+              ? 'h-[32px] leading-[32px] text-[15px] font-normal text-zinc-800 dark:text-zinc-200 overflow-hidden select-text'
+              : 'py-0.5 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed'
+          }
+        >
           {line ? renderInlineKatex(line) : <br />}
         </div>
       );
@@ -561,8 +569,12 @@ export default function TheoryBlock({
               }}
               autoFocus
               placeholder="Start typing notes... (use # for title, - for bullets, [ ] for tasks, $...$ for math)"
-              className="relative z-10 w-full h-full p-2.5 bg-transparent text-xs font-sans font-normal text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none leading-relaxed whitespace-pre-wrap break-words"
-              style={{ minHeight: '80px' }}
+              className="relative z-10 w-full h-full p-2.5 bg-transparent font-sans font-normal text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none whitespace-pre-wrap break-words"
+              style={{
+                minHeight: '80px',
+                fontSize: isRuledLineAligned ? '15px' : '12px',
+                lineHeight: isRuledLineAligned ? '32px' : '1.625',
+              }}
             />
           </div>
           <div className="flex-shrink-0 text-[10px] text-zinc-400 px-0.5">
@@ -574,9 +586,11 @@ export default function TheoryBlock({
       ) : (
         <div
           onClick={() => setIsEditing(true)}
-          className="group relative w-full h-full p-3 rounded-xl bg-transparent hover:bg-zinc-100/40 dark:hover:bg-zinc-800/30 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 cursor-text transition-all overflow-y-auto"
+          className={`group relative w-full h-full ${
+            isRuledLineAligned ? 'p-0 pt-[2px]' : 'p-3'
+          } rounded-xl bg-transparent hover:bg-zinc-100/40 dark:hover:bg-zinc-800/30 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 cursor-text transition-all overflow-y-auto`}
         >
-          <div className="space-y-1">
+          <div className={isRuledLineAligned ? 'space-y-0' : 'space-y-1'}>
             {renderRichContent(text)}
           </div>
 

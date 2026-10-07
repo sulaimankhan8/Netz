@@ -8,15 +8,15 @@
  * For general handwriting, returns the recognized text for typed block conversion.
  */
 
-import { evaluateMath } from '../../../utils/evaluateMath';
-import { rasterizeStrokesToDataUrl, extractBase64FromDataUrl } from './strokeRasterizer';
+import { evaluateMath } from '../../../utils/evaluateMath.js';
+import { rasterizeStrokesToDataUrl, extractBase64FromDataUrl } from './strokeRasterizer.js';
 import {
   recognizeHandwriting,
   getCachedResult,
   setCachedResult,
   generateCacheKey,
-} from './localOCRService';
-import { recognizeInkCluster } from './recognition/recognitionPipeline';
+} from './localOCRService.js';
+import { recognizeInkCluster } from './recognition/recognitionPipeline.js';
 
 /**
  * Task cancellation registry for OCR requests in flight.
@@ -78,6 +78,7 @@ export function evaluateLatexExpression(latexStr) {
  */
 export async function processClusterOCR(cluster, options = {}) {
   const { clusterId, strokeIds = [], strokes = [], bbox } = cluster;
+  const mode = options.mode || (cluster.notesMode ? 'notes' : 'normal');
 
   if (!strokes || strokes.length === 0) {
     return {
@@ -88,6 +89,9 @@ export async function processClusterOCR(cluster, options = {}) {
       confidence: 0,
       status: 'empty',
       error: null,
+      mode,
+      shouldConvert: false,
+      action: 'none',
     };
   }
 
@@ -121,15 +125,15 @@ export async function processClusterOCR(cluster, options = {}) {
       console.log(
         '%c[NETZ Neural Pipeline] Running on-device ONNX model on strokes...',
         'color: #10b981; font-weight: bold;',
-        { strokeCount: strokes.length, clusterId }
+        { strokeCount: strokes.length, clusterId, mode }
       );
-      const pipelineResult = await recognizeInkCluster(strokes, strokeIds, bbox);
+      const pipelineResult = await recognizeInkCluster(strokes, strokeIds, bbox, mode);
       if (controller.signal.aborted) return null;
       pendingOcrControllers.delete(clusterId);
 
       if (pipelineResult && pipelineResult.value) {
         console.log(
-          `%c[NETZ Neural Pipeline] Recognized: "${pipelineResult.value}" (Type: ${pipelineResult.type}, Conf: ${Math.round((pipelineResult.confidence.overall || 0.8) * 100)}%)`,
+          `%c[NETZ Neural Pipeline] Recognized: "${pipelineResult.value}" (Type: ${pipelineResult.type}, Action: ${pipelineResult.action}, Conf: ${Math.round((pipelineResult.confidence.overall || 0.8) * 100)}%)`,
           'color: #10b981; font-weight: bold;'
         );
         const detectedText = pipelineResult.value;
@@ -139,6 +143,9 @@ export async function processClusterOCR(cluster, options = {}) {
         if (isMath && detectedText.includes('=')) {
           evaluatedResult = evaluateLatexExpression(detectedText);
         }
+
+        const shouldConvert = pipelineResult.shouldConvert !== undefined ? pipelineResult.shouldConvert : true;
+        const action = pipelineResult.action || (isMath ? 'convert_equation' : 'convert_text');
 
         const result = {
           detectedText,
@@ -153,6 +160,9 @@ export async function processClusterOCR(cluster, options = {}) {
           alternatives: pipelineResult.alternatives,
           confidenceDetails: pipelineResult.confidence,
           sourceStrokeIds: strokeIds,
+          mode,
+          shouldConvert,
+          action,
         };
 
         setCachedResult(strokeIds, result);
@@ -186,9 +196,9 @@ export async function processClusterOCR(cluster, options = {}) {
     if (controller.signal.aborted) return null;
 
     const base64Image = extractBase64FromDataUrl(rasterResult.dataUrl);
-    const mode = classifyClusterMode(cluster);
+    const fallbackMode = classifyClusterMode(cluster);
 
-    const recognition = await recognizeHandwriting(base64Image, mode, controller.signal, { strokes, bbox });
+    const recognition = await recognizeHandwriting(base64Image, fallbackMode, controller.signal, { strokes, bbox });
 
     if (controller.signal.aborted) return null;
     pendingOcrControllers.delete(clusterId);
@@ -213,6 +223,18 @@ export async function processClusterOCR(cluster, options = {}) {
       evaluatedResult = evaluateLatexExpression(detectedText);
     }
 
+    let shouldConvert = true;
+    let action = isMath ? 'convert_equation' : 'convert_text';
+    if (mode === 'normal') {
+      if (!isMath) {
+        shouldConvert = false;
+        action = 'keep_ink';
+      }
+    } else {
+      shouldConvert = true;
+      action = isMath ? 'convert_equation' : 'convert_text';
+    }
+
     const result = {
       detectedText,
       isMath,
@@ -220,6 +242,9 @@ export async function processClusterOCR(cluster, options = {}) {
       confidence: recognition.confidence || 0,
       status: detectedText ? 'recognized' : 'empty',
       error: null,
+      mode,
+      shouldConvert,
+      action,
     };
 
     setCachedResult(strokeIds, result);

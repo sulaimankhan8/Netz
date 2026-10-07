@@ -20,11 +20,13 @@ import PageManager from './PageManager';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import SoftEditorModal from './SoftEditorModal';
 import SemanticLassoModal from './SemanticLassoModal';
+import AIModelLoadingStatusPill from './AIModelLoadingStatusPill';
 import { startAudioRecording, stopAudioRecording } from '../utils/audioRecorder';
 
 import { clusterStrokes } from '../utils/spatialClusterer';
 import { processClusterOCR } from '../utils/handwritingOCR';
 import { preloadOCREngine } from '../utils/localOCRService';
+import { modelManager } from '../utils/recognition/modelManager';
 import { initAutocompleteTrie } from '../utils/autocompleteTrie';
 import { generateGraphDatasetFromLatex } from '../utils/equationToGraph';
 import { exportCanvasToPng, exportCanvasToSvg, exportCanvasToPdf } from '../utils/exportEngine';
@@ -220,6 +222,8 @@ export default function PlaygroundCanvasContainer() {
 
     preloadOCREngine();
     initAutocompleteTrie();
+    // Warm up lightweight 400KB neural router in background
+    modelManager.loadRouter().catch(() => {});
   }, []);
 
   // Save Session whenever blocks or links change (guarded by isSessionLoadedRef)
@@ -337,6 +341,16 @@ export default function PlaygroundCanvasContainer() {
       return;
     }
 
+    // In Notes Mode, writing is freeform and purely on-demand via the Lasso tool.
+    // We only auto-evaluate if an explicit '=' gesture is drawn for instant math solving.
+    if (notesMode) {
+      const rawClusters = clusterStrokes(allStrokes, 32);
+      const instantEqualsCluster = rawClusters.find((c) => c.hasEqualsGesture);
+      if (!instantEqualsCluster) {
+        return;
+      }
+    }
+
     const rawClusters = clusterStrokes(allStrokes, 32);
     const hasInstantEquals = rawClusters.some((c) => c.hasEqualsGesture);
     const delay = hasInstantEquals ? 100 : 800;
@@ -353,9 +367,10 @@ export default function PlaygroundCanvasContainer() {
     setClusters(pendingClusters);
 
     ocrDebounceTimerRef.current = setTimeout(async () => {
+      const currentMode = notesMode ? 'notes' : 'normal';
       const processed = await Promise.all(
         rawClusters.map(async (c) => {
-          const res = await processClusterOCR(c);
+          const res = await processClusterOCR(c, { mode: currentMode });
           return {
             ...c,
             detectedText: res ? res.detectedText : '',
@@ -364,6 +379,9 @@ export default function PlaygroundCanvasContainer() {
             confidence: res ? res.confidence : 0,
             ocrStatus: res ? (res.status || 'recognized') : 'error',
             ocrError: res ? res.error : null,
+            shouldConvert: res ? res.shouldConvert : true,
+            action: res ? res.action : 'convert_equation',
+            type: res ? res.type : undefined,
           };
         })
       );
@@ -376,10 +394,60 @@ export default function PlaygroundCanvasContainer() {
         setSelectedClusterId(recognizedClusters[recognizedClusters.length - 1].clusterId);
       }
     }, delay);
-  }, [activeTool, ocrMode, currentPageIndex, blockState.blocks, blockState.links]);
+  }, [activeTool, ocrMode, notesMode, currentPageIndex, blockState.blocks, blockState.links]);
+
+  // Convert OCR Handwriting Cluster to In-Place Editable Typed Block (Replacing Ink)
+  // In Notes Mode, snaps position and dimensions directly to ruled paper grid lines
+  const handleConvertClusterToBlock = useCallback((cluster, editedText = null) => {
+    let spawnX = cluster.bbox.minX;
+    let spawnY = cluster.bbox.minY;
+    let width = Math.max(260, (cluster.bbox.maxX - cluster.bbox.minX) + 60);
+    let height = 100;
+
+    // Guideline Snapping in Notes Mode: aligns directly onto the 32px lined paper grid
+    if (notesMode) {
+      const gridSpacing = 32;
+      spawnY = Math.round(cluster.bbox.minY / gridSpacing) * gridSpacing;
+      const rawHeight = Math.max(gridSpacing, cluster.bbox.maxY - cluster.bbox.minY);
+      height = Math.max(gridSpacing * 2, Math.ceil(rawHeight / gridSpacing) * gridSpacing);
+    }
+
+    const finalText = editedText !== null ? editedText : (cluster.detectedText || '');
+
+    const newBlockId = `block_${Date.now()}`;
+    const blockType = cluster.isMath ? 'equation' : 'theory';
+    const content = cluster.isMath
+      ? { latex: finalText }
+      : { text: finalText };
+
+    const newBlock = {
+      blockId: newBlockId,
+      type: blockType,
+      content,
+      linkedBlockIds: [],
+      sourceStrokeIds: cluster.strokeIds || [],
+      sourceStrokes: cluster.strokes || [],
+      position: { x: spawnX, y: spawnY },
+      size: { width, height },
+      status: 'active',
+      isMinimal: !cluster.isMath,
+      isRuledLineAligned: Boolean(notesMode),
+    };
+
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+
+    // Erase converted handwritten ink strokes from canvas
+    if (whiteboardCanvasRef.current && cluster.strokeIds) {
+      whiteboardCanvasRef.current.eraseStrokesByIds(cluster.strokeIds);
+    }
+
+    // Remove preview pill once converted
+    setClusters((prev) => prev.filter((c) => c.clusterId !== cluster.clusterId));
+    setSelectedClusterId(null);
+  }, [notesMode]);
 
   // Handle Manual Selection OCR Trigger (when user selects drawn area with Lasso)
-  const handleSelectionCompleted = useCallback(async ({ strokes, strokeIds, bbox }) => {
+  const handleSelectionCompleted = useCallback(async ({ strokes, strokeIds, bbox, lassoPolygon }) => {
     if (!strokes || strokes.length === 0) return;
 
     const selectionClusterId = `selection_${Date.now()}`;
@@ -388,6 +456,7 @@ export default function PlaygroundCanvasContainer() {
       strokeIds,
       strokes,
       bbox,
+      lassoPolygon,
       hasEqualsGesture: false,
       status: 'pending',
       detectedText: '',
@@ -400,7 +469,8 @@ export default function PlaygroundCanvasContainer() {
     setClusters((prev) => [...prev.filter((c) => !c.clusterId.startsWith('selection_')), selectionCluster]);
     setSelectedClusterId(selectionClusterId);
 
-    const res = await processClusterOCR(selectionCluster, { forceRefresh: true });
+    const currentMode = notesMode ? 'notes' : 'normal';
+    const res = await processClusterOCR(selectionCluster, { forceRefresh: true, mode: currentMode });
 
     if (res) {
       const updatedCluster = {
@@ -411,13 +481,16 @@ export default function PlaygroundCanvasContainer() {
         confidence: res.confidence || 0,
         ocrStatus: res.detectedText ? 'recognized' : (res.status || 'error'),
         ocrError: res.error || null,
+        shouldConvert: res.shouldConvert !== undefined ? res.shouldConvert : true,
+        action: res.action || (res.isMath ? 'convert_equation' : 'convert_text'),
+        type: res.type,
       };
 
       setClusters((prev) =>
         prev.map((c) => (c.clusterId === selectionClusterId ? updatedCluster : c))
       );
     }
-  }, []);
+  }, [notesMode]);
 
   // Unified Block Content Update Handler with Reactive Link Propagation
   const handleUpdateBlockContent = useCallback((blockId, content) => {
@@ -721,46 +794,6 @@ export default function PlaygroundCanvasContainer() {
     }
 
     persistSession(nextPages, newIdx, dupPage.blocks, dupPage.links);
-  };
-
-  // Convert OCR Handwriting Cluster to In-Place Editable Typed Block (Replacing Ink)
-  // Accepts optional editedText override from user corrections in the preview pill
-  const handleConvertClusterToBlock = (cluster, editedText = null) => {
-    const spawnX = cluster.bbox.minX;
-    const spawnY = cluster.bbox.minY;
-    const width = Math.max(260, (cluster.bbox.maxX - cluster.bbox.minX) + 60);
-
-    const finalText = editedText !== null ? editedText : (cluster.detectedText || '');
-
-    const newBlockId = `block_${Date.now()}`;
-    const blockType = cluster.isMath ? 'equation' : 'theory';
-    const content = cluster.isMath
-      ? { latex: finalText }
-      : { text: finalText };
-
-    const newBlock = {
-      blockId: newBlockId,
-      type: blockType,
-      content,
-      linkedBlockIds: [],
-      sourceStrokeIds: cluster.strokeIds || [],
-      sourceStrokes: cluster.strokes || [],
-      position: { x: spawnX, y: spawnY },
-      size: { width, height: 100 },
-      status: 'active',
-      isMinimal: !cluster.isMath,
-    };
-
-    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-
-    // Erase converted handwritten ink strokes from canvas
-    if (whiteboardCanvasRef.current && cluster.strokeIds) {
-      whiteboardCanvasRef.current.eraseStrokesByIds(cluster.strokeIds);
-    }
-
-    // Remove preview pill once converted
-    setClusters((prev) => prev.filter((c) => c.clusterId !== cluster.clusterId));
-    setSelectedClusterId(null);
   };
 
   // Plot Graph from Equation Block (Reuses or Appends if Already Linked)
@@ -1087,6 +1120,9 @@ export default function PlaygroundCanvasContainer() {
         />
       </div>
 
+      {/* Floating AI Neural Engine Loading & Status Indicator */}
+      <AIModelLoadingStatusPill />
+
       {/* Live Universal Text & KaTeX Preview Pill Overlay */}
       <LiveMathPreviewOverlay
         clusters={clusters}
@@ -1138,7 +1174,8 @@ export default function PlaygroundCanvasContainer() {
             type: typeId,
             ocrStatus: 'pending',
           };
-          const res = await processClusterOCR(cluster, { forceRefresh: true });
+          const currentMode = notesMode ? 'notes' : 'normal';
+          const res = await processClusterOCR(cluster, { forceRefresh: true, mode: currentMode });
           if (res && res.detectedText) {
             handleConvertClusterToBlock({ ...cluster, ...res });
           } else {
