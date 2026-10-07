@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
-import { FiCheck, FiBarChart2, FiEdit2, FiAlertCircle, FiLoader } from 'react-icons/fi';
+import { FiCheck, FiBarChart2, FiEdit2, FiAlertCircle, FiLoader, FiSliders } from 'react-icons/fi';
 
 /**
  * LiveMathPreviewOverlay
@@ -25,6 +25,7 @@ export default function LiveMathPreviewOverlay({
   selectedClusterId = null,
   onConvertCluster,
   onPlotClusterGraph,
+  onOpenSoftEditor,
 }) {
   // Track inline editing state per cluster
   const [editingClusterId, setEditingClusterId] = useState(null);
@@ -149,6 +150,17 @@ export default function LiveMathPreviewOverlay({
                   >
                     <FiEdit2 className="w-3.5 h-3.5" />
                   </button>
+
+                  {/* Soft Editor & Multi-Hypothesis Resolver */}
+                  {onOpenSoftEditor && (
+                    <button
+                      onClick={() => onOpenSoftEditor(cluster)}
+                      title="Open Soft Editor & Ambiguity Resolver"
+                      className="p-1 text-zinc-400 hover:text-blue-500 rounded-md transition-colors"
+                    >
+                      <FiSliders className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
                   {/* Plot Graph (math only) */}
                   {isMath && onPlotClusterGraph && (

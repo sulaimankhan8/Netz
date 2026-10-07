@@ -31,6 +31,7 @@
     "next": "^16.3.1",
     "next-sitemap": "^4.2.3",
     "nextjs-google-analytics": "^2.3.7",
+    "onnxruntime-web": "^1.30.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",

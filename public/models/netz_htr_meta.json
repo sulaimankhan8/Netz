@@ -1,0 +1,17 @@
+{
+  "max_len": 1024,
+  "scale_mode": "height",
+  "blank_index": 0,
+  "feature_spec": [
+    "x",
+    "y",
+    "dx",
+    "dy",
+    "dt",
+    "stroke_end",
+    "stroke_start",
+    "speed"
+  ],
+  "test_cer": 0.045,
+  "test_wer": 0.1748
+}

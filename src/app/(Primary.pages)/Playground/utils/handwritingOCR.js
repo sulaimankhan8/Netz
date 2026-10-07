@@ -16,6 +16,7 @@ import {
   setCachedResult,
   generateCacheKey,
 } from './localOCRService';
+import { recognizeInkCluster } from './recognition/recognitionPipeline';
 
 /**
  * Task cancellation registry for OCR requests in flight.
@@ -67,10 +68,9 @@ export function evaluateLatexExpression(latexStr) {
  *
  * Pipeline:
  * 1. Check cache for previously recognized result
- * 2. Rasterize stroke cluster to PNG bitmap
- * 3. Send to Gemini Vision API for recognition
- * 4. Cache and return result
- * 5. Evaluate math if applicable
+ * 2. Run NETZ On-Device Neural Pipeline (Router + HTR / HMER + Heuristics)
+ * 3. Fallback to rasterization + localOCRService if offline/loading
+ * 4. Cache and return standard result contract
  *
  * @param {Object} cluster - Stroke cluster with .clusterId, .strokes, .strokeIds, .bbox, .hasEqualsGesture
  * @param {Object} options - Optional: { forceRefresh: boolean }
@@ -116,7 +116,58 @@ export async function processClusterOCR(cluster, options = {}) {
   try {
     if (controller.signal.aborted) return null;
 
-    // Step 1: Rasterize the stroke cluster to a PNG image
+    // PRIMARY ATTEMPT: Run on-device NETZ Neural Ink & Pure Heuristics Pipeline
+    try {
+      console.log(
+        '%c[NETZ Neural Pipeline] Running on-device ONNX model on strokes...',
+        'color: #10b981; font-weight: bold;',
+        { strokeCount: strokes.length, clusterId }
+      );
+      const pipelineResult = await recognizeInkCluster(strokes, strokeIds, bbox);
+      if (controller.signal.aborted) return null;
+      pendingOcrControllers.delete(clusterId);
+
+      if (pipelineResult && pipelineResult.value) {
+        console.log(
+          `%c[NETZ Neural Pipeline] Recognized: "${pipelineResult.value}" (Type: ${pipelineResult.type}, Conf: ${Math.round((pipelineResult.confidence.overall || 0.8) * 100)}%)`,
+          'color: #10b981; font-weight: bold;'
+        );
+        const detectedText = pipelineResult.value;
+        const isMath = pipelineResult.type === 'MATH' || pipelineResult.type === 'MIXED';
+        let evaluatedResult = null;
+
+        if (isMath && detectedText.includes('=')) {
+          evaluatedResult = evaluateLatexExpression(detectedText);
+        }
+
+        const result = {
+          detectedText,
+          isMath,
+          evaluatedResult,
+          confidence: pipelineResult.confidence.overall,
+          status: 'recognized',
+          error: null,
+          rawResult: pipelineResult,
+          type: pipelineResult.type,
+          ast: pipelineResult.ast,
+          alternatives: pipelineResult.alternatives,
+          confidenceDetails: pipelineResult.confidence,
+          sourceStrokeIds: strokeIds,
+        };
+
+        setCachedResult(strokeIds, result);
+        return {
+          clusterId,
+          ...result,
+        };
+      }
+    } catch (pipelineErr) {
+      console.warn('[handwritingOCR] On-device neural pipeline error, trying fallback:', pipelineErr);
+    }
+
+    if (controller.signal.aborted) return null;
+
+    // FALLBACK ATTEMPT: Rasterize the stroke cluster to a PNG image
     const rasterResult = rasterizeStrokesToDataUrl(strokes, bbox);
 
     if (!rasterResult || !rasterResult.dataUrl) {
@@ -134,18 +185,14 @@ export async function processClusterOCR(cluster, options = {}) {
 
     if (controller.signal.aborted) return null;
 
-    // Step 2: Extract base64 and determine recognition mode
     const base64Image = extractBase64FromDataUrl(rasterResult.dataUrl);
     const mode = classifyClusterMode(cluster);
 
-    // Step 3: Run recognition (Digital Ink vector engine with offline WASM fallback)
     const recognition = await recognizeHandwriting(base64Image, mode, controller.signal, { strokes, bbox });
 
     if (controller.signal.aborted) return null;
-
     pendingOcrControllers.delete(clusterId);
 
-    // Handle recognition errors gracefully
     if (recognition.error && recognition.error !== 'ABORTED') {
       return {
         clusterId,
@@ -158,7 +205,6 @@ export async function processClusterOCR(cluster, options = {}) {
       };
     }
 
-    // Step 4: Evaluate math if applicable
     let evaluatedResult = null;
     const detectedText = recognition.text || '';
     const isMath = recognition.isMath || false;
@@ -167,7 +213,6 @@ export async function processClusterOCR(cluster, options = {}) {
       evaluatedResult = evaluateLatexExpression(detectedText);
     }
 
-    // Step 5: Cache the result
     const result = {
       detectedText,
       isMath,

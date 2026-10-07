@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { extractPointerPoints, isPalmTouch } from '../utils/pointerEventsHandler';
 import { drawSmoothStroke, calculateBoundingBox } from '../utils/strokeSmoother';
-import { SpatialStrokeIndex } from '../utils/spatialIndexRTree';
+import { SpatialStrokeIndex, intersectsBBox } from '../utils/spatialIndexRTree';
 import { detectScratchOutGesture } from '../utils/spatialClusterer';
 import { recognizeAndSnapShape } from '../utils/shapeRecognizer';
 

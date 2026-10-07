@@ -18,6 +18,8 @@ import ImageBlock from './blocks/ImageBlock';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 import PageManager from './PageManager';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import SoftEditorModal from './SoftEditorModal';
+import SemanticLassoModal from './SemanticLassoModal';
 import { startAudioRecording, stopAudioRecording } from '../utils/audioRecorder';
 
 import { clusterStrokes } from '../utils/spatialClusterer';
@@ -81,6 +83,8 @@ export default function PlaygroundCanvasContainer() {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const [pendingTargetUrl, setPendingTargetUrl] = useState(null);
+  const [softEditorCluster, setSoftEditorCluster] = useState(null);
+  const [semanticLassoSelection, setSemanticLassoSelection] = useState(null);
 
   // Pan State, Canvas & Persistence Refs
   const containerRef = useRef(null);
@@ -739,6 +743,8 @@ export default function PlaygroundCanvasContainer() {
       type: blockType,
       content,
       linkedBlockIds: [],
+      sourceStrokeIds: cluster.strokeIds || [],
+      sourceStrokes: cluster.strokes || [],
       position: { x: spawnX, y: spawnY },
       size: { width, height: 100 },
       status: 'active',
@@ -1092,6 +1098,52 @@ export default function PlaygroundCanvasContainer() {
         onConvertCluster={handleConvertClusterToBlock}
         onPlotClusterGraph={(cluster) => {
           handleConvertClusterToBlock(cluster);
+        }}
+        onOpenSoftEditor={(cluster) => setSoftEditorCluster(cluster)}
+      />
+
+      {/* Soft Editor & Hypotheses Resolver Modal */}
+      <SoftEditorModal
+        isOpen={Boolean(softEditorCluster)}
+        cluster={softEditorCluster}
+        onClose={() => setSoftEditorCluster(null)}
+        onApplyCorrection={(cluster, correctedText, assignedType) => {
+          const isMath = assignedType === 'MATH' || assignedType === 'FRACTION';
+          const updatedCluster = {
+            ...cluster,
+            detectedText: correctedText,
+            isMath,
+            type: assignedType,
+          };
+          handleConvertClusterToBlock(updatedCluster, correctedText);
+        }}
+      />
+
+      {/* Semantic Lasso Modal */}
+      <SemanticLassoModal
+        isOpen={Boolean(semanticLassoSelection)}
+        selectedStrokes={semanticLassoSelection?.strokes || []}
+        strokeIds={semanticLassoSelection?.strokeIds || []}
+        bbox={semanticLassoSelection?.bbox || null}
+        onClose={() => setSemanticLassoSelection(null)}
+        onAssignSemanticType={async (typeId, strokes, strokeIds, bbox) => {
+          const isMath = typeId === 'MATH' || typeId === 'FRACTION';
+          const cluster = {
+            clusterId: `lasso_${Date.now()}`,
+            strokes,
+            strokeIds,
+            bbox,
+            detectedText: '',
+            isMath,
+            type: typeId,
+            ocrStatus: 'pending',
+          };
+          const res = await processClusterOCR(cluster, { forceRefresh: true });
+          if (res && res.detectedText) {
+            handleConvertClusterToBlock({ ...cluster, ...res });
+          } else {
+            setSoftEditorCluster(cluster);
+          }
         }}
       />
 

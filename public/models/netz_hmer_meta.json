@@ -1,0 +1,21 @@
+{
+  "max_len": 512,
+  "max_tgt": 160,
+  "scale_mode": "max",
+  "pad": 0,
+  "sos": 1,
+  "eos": 2,
+  "unk": 3,
+  "feature_spec": [
+    "x",
+    "y",
+    "dx",
+    "dy",
+    "dt",
+    "stroke_end",
+    "stroke_start",
+    "speed"
+  ],
+  "test_exprate": 0.536,
+  "test_token_error_rate": 0.081
+}
