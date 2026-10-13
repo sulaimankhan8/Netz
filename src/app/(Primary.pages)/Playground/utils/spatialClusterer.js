@@ -206,6 +206,26 @@ function isVerticallyStacked(boxA, boxB, maxVDist = 55) {
   return horizontallyAligned && yDist <= maxVDist;
 }
 
+const REFERENCE_WRITING_HEIGHT = 40; // writing height the fixed proximity margins were tuned for
+const MAX_WRITING_HEIGHT = 200; // taller strokes are rules, brackets or drawings, not writing
+const MAX_WRITING_SCALE = 5;
+
+/**
+ * How much larger than the reference size this cluster's writing is (never below 1).
+ * Uses the median stroke height, so a multi-line cluster or one tall stroke does not inflate it.
+ */
+function getWritingScale(clusterStrokeList) {
+  const heights = [];
+  for (let i = 0; i < clusterStrokeList.length; i++) {
+    const h = clusterStrokeList[i].bbox.maxY - clusterStrokeList[i].bbox.minY;
+    if (h >= 8 && h <= MAX_WRITING_HEIGHT) heights.push(h);
+  }
+  if (heights.length === 0) return 1;
+  heights.sort((a, b) => a - b);
+  const medianHeight = heights[Math.floor((heights.length - 1) / 2)];
+  return Math.min(MAX_WRITING_SCALE, Math.max(1, medianHeight / REFERENCE_WRITING_HEIGHT));
+}
+
 /**
  * Clusters strokes on canvas into spatial groups.
  *
@@ -225,8 +245,12 @@ export function clusterStrokes(strokes, proximityMargin = 36) {
   const clusters = [];
   const visited = new Set();
 
+  // Highlighter marks are annotations over the writing, and snapped shapes are drawings:
+  // neither is writing, so both are kept out of recognition
+  const inkStrokes = strokes.filter((s) => s.tool !== 'highlighter' && !s.shape);
+
   // Sort strokes by timestamp for consistent ordering
-  const sortedStrokes = [...strokes].sort((a, b) => getStrokeTimestamp(a) - getStrokeTimestamp(b));
+  const sortedStrokes = inkStrokes.sort((a, b) => getStrokeTimestamp(a) - getStrokeTimestamp(b));
 
   for (let i = 0; i < sortedStrokes.length; i++) {
     const stroke = sortedStrokes[i];
@@ -240,10 +264,13 @@ export function clusterStrokes(strokes, proximityMargin = 36) {
     while (expanded) {
       expanded = false;
 
-      // Generous search boxes for line and vertical stacking
-      const lineSearchBox = expandBBoxForLine(clusterBox, proximityMargin + 16, Math.max(proximityMargin - 8, 16));
-      const verticalSearchBox = expandBBox(clusterBox, Math.max(proximityMargin + 16, 48));
-      const standardSearchBox = expandBBox(clusterBox, proximityMargin);
+      // Generous search boxes for line and vertical stacking.
+      // The margins were tuned for writing about 40 px tall; they grow with larger writing
+      // (a stylus on a big canvas) and are unchanged for writing that size or smaller.
+      const scale = getWritingScale(currentClusterStrokes);
+      const lineSearchBox = expandBBoxForLine(clusterBox, (proximityMargin + 16) * scale, Math.max(proximityMargin - 8, 16) * scale);
+      const verticalSearchBox = expandBBox(clusterBox, Math.max(proximityMargin + 16, 48) * scale);
+      const standardSearchBox = expandBBox(clusterBox, proximityMargin * scale);
 
       for (let j = 0; j < sortedStrokes.length; j++) {
         const candidate = sortedStrokes[j];
@@ -252,7 +279,7 @@ export function clusterStrokes(strokes, proximityMargin = 36) {
         // Check if candidate is on the same baseline as any stroke in the cluster
         const onSameLine = currentClusterStrokes.some((s) => sharesBaseline(s, candidate));
         // Check if candidate is vertically stacked (question mark dot, exclamation dot, colon, equals, etc.)
-        const isStacked = isVerticallyStacked(clusterBox, candidate.bbox);
+        const isStacked = isVerticallyStacked(clusterBox, candidate.bbox, 55 * scale);
 
         const searchBox = onSameLine ? lineSearchBox : (isStacked ? verticalSearchBox : standardSearchBox);
 
@@ -271,7 +298,9 @@ export function clusterStrokes(strokes, proximityMargin = 36) {
     const hasEquals = detectEqualsGesture(currentClusterStrokes);
 
     clusters.push({
-      clusterId: `cluster_${Date.now()}_${i}`,
+      // Stable across re-clustering: a cluster keeps its ID while its earliest stroke exists,
+      // so selection and preview pills survive the next stroke being written
+      clusterId: `cluster_${currentClusterStrokes[0].id}`,
       strokeIds: currentClusterStrokes.map((s) => s.id),
       strokes: currentClusterStrokes,
       bbox: clusterBox,
@@ -280,5 +309,60 @@ export function clusterStrokes(strokes, proximityMargin = 36) {
     });
   }
 
-  return clusters;
+  return attachLoneEqualsSigns(clusters);
+}
+
+/**
+ * True when a cluster is nothing but an equals sign: two flat strokes, one above the other.
+ */
+function isLoneEqualsSign(cluster) {
+  return cluster.strokes.length === 2 && detectEqualsGesture(cluster.strokes);
+}
+
+/**
+ * An "=" written a little apart from its expression ends up as a cluster of its own, and
+ * "=" alone has nothing to evaluate. The proximity margins above are fixed pixel values, so this
+ * happens whenever the writing is large. Such an equals sign is joined to the expression on its
+ * left when both sit on the same line and the gap is small relative to the writing's own height.
+ */
+function attachLoneEqualsSigns(clusters) {
+  if (clusters.length < 2) return clusters;
+
+  const absorbed = new Set();
+  for (let i = 0; i < clusters.length; i++) {
+    const equalsCluster = clusters[i];
+    if (absorbed.has(i) || !isLoneEqualsSign(equalsCluster)) continue;
+
+    const eq = equalsCluster.bbox;
+    const eqCenterY = (eq.minY + eq.maxY) / 2;
+    let bestIdx = -1;
+    let bestGap = Infinity;
+
+    for (let j = 0; j < clusters.length; j++) {
+      if (j === i || absorbed.has(j) || isLoneEqualsSign(clusters[j])) continue;
+      const box = clusters[j].bbox;
+      const height = Math.max(box.maxY - box.minY, 1);
+      const gap = eq.minX - box.maxX;
+      const onSameLine = eqCenterY >= box.minY - height * 0.25 && eqCenterY <= box.maxY + height * 0.25;
+      if (gap >= 0 && gap <= height * 1.5 && onSameLine && gap < bestGap) {
+        bestGap = gap;
+        bestIdx = j;
+      }
+    }
+
+    if (bestIdx >= 0) {
+      const target = clusters[bestIdx];
+      const strokes = [...target.strokes, ...equalsCluster.strokes].sort((a, b) => getStrokeTimestamp(a) - getStrokeTimestamp(b));
+      clusters[bestIdx] = {
+        ...target,
+        strokeIds: strokes.map((s) => s.id),
+        strokes,
+        bbox: mergeBBoxes(target.bbox, equalsCluster.bbox),
+        hasEqualsGesture: true,
+      };
+      absorbed.add(i);
+    }
+  }
+
+  return absorbed.size > 0 ? clusters.filter((_, idx) => !absorbed.has(idx)) : clusters;
 }

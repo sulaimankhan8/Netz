@@ -26,6 +26,7 @@ export default function LiveMathPreviewOverlay({
   onConvertCluster,
   onPlotClusterGraph,
   onOpenSoftEditor,
+  onReadAsMath,
 }) {
   // Track inline editing state per cluster
   const [editingClusterId, setEditingClusterId] = useState(null);
@@ -79,9 +80,19 @@ export default function LiveMathPreviewOverlay({
         const { bbox, detectedText, isMath, evaluatedResult, action } = cluster;
         const isEditing = editingClusterId === cluster.clusterId;
 
-        // Position pill floating cleanly ABOVE the top of the stroke bounding box
-        const screenX = bbox.minX * zoomLevel + panOffset.x;
-        const screenY = bbox.minY * zoomLevel + panOffset.y - 48;
+        // Position pill floating cleanly near the stroke bounding box, clamped within viewport
+        const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+        const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+        const rawX = bbox.minX * zoomLevel + panOffset.x;
+        const screenX = Math.max(12, Math.min(vw - 280, rawX));
+
+        let screenY = bbox.minY * zoomLevel + panOffset.y - 48;
+        if (screenY < 64) {
+          // If above top of viewport, show below stroke bbox
+          screenY = Math.min(vh - 90, bbox.maxY * zoomLevel + panOffset.y + 16);
+        } else if (screenY > vh - 90) {
+          screenY = vh - 90;
+        }
 
         return (
           <div
@@ -130,7 +141,7 @@ export default function LiveMathPreviewOverlay({
                   <button
                     onClick={() => onConvertCluster(cluster)}
                     title="Force convert to typed block"
-                    className="ml-1 px-2 py-0.5 text-[10px] font-semibold rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
+                    className="ml-1 px-2.5 py-1 min-h-[36px] flex items-center justify-center text-xs font-semibold rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
                   >
                     Convert
                   </button>
@@ -147,9 +158,9 @@ export default function LiveMathPreviewOverlay({
                 </span>
                 <button
                   onClick={() => handleConvertManual(cluster)}
-                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 min-h-[36px] text-xs font-semibold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  <FiEdit2 className="w-3 h-3" />
+                  <FiEdit2 className="w-3.5 h-3.5" />
                   <span>Type manually</span>
                 </button>
               </div>
@@ -182,9 +193,9 @@ export default function LiveMathPreviewOverlay({
                   <button
                     onClick={() => handleStartEdit(cluster)}
                     title="Edit recognized text"
-                    className="p-1 text-zinc-400 hover:text-blue-500 rounded-md transition-colors"
+                    className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-zinc-500 hover:text-blue-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   >
-                    <FiEdit2 className="w-3.5 h-3.5" />
+                    <FiEdit2 className="w-4 h-4" />
                   </button>
 
                   {/* Soft Editor & Multi-Hypothesis Resolver */}
@@ -192,9 +203,21 @@ export default function LiveMathPreviewOverlay({
                     <button
                       onClick={() => onOpenSoftEditor(cluster)}
                       title="Open Soft Editor & Ambiguity Resolver"
-                      className="p-1 text-zinc-400 hover:text-blue-500 rounded-md transition-colors"
+                      className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-zinc-500 hover:text-blue-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      <FiSliders className="w-3.5 h-3.5" />
+                      <FiSliders className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Read as maths (shown when the router judged this to be writing and maths was not tried) */}
+                  {!isMath && cluster.mathsSkipped && onReadAsMath && (
+                    <button
+                      onClick={() => onReadAsMath(cluster)}
+                      title="Read this as maths instead"
+                      aria-label="Read this as maths instead"
+                      className="px-2.5 py-1 min-h-[36px] flex items-center justify-center text-xs font-semibold rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      ∑ Maths
                     </button>
                   )}
 
@@ -203,9 +226,9 @@ export default function LiveMathPreviewOverlay({
                     <button
                       onClick={() => onPlotClusterGraph(cluster)}
                       title="Plot Graph from Equation"
-                      className="p-1 text-zinc-400 hover:text-blue-500 rounded-md transition-colors"
+                      className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-zinc-500 hover:text-blue-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      <FiBarChart2 className="w-3.5 h-3.5" />
+                      <FiBarChart2 className="w-4 h-4" />
                     </button>
                   )}
 
@@ -214,9 +237,9 @@ export default function LiveMathPreviewOverlay({
                     <button
                       onClick={() => onConvertCluster(cluster)}
                       title="Convert handwriting to editable typed block"
-                      className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-sm transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] text-xs font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-sm transition-all"
                     >
-                      <FiCheck className="w-3.5 h-3.5" />
+                      <FiCheck className="w-4 h-4" />
                       <span>Convert</span>
                     </button>
                   )}

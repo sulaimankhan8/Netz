@@ -245,7 +245,7 @@ class ModelManager {
     this.notifyStatus({
       isLoading: true,
       modelName: 'Math HMER',
-      message: 'Initializing Math Equation Engine (94% HMER)...',
+      message: 'Loading Math Equation Engine...',
     });
 
     try {

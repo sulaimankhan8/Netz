@@ -42,8 +42,9 @@ export default function EquationBlock({
   onPlotGraph,
   isEditing: propIsEditing,
   setIsEditing: propSetIsEditing,
+  isSelected = false,
 }) {
-  const [latex, setLatex] = useState(block.content?.latex || 'y = x^2 - 4x + 3');
+  const [latex, setLatex] = useState(block.content?.latex ?? '');
   const [localIsEditing, setLocalIsEditing] = useState(false);
 
   const isEditing = propIsEditing !== undefined ? propIsEditing : localIsEditing;
@@ -114,15 +115,14 @@ export default function EquationBlock({
         </div>
       ) : (
         <div
-          onClick={() => setIsEditing(true)}
-          className="group/eq relative px-3 py-2.5 rounded-xl bg-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 transition-all cursor-pointer flex items-center justify-between gap-3 select-none"
+          className="group/eq relative px-3 py-2.5 rounded-xl bg-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 border border-transparent hover:border-zinc-200/80 dark:hover:border-zinc-800/80 transition-all flex items-center justify-between gap-3 select-none"
         >
           <div className="text-base text-zinc-900 dark:text-zinc-100 font-medium overflow-x-auto py-1">
             <SafeInlineMath math={latex} />
           </div>
 
-          {/* Semi-transparent hover edit & plot icons */}
-          <div className="opacity-0 group-hover/eq:opacity-100 flex items-center gap-1 transition-opacity flex-shrink-0">
+          {/* Action icons: visible on hover OR when block is selected */}
+          <div className={`${isSelected ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover/eq:opacity-100 group-hover/eq:pointer-events-auto'} flex items-center gap-1.5 transition-opacity flex-shrink-0`}>
             {onPlotGraph && (
               <button
                 onClick={(e) => {
@@ -130,7 +130,7 @@ export default function EquationBlock({
                   onPlotGraph(block, latex);
                 }}
                 title="Plot Graph"
-                className="p-1.5 text-zinc-400 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-zinc-500 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <FiBarChart2 className="w-4 h-4" />
               </button>
@@ -141,7 +141,7 @@ export default function EquationBlock({
                 setIsEditing(true);
               }}
               title="Edit Equation"
-              className="p-1.5 text-zinc-400 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-zinc-500 hover:text-blue-500 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
             >
               <FiEdit2 className="w-4 h-4" />
             </button>

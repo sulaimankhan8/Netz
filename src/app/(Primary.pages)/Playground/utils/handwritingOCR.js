@@ -8,7 +8,7 @@
  * For general handwriting, returns the recognized text for typed block conversion.
  */
 
-import { evaluateMath } from '../../../utils/evaluateMath.js';
+import { evaluateLatexExpression } from './latexEvaluator.js';
 import { rasterizeStrokesToDataUrl, extractBase64FromDataUrl } from './strokeRasterizer.js';
 import {
   recognizeHandwriting,
@@ -39,29 +39,7 @@ function classifyClusterMode(cluster) {
   return 'auto';
 }
 
-/**
- * Evaluates a math expression string if it ends with '='.
- *
- * @param {string} latexStr - LaTeX or plain math expression
- * @returns {string|null} Evaluated result string, or null if not evaluable
- */
-export function evaluateLatexExpression(latexStr) {
-  if (!latexStr || !latexStr.endsWith('=')) return null;
-
-  try {
-    const cleanExpr = latexStr.replace(/\s*=\s*$/, '').trim();
-    if (!cleanExpr) return null;
-
-    const result = evaluateMath(cleanExpr, 1);
-    if (result !== undefined && result !== null) {
-      return String(result);
-    }
-  } catch (err) {
-    // Evaluation failed — expression may be symbolic
-  }
-
-  return null;
-}
+export { evaluateLatexExpression };
 
 /**
  * Main OCR & Evaluation entry point for a stroke cluster.
@@ -73,7 +51,7 @@ export function evaluateLatexExpression(latexStr) {
  * 4. Cache and return standard result contract
  *
  * @param {Object} cluster - Stroke cluster with .clusterId, .strokes, .strokeIds, .bbox, .hasEqualsGesture
- * @param {Object} options - Optional: { forceRefresh: boolean }
+ * @param {Object} options - Optional: { forceRefresh: boolean, mode: 'normal'|'notes', alwaysRunMath: boolean, preferType: 'MATH'|'TEXT' }
  * @returns {Promise<{ clusterId, detectedText, isMath, evaluatedResult, confidence, status, error } | null>}
  */
 export async function processClusterOCR(cluster, options = {}) {
@@ -127,7 +105,11 @@ export async function processClusterOCR(cluster, options = {}) {
         'color: #10b981; font-weight: bold;',
         { strokeCount: strokes.length, clusterId, mode }
       );
-      const pipelineResult = await recognizeInkCluster(strokes, strokeIds, bbox, mode);
+      const pipelineResult = await recognizeInkCluster(strokes, strokeIds, bbox, mode, {
+        // Ink ending in "=" is a calculation: never let the Notes-mode text fast path skip maths
+        alwaysRunMath: Boolean(cluster.hasEqualsGesture) || Boolean(options.alwaysRunMath),
+        preferType: options.preferType,
+      });
       if (controller.signal.aborted) return null;
       pendingOcrControllers.delete(clusterId);
 
@@ -163,6 +145,8 @@ export async function processClusterOCR(cluster, options = {}) {
           mode,
           shouldConvert,
           action,
+          // True when the router was confident this is writing and the maths recogniser was not run
+          mathsSkipped: Boolean(pipelineResult.routing && pipelineResult.routing.mathsSkipped),
         };
 
         setCachedResult(strokeIds, result);

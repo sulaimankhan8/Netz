@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
-import { extractPointerPoints, isPalmTouch } from '../utils/pointerEventsHandler';
-import { drawSmoothStroke, calculateBoundingBox } from '../utils/strokeSmoother';
+import { extractPointerPoints, shouldRejectTouch } from '../utils/pointerEventsHandler';
+import { MIN_ZOOM, MAX_ZOOM, visibleWorldRect, boxTouchesRect } from '../utils/viewportMath';
+import { orderStrokesForPainting, paintedWidth } from '../utils/pageSvg';
+import { drawSmoothStroke, calculateBoundingBox, strokeHasPressure } from '../utils/strokeSmoother';
 import { SpatialStrokeIndex, intersectsBBox } from '../utils/spatialIndexRTree';
 import { detectScratchOutGesture } from '../utils/spatialClusterer';
 import { recognizeAndSnapShape } from '../utils/shapeRecognizer';
+import { eraseFromStroke, strokeTouchesCircle } from '../utils/strokeEraser';
+import { bboxOfStrokes, translateStroke, scaleStroke, duplicateStroke, recolorStroke } from '../utils/strokeTransform';
 
 /**
  * Ray-casting algorithm to test whether a 2D point is enclosed in a polygon.
@@ -27,32 +31,75 @@ function isPointInPolygon(point, polygon) {
   return inside;
 }
 
+/**
+ * The canvases are backed by device pixels (width x devicePixelRatio) so ink stays sharp on
+ * high-density screens; everything is still drawn in CSS pixel / canvas-world coordinates.
+ */
+function getPixelRatio() {
+  return typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+}
+
+function clearCanvas(ctx) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+// Viewport transform matrix (Pan & Zoom), scaled to device pixels
+function applyWorldTransform(ctx, zoomLevel, panOffset) {
+  const ratio = getPixelRatio();
+  ctx.setTransform(zoomLevel * ratio, 0, 0, zoomLevel * ratio, panOffset.x * ratio, panOffset.y * ratio);
+}
+
+const SELECTION_PADDING = 8; // px on screen between the selected ink and its box
+const SELECTION_HANDLE = 12; // px on screen, the resize handle at the box's bottom-right corner
+
 const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   {
     activeTool = 'pen',
     strokeColor = '#3B82F6',
     strokeWidth = 3,
+    strokeOpacity = 1,
     zoomLevel = 1,
     panOffset = { x: 0, y: 0 },
     width,
     height,
     snapShapes = false,
+    fingerDraws = true,
+    onViewportChange,
+    eraserMode = 'stroke',
+    eraserSize = 16,
     onStrokeAdded,
     onStrokesErased,
     onStrokesUpdated,
     onDrawingStateChange,
     onSelectionCompleted,
+    onSelectionChange,
   },
   ref
 ) {
   // Canvas Refs
   const staticCanvasRef = useRef(null);
   const activeCanvasRef = useRef(null);
+  const pixelRatio = getPixelRatio();
 
   // Inking State Refs
   const isDrawingRef = useRef(false);
   const activePointsRef = useRef([]);
   const activePointerTypeRef = useRef(null);
+  const activePointerIdRef = useRef(null);
+
+  // Touch navigation & palm rejection state
+  const touchPointsRef = useRef(new Map()); // pointerId -> { x, y } relative to the canvas
+  const gestureRef = useRef(null); // two-finger pinch/pan, or one-finger pan when fingers do not draw
+  const penStateRef = useRef({ isDown: false, lastActive: -Infinity });
+
+  // Lasso selection: the selected stroke ids with their bounding box, and a move / resize in progress
+  const selectionRef = useRef(null);
+  const selectionDragRef = useRef(null);
+
+  // Eraser drag state
+  const lastEraserPointRef = useRef(null);
+  const erasedDuringDragRef = useRef(false);
   const strokesRef = useRef([]);
   const rtreeRef = useRef(new SpatialStrokeIndex());
 
@@ -64,28 +111,56 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     if (!ctx) return;
 
     // Reset transform & clear
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    clearCanvas(ctx);
 
     // Apply viewport transform matrix (Pan & Zoom)
-    ctx.setTransform(zoomLevel, 0, 0, zoomLevel, panOffset.x, panOffset.y);
+    applyWorldTransform(ctx, zoomLevel, panOffset);
 
-    const strokes = strokesRef.current;
+    // Ink that is off screen is skipped: on a large page, zoomed in, that is most of it.
+    // The margin covers the stroke's thickness, including the points of sharp shape corners.
+    const view = visibleWorldRect(panOffset, zoomLevel, width, height);
+
+    // Highlighter marks are painted first, so they sit under the writing instead of dimming it
+    const strokes = orderStrokesForPainting(strokesRef.current);
     for (let i = 0; i < strokes.length; i++) {
       const stroke = strokes[i];
+      if (!boxTouchesRect(stroke.bbox, view, paintedWidth(stroke) * 6 + 4)) continue;
       drawSmoothStroke(ctx, stroke.points, {
         color: stroke.color,
         width: stroke.width,
         tool: stroke.tool,
+        shape: stroke.shape,
+        opacity: stroke.opacity,
+        hasPressure: stroke.hasPressure,
       });
     }
-  }, [width, height, zoomLevel, panOffset]);
+  }, [zoomLevel, panOffset, width, height]);
+
+  // Adds one finished stroke to the committed-ink layer without repainting everything under it.
+  // Right only for ink that belongs on top: a highlighter mark goes beneath the writing.
+  const paintNewStroke = useCallback((stroke) => {
+    const ctx = stroke.tool === 'highlighter' ? null : staticCanvasRef.current?.getContext('2d');
+    if (!ctx) {
+      redrawStaticLayer();
+      return;
+    }
+    applyWorldTransform(ctx, zoomLevel, panOffset);
+    drawSmoothStroke(ctx, stroke.points, {
+      color: stroke.color,
+      width: stroke.width,
+      tool: stroke.tool,
+      shape: stroke.shape,
+      opacity: stroke.opacity,
+      hasPressure: stroke.hasPressure,
+    });
+  }, [redrawStaticLayer, zoomLevel, panOffset]);
 
   // Expose imperatively callable helper to erase specific stroke IDs & load/clear page strokes
   useImperativeHandle(ref, () => ({
     getStrokes: () => strokesRef.current || [],
     eraseStrokesByIds: (strokeIdsToErase) => {
       if (!strokeIdsToErase || strokeIdsToErase.length === 0) return;
+      clearSelection('cleared');
       strokesRef.current = strokesRef.current.filter((s) => !strokeIdsToErase.includes(s.id));
       rtreeRef.current.clear();
       strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
@@ -93,35 +168,317 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
     },
     loadStrokes: (newStrokes = []) => {
+      clearSelection('cleared');
       strokesRef.current = Array.isArray(newStrokes) ? [...newStrokes] : [];
       rtreeRef.current.clear();
       strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
       redrawStaticLayer();
     },
     clearStrokes: () => {
+      clearSelection('cleared');
       strokesRef.current = [];
       rtreeRef.current.clear();
       redrawStaticLayer();
       if (onStrokesUpdated) onStrokesUpdated([]);
     },
+    // Lasso selection actions (used by the selection toolbar and the Delete key)
+    hasSelection: () => Boolean(selectionRef.current),
+    deleteSelection,
+    duplicateSelection,
+    recolorSelection,
+    clearSelection: () => clearSelection('cleared'),
   }));
 
-  // Initial setup & resize handling
+  // Initial setup & resize handling (resizing the canvas element clears it, so it must be redrawn)
   useEffect(() => {
     redrawStaticLayer();
-  }, [redrawStaticLayer]);
+  }, [redrawStaticLayer, width, height]);
+
+  // ── Lasso selection: move, resize, duplicate, recolour, delete ───────────────
+  // Strokes are replaced by transformed copies, never changed in place: undo history and
+  // saved pages keep references to the existing stroke objects.
+  const getSelectedStrokes = () => {
+    const selection = selectionRef.current;
+    if (!selection) return [];
+    const ids = new Set(selection.ids);
+    return strokesRef.current.filter((s) => ids.has(s.id));
+  };
+
+  const notifySelection = (reason) => {
+    if (!onSelectionChange) return;
+    const selection = selectionRef.current;
+    onSelectionChange(
+      selection ? { strokeIds: selection.ids, strokes: getSelectedStrokes(), bbox: selection.bbox } : null,
+      reason
+    );
+  };
+
+  // Dashed box around the selected ink, with a resize handle at its bottom-right corner
+  const drawSelectionOverlay = () => {
+    const canvas = activeCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    clearCanvas(ctx);
+
+    const selection = selectionRef.current;
+    if (!selection) return;
+
+    applyWorldTransform(ctx, zoomLevel, panOffset);
+    const pad = SELECTION_PADDING / zoomLevel;
+    const handle = SELECTION_HANDLE / zoomLevel;
+    const { minX, minY, maxX, maxY } = selection.bbox;
+
+    ctx.save();
+    ctx.strokeStyle = '#8B5CF6';
+    ctx.lineWidth = 1.5 / zoomLevel;
+    ctx.setLineDash([6 / zoomLevel, 4 / zoomLevel]);
+    ctx.strokeRect(minX - pad, minY - pad, maxX - minX + 2 * pad, maxY - minY + 2 * pad);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(maxX + pad - handle / 2, maxY + pad - handle / 2, handle, handle);
+    ctx.strokeRect(maxX + pad - handle / 2, maxY + pad - handle / 2, handle, handle);
+    ctx.restore();
+  };
+
+  const clearSelection = (reason) => {
+    if (!selectionRef.current) return;
+    selectionRef.current = null;
+    selectionDragRef.current = null;
+    const ctx = activeCanvasRef.current ? activeCanvasRef.current.getContext('2d') : null;
+    if (ctx) clearCanvas(ctx);
+    notifySelection(reason);
+  };
+
+  const replaceSelectedStrokes = (transform) => {
+    const ids = new Set(selectionRef.current.ids);
+    strokesRef.current = strokesRef.current.map((s) => (ids.has(s.id) ? transform(s) : s));
+  };
+
+  // Finishes an edit to the selection: one stroke update, so one undo step
+  const commitSelectionEdit = (reason) => {
+    rtreeRef.current.clear();
+    strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
+    redrawStaticLayer();
+    if (selectionRef.current) {
+      selectionRef.current = { ...selectionRef.current, bbox: bboxOfStrokes(getSelectedStrokes()) };
+      drawSelectionOverlay();
+    }
+    if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
+    notifySelection(reason);
+  };
+
+  const toCanvasPoint = (e) => {
+    const rect = activeCanvasRef.current.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left - panOffset.x) / zoomLevel,
+      y: (e.clientY - rect.top - panOffset.y) / zoomLevel,
+    };
+  };
+
+  // Returns true when the press landed on the selection (or its handle) and a drag has begun
+  const beginSelectionDrag = (e) => {
+    const selection = selectionRef.current;
+    const pt = toCanvasPoint(e);
+    const pad = SELECTION_PADDING / zoomLevel;
+    const handle = SELECTION_HANDLE / zoomLevel;
+    const { minX, minY, maxX, maxY } = selection.bbox;
+
+    const onHandle = Math.abs(pt.x - (maxX + pad)) <= handle && Math.abs(pt.y - (maxY + pad)) <= handle;
+    const inside = pt.x >= minX - pad && pt.x <= maxX + pad && pt.y >= minY - pad && pt.y <= maxY + pad;
+    if (!onHandle && !inside) return false;
+
+    selectionDragRef.current = {
+      type: onHandle ? 'scale' : 'move',
+      start: pt,
+      startBBox: selection.bbox,
+      originals: getSelectedStrokes(),
+      changed: false,
+    };
+
+    activeCanvasRef.current.setPointerCapture(e.pointerId);
+    isDrawingRef.current = true;
+    activePointerTypeRef.current = e.pointerType;
+    activePointerIdRef.current = e.pointerId;
+    if (onDrawingStateChange) onDrawingStateChange(true);
+    return true;
+  };
+
+  const updateSelectionDrag = (e) => {
+    const drag = selectionDragRef.current;
+    const pt = toCanvasPoint(e);
+    const originalById = new Map(drag.originals.map((s) => [s.id, s]));
+
+    if (drag.type === 'move') {
+      const dx = pt.x - drag.start.x;
+      const dy = pt.y - drag.start.y;
+      replaceSelectedStrokes((s) => translateStroke(originalById.get(s.id), dx, dy));
+    } else {
+      // Resize from the bottom-right handle, keeping the top-left corner fixed and the proportions
+      const origin = { x: drag.startBBox.minX, y: drag.startBBox.minY };
+      const startWidth = Math.max(drag.startBBox.maxX - drag.startBBox.minX, 1);
+      const startHeight = Math.max(drag.startBBox.maxY - drag.startBBox.minY, 1);
+      // Follow the handle along the selection's longer side, measured from where the drag began,
+      // so a flat selection (a single line) does not blow up and nothing jumps on the first move
+      const rawFactor = startWidth >= startHeight
+        ? (startWidth + (pt.x - drag.start.x)) / startWidth
+        : (startHeight + (pt.y - drag.start.y)) / startHeight;
+      const factor = Math.min(10, Math.max(0.1, rawFactor));
+      replaceSelectedStrokes((s) => scaleStroke(originalById.get(s.id), factor, origin));
+    }
+
+    drag.changed = true;
+    selectionRef.current = { ...selectionRef.current, bbox: bboxOfStrokes(getSelectedStrokes()) };
+    redrawStaticLayer();
+    drawSelectionOverlay();
+  };
+
+  const finishSelectionDrag = () => {
+    const drag = selectionDragRef.current;
+    selectionDragRef.current = null;
+    if (drag.changed) {
+      commitSelectionEdit('transform');
+    } else {
+      drawSelectionOverlay();
+    }
+  };
+
+  const deleteSelection = () => {
+    if (!selectionRef.current) return;
+    const ids = new Set(selectionRef.current.ids);
+    strokesRef.current = strokesRef.current.filter((s) => !ids.has(s.id));
+    selectionRef.current = null;
+    const ctx = activeCanvasRef.current ? activeCanvasRef.current.getContext('2d') : null;
+    if (ctx) clearCanvas(ctx);
+    commitSelectionEdit('deleted');
+  };
+
+  // The copies become the selection, so they can be dragged into place straight away
+  const duplicateSelection = () => {
+    if (!selectionRef.current) return;
+    const offset = 24 / zoomLevel;
+    const copies = getSelectedStrokes().map((s, i) =>
+      duplicateStroke(s, offset, offset, `stroke_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${i}`)
+    );
+    strokesRef.current = [...strokesRef.current, ...copies];
+    selectionRef.current = { ids: copies.map((s) => s.id), bbox: bboxOfStrokes(copies) };
+    commitSelectionEdit('transform');
+  };
+
+  const recolorSelection = (color) => {
+    if (!selectionRef.current) return;
+    replaceSelectedStrokes((s) => recolorStroke(s, color));
+    commitSelectionEdit('transform');
+  };
+
+  // The selection box follows the page when it is panned or zoomed
+  useEffect(() => {
+    if (selectionRef.current) drawSelectionOverlay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomLevel, panOffset, width, height]);
+
+  // A selection belongs to the lasso; leaving any tool also clears what it drew on the top layer
+  useEffect(() => {
+    if (activeTool !== 'lasso') clearSelection('cleared');
+    if (!isDrawingRef.current && !selectionRef.current) {
+      const ctx = activeCanvasRef.current ? activeCanvasRef.current.getContext('2d') : null;
+      if (ctx) clearCanvas(ctx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTool]);
+
+  // ── Eraser ───────────────────────────────────────────────────────────────────
+  // The eraser has its own size, constant on screen whatever the zoom, and two modes:
+  //   'stroke'  removes every stroke it touches
+  //   'partial' rubs out only the part it passes over
+  const eraseAlong = (points) => {
+    const radius = eraserSize / zoomLevel;
+    const erasedIds = [];
+
+    // Fill the gaps of a fast drag so thin strokes between two pointer samples are not skipped
+    const path = [];
+    for (let i = 0; i < points.length; i++) {
+      const prev = lastEraserPointRef.current;
+      const pt = points[i];
+      if (prev) {
+        const steps = Math.ceil(Math.hypot(pt.x - prev.x, pt.y - prev.y) / Math.max(radius / 2, 0.5));
+        for (let s = 1; s < steps; s++) {
+          path.push({ x: prev.x + ((pt.x - prev.x) * s) / steps, y: prev.y + ((pt.y - prev.y) * s) / steps });
+        }
+      }
+      path.push(pt);
+      lastEraserPointRef.current = pt;
+    }
+
+    for (let i = 0; i < path.length; i++) {
+      const { x, y } = path[i];
+      const remaining = [];
+      for (let j = 0; j < strokesRef.current.length; j++) {
+        const stroke = strokesRef.current[j];
+        if (eraserMode === 'partial') {
+          const pieces = eraseFromStroke(stroke, x, y, radius, (n) => `stroke_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${n}`);
+          if (pieces === null) {
+            remaining.push(stroke);
+          } else {
+            erasedIds.push(stroke.id);
+            remaining.push(...pieces);
+          }
+        } else if (strokeTouchesCircle(stroke, x, y, radius)) {
+          erasedIds.push(stroke.id);
+        } else {
+          remaining.push(stroke);
+        }
+      }
+      strokesRef.current = remaining;
+    }
+
+    if (erasedIds.length > 0) {
+      erasedDuringDragRef.current = true;
+      rtreeRef.current.clear();
+      strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
+      redrawStaticLayer();
+      if (onStrokesErased) onStrokesErased(erasedIds);
+      // "transient": more of the same drag may follow; the whole drag is one undo step
+      if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current], { transient: true });
+    }
+  };
+
+  // Shows the eraser's reach as a circle under the pointer (drawn in screen pixels)
+  const drawEraserCursor = (clientX, clientY) => {
+    const canvas = activeCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const ratio = getPixelRatio();
+    clearCanvas(ctx);
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.beginPath();
+    ctx.arc(clientX - rect.left, clientY - rect.top, eraserSize, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(244, 63, 94, 0.10)';
+    ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.fill();
+    ctx.stroke();
+  };
 
   // Pointer Down Handler
   const handlePointerDown = (e) => {
     if (activeTool === 'pan') return;
-    if (isPalmTouch(e.nativeEvent, activePointerTypeRef.current)) return;
 
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
 
+    // With something selected, a press on it moves or resizes it; a press elsewhere lets it go
+    if (activeTool === 'lasso' && selectionRef.current) {
+      if (beginSelectionDrag(e)) return;
+      clearSelection('cleared');
+    }
+
     canvas.setPointerCapture(e.pointerId);
     isDrawingRef.current = true;
     activePointerTypeRef.current = e.pointerType;
+    activePointerIdRef.current = e.pointerId;
 
     if (onDrawingStateChange) onDrawingStateChange(true);
 
@@ -132,29 +489,20 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     activePointsRef.current = points;
 
     if (activeTool === 'eraser') {
-      const pt = points[0];
-      if (pt) {
-        const hits = rtreeRef.current.queryPoint(pt.x, pt.y, strokeWidth * 3);
-        if (hits.length > 0) {
-          const hitIds = hits.map((s) => s.id);
-          strokesRef.current = strokesRef.current.filter((s) => !hitIds.includes(s.id));
-          rtreeRef.current.clear();
-          strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
-          redrawStaticLayer();
-          if (onStrokesErased) onStrokesErased(hitIds);
-          if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
-        }
-      }
+      lastEraserPointRef.current = null;
+      erasedDuringDragRef.current = false;
+      eraseAlong(points);
+      drawEraserCursor(e.clientX, e.clientY);
     } else {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width, height);
-        ctx.setTransform(zoomLevel, 0, 0, zoomLevel, panOffset.x, panOffset.y);
+        clearCanvas(ctx);
+        applyWorldTransform(ctx, zoomLevel, panOffset);
         drawSmoothStroke(ctx, points, {
           color: strokeColor,
           width: strokeWidth,
           tool: activeTool,
+          opacity: strokeOpacity,
         });
       }
     }
@@ -163,10 +511,14 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   // Pointer Move Handler
   const handlePointerMove = (e) => {
     if (!isDrawingRef.current) return;
-    if (isPalmTouch(e.nativeEvent, activePointerTypeRef.current)) return;
 
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
+
+    if (selectionDragRef.current) {
+      updateSelectionDrag(e);
+      return;
+    }
 
     const rect = canvas.getBoundingClientRect();
     const transform = { panOffset, zoomLevel };
@@ -175,34 +527,13 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     activePointsRef.current.push(...newPoints);
 
     if (activeTool === 'eraser') {
-      let erasedAny = false;
-      const hitIds = [];
-
-      for (let i = 0; i < newPoints.length; i++) {
-        const pt = newPoints[i];
-        const hits = rtreeRef.current.queryPoint(pt.x, pt.y, strokeWidth * 3);
-        for (let j = 0; j < hits.length; j++) {
-          if (!hitIds.includes(hits[j].id)) {
-            hitIds.push(hits[j].id);
-            erasedAny = true;
-          }
-        }
-      }
-
-      if (erasedAny) {
-        strokesRef.current = strokesRef.current.filter((s) => !hitIds.includes(s.id));
-        rtreeRef.current.clear();
-        strokesRef.current.forEach((s) => rtreeRef.current.insert(s));
-        redrawStaticLayer();
-        if (onStrokesErased) onStrokesErased(hitIds);
-        if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
-      }
+      eraseAlong(newPoints);
+      drawEraserCursor(e.clientX, e.clientY);
     } else if (activeTool === 'lasso') {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width, height);
-        ctx.setTransform(zoomLevel, 0, 0, zoomLevel, panOffset.x, panOffset.y);
+        clearCanvas(ctx);
+        applyWorldTransform(ctx, zoomLevel, panOffset);
 
         const pts = activePointsRef.current;
         if (pts.length > 1) {
@@ -225,14 +556,15 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     } else {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width, height);
-        ctx.setTransform(zoomLevel, 0, 0, zoomLevel, panOffset.x, panOffset.y);
+        clearCanvas(ctx);
+        applyWorldTransform(ctx, zoomLevel, panOffset);
 
         drawSmoothStroke(ctx, activePointsRef.current, {
           color: strokeColor,
           width: strokeWidth,
           tool: activeTool,
+          opacity: strokeOpacity,
+          hasPressure: activePointerTypeRef.current === 'pen' && strokeHasPressure(activePointsRef.current),
         });
       }
     }
@@ -249,8 +581,20 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
 
     isDrawingRef.current = false;
     activePointerTypeRef.current = null;
+    activePointerIdRef.current = null;
 
     if (onDrawingStateChange) onDrawingStateChange(false);
+
+    if (selectionDragRef.current) {
+      finishSelectionDrag();
+      return;
+    }
+
+    // One eraser drag is one edit: report it once more, as final, so it becomes a single undo step
+    if (activeTool === 'eraser' && erasedDuringDragRef.current) {
+      erasedDuringDragRef.current = false;
+      if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
+    }
 
     if (activeTool === 'lasso' && activePointsRef.current.length > 2) {
       const pts = activePointsRef.current;
@@ -292,29 +636,36 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-          ctx.clearRect(0, 0, width, height);
+          clearCanvas(ctx);
         }
       }
 
-      if (onSelectionCompleted && selectedStrokes.length > 0) {
-        onSelectionCompleted({
-          strokes: selectedStrokes,
-          strokeIds: selectedStrokes.map((s) => s.id),
-          bbox: selectionBbox,
-          lassoPolygon: pts,
-        });
+      if (selectedStrokes.length > 0) {
+        // The selection box hugs the ink, not the loop that was drawn around it
+        const inkBbox = bboxOfStrokes(selectedStrokes);
+        selectionRef.current = { ids: selectedStrokes.map((s) => s.id), bbox: inkBbox };
+        notifySelection('new');
+        if (onSelectionCompleted) {
+          onSelectionCompleted({
+            strokes: selectedStrokes,
+            strokeIds: selectedStrokes.map((s) => s.id),
+            bbox: inkBbox,
+            lassoPolygon: pts,
+          });
+        }
       }
     } else if (activeTool !== 'eraser' && activeTool !== 'lasso' && activePointsRef.current.length > 0) {
       let finalPoints = [...activePointsRef.current];
       let strokeBbox = calculateBoundingBox(finalPoints);
 
       // Auto-snap shape if shape snapping is enabled or requested
+      let snappedShape = null;
       if (snapShapes || activeTool === 'shape') {
         const snapResult = recognizeAndSnapShape(finalPoints, strokeBbox);
         if (snapResult.isSnapped && snapResult.points) {
           finalPoints = snapResult.points;
           strokeBbox = calculateBoundingBox(finalPoints);
+          snappedShape = snapResult.shape;
         }
       }
 
@@ -325,9 +676,19 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
         tool: activeTool === 'shape' ? 'pen' : activeTool,
         points: finalPoints,
         bbox: strokeBbox,
+        // A snapped shape is a drawing, not writing: it is drawn with sharp corners and
+        // kept out of handwriting recognition
+        ...(snappedShape ? { shape: snappedShape } : {}),
+        // Pen presets may be translucent (pencil, marker); the highlighter has its own fixed look
+        ...(strokeOpacity < 1 && activeTool !== 'highlighter' ? { opacity: strokeOpacity } : {}),
+        // A real stylus varies its pressure: such strokes are drawn with a varying width
+        ...(!snappedShape && strokeHasPressure(finalPoints) ? { hasPressure: true } : {}),
       };
 
-      const scratchResult = detectScratchOutGesture(newStroke, strokesRef.current);
+      // Only pen ink can scratch out: colouring back and forth with the highlighter must not delete writing
+      const scratchResult = activeTool === 'pen'
+        ? detectScratchOutGesture(newStroke, strokesRef.current)
+        : { isScratch: false, targetIds: [] };
       if (scratchResult.isScratch) {
         strokesRef.current = strokesRef.current.filter((s) => !scratchResult.targetIds.includes(s.id));
         rtreeRef.current.clear();
@@ -338,7 +699,7 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       } else {
         strokesRef.current.push(newStroke);
         rtreeRef.current.insert(newStroke);
-        redrawStaticLayer();
+        paintNewStroke(newStroke);
 
         if (onStrokeAdded) onStrokeAdded(newStroke);
         if (onStrokesUpdated) onStrokesUpdated([...strokesRef.current]);
@@ -348,12 +709,172 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width, height);
+        clearCanvas(ctx);
       }
     }
 
     activePointsRef.current = [];
+    if (selectionRef.current) drawSelectionOverlay();
+  };
+
+  // ── Input routing: who draws, who navigates ──────────────────────────────────
+  // Every pointer may draw: mouse, trackpad cursor, finger, pen. On top of that:
+  //   - two fingers pan and pinch-zoom the page (and never leave a mark)
+  //   - a touch is ignored while a pen is writing or has just lifted (the resting palm)
+  //   - with "finger draws" switched off, one finger moves the page instead of drawing
+
+  // Drops a stroke that was started but must not be kept (second finger landed, pen arrived)
+  const cancelActiveStroke = () => {
+    if (!isDrawingRef.current) return;
+    const canvas = activeCanvasRef.current;
+    if (canvas && activePointerIdRef.current !== null && canvas.hasPointerCapture(activePointerIdRef.current)) {
+      canvas.releasePointerCapture(activePointerIdRef.current);
+    }
+    isDrawingRef.current = false;
+    activePointerTypeRef.current = null;
+    activePointerIdRef.current = null;
+    activePointsRef.current = [];
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) clearCanvas(ctx);
+    }
+    if (onDrawingStateChange) onDrawingStateChange(false);
+  };
+
+  const touchPosition = (e) => {
+    const rect = activeCanvasRef.current.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  const twoFingerState = () => {
+    const [a, b] = [...touchPointsRef.current.values()];
+    return {
+      distance: Math.max(Math.hypot(b.x - a.x, b.y - a.y), 1),
+      mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+    };
+  };
+
+  const onPointerDown = (e) => {
+    const now = performance.now();
+
+    if (e.pointerType === 'pen') {
+      penStateRef.current = { isDown: true, lastActive: now };
+      // The palm usually lands a moment before the pen tip: whatever it started is not writing
+      if (activePointerTypeRef.current === 'touch') cancelActiveStroke();
+      touchPointsRef.current.clear();
+      gestureRef.current = null;
+    }
+
+    if (e.pointerType === 'touch') {
+      if (shouldRejectTouch(penStateRef.current, now)) return;
+
+      const canvas = activeCanvasRef.current;
+      if (!canvas) return;
+      touchPointsRef.current.set(e.pointerId, touchPosition(e));
+
+      if (touchPointsRef.current.size === 2) {
+        // Second finger: this is navigation, so the first finger's stroke is dropped
+        cancelActiveStroke();
+        canvas.setPointerCapture(e.pointerId);
+        const { distance, mid } = twoFingerState();
+        gestureRef.current = { type: 'pinch', startDistance: distance, startMid: mid, startZoom: zoomLevel, startPan: panOffset };
+        return;
+      }
+      if (touchPointsRef.current.size > 2) return;
+
+      if (!fingerDraws || activeTool === 'pan') {
+        canvas.setPointerCapture(e.pointerId);
+        gestureRef.current = { type: 'pan', pointerId: e.pointerId, start: touchPosition(e), startPan: panOffset };
+        return;
+      }
+    }
+
+    if (isDrawingRef.current) return; // another pointer is already drawing
+    handlePointerDown(e);
+  };
+
+  const onPointerMove = (e) => {
+    if (e.pointerType === 'pen') penStateRef.current.lastActive = performance.now();
+
+    if (e.pointerType === 'touch' && touchPointsRef.current.has(e.pointerId)) {
+      touchPointsRef.current.set(e.pointerId, touchPosition(e));
+      const gesture = gestureRef.current;
+
+      if (gesture && gesture.type === 'pinch') {
+        if (touchPointsRef.current.size >= 2 && onViewportChange) {
+          const { distance, mid } = twoFingerState();
+          const zoom = Math.min(Math.max(gesture.startZoom * (distance / gesture.startDistance), MIN_ZOOM), MAX_ZOOM);
+          // The canvas point that was between the fingers stays between the fingers
+          const anchorX = (gesture.startMid.x - gesture.startPan.x) / gesture.startZoom;
+          const anchorY = (gesture.startMid.y - gesture.startPan.y) / gesture.startZoom;
+          onViewportChange({ zoom, pan: { x: mid.x - anchorX * zoom, y: mid.y - anchorY * zoom } });
+        }
+        return;
+      }
+
+      if (gesture && gesture.type === 'pan' && gesture.pointerId === e.pointerId) {
+        if (onViewportChange) {
+          const pos = touchPosition(e);
+          onViewportChange({
+            zoom: zoomLevel,
+            pan: { x: gesture.startPan.x + (pos.x - gesture.start.x), y: gesture.startPan.y + (pos.y - gesture.start.y) },
+          });
+        }
+        return;
+      }
+    }
+
+    if (e.pointerId !== activePointerIdRef.current) {
+      // Hovering with the eraser shows its reach before anything is touched
+      if (activeTool === 'eraser' && !isDrawingRef.current && e.pointerType !== 'touch') {
+        drawEraserCursor(e.clientX, e.clientY);
+      }
+      return;
+    }
+    handlePointerMove(e);
+  };
+
+  const onPointerLeave = () => {
+    if (activeTool === 'eraser' && !isDrawingRef.current) {
+      const ctx = activeCanvasRef.current ? activeCanvasRef.current.getContext('2d') : null;
+      if (ctx) clearCanvas(ctx);
+    }
+  };
+
+  // Returns true when the event belonged to touch navigation and is fully handled
+  const releaseTouch = (e) => {
+    if (e.pointerType !== 'touch' || !touchPointsRef.current.has(e.pointerId)) return false;
+    touchPointsRef.current.delete(e.pointerId);
+
+    const canvas = activeCanvasRef.current;
+    const gesture = gestureRef.current;
+    if (!gesture) return false;
+
+    if (canvas && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+    if (gesture.type === 'pan' || touchPointsRef.current.size < 2) {
+      // The finger left on the screen after a pinch does nothing until it is lifted
+      gestureRef.current = null;
+    }
+    return true;
+  };
+
+  const onPointerUp = (e) => {
+    if (e.pointerType === 'pen') penStateRef.current = { isDown: false, lastActive: performance.now() };
+    if (releaseTouch(e)) return;
+    if (e.pointerId !== activePointerIdRef.current) return;
+    handlePointerUp(e);
+  };
+
+  const onPointerCancel = (e) => {
+    if (e.pointerType === 'pen') penStateRef.current = { isDown: false, lastActive: performance.now() };
+    if (releaseTouch(e)) return;
+    if (e.pointerId !== activePointerIdRef.current) return;
+    // The system took the touch away mid-stroke (a gesture, an alert): that was not a finished stroke
+    if (e.pointerType === 'touch') {
+      cancelActiveStroke();
+    } else {
+      handlePointerUp(e);
+    }
   };
 
   return (
@@ -361,25 +882,28 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       {/* Middle Layer: Static Ink Canvas (Offscreen Baked Strokes) */}
       <canvas
         ref={staticCanvasRef}
-        width={width}
-        height={height}
+        width={Math.round(width * pixelRatio)}
+        height={Math.round(height * pixelRatio)}
+        style={{ width, height }}
         className="absolute inset-0 z-10 pointer-events-none"
       />
 
       {/* Top Layer: Active Scratchpad Canvas (O(1) Active Stroke Render & Pointer Events) */}
       <canvas
         ref={activeCanvasRef}
-        width={width}
-        height={height}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        width={Math.round(width * pixelRatio)}
+        height={Math.round(height * pixelRatio)}
+        style={{ width, height }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onPointerLeave={onPointerLeave}
         className={`absolute inset-0 z-20 touch-none ${
           activeTool === 'pan'
             ? 'cursor-grab active:cursor-grabbing'
             : activeTool === 'eraser'
-            ? 'cursor-crosshair'
+            ? 'cursor-none'
             : 'cursor-crosshair'
         }`}
       />

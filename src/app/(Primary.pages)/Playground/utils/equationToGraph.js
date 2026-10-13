@@ -48,28 +48,35 @@ export function extractExpressionFromLatex(latexStr) {
   str = str.replace(/\\left\./g, '');
   str = str.replace(/\\right\./g, '');
 
-  // Convert LaTeX fractions recursively to handle nested fractions \frac{a}{b} -> ((a)/(b))
-  let fractionMatched = true;
-  let safetyCount = 0;
-  while (fractionMatched && safetyCount < 10) {
-    safetyCount++;
-    const prevStr = str;
-    str = str.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '(($1)/($2))');
-    fractionMatched = str !== prevStr;
-  }
-
-  // Convert LaTeX roots: \sqrt[n]{x} -> (x)^(1/n), \sqrt{x} -> sqrt(x)
-  str = str.replace(/\\sqrt\[([^\]]+)\]\{([^{}]+)\}/g, '(($2)^(1/($1)))');
-  str = str.replace(/\\sqrt\{([^{}]+)\}/g, 'sqrt($1)');
-  str = str.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, 'sqrt($1)');
-
-  // Convert LaTeX absolute value \abs{x} -> abs(x) or |x| -> abs(x)
-  str = str.replace(/\\abs\{([^{}]+)\}/g, 'abs($1)');
-  str = str.replace(/\|([^|]+)\|/g, 'abs($1)');
-
   // Convert trig function powers: \sin^2(x) -> (sin(x))^2, \cos^{2}(x) -> (cos(x))^2
+  // (before braces are rewritten below, so the ^{2} form is still recognisable)
   str = str.replace(/\\?(sin|cos|tan|sec|csc|cot)\^\{?(\d+)\}?\s*\(([^)]+)\)/gi, '($1($3))^$2');
   str = str.replace(/\\?(sin|cos|tan|sec|csc|cot)\^\{?(\d+)\}?\s*([a-zA-Z0-9]+)/gi, '($1($3))^$2');
+
+  // Convert braced structure from the inside out, so nesting works in any combination:
+  //   \frac{x^{2}}{4}, \frac{\sqrt{x}}{2}, \sqrt{\frac{a}{b}}, \frac{1}{\frac{1}{x}}
+  // Each pass rewrites the groups that no longer contain braces.
+  let structureMatched = true;
+  let safetyCount = 0;
+  while (structureMatched && safetyCount < 12) {
+    safetyCount++;
+    const prevStr = str;
+    // Exponent notation x^{2} -> x^(2)
+    str = str.replace(/\^\{([^{}]+)\}/g, '^($1)');
+    // LaTeX roots: \sqrt[n]{x} -> (x)^(1/n), \sqrt{x} -> sqrt(x)
+    str = str.replace(/\\sqrt\[([^\]]+)\]\{([^{}]+)\}/g, '(($2)^(1/($1)))');
+    str = str.replace(/\\sqrt\{([^{}]+)\}/g, 'sqrt($1)');
+    // LaTeX fractions \frac{a}{b} -> ((a)/(b))
+    str = str.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '(($1)/($2))');
+    // LaTeX absolute value \abs{x} -> abs(x)
+    str = str.replace(/\\abs\{([^{}]+)\}/g, 'abs($1)');
+    structureMatched = str !== prevStr;
+  }
+
+  str = str.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, 'sqrt($1)');
+
+  // Convert |x| -> abs(x)
+  str = str.replace(/\|([^|]+)\|/g, 'abs($1)');
 
   // Convert LaTeX trig & function symbols
   str = str.replace(/\\sin/gi, 'sin');
@@ -95,14 +102,22 @@ export function extractExpressionFromLatex(latexStr) {
   str = str.replace(/\\pi/gi, 'pi');
   str = str.replace(/\\theta/gi, 'theta');
 
+  // A function written without brackets takes the next term: sin x -> sin(x), cos 2x -> cos(2x)
+  str = str.replace(
+    /(?<![a-zA-Z])(asin|acos|atan|sin|cos|tan|sec|csc|cot|log10|log|exp)\s+([0-9.]*[a-zA-Z]+|[0-9.]+)/g,
+    '$1($2)'
+  );
+
   // Convert exponent notation x^{2} -> x^(2)
   str = str.replace(/\^\{([^}]+)\}/g, '^($1)');
 
   // Fix implicit multiplication:
+  // (The look-behind keeps digits that belong to a name, as in log10, out of rules 1 and 2:
+  //  without it \log(x) became log10*(x).)
   // 1. Number followed by variable / function: 2x -> 2*x, 3.5pi -> 3.5*pi, 4sin(x) -> 4*sin(x)
-  str = str.replace(/(\d+(?:\.\d+)?)\s*([a-zA-Z]|pi|sqrt|sin|cos|tan|log|exp|abs)\b/g, '$1*$2');
+  str = str.replace(/(?<![a-zA-Z_\d.])(\d+(?:\.\d+)?)\s*([a-zA-Z]|pi|sqrt|sin|cos|tan|log|exp|abs)\b/g, '$1*$2');
   // 2. Number followed by parenthesis: 2(x+1) -> 2*(x+1)
-  str = str.replace(/(\d+(?:\.\d+)?)\s*\(/g, '$1*(');
+  str = str.replace(/(?<![a-zA-Z_\d.])(\d+(?:\.\d+)?)\s*\(/g, '$1*(');
   // 3. Variable followed by parenthesis: x(x+1) -> x*(x+1) (except for known functions)
   str = str.replace(/\b(?!(?:sin|cos|tan|asin|acos|atan|sec|csc|cot|sqrt|log|log10|exp|abs)\b)([a-zA-Z])\s*\(/g, '$1*(');
   // 4. Closing parenthesis followed by opening parenthesis or variable: (x+1)(x-1) -> (x+1)*(x-1), (x+1)x -> (x+1)*x
@@ -185,6 +200,39 @@ export function generateGraphDatasetFromLatex(latexStr, label = '', domain = [-1
     pointRadius: 0,
     pointHoverRadius: 6,
   };
+}
+
+/**
+ * Puts an Equation Block's curve onto a graph without disturbing the graph's other curves.
+ * The curve is tagged with its source block, so editing the equation later updates that one
+ * curve in place (keeping its colour and visibility) instead of replacing the whole graph.
+ *
+ * @param {Array<Object>} existingDatasets - The graph's current curves
+ * @param {string} sourceBlockId - The Equation Block the curve comes from
+ * @param {string} latexStr - The equation
+ * @returns {Array<Object>|null} New dataset list, or null when the equation cannot be plotted
+ */
+export function upsertCurveForSource(existingDatasets, sourceBlockId, latexStr) {
+  const datasets = Array.isArray(existingDatasets) ? existingDatasets : [];
+
+  let idx = datasets.findIndex((ds) => ds.sourceBlockId === sourceBlockId);
+  // A graph made before curves were tagged holds exactly the equation's one curve
+  if (idx < 0 && datasets.length === 1 && !datasets[0].sourceBlockId) idx = 0;
+
+  const fresh = generateGraphDatasetFromLatex(latexStr, latexStr, [-10, 10], idx >= 0 ? idx : datasets.length);
+  if (!fresh) return null;
+
+  if (idx < 0) return [...datasets, { ...fresh, sourceBlockId }];
+
+  const previous = datasets[idx];
+  const updated = {
+    ...fresh,
+    sourceBlockId,
+    borderColor: previous.borderColor || fresh.borderColor,
+    backgroundColor: previous.backgroundColor || fresh.backgroundColor,
+    hidden: Boolean(previous.hidden),
+  };
+  return datasets.map((ds, i) => (i === idx ? updated : ds));
 }
 
 /**

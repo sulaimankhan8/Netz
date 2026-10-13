@@ -1,6 +1,6 @@
 /**
  * Pointer Events Handler Utility for NETZ Smart Whiteboard Playground
- * Normalizes Pen, Touch, and Mouse inputs, enforces palm rejection,
+ * Normalizes Pen, Touch, and Mouse inputs, rejects a resting palm while a pen is in use,
  * extracts hardware coalesced events (120Hz-240Hz digitizer sampling),
  * and maps viewport client coordinates to infinite canvas space.
  */
@@ -21,22 +21,23 @@ export function getCanvasCoordinates(clientX, clientY, rect, transform) {
   return { x: canvasX, y: canvasY };
 }
 
+// A palm often brushes the screen just after the pen lifts: touches are ignored for this long
+export const PEN_PALM_GUARD_MS = 700;
+
 /**
- * Enforces Palm Rejection rules for touch & stylus input.
- * Rejects accidental palm touches when active stylus pen is detected.
+ * Palm rejection for touch input.
+ *
+ * Every kind of pointer may draw: mouse, trackpad cursor, finger and pen. A touch is only
+ * rejected while it is likely to be the hand that holds a pen, that is while the pen is on
+ * the screen or has just left it. Nothing is rejected on a device where no pen is in use,
+ * and contact size is not used: an ordinary fingertip is often reported wider than 25 px.
+ *
+ * @param {{ isDown: boolean, lastActive: number }} penState - lastActive is a performance.now() time
+ * @param {number} now - performance.now()
  */
-export function isPalmTouch(e, activePointerType) {
-  // If user is drawing with a stylus pen, reject touch inputs (palm resting on screen)
-  if (activePointerType === 'pen' && e.pointerType === 'touch') {
-    return true;
-  }
-
-  // Reject multi-touch palm contacts (large contact area)
-  if (e.pointerType === 'touch' && (e.width > 25 || e.height > 25)) {
-    return true;
-  }
-
-  return false;
+export function shouldRejectTouch(penState, now) {
+  if (penState.isDown) return true;
+  return now - penState.lastActive < PEN_PALM_GUARD_MS;
 }
 
 /**
@@ -46,8 +47,11 @@ export function isPalmTouch(e, activePointerType) {
 export function extractPointerPoints(e, canvasRect, transform) {
   const points = [];
 
-  // Try extracting coalesced events if supported by hardware/browser
-  const coalescedEvents = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+  // Try extracting coalesced events if supported by hardware/browser.
+  // The list is empty for anything but move events (pointerdown, pointerup), so fall back to the
+  // event itself: otherwise the first point of every stroke is lost and a tap draws no dot at all.
+  const coalesced = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [];
+  const coalescedEvents = coalesced.length > 0 ? coalesced : [e];
 
   for (let i = 0; i < coalescedEvents.length; i++) {
     const ev = coalescedEvents[i];
@@ -59,13 +63,19 @@ export function extractPointerPoints(e, canvasRect, transform) {
       pressure = 0.5;
     }
 
-    points.push({
+    const point = {
       x: coords.x,
       y: coords.y,
       pressure,
       timestamp: ev.timeStamp || performance.now(),
       pointerType: ev.pointerType || 'mouse',
-    });
+    };
+    // A stylus also reports how it is leaning (degrees); kept for tilt-aware pens
+    if (ev.pointerType === 'pen' && (ev.tiltX || ev.tiltY)) {
+      point.tiltX = ev.tiltX;
+      point.tiltY = ev.tiltY;
+    }
+    points.push(point);
   }
 
   return points;

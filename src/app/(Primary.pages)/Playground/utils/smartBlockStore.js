@@ -6,6 +6,7 @@
 
 const INDEXEDDB_DB_NAME = 'NETZ_PLAYGROUND_DB';
 const INDEXEDDB_STORE_NAME = 'sessions';
+const SESSION_BACKUP_KEY = 'NETZ_PLAYGROUND_SESSION_BACKUP';
 
 // IndexedDB Helper
 export function saveSessionToIndexedDB(sessionId, sessionData) {
@@ -23,14 +24,139 @@ export function saveSessionToIndexedDB(sessionId, sessionData) {
     const db = e.target.result;
     const tx = db.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
     const store = tx.objectStore(INDEXEDDB_STORE_NAME);
-    store.put({ sessionId, ...sessionData, updatedAt: Date.now() });
+    store.put({ sessionId, ...sessionData, updatedAt: sessionData.updatedAt || Date.now() });
   };
 }
 
+/**
+ * Saves a session to both stores with one timestamp: IndexedDB (no practical size limit) and
+ * the localStorage backup (read synchronously on start-up, capped at about 5 MB).
+ * A backup that no longer fits is removed, so an old copy can never be mistaken for the latest.
+ *
+ * @returns {boolean} Whether the localStorage backup was written
+ */
+export function saveSession(sessionId, sessionData) {
+  const stamped = { ...sessionData, updatedAt: Date.now() };
+  saveSessionToIndexedDB(sessionId, stamped);
+  if (typeof localStorage === 'undefined') return false;
+
+  // A session that cannot fit is not serialised at all: turning 10 MB into text only to have
+  // the write refused freezes the page for a noticeable moment after every change.
+  const estimate = estimateSessionChars(stamped);
+  if (estimate > backupState.limitChars) {
+    removeSessionBackup();
+    return false;
+  }
+
+  try {
+    localStorage.setItem(SESSION_BACKUP_KEY, JSON.stringify(stamped));
+    return true;
+  } catch (e) {
+    // This browser's real limit is lower than assumed: remember it, so the next save does not try again
+    // (never below a size that is cheap to try: a refusal can also mean storage is switched off)
+    backupState.limitChars = Math.max(MIN_BACKUP_LIMIT_CHARS, Math.min(backupState.limitChars, Math.floor(estimate * 0.9)));
+    removeSessionBackup();
+    return false;
+  }
+}
+
+/**
+ * Largest session (estimated characters) still offered to localStorage. Browsers allow about
+ * 5 MB per site, counted differently from one to the next, so this starts below that and is
+ * lowered to what the browser actually accepts the first time a write is refused.
+ */
+export const backupState = { limitChars: 4000000 };
+const MIN_BACKUP_LIMIT_CHARS = 200000;
+
+const CHARS_PER_POINT = 110; // measured on saved ink: coordinates, pressure, timestamp, pointer type
+const CHARS_PER_STROKE = 160; // id, colour, width, tool, bounding box
+const CHARS_PER_BLOCK = 300;
+
+function stringChars(value, depth = 0) {
+  if (typeof value === 'string') return value.length + 2;
+  if (typeof value === 'number' || typeof value === 'boolean') return 12;
+  if (!value || depth > 6) return 4;
+  let total = 2;
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) total += stringChars(value[i], depth + 1) + 1;
+    return total;
+  }
+  for (const key in value) total += key.length + 4 + stringChars(value[key], depth + 1);
+  return total;
+}
+
+/**
+ * Rough size of a session once written as JSON, without writing it. Ink is counted by its
+ * points; blocks by their content (pictures and recordings are long text).
+ */
+export function estimateSessionChars(session) {
+  if (!session || !Array.isArray(session.pages)) return 0;
+  let total = 200;
+  for (let p = 0; p < session.pages.length; p++) {
+    const page = session.pages[p] || {};
+    const strokes = page.strokes || [];
+    for (let i = 0; i < strokes.length; i++) {
+      total += CHARS_PER_STROKE + ((strokes[i].points && strokes[i].points.length) || 0) * CHARS_PER_POINT;
+    }
+    const blocks = page.blocks || [];
+    for (let i = 0; i < blocks.length; i++) total += CHARS_PER_BLOCK + stringChars(blocks[i].content);
+    total += ((page.links && page.links.length) || 0) * 150;
+  }
+  // The active page's blocks are also stored at the top level
+  const topBlocks = session.blocks || [];
+  for (let i = 0; i < topBlocks.length; i++) total += CHARS_PER_BLOCK + stringChars(topBlocks[i].content);
+  return total;
+}
+
+function removeSessionBackup() {
+  try {
+    localStorage.removeItem(SESSION_BACKUP_KEY);
+  } catch (e) {}
+}
+
+/** The synchronous localStorage copy of the session, or null. */
+export function readSessionBackup() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(SESSION_BACKUP_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return isUsableSession(parsed) ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function isUsableSession(session) {
+  return Boolean(session && Array.isArray(session.pages) && session.pages.length > 0);
+}
+
+/**
+ * Of two saved copies of a session, the one saved last. Copies written before timestamps
+ * existed count as oldest; on a tie the first argument wins.
+ */
+export function pickNewerSession(first, second) {
+  const firstOk = isUsableSession(first);
+  const secondOk = isUsableSession(second);
+  if (!firstOk) return secondOk ? second : null;
+  if (!secondOk) return first;
+  return (second.updatedAt || 0) > (first.updatedAt || 0) ? second : first;
+}
+
+/**
+ * Loads a saved session. The callback is always called exactly once: with the session,
+ * or with null when there is none (first visit) or storage is unavailable. Callers rely on
+ * that to know loading has finished.
+ */
 export function loadSessionFromIndexedDB(sessionId, callback) {
-  if (typeof window === 'undefined' || !window.indexedDB) return;
+  if (typeof window === 'undefined' || !window.indexedDB) {
+    if (callback) callback(null);
+    return;
+  }
 
   const request = window.indexedDB.open(INDEXEDDB_DB_NAME, 1);
+  request.onerror = () => {
+    if (callback) callback(null);
+  };
   request.onupgradeneeded = (e) => {
     const db = e.target.result;
     if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
@@ -45,9 +171,10 @@ export function loadSessionFromIndexedDB(sessionId, callback) {
     const getReq = store.get(sessionId);
 
     getReq.onsuccess = () => {
-      if (getReq.result && callback) {
-        callback(getReq.result);
-      }
+      if (callback) callback(getReq.result || null);
+    };
+    getReq.onerror = () => {
+      if (callback) callback(null);
     };
   };
 }

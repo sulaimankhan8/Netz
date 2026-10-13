@@ -59,6 +59,7 @@ export default function GraphBlock({
   onUpdateContent,
   isEditing: propIsEditing,
   setIsEditing: propSetIsEditing,
+  isSelected = false,
 }) {
   const [domain, setDomain] = useState([-10, 10]);
   const [newEquationInput, setNewEquationInput] = useState('');
@@ -90,6 +91,8 @@ export default function GraphBlock({
         borderColor: ds.borderColor || freshDs.borderColor,
         backgroundColor: ds.backgroundColor || freshDs.backgroundColor,
         hidden: !!ds.hidden,
+        // Which Equation Block this curve follows (kept so edits there update only this curve)
+        ...(ds.sourceBlockId ? { sourceBlockId: ds.sourceBlockId } : {}),
       };
     }).filter(Boolean);
   }, [rawDatasets, domain]);
@@ -235,13 +238,13 @@ export default function GraphBlock({
 
   return (
     <div className="group/graph relative w-full h-full flex flex-col gap-2 p-1 select-none overflow-hidden font-sans">
-      {/* Semi-transparent hover edit icon in top-right */}
+      {/* Edit icon in top-right: visible on hover, when selected, or in edit mode */}
       <button
         onClick={() => setIsEditing(!isEditing)}
         title={isEditing ? 'Close Controls' : 'Edit Graph Controls'}
-        className="opacity-0 group-hover/graph:opacity-100 absolute top-2 right-2 z-30 p-1.5 rounded-lg bg-zinc-900/80 text-zinc-400 hover:text-blue-400 backdrop-blur-sm border border-zinc-700/50 transition-all cursor-pointer"
+        className={`${(isSelected || isEditing) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover/graph:opacity-100 group-hover/graph:pointer-events-auto'} absolute top-2 right-2 z-30 w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-zinc-900/80 text-zinc-400 hover:text-blue-400 backdrop-blur-sm border border-zinc-700/50 transition-all cursor-pointer`}
       >
-        <FiEdit2 className="w-3.5 h-3.5" />
+        <FiEdit2 className="w-4 h-4" />
       </button>
 
       {/* Controls Bar (Visible in Edit Mode) */}

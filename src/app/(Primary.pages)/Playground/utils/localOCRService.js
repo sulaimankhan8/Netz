@@ -1,14 +1,15 @@
 /**
  * Clean Lightweight Digital Ink & Vector Handwriting Recognition Service
  *
- * Streamlined production engine:
+ * Streamlined production engine (fully on-device: no ink is sent over the network):
  *   Layer 0: Instant Vector Topology Matcher (sub-1ms punctuation, Greek, calculus & math primitives)
- *   Layer 1: Google Digital Ink Vector Engine (Online, 0 API keys required)
- *   Layer 2: Native W3C OS Handwriting API (Native OS offline engine on Chromium)
+ *   Layer 1: Native W3C OS Handwriting API (Native OS offline engine where the browser provides one)
  *
  * Decommissioned:
  *   - Legacy Tesseract.js (removed 15MB WASM download & printed-OCR hallucinations)
  *   - Legacy TrOCR Vision Transformer (removed 150MB third-party model download)
+ *   - Google Digital Ink online endpoint (removed: sent user strokes off the device).
+ *     It survives only in benchmark_recognition.mjs as a developer reference score.
  *   - Replaced by native NETZ ONNX Neural Pipeline (Router, HMER, HTR).
  */
 
@@ -20,145 +21,6 @@ import { matchVectorSymbol } from './vectorSymbolMatcher.js';
  */
 const recognitionCache = new Map();
 const MAX_CACHE_SIZE = 100;
-
-/**
- * Greek letter & math symbol candidate map for Google IME disambiguation.
- */
-const GREEK_MATH_MAP = {
-  'θ': '\\theta ',
-  'theta': '\\theta ',
-  'Theta': '\\Theta ',
-  'Θ': '\\Theta ',
-  'γ': '\\gamma ',
-  'gamma': '\\gamma ',
-  'Gamma': '\\Gamma ',
-  'Γ': '\\Gamma ',
-  'α': '\\alpha ',
-  'alpha': '\\alpha ',
-  'β': '\\beta ',
-  'beta': '\\beta ',
-  'δ': '\\delta ',
-  'delta': '\\delta ',
-  'Delta': '\\Delta ',
-  'Δ': '\\Delta ',
-  'λ': '\\lambda ',
-  'lambda': '\\lambda ',
-  'Lambda': '\\Lambda ',
-  'Λ': '\\Lambda ',
-  'μ': '\\mu ',
-  'mu': '\\mu ',
-  'pi': '\\pi ',
-  'Pi': '\\Pi ',
-  'Π': '\\Pi ',
-  'σ': '\\sigma ',
-  'sigma': '\\sigma ',
-  'Sigma': '\\Sigma ',
-  'Σ': '\\Sigma ',
-  'ω': '\\omega ',
-  'omega': '\\omega ',
-  'Omega': '\\Omega ',
-  'Ω': '\\Omega ',
-  'phi': '\\phi ',
-  'Phi': '\\Phi ',
-  'Φ': '\\Phi ',
-  'psi': '\\psi ',
-  'Psi': '\\Psi ',
-  'Ψ': '\\Psi ',
-  'sqrt': '\\sqrt{',
-  'infty': '\\infty ',
-  'infinity': '\\infty ',
-  'sum': '\\sum ',
-  'int': '\\int ',
-  'approx': '\\approx ',
-  'pm': '\\pm ',
-  'times': '\\times ',
-  'div': '\\div ',
-};
-
-/**
- * Converts ink strokes into Google Digital Ink API payload format.
- */
-function convertStrokesToInkPayload(strokes, width = 800, height = 600) {
-  const ink = [];
-
-  for (const stroke of strokes) {
-    const pts = stroke.points || [];
-    if (pts.length === 0) continue;
-
-    const xArr = [];
-    const yArr = [];
-    const tArr = [];
-
-    const baseTime = pts[0].timestamp || 0;
-    for (let i = 0; i < pts.length; i++) {
-      xArr.push(Math.round(pts[i].x));
-      yArr.push(Math.round(pts[i].y));
-      tArr.push(Math.round((pts[i].timestamp || i * 16) - baseTime));
-    }
-
-    ink.push([xArr, yArr, tArr]);
-  }
-
-  return {
-    input_type: 0,
-    requests: [
-      {
-        language: 'en',
-        writing_guide: {
-          writing_area_width: width,
-          writing_area_height: height,
-        },
-        ink,
-        pre_context: '',
-        max_num_results: 5,
-        max_completions: 0,
-      },
-    ],
-  };
-}
-
-/**
- * Recognizes strokes using Google Digital Ink API.
- */
-async function recognizeOnlineDigitalInk(strokes, bbox, signal = null) {
-  const width = Math.max(300, Math.ceil(bbox.maxX - bbox.minX + 100));
-  const height = Math.max(200, Math.ceil(bbox.maxY - bbox.minY + 100));
-
-  const payload = convertStrokesToInkPayload(strokes, width, height);
-
-  const res = await fetch('https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    signal,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Google IME HTTP ${res.status}`);
-  }
-
-  const data = await res.json();
-  if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
-    const candidates = data[1][0][1];
-    if (candidates.length > 0) {
-      for (const cand of candidates) {
-        const lower = cand.toLowerCase().trim();
-        if (GREEK_MATH_MAP[lower]) {
-          return {
-            text: GREEK_MATH_MAP[lower],
-            confidence: 0.98,
-          };
-        }
-      }
-      return {
-        text: candidates[0],
-        confidence: 0.95,
-      };
-    }
-  }
-
-  return null;
-}
 
 /**
  * Recognizes strokes via native W3C Handwriting Recognition API (Chromium).
@@ -253,8 +115,7 @@ export function postProcessText(rawText) {
 /**
  * Main handwriting fallback recognition entry point.
  * Layer 0: High-speed Vector Topological Matcher (deterministic 0ms symbol recognition).
- * Layer 1 (Online): Google Digital Ink vector engine.
- * Layer 2 (Native): W3C Handwriting Recognition API.
+ * Layer 1 (Native): W3C Handwriting Recognition API.
  */
 export async function recognizeHandwriting(base64Image, mode = 'auto', signal = null, strokeData = null) {
   // Layer 0: Fast Vector Geometry & Topological Matcher
@@ -272,28 +133,7 @@ export async function recognizeHandwriting(base64Image, mode = 'auto', signal = 
     }
   }
 
-  // Layer 1: Google Digital Ink online vector engine
-  if (strokeData && strokeData.strokes && strokeData.strokes.length > 0 && strokeData.bbox) {
-    try {
-      const onlineResult = await recognizeOnlineDigitalInk(strokeData.strokes, strokeData.bbox, signal);
-      if (onlineResult && onlineResult.text) {
-        const cleanedText = postProcessText(onlineResult.text);
-        const isMath = onlineResult.isMath || mode === 'math' || (mode === 'auto' && classifyAsMath(cleanedText));
-
-        return {
-          text: isMath ? textToRichLatex(cleanedText) : cleanedText,
-          isMath,
-          confidence: onlineResult.confidence || 0.95,
-          engine: 'google-digital-ink-online',
-          error: null,
-        };
-      }
-    } catch {
-      // Offline fallback
-    }
-  }
-
-  // Layer 2: Native W3C OS API
+  // Layer 1: Native W3C OS API
   if (strokeData && strokeData.strokes && strokeData.strokes.length > 0 && strokeData.bbox) {
     try {
       if (signal?.aborted) return { text: '', isMath: false, confidence: 0, error: 'ABORTED' };

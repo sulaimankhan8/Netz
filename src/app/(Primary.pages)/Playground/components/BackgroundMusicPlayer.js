@@ -206,16 +206,18 @@ export default function BackgroundMusicPlayer() {
         <button
           onClick={togglePlay}
           title={isPlaying ? 'Pause Ambient Sound' : 'Play Ambient Sound'}
-          className="p-2 rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-md transition-all cursor-pointer"
+          aria-label={isPlaying ? 'Pause Ambient Sound' : 'Play Ambient Sound'}
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-md transition-all cursor-pointer"
         >
-          {isPlaying ? <FiPause className="w-3.5 h-3.5" /> : <FiPlay className="w-3.5 h-3.5 ml-0.5" />}
+          {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4 ml-0.5" />}
         </button>
 
         {/* Expand Options Arrow */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           title={isExpanded ? 'Collapse' : 'Ambient sound options'}
-          className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
+          aria-label={isExpanded ? 'Collapse' : 'Ambient sound options'}
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
         >
           {isExpanded ? <FiChevronDown className="w-4 h-4" /> : <FiChevronUp className="w-4 h-4" />}
         </button>

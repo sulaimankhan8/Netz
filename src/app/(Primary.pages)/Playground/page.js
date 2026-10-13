@@ -9,7 +9,7 @@ const PlaygroundCanvasContainer = dynamic(
 
 export default function PlaygroundPage() {
   return (
-    <main className="w-full h-full min-h-screen overflow-hidden">
+    <main className="w-full h-[100dvh] overflow-hidden overscroll-none select-none touch-none">
       <PlaygroundCanvasContainer />
     </main>
   );

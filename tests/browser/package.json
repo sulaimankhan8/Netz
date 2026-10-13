@@ -1,0 +1,13 @@
+{
+  "name": "netz-playground-browser-checks",
+  "private": true,
+  "type": "module",
+  "description": "Drives the NETZ Playground in headless Chrome (mouse, touch and pen input). Kept apart from the app's own dependencies.",
+  "scripts": {
+    "all": "node run-all.mjs",
+    "screens": "node screens.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiX, FiCheckCircle, FiFileText, FiLayers } from 'react-icons/fi';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
@@ -15,6 +15,14 @@ export default function InkToBlockConverterModal({
   const [selectedBlockIds, setSelectedBlockIds] = useState(() => blocks.map((b) => b.blockId));
   const [isSynced, setIsSynced] = useState(false);
 
+  // This component is mounted before the session has loaded, so the initial selection above is
+  // empty. Every time the dialog opens, start with all of the page's blocks selected.
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedBlockIds(blocks.map((b) => b.blockId));
+    }
+  }, [isOpen, blocks]);
+
   if (!isOpen) return null;
 
   const toggleBlockSelection = (blockId) => {
@@ -27,26 +35,31 @@ export default function InkToBlockConverterModal({
     const selectedBlocks = blocks.filter((b) => selectedBlockIds.includes(b.blockId));
     
     // Map Smart Blocks to Notion-style Notes workspace block JSON objects
-    const noteBlocks = selectedBlocks.map((b) => {
+    const noteBlocks = selectedBlocks.flatMap((b) => {
       if (b.type === 'equation') {
-        return {
+        return [{
           id: b.blockId,
           type: 'math',
           content: b.content?.latex || '',
-        };
+        }];
       } else if (b.type === 'graph') {
-        return {
-          id: b.blockId,
-          type: 'graph',
-          content: b.content?.graphData || {},
-        };
-      } else {
-        return {
+        // The Notes workspace has no graph block: carry each plotted curve over as its equation
+        return (b.content?.graphData?.datasets || [])
+          .map((ds, idx) => ({
+            id: `${b.blockId}_curve_${idx}`,
+            type: 'math',
+            content: ds.latex || ds.label || '',
+          }))
+          .filter((nb) => nb.content);
+      } else if (b.type === 'theory') {
+        return [{
           id: b.blockId,
           type: 'text',
           content: b.content?.text || '',
-        };
+        }];
       }
+      // Sketch, audio and image blocks have no equivalent in Notes yet
+      return [];
     });
 
     if (onConfirmSync) {
@@ -61,10 +74,10 @@ export default function InkToBlockConverterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex sm:items-center items-end justify-center sm:p-4 p-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
           <div className="flex items-center gap-2">
             <FiLayers className="w-5 h-5 text-blue-500" />
             <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -73,14 +86,14 @@ export default function InkToBlockConverterModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
           >
             <FiX className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           {/* Note Title Input */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
@@ -146,10 +159,10 @@ export default function InkToBlockConverterModal({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+            className="px-4 py-2 min-h-[44px] flex items-center justify-center text-xs font-medium rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -157,7 +170,7 @@ export default function InkToBlockConverterModal({
           <button
             onClick={handleSync}
             disabled={selectedBlockIds.length === 0 || isSynced}
-            className="flex items-center gap-1.5 px-5 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-5 py-2 min-h-[44px] text-xs font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {isSynced ? (
               <>

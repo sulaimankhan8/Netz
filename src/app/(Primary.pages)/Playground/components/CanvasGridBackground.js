@@ -10,6 +10,8 @@ export default function CanvasGridBackground({
   height,
 }) {
   const canvasRef = useRef(null);
+  // Sharp grid on high-density screens
+  const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -18,9 +20,10 @@ export default function CanvasGridBackground({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Reset transform & clear
+    // Reset transform & clear, then draw in CSS pixels on a device-pixel backing store
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
     if (gridStyle === 'none') return;
 
@@ -72,13 +75,14 @@ export default function CanvasGridBackground({
     }
 
     ctx.restore();
-  }, [gridStyle, zoomLevel, panOffset, width, height]);
+  }, [gridStyle, zoomLevel, panOffset, width, height, pixelRatio]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={width}
-      height={height}
+      width={Math.round(width * pixelRatio)}
+      height={Math.round(height * pixelRatio)}
+      style={{ width, height }}
       className="absolute inset-0 pointer-events-none z-0"
     />
   );

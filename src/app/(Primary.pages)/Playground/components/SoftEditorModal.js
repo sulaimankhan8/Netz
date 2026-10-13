@@ -84,10 +84,10 @@ export default function SoftEditorModal({
       : 'bg-rose-500/10 text-rose-400 border-rose-500/30';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl text-zinc-100 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex sm:items-center items-end justify-center sm:p-4 p-0 bg-black/70 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-t-2xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl text-zinc-100 flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <FiSliders className="w-5 h-5" />
@@ -99,7 +99,7 @@ export default function SoftEditorModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -203,17 +203,17 @@ export default function SoftEditorModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800/80 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800/80 bg-zinc-900/60 shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
+            className="px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-5 py-2 min-h-[44px] rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition disabled:opacity-50 cursor-pointer"
           >
             <FiCheck className="w-4 h-4" />
             Accept & Convert

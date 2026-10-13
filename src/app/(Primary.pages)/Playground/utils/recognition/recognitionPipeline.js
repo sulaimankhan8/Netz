@@ -17,8 +17,9 @@ import { modelManager } from './modelManager.js';
 import { extractFeatures, strokesToArray } from './canonicalFeatures.js';
 import { decodeHTRGreedy } from './htrDecoder.js';
 import { decodeHMERAutoregressive } from './hmerDecoder.js';
-import { synthesizeHeuristicAST, calculateVinculumEnergy } from './heuristicStructureEngine.js';
-import { validateLatexSyntax, evaluateSemanticCoherence } from './semanticValidator.js';
+import { calculateVinculumEnergy } from './heuristicStructureEngine.js';
+import { segmentStrokesIntoLines } from './lineSegmenter.js';
+import { evaluateSemanticCoherence } from './semanticValidator.js';
 import { generateRankedCandidates } from './candidateEngine.js';
 
 /**
@@ -38,6 +39,10 @@ import { generateRankedCandidates } from './candidateEngine.js';
  */
 
 const ROUTER_CLASSES = ['TEXT', 'NUMBER', 'MATH', 'MIXED', 'OBJECT', 'UNKNOWN'];
+
+// Notes mode: router P(TEXT) at or above this skips the maths recogniser (see "text fast path" below).
+// A starting value, to be tuned on the Stage 0 in-app samples.
+const TEXT_FAST_PATH_MIN_PROB = 0.85;
 
 /**
  * Computes softmax over a 1D array of logits.
@@ -71,9 +76,12 @@ function softmax(logits) {
  * @param {Array<string>} [strokeIds=[]] - Source stroke IDs
  * @param {Object} [bbox={ minX: 0, maxX: 100, minY: 0, maxY: 100 }] - Bounding box
  * @param {'normal'|'notes'} [mode='normal'] - Canvas operating mode
+ * @param {{ alwaysRunMath?: boolean, preferType?: 'MATH'|'TEXT' }} [options]
+ *   alwaysRunMath: never take the text fast path (e.g. the ink ends with an "=" gesture)
+ *   preferType: the user explicitly asked for this reading; it wins when available
  * @returns {Promise<RecognitionResult>}
  */
-export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, mode = 'normal') {
+export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, mode = 'normal', options = {}) {
   const startTime = performance.now();
   const rawRows = strokesToArray(strokes);
 
@@ -125,7 +133,11 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, 
   const routerMaxLen = routerMeta ? routerMeta.max_len : 256;
   const routerScaleMode = routerMeta ? routerMeta.scale_mode : 'max';
 
+  // Per-stage inference time (model loading excluded), reported on the result for benchmarking
+  const timings = { routerMs: 0, hmerMs: 0, htrMs: 0 };
+
   if (routerSession) {
+    const routerStart = performance.now();
     const routerFeats = extractFeatures(rawRows, routerMaxLen, routerScaleMode);
     const routerSeqLen = routerFeats.length / 8;
     const routerTensor = new ort.Tensor('float32', routerFeats, [1, routerSeqLen, 8]);
@@ -149,6 +161,7 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, 
 
     routerPredictedType = ROUTER_CLASSES[bestClassIdx] || 'MATH';
     routerConfidence = Math.min(1.0, Math.max(0.1, maxProb));
+    timings.routerMs = Math.round(performance.now() - routerStart);
   }
 
   // 2. CONTINUOUS MULTI-HYPOTHESIS EXPERT INFERENCE (NO IF-ELSE GUARD RAILS)
@@ -168,100 +181,135 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, 
   }
 
   // Hypothesis A: HMER (Mathematical Expression)
-  try {
-    const hmerSession = await modelManager.loadHMER();
-    const hmerMeta = modelManager.metadata.hmer;
-    const hmerVocab = modelManager.vocabs.hmer || [];
-    const hmerMaxLen = hmerMeta ? hmerMeta.max_len : 512;
-    const hmerScaleMode = hmerMeta ? hmerMeta.scale_mode : 'max';
+  const evaluateMathHypothesis = async () => {
+    try {
+      const hmerSession = await modelManager.loadHMER();
+      const hmerMeta = modelManager.metadata.hmer;
+      const hmerVocab = modelManager.vocabs.hmer || [];
+      const hmerMaxLen = hmerMeta ? hmerMeta.max_len : 512;
+      const hmerScaleMode = hmerMeta ? hmerMeta.scale_mode : 'max';
 
-    const hmerFeats = extractFeatures(rawRows, hmerMaxLen, hmerScaleMode);
-    const hmerSeqLen = hmerFeats.length / 8;
+      const hmerStart = performance.now();
+      const hmerFeats = extractFeatures(rawRows, hmerMaxLen, hmerScaleMode);
+      const hmerSeqLen = hmerFeats.length / 8;
 
-    const decoded = await decodeHMERAutoregressive(
-      hmerSession,
-      hmerFeats,
-      hmerSeqLen,
-      hmerVocab,
-      120
-    );
+      const decoded = await decodeHMERAutoregressive(
+        hmerSession,
+        hmerFeats,
+        hmerSeqLen,
+        hmerVocab,
+        120
+      );
+      timings.hmerMs = Math.round(performance.now() - hmerStart);
 
-    if (decoded && decoded.latex) {
-      const semE = evaluateSemanticCoherence(decoded.latex, 'MATH');
-      const hasMathSyntax = /[\\^_{}+=><\-]/.test(decoded.latex);
+      if (decoded && decoded.latex) {
+        const semE = evaluateSemanticCoherence(decoded.latex, 'MATH');
+        const hasMathSyntax = /[\\^_{}+=><\-]/.test(decoded.latex);
 
-      // Continuous composite prior: P(MATH) + P(NUMBER) from router + vinculum energy
-      // On short clusters (<= 2 strokes) or when explicit math syntax is found, avoid sequence router text bias
-      const effectiveRouterMath = (strokes.length <= 2 || hasMathSyntax)
-        ? Math.max(routerProbs[1] + routerProbs[2], 0.5)
-        : (routerProbs[1] + routerProbs[2]);
+        // Continuous composite prior: P(MATH) + P(NUMBER) from router + vinculum energy
+        // On short clusters (<= 2 strokes) or when explicit math syntax is found, avoid sequence router text bias
+        const effectiveRouterMath = (strokes.length <= 2 || hasMathSyntax)
+          ? Math.max(routerProbs[1] + routerProbs[2], 0.5)
+          : (routerProbs[1] + routerProbs[2]);
 
-      const mathPrior = Math.max(0.05, effectiveRouterMath * 0.7 + maxVinculumEnergy * 0.3);
-      const syntaxBonus = hasMathSyntax ? 0.25 : 0;
-      const totalScore = mathPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3 + syntaxBonus;
+        const mathPrior = Math.max(0.05, effectiveRouterMath * 0.7 + maxVinculumEnergy * 0.3);
+        const syntaxBonus = hasMathSyntax ? 0.25 : 0;
+        const totalScore = mathPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3 + syntaxBonus;
 
-      let ast = null;
-      try {
-        ast = synthesizeHeuristicAST(
-          strokes.map((s, idx) => ({
-            id: s.id || `s_${idx}`,
-            text: decoded.latex[idx] || '',
-            bbox: s.bbox || clusterBBox,
-          }))
-        );
-      } catch {
-        ast = { type: 'Expression', latex: decoded.latex };
+        // The decoder returns LaTeX for the whole expression, not which stroke drew which symbol,
+        // so no per-symbol structure tree can honestly be built from it.
+        const ast = { type: 'Expression', latex: decoded.latex };
+
+        hypotheses.push({
+          type: 'MATH',
+          value: decoded.latex,
+          confidence: decoded.confidence,
+          semanticScore: semE,
+          prior: mathPrior,
+          score: totalScore,
+          ast,
+        });
       }
-
-      hypotheses.push({
-        type: 'MATH',
-        value: decoded.latex,
-        confidence: decoded.confidence,
-        semanticScore: semE,
-        prior: mathPrior,
-        score: totalScore,
-        ast,
-      });
+    } catch (hmerErr) {
+      console.warn('[RecognitionPipeline] HMER evaluation notice:', hmerErr);
     }
-  } catch (hmerErr) {
-    console.warn('[RecognitionPipeline] HMER evaluation notice:', hmerErr);
-  }
+  };
 
   // Hypothesis B: HTR (Natural Language Text)
-  try {
-    const htrSession = await modelManager.loadHTR();
-    const htrMeta = modelManager.metadata.htr;
-    const htrVocab = modelManager.vocabs.htr || [];
-    const htrMaxLen = htrMeta ? htrMeta.max_len : 1024;
-    const htrScaleMode = htrMeta ? htrMeta.scale_mode : 'height';
+  const evaluateTextHypothesis = async () => {
+    try {
+      const htrSession = await modelManager.loadHTR();
+      const htrMeta = modelManager.metadata.htr;
+      const htrVocab = modelManager.vocabs.htr || [];
+      const htrMaxLen = htrMeta ? htrMeta.max_len : 1024;
+      const htrScaleMode = htrMeta ? htrMeta.scale_mode : 'height';
 
-    const htrFeats = extractFeatures(rawRows, htrMaxLen, htrScaleMode);
-    const htrSeqLen = htrFeats.length / 8;
-    const htrTensor = new ort.Tensor('float32', htrFeats, [1, htrSeqLen, 8]);
+      const htrStart = performance.now();
+      const htrFeats = extractFeatures(rawRows, htrMaxLen, htrScaleMode);
+      const htrSeqLen = htrFeats.length / 8;
+      const htrTensor = new ort.Tensor('float32', htrFeats, [1, htrSeqLen, 8]);
 
-    const htrOut = await htrSession.run({ strokes: htrTensor });
-    const logitsTensor = htrOut.logits;
-    const timeSteps = logitsTensor.dims[1];
-    const numClasses = logitsTensor.dims[2];
+      const htrOut = await htrSession.run({ strokes: htrTensor });
+      const logitsTensor = htrOut.logits;
+      const timeSteps = logitsTensor.dims[1];
+      const numClasses = logitsTensor.dims[2];
 
-    const decoded = decodeHTRGreedy(logitsTensor.data, timeSteps, numClasses, htrVocab);
-    if (decoded && decoded.text) {
-      const semE = evaluateSemanticCoherence(decoded.text, 'TEXT');
-      const textPrior = Math.max(0.05, routerProbs[0]);
-      const totalScore = textPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3;
+      const decoded = decodeHTRGreedy(logitsTensor.data, timeSteps, numClasses, htrVocab);
 
-      hypotheses.push({
-        type: 'TEXT',
-        value: decoded.text,
-        confidence: decoded.confidence,
-        semanticScore: semE,
-        prior: textPrior,
-        score: totalScore,
-        ast: { type: 'Text', value: decoded.text },
-      });
+      // The text model was trained on single lines. When the ink holds several written lines,
+      // read each line on its own and join them. Only the text hypothesis' VALUE changes here:
+      // its score still comes from the whole-cluster pass above, so which hypothesis wins
+      // (and therefore every maths result) is exactly as before.
+      let textValue = decoded ? decoded.text : '';
+      let lineCount = 1;
+      const lines = textValue ? segmentStrokesIntoLines(strokes) : [];
+      if (lines.length > 1) {
+        const lineTexts = [];
+        for (let l = 0; l < lines.length; l++) {
+          const lineFeats = extractFeatures(strokesToArray(lines[l]), htrMaxLen, htrScaleMode);
+          const lineTensor = new ort.Tensor('float32', lineFeats, [1, lineFeats.length / 8, 8]);
+          const lineOut = await htrSession.run({ strokes: lineTensor });
+          const lineDecoded = decodeHTRGreedy(lineOut.logits.data, lineOut.logits.dims[1], lineOut.logits.dims[2], htrVocab);
+          if (lineDecoded.text) lineTexts.push(lineDecoded.text);
+        }
+        if (lineTexts.length > 0) {
+          textValue = lineTexts.join('\n');
+          lineCount = lines.length;
+        }
+      }
+      timings.htrMs = Math.round(performance.now() - htrStart);
+
+      if (decoded && decoded.text) {
+        const semE = evaluateSemanticCoherence(decoded.text, 'TEXT');
+        const textPrior = Math.max(0.05, routerProbs[0]);
+        const totalScore = textPrior * 0.3 + decoded.confidence * 0.4 + semE * 0.3;
+
+        hypotheses.push({
+          type: 'TEXT',
+          value: textValue,
+          confidence: decoded.confidence,
+          semanticScore: semE,
+          prior: textPrior,
+          score: totalScore,
+          ast: { type: 'Text', value: textValue, lineCount },
+        });
+      }
+    } catch (htrErr) {
+      console.warn('[RecognitionPipeline] HTR evaluation notice:', htrErr);
     }
-  } catch (htrErr) {
-    console.warn('[RecognitionPipeline] HTR evaluation notice:', htrErr);
+  };
+
+  // In Notes mode, the slow 2D maths model is strictly disabled unless there is an
+  // explicit '=' calculation gesture or the user explicitly chose 'MATH'.
+  const routerMinStrokes = (routerMeta && routerMeta.min_strokes_recommended) || 3;
+  let mathsSkipped = false;
+
+  if (mode === 'notes' && !options.alwaysRunMath && options.preferType !== 'MATH') {
+    await evaluateTextHypothesis();
+    mathsSkipped = true;
+  } else {
+    await evaluateMathHypothesis();
+    await evaluateTextHypothesis();
   }
 
   // Hypothesis C: Continuous Object / Drawing representation
@@ -278,6 +326,12 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, 
 
   // Sort hypotheses continuously by composite score (Maximum Likelihood Hypothesis)
   hypotheses.sort((a, b) => b.score - a.score);
+
+  // The user asked for a specific reading ("read as maths"): it wins if that expert produced one
+  if (options.preferType) {
+    const preferredIdx = hypotheses.findIndex((h) => h.type === options.preferType);
+    if (preferredIdx > 0) hypotheses.unshift(hypotheses.splice(preferredIdx, 1)[0]);
+  }
 
   const winning = hypotheses[0] || {
     type: 'MATH',
@@ -366,6 +420,14 @@ export async function recognizeInkCluster(strokes, strokeIds = [], bbox = null, 
     bbox: clusterBBox,
     modelVersion: '1.0.0',
     processingTimeMs,
+    timings,
+    routing: {
+      textProb: Number(routerProbs[0].toFixed(3)),
+      numberProb: Number(routerProbs[1].toFixed(3)),
+      mathProb: Number(routerProbs[2].toFixed(3)),
+      objectProb: Number(routerProbs[4].toFixed(3)),
+      mathsSkipped,
+    },
     mode,
     shouldConvert,
     action,

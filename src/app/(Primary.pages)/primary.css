@@ -1,6 +1,26 @@
-body{
+body {
   background-image: url("/bg1.png");
   background-color: black;
   background-size: cover;
-  background-repeat: no-repeat;  
+  background-repeat: no-repeat;
+  overscroll-behavior: none;
+}
+
+/* Touch and coarse pointer ergonomics for mobile & tablet */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  input[type="color"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Ensure no callouts, selection, or tap highlights on interactive canvas surfaces */
+.touch-canvas-surface {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
 }

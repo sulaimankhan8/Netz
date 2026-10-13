@@ -6,6 +6,15 @@
  * with playback duration and timestamp.
  */
 
+// Browsers differ in what they can record: Chrome and Firefox produce WebM, Safari produces MP4.
+// The first supported type is used, and the recording is labelled with what was actually produced.
+const PREFERRED_AUDIO_TYPES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+
+export function pickRecordingType() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') return '';
+  return PREFERRED_AUDIO_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
 let mediaRecorder = null;
 let audioChunks = [];
 let recordingStartTime = 0;
@@ -31,7 +40,8 @@ export async function startAudioRecording() {
   audioChunks = [];
   recordingStartTime = Date.now();
 
-  mediaRecorder = new MediaRecorder(stream);
+  const recordingType = pickRecordingType();
+  mediaRecorder = recordingType ? new MediaRecorder(stream, { mimeType: recordingType }) : new MediaRecorder(stream);
 
   mediaRecorder.ondataavailable = (event) => {
     if (event.data.size > 0) {
@@ -56,7 +66,8 @@ export function stopAudioRecording() {
     const durationMs = Date.now() - recordingStartTime;
 
     mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const producedType = mediaRecorder.mimeType || (audioChunks[0] && audioChunks[0].type) || 'audio/webm';
+      const audioBlob = new Blob(audioChunks, { type: producedType });
       const reader = new FileReader();
 
       reader.onloadend = () => {
@@ -69,6 +80,7 @@ export function stopAudioRecording() {
           blob: audioBlob,
           dataUrl: reader.result,
           durationMs,
+          mimeType: producedType,
         });
       };
 

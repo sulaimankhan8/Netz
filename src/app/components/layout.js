@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import EditorialSidebar from './editorial/EditorialSidebar';
 import NavBar from './NavBar';
 
 const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
+  const isPlayground = pathname?.startsWith('/Playground');
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 768 || window.innerHeight <= 500);
     };
 
     handleResize();
@@ -24,7 +27,7 @@ const Layout = ({ children }) => {
       <div className="flex-1 w-full min-h-screen">
         {children}
       </div>
-      {isMobile && <NavBar />}
+      {isMobile && !isPlayground && <NavBar />}
     </div>
   );
 };
