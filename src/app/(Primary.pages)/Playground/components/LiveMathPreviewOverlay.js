@@ -27,6 +27,7 @@ export default function LiveMathPreviewOverlay({
   onPlotClusterGraph,
   onOpenSoftEditor,
   onReadAsMath,
+  onReadAsText,
 }) {
   // Track inline editing state per cluster
   const [editingClusterId, setEditingClusterId] = useState(null);
@@ -209,8 +210,8 @@ export default function LiveMathPreviewOverlay({
                     </button>
                   )}
 
-                  {/* Read as maths (shown when the router judged this to be writing and maths was not tried) */}
-                  {!isMath && cluster.mathsSkipped && onReadAsMath && (
+                  {/* Read as maths (shown when text model is active) */}
+                  {!isMath && onReadAsMath && (
                     <button
                       onClick={() => onReadAsMath(cluster)}
                       title="Read this as maths instead"
@@ -218,6 +219,18 @@ export default function LiveMathPreviewOverlay({
                       className="px-2.5 py-1 min-h-[36px] flex items-center justify-center text-xs font-semibold rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
                       ∑ Maths
+                    </button>
+                  )}
+
+                  {/* Read as text (shown when math is selected/identified) */}
+                  {isMath && onReadAsText && (
+                    <button
+                      onClick={() => onReadAsText(cluster)}
+                      title="Read this as text instead"
+                      aria-label="Read this as text instead"
+                      className="px-2.5 py-1 min-h-[36px] flex items-center justify-center text-xs font-semibold rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      🔤 Text
                     </button>
                   )}
 

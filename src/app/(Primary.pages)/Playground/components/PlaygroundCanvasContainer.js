@@ -816,6 +816,55 @@ export default function PlaygroundCanvasContainer() {
     }
   }, [notesMode]);
 
+  // "Read as text": the math recogniser was chosen and the user says it is ordinary text.
+  // Re-reads the same ink with text preferred and keeps the correction as router training data.
+  const handleReadClusterAsText = useCallback(async (cluster) => {
+    if (!cluster || !cluster.strokes || cluster.strokes.length === 0) return;
+    const previousText = cluster.detectedText || '';
+
+    setClusters((prev) =>
+      prev.map((c) => (c.clusterId === cluster.clusterId ? { ...c, ocrStatus: 'pending', detectedText: '' } : c))
+    );
+
+    const currentMode = notesMode ? 'notes' : 'normal';
+    const res = await processClusterOCR(cluster, { forceRefresh: true, mode: currentMode, preferType: 'TEXT' });
+
+    setClusters((prev) =>
+      prev.map((c) => {
+        if (c.clusterId !== cluster.clusterId) return c;
+        if (!res || !res.detectedText) {
+          return { ...c, ocrStatus: 'recognized', detectedText: previousText };
+        }
+        return {
+          ...c,
+          detectedText: res.detectedText,
+          isMath: false,
+          evaluatedResult: null,
+          confidence: res.confidence || 0,
+          ocrStatus: 'recognized',
+          ocrError: null,
+          shouldConvert: res.shouldConvert !== undefined ? res.shouldConvert : true,
+          action: res.action || 'convert_text',
+          type: res.type || 'TEXT',
+          alternatives: res.alternatives,
+          confidenceDetails: res.confidenceDetails,
+          mathsSkipped: true,
+        };
+      })
+    );
+
+    if (res && !res.isMath && res.detectedText) {
+      recordUserCorrection({
+        sourceStrokeIds: cluster.strokeIds || [],
+        strokes: cluster.strokes,
+        predictedValue: previousText,
+        userCorrectedValue: res.detectedText,
+        assignedType: 'TEXT',
+        confidence: res.confidenceDetails || {},
+      }).catch(() => {});
+    }
+  }, [notesMode]);
+
   // Unified Block Content Update Handler with Reactive Link Propagation
   const handleUpdateBlockContent = useCallback((blockId, content) => {
     dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId, content } });
@@ -1573,6 +1622,7 @@ export default function PlaygroundCanvasContainer() {
         }}
         onOpenSoftEditor={(cluster) => setSoftEditorCluster(cluster)}
         onReadAsMath={handleReadClusterAsMath}
+        onReadAsText={handleReadClusterAsText}
       />
 
       {/* Lasso selection toolbar: drag the selection to move it, its corner handle to resize it */}
