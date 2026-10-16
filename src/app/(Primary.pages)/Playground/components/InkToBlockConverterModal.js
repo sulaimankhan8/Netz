@@ -1,191 +1,158 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FiX, FiCheckCircle, FiFileText, FiLayers } from 'react-icons/fi';
+import { FiAlertTriangle, FiCheck, FiCheckCircle } from 'react-icons/fi';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
+import { Dialog } from './ui/Dialog';
+import { UI, blockLabel } from '../utils/uiText';
 
-export default function InkToBlockConverterModal({
-  isOpen,
-  onClose,
-  blocks = [],
-  onConfirmSync,
-}) {
-  const [noteTitle, setNoteTitle] = useState('Playground Math Session Notes');
-  const [selectedBlockIds, setSelectedBlockIds] = useState(() => blocks.map((b) => b.blockId));
-  const [isSynced, setIsSynced] = useState(false);
+// Block types the Notes workspace can hold (equations and graph curves as maths, text as text)
+const SENDABLE = new Set(['equation', 'graph', 'theory']);
 
-  // This component is mounted before the session has loaded, so the initial selection above is
-  // empty. Every time the dialog opens, start with all of the page's blocks selected.
+/** The Notes blocks one Playground block becomes (a graph becomes the equations of its curves). */
+function toNoteBlocks(b) {
+  if (b.type === 'equation') return [{ id: b.blockId, type: 'math', content: b.content?.latex || '' }];
+  if (b.type === 'graph') {
+    return (b.content?.graphData?.datasets || [])
+      .map((ds, idx) => ({ id: `${b.blockId}_curve_${idx}`, type: 'math', content: ds.latex || ds.label || '' }))
+      .filter((nb) => nb.content);
+  }
+  if (b.type === 'theory') return [{ id: b.blockId, type: 'text', content: b.content?.text || '' }];
+  return [];
+}
+
+/**
+ * Send to Notes: makes a new note in the Notes workspace from the page's typed blocks.
+ * Pictures, voice memos and sketches cannot go yet, and say so; handwriting stays on the page.
+ * onConfirmSync returns { ok, noteId } or { ok: false, reason }, and the dialog says which.
+ */
+export default function InkToBlockConverterModal({ isOpen, isMobile = false, onClose, blocks = [], onConfirmSync, onOpenNote }) {
+  const [noteTitle, setNoteTitle] = useState('Playground notes');
+  const [selectedBlockIds, setSelectedBlockIds] = useState([]);
+  const [result, setResult] = useState(null); // { ok, noteId } | { ok: false, reason }
+
+  // Each time it opens: every block that can be sent is ticked, and no earlier result shows
   useEffect(() => {
     if (isOpen) {
-      setSelectedBlockIds(blocks.map((b) => b.blockId));
+      setSelectedBlockIds(blocks.filter((b) => SENDABLE.has(b.type)).map((b) => b.blockId));
+      setResult(null);
     }
   }, [isOpen, blocks]);
 
   if (!isOpen) return null;
 
-  const toggleBlockSelection = (blockId) => {
-    setSelectedBlockIds((prev) =>
-      prev.includes(blockId) ? prev.filter((id) => id !== blockId) : [...prev, blockId]
-    );
+  const toggle = (blockId) => {
+    setResult(null);
+    setSelectedBlockIds((prev) => (prev.includes(blockId) ? prev.filter((id) => id !== blockId) : [...prev, blockId]));
   };
 
-  const handleSync = () => {
-    const selectedBlocks = blocks.filter((b) => selectedBlockIds.includes(b.blockId));
-    
-    // Map Smart Blocks to Notion-style Notes workspace block JSON objects
-    const noteBlocks = selectedBlocks.flatMap((b) => {
-      if (b.type === 'equation') {
-        return [{
-          id: b.blockId,
-          type: 'math',
-          content: b.content?.latex || '',
-        }];
-      } else if (b.type === 'graph') {
-        // The Notes workspace has no graph block: carry each plotted curve over as its equation
-        return (b.content?.graphData?.datasets || [])
-          .map((ds, idx) => ({
-            id: `${b.blockId}_curve_${idx}`,
-            type: 'math',
-            content: ds.latex || ds.label || '',
-          }))
-          .filter((nb) => nb.content);
-      } else if (b.type === 'theory') {
-        return [{
-          id: b.blockId,
-          type: 'text',
-          content: b.content?.text || '',
-        }];
-      }
-      // Sketch, audio and image blocks have no equivalent in Notes yet
-      return [];
-    });
-
-    if (onConfirmSync) {
-      onConfirmSync({ title: noteTitle, blocks: noteBlocks });
-    }
-
-    setIsSynced(true);
-    setTimeout(() => {
-      setIsSynced(false);
-      onClose();
-    }, 1200);
+  const send = () => {
+    const chosen = blocks.filter((b) => SENDABLE.has(b.type) && selectedBlockIds.includes(b.blockId));
+    const outcome = onConfirmSync ? onConfirmSync({ title: noteTitle.trim() || 'Playground notes', blocks: chosen.flatMap(toNoteBlocks) }) : { ok: false, reason: 'Notes is not available.' };
+    setResult(outcome || { ok: false, reason: 'The note could not be saved on this device.' });
   };
+
+  const sentOk = result && result.ok;
+  const button = 'px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-xs font-semibold';
+  const footer = sentOk ? (
+    <>
+      <button type="button" onClick={onClose} className={`${button} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+        Close
+      </button>
+      <button type="button" onClick={() => onOpenNote?.(result.noteId)} className={`${button} bg-blue-600 hover:bg-blue-700 text-white`}>
+        Open note
+      </button>
+    </>
+  ) : (
+    <>
+      <button type="button" onClick={onClose} className={`${button} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+        Cancel
+      </button>
+      <button type="button" onClick={send} disabled={selectedBlockIds.length === 0} className={`${button} bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50`}>
+        {UI.sendToNotes}
+      </button>
+    </>
+  );
+
+  const sendable = blocks.filter((b) => SENDABLE.has(b.type));
 
   return (
-    <div className="fixed inset-0 z-50 flex sm:items-center items-end justify-center sm:p-4 p-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
-          <div className="flex items-center gap-2">
-            <FiLayers className="w-5 h-5 text-blue-500" />
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-              Sync Whiteboard to Notes Workspace
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
-          >
-            <FiX className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog title={UI.sendToNotes} isMobile={isMobile} onClose={onClose} footer={footer} width="w-[520px]" fullHeight={false}>
+      <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+        Sends typed blocks to a new note. Handwriting stays on this page; turn it into typed text first to send it.
+      </p>
 
-        {/* Modal Content */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1">
-          {/* Note Title Input */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
-              Target Note Title
-            </label>
+      {sentOk && (
+        <div role="status" className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold">
+          <FiCheckCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+          Sent to Notes as “{noteTitle.trim() || 'Playground notes'}”.
+        </div>
+      )}
+      {result && !result.ok && (
+        <div role="alert" className="flex items-start gap-2 p-3 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400">
+          <FiAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>
+            <span className="font-semibold">Couldn&apos;t send to Notes.</span> {result.reason}
+          </span>
+        </div>
+      )}
+
+      {!sentOk && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-semibold text-zinc-600 dark:text-zinc-300">Note title</span>
             <input
               type="text"
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
-          </div>
+          </label>
 
-          {/* Block Selection List */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
-              Select Blocks to Transcribe ({selectedBlockIds.length}/{blocks.length})
-            </label>
-            <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-              {blocks.length === 0 ? (
-                <div className="p-4 text-center text-xs text-zinc-400">
-                  No active Smart Blocks found on canvas to convert.
-                </div>
-              ) : (
-                blocks.map((block) => {
-                  const isSelected = selectedBlockIds.includes(block.blockId);
-                  return (
-                    <div
-                      key={block.blockId}
-                      onClick={() => toggleBlockSelection(block.blockId)}
-                      className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                        isSelected
-                          ? 'bg-blue-500/10 border-blue-500/60'
-                          : 'bg-zinc-50 dark:bg-zinc-950/40 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 text-xs font-medium text-zinc-800 dark:text-zinc-200">
-                        <span className="uppercase text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-500">
-                          {block.type}
-                        </span>
-                        {block.type === 'equation' && block.content?.latex && (
-                          <InlineMath math={block.content.latex} />
-                        )}
-                        {block.type === 'theory' && (
-                          <span className="truncate max-w-[200px]">{block.content?.text}</span>
-                        )}
-                        {block.type === 'graph' && <span>Plot Curve Dataset</span>}
-                      </div>
-
-                      <div
-                        className={`w-4 h-4 rounded-md border flex items-center justify-center ${
-                          isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-zinc-400'
-                        }`}
-                      >
-                        {isSelected && <FiCheckCircle className="w-3 h-3" />}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+            <div className="font-semibold text-zinc-600 dark:text-zinc-300 mb-1.5">
+              Blocks to send ({selectedBlockIds.length} of {sendable.length})
             </div>
-          </div>
-        </div>
-
-        {/* Modal Footer Actions */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 min-h-[44px] flex items-center justify-center text-xs font-medium rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSync}
-            disabled={selectedBlockIds.length === 0 || isSynced}
-            className="flex items-center justify-center gap-1.5 px-5 py-2 min-h-[44px] text-xs font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            {isSynced ? (
-              <>
-                <FiCheckCircle className="w-4 h-4" />
-                <span>Synced to Notes Workspace!</span>
-              </>
+            {blocks.length === 0 ? (
+              <div className="p-4 text-center text-zinc-500 dark:text-zinc-400">There are no typed blocks on this page yet.</div>
             ) : (
-              <>
-                <FiFileText className="w-4 h-4" />
-                <span>Transcribe to Notes Page</span>
-              </>
+              <ul className="flex flex-col gap-2">
+                {blocks.map((block) => {
+                  const can = SENDABLE.has(block.type);
+                  const ticked = can && selectedBlockIds.includes(block.blockId);
+                  return (
+                    <li key={block.blockId}>
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={ticked}
+                        aria-disabled={!can}
+                        disabled={!can}
+                        onClick={() => toggle(block.blockId)}
+                        className={`w-full flex items-center justify-between gap-3 p-3 min-h-[44px] rounded-xl border text-left ${
+                          ticked ? 'bg-blue-500/10 border-blue-500/60' : 'border-zinc-200 dark:border-zinc-800'
+                        } ${can ? 'hover:border-zinc-400' : 'opacity-60 cursor-not-allowed'}`}
+                      >
+                        <span className="flex items-center gap-2 min-w-0 text-zinc-800 dark:text-zinc-200">
+                          <span className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">{blockLabel(block.type)}</span>
+                          {block.type === 'equation' && block.content?.latex && <InlineMath math={block.content.latex} />}
+                          {block.type === 'theory' && <span className="truncate">{block.content?.text}</span>}
+                          {block.type === 'graph' && <span>Its curves, as equations</span>}
+                          {!can && <span className="text-zinc-500 dark:text-zinc-400">Notes can&apos;t hold this yet</span>}
+                        </span>
+                        <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${ticked ? 'bg-blue-500 border-blue-500 text-white' : 'border-zinc-400'}`}>
+                          {ticked && <FiCheck className="w-3.5 h-3.5" aria-hidden="true" />}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </button>
-        </div>
-      </div>
-    </div>
+          </div>
+        </>
+      )}
+    </Dialog>
   );
 }

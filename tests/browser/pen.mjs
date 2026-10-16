@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, sleep, clickTitle, shot } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, withToolOptions, setPenWidth } from './lib.mjs';
 
 const { browser, page, errors } = await launch();
 const client = await page.createCDPSession();
@@ -34,9 +34,7 @@ async function penLine(x0, x1, y, forceFrom, forceTo, tilt = 0) {
 
 try {
   await openPlayground(page);
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  await clickText('Bold'); // 8 px, so thickness differences are easy to measure
-  await sleep(100);
+  await withToolOptions(page, () => setPenWidth(page, 8)); // 8 px, so thickness differences are easy to measure
 
   // Pressure
   await penLine(300, 700, 250, 0.1, 0.95, 30);
@@ -57,42 +55,37 @@ try {
   check('a mouse stroke has the same width along its length', Math.abs(m1 - m2) <= 1 && m1 >= 7, `${m1}px, ${m2}px`);
 
   // Presets differ
-  await clickText('Pencil');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Pencil'));
   await drawStroke(page, [[300, 390], [700, 390]], { steps: 20 });
   await sleep(150);
   s = await saved();
   check('Pencil preset: 3 px and 70% opaque', s[2].width === 3 && s[2].opacity === 0.7, JSON.stringify(s[2]));
   const pencilAlpha = await pixelAlpha(500, 390);
   check('Pencil ink is drawn translucent', pencilAlpha > 120 && pencilAlpha < 215, pencilAlpha);
-  await clickText('Marker');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Marker'));
   await drawStroke(page, [[300, 450], [700, 450]], { steps: 20 });
   await sleep(150);
   s = await saved();
   check('Marker preset: 10 px and 85% opaque', s[3].width === 10 && s[3].opacity === 0.85, JSON.stringify(s[3]));
-  await clickText('Ballpoint');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Ballpoint'));
   await drawStroke(page, [[300, 500], [700, 500]], { steps: 20 });
   await sleep(150);
   s = await saved();
   check('Ballpoint preset: 2 px and fully opaque', s[4].width === 2 && s[4].opacity === undefined, JSON.stringify(s[4]));
 
   // Colours: black swatch and the custom picker
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.style.backgroundColor === 'rgb(24, 24, 27)').click());
-  await sleep(100);
+  await withToolOptions(page, () => page.evaluate(() => document.querySelector('button[aria-label="Black"]').click()));
   await drawStroke(page, [[300, 550], [700, 550]], { steps: 10 });
   await sleep(150);
   s = await saved();
   check('black is in the palette', s[5].color === '#18181B', s[5].color);
-  await page.evaluate(() => {
+  await withToolOptions(page, () => page.evaluate(() => {
     const input = document.querySelector('input[type="color"]');
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     setter.call(input, '#12ab9c');
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  await sleep(150);
+  }));
   await drawStroke(page, [[300, 600], [700, 600]], { steps: 10 });
   await sleep(150);
   s = await saved();

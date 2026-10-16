@@ -88,7 +88,7 @@ try {
 
   // Recolour with the current pen colour
   await clickTitle(page, 'Stroke & Canvas Settings');
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.style.backgroundColor === 'rgb(244, 63, 94)').click());
+  await page.evaluate(() => document.querySelector('button[aria-label="Pink"]').click());
   await sleep(150);
   await clickTitle(page, 'Stroke & Canvas Settings');
   await lassoAround(270, 250, 390, 370);

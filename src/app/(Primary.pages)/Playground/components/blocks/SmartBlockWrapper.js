@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { FiX, FiMove, FiEdit2, FiCheck } from 'react-icons/fi';
+import { FiTrash2, FiMove, FiEdit2, FiCheck } from 'react-icons/fi';
 import AIActionButton from '../AIActionButton';
 import { resizeKeepingAspect } from '../../utils/imageSizing';
+import { TOUCH_TARGET } from '../ui/Dialog';
+import { blockLabel } from '../../utils/uiText';
+
+// A mouse press on a selected block that moves this far (px) starts moving the block
+const MOUSE_DRAG_START = 4;
 
 export default function SmartBlockWrapper({
   block,
@@ -63,10 +68,12 @@ export default function SmartBlockWrapper({
   };
 
   // Long press on block body to start dragging without aiming at the tiny grab handle
+  const mouseDragPendingRef = useRef(false);
   const handleBodyPointerDown = (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     touchStartPosRef.current = { x: e.clientX, y: e.clientY };
     longPressTriggeredRef.current = false;
+    mouseDragPendingRef.current = e.pointerType === 'mouse' && isSelected;
 
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => {
@@ -84,6 +91,22 @@ export default function SmartBlockWrapper({
   };
 
   const handleBodyPointerMove = (e) => {
+    if (mouseDragPendingRef.current) {
+      const moved = Math.hypot(e.clientX - touchStartPosRef.current.x, e.clientY - touchStartPosRef.current.y);
+      if (moved > MOUSE_DRAG_START) {
+        mouseDragPendingRef.current = false;
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+        longPressTriggeredRef.current = true;
+        setIsDragging(true);
+        const currentScreenX = position.x * zoomLevel + panOffset.x;
+        const currentScreenY = position.y * zoomLevel + panOffset.y;
+        dragStartRef.current = { x: touchStartPosRef.current.x - currentScreenX, y: touchStartPosRef.current.y - currentScreenY };
+        return;
+      }
+    }
     if (longPressTimerRef.current) {
       const dx = Math.abs(e.clientX - touchStartPosRef.current.x);
       const dy = Math.abs(e.clientY - touchStartPosRef.current.y);
@@ -114,8 +137,9 @@ export default function SmartBlockWrapper({
         setIsSelected(true);
       }
     } else {
+      // Mouse: a click selects (bar, handles); a double click or the Edit button edits
+      mouseDragPendingRef.current = false;
       setIsSelected(true);
-      setIsEditing(true);
     }
   };
 
@@ -242,25 +266,13 @@ export default function SmartBlockWrapper({
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300 cursor-grab active:cursor-grabbing select-none touch-none min-h-[36px]"
             >
               <FiMove className="w-3.5 h-3.5" />
-              <span className="capitalize">{type}</span>
+              <span>{blockLabel(type)}</span>
             </div>
 
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-1.5" onPointerDown={(e) => e.stopPropagation()}>
+            {/* Quick actions: Delete set apart from Edit, so one is not pressed for the other */}
+            <div className="flex items-center gap-3" onPointerDown={(e) => e.stopPropagation()}>
               <button
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                title="Edit Block"
-                className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-200 hover:text-blue-500 transition-colors cursor-pointer"
-              >
-                <FiEdit2 className="w-4 h-4 pointer-events-none" />
-              </button>
-              <button
+                type="button"
                 onPointerDown={(e) => {
                   e.stopPropagation();
                 }}
@@ -269,15 +281,32 @@ export default function SmartBlockWrapper({
                   onDeleteBlock(block.blockId);
                 }}
                 title="Delete Block"
-                className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-200 hover:text-rose-500 transition-colors cursor-pointer"
+                aria-label={`Delete ${blockLabel(type)}`}
+                className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-600 dark:text-zinc-300 hover:text-rose-500 transition-colors cursor-pointer`}
               >
-                <FiX className="w-4 h-4 pointer-events-none" />
+                <FiTrash2 className="w-4 h-4 pointer-events-none" />
+              </button>
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                title="Edit Block"
+                aria-label={`Edit ${blockLabel(type)}`}
+                className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-200 hover:text-blue-500 transition-colors cursor-pointer`}
+              >
+                <FiEdit2 className="w-4 h-4 pointer-events-none" />
               </button>
             </div>
           </div>
 
           {/* Block Content Body: supports tap selection and 350ms long press to drag */}
           <div
+            data-block-body
             onPointerDown={handleBodyPointerDown}
             onPointerMove={handleBodyPointerMove}
             onPointerUp={handleBodyPointerUp}
@@ -293,9 +322,14 @@ export default function SmartBlockWrapper({
                 return;
               }
               setIsSelected(true);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setIsSelected(true);
               setIsEditing(true);
             }}
-            className="flex-1 w-full h-full cursor-text overflow-hidden touch-none"
+            title={isSelected ? 'Double-click to edit, drag to move' : undefined}
+            className={`flex-1 w-full h-full overflow-hidden touch-none ${isSelected ? 'cursor-move' : 'cursor-pointer'}`}
           >
             {childElement}
           </div>
@@ -340,8 +374,8 @@ export default function SmartBlockWrapper({
       >
         <div className="flex items-center gap-2">
           <FiMove className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
-            {type} Block
+          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-200">
+            {blockLabel(type)}
           </span>
           {isLinked && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-mono font-semibold">
@@ -351,6 +385,24 @@ export default function SmartBlockWrapper({
         </div>
 
         <div className="flex items-center gap-1.5" onPointerDown={(e) => e.stopPropagation()}>
+          {/* Delete, kept well away from Done */}
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteBlock(block.blockId);
+            }}
+            className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center p-1 text-zinc-500 hover:text-rose-500 rounded-lg cursor-pointer`}
+            title="Delete Block"
+            aria-label={`Delete ${blockLabel(type)}`}
+          >
+            <FiTrash2 className="w-4 h-4 pointer-events-none" />
+          </button>
+          <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+
           {/* AI Action Popover Button (FOR EQUATION BLOCKS WITH CAS ACTIONS) */}
           {onSelectAiAction && type === 'equation' && (
             <AIActionButton block={block} onSelectAction={onSelectAiAction} />
@@ -366,24 +418,10 @@ export default function SmartBlockWrapper({
               setIsEditing(false);
             }}
             title="Done Editing"
-            className="flex items-center gap-1 px-3 py-1.5 min-h-[36px] text-xs font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow-xs transition-colors cursor-pointer"
+            className={`flex items-center gap-1 px-3 py-1.5 min-h-[36px] ${TOUCH_TARGET} text-xs font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow-xs transition-colors cursor-pointer`}
           >
             <FiCheck className="w-3.5 h-3.5 pointer-events-none" />
             <span className="pointer-events-none">Done</span>
-          </button>
-
-          <button
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteBlock(block.blockId);
-            }}
-            className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center p-1 text-zinc-400 hover:text-rose-500 rounded-lg ml-0.5 cursor-pointer"
-            title="Delete Block"
-          >
-            <FiX className="w-4 h-4 pointer-events-none" />
           </button>
         </div>
       </div>

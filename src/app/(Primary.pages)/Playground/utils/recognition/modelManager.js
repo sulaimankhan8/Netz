@@ -53,8 +53,64 @@ class ModelManager {
     this.statusListeners = new Set();
     this.currentStatus = {
       isLoading: false,
+      state: 'idle', // 'idle' | 'loading' | 'ready' | 'failed' | 'needs-consent'
       modelName: '',
       message: '',
+      progress: null, // { loaded, total } in bytes while a model file downloads
+    };
+    // With the browser's data saver on, the large models wait for a yes (acceptLargeDownloads)
+    this.allowLargeDownloads = !(typeof navigator !== 'undefined' && navigator.connection && navigator.connection.saveData);
+    this.lastFailed = null; // the loader Retry runs again
+  }
+
+  /** Runs the load that failed (or waited for consent) again; resolves either way. */
+  retry() {
+    const loader = this.lastFailed;
+    this.lastFailed = null;
+    if (loader === 'router') return this.loadRouter().catch(() => {});
+    if (loader === 'htr') return this.loadHTR().catch(() => {});
+    if (loader === 'hmer') return this.loadHMER().catch(() => {});
+    return Promise.resolve();
+  }
+
+  /** Data saver on: yes to the large downloads, and start the one that was waiting. */
+  acceptLargeDownloads() {
+    this.allowLargeDownloads = true;
+    return this.retry();
+  }
+
+  /** Data saver on: not now. The prompt goes away; the next attempt asks again. */
+  declineLargeDownloads() {
+    this.lastFailed = null;
+    this.notifyStatus({ isLoading: false, state: 'idle', message: '', progress: null });
+  }
+
+  async isCached(url) {
+    if (typeof caches === 'undefined') return false;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      return Boolean(await cache.match(url));
+    } catch {
+      return false;
+    }
+  }
+
+  /** With data saver on, a large model that is not downloaded yet waits for a yes. */
+  async checkLargeDownload(loaderName, url) {
+    if (this.allowLargeDownloads || (await this.isCached(url))) return;
+    this.lastFailed = loaderName;
+    this.notifyStatus({ isLoading: false, state: 'needs-consent', modelName: loaderName, message: '', progress: null });
+    throw new Error('download-declined');
+  }
+
+  /** Download progress for the status pill, at most about four times a second. */
+  progressReporter(modelName) {
+    let last = 0;
+    return (loaded, total) => {
+      const now = Date.now();
+      if (now - last < 250 && loaded !== total) return;
+      last = now;
+      this.notifyStatus({ isLoading: true, state: 'loading', modelName, progress: { loaded, total } });
     };
   }
 
@@ -91,7 +147,7 @@ class ModelManager {
    * @param {'arrayBuffer'|'json'} [responseType='arrayBuffer']
    * @returns {Promise<ArrayBuffer|Object>}
    */
-  async fetchWithCache(url, responseType = 'arrayBuffer') {
+  async fetchWithCache(url, responseType = 'arrayBuffer', onBytes = null) {
     let resolvedUrl = url;
     if (typeof window === 'undefined' && !url.startsWith('http')) {
       resolvedUrl = `http://localhost:3000${url.startsWith('/') ? '' : '/'}${url}`;
@@ -115,12 +171,35 @@ class ModelManager {
       throw new Error(`Failed to fetch model asset: ${resolvedUrl} (status: ${res.status})`);
     }
 
+    const streaming = Boolean(onBytes && responseType !== 'json' && res.body && typeof res.body.getReader === 'function');
     if (cache) {
-      try {
-        await cache.put(url, res.clone());
-      } catch (err) {
+      // While streaming, the cache copy fills alongside this read (awaiting it first would
+      // download the whole file before any progress could be shown)
+      const putting = cache.put(url, res.clone()).catch((err) => {
         console.warn('[ModelManager] Cache put error:', err);
+      });
+      if (!streaming) await putting;
+    }
+
+    if (streaming) {
+      const total = Number(res.headers.get('Content-Length')) || 0;
+      const reader = res.body.getReader();
+      const chunks = [];
+      let loaded = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.byteLength;
+        onBytes(loaded, total);
       }
+      const out = new Uint8Array(loaded);
+      let offset = 0;
+      for (const chunk of chunks) {
+        out.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      return out.buffer;
     }
 
     return responseType === 'json' ? res.json() : res.arrayBuffer();
@@ -162,8 +241,10 @@ class ModelManager {
 
     this.notifyStatus({
       isLoading: true,
-      modelName: 'Router',
-      message: 'Loading Neural Router...',
+      state: 'loading',
+      modelName: 'router',
+      message: '',
+      progress: null,
     });
 
     try {
@@ -179,16 +260,21 @@ class ModelManager {
 
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Router',
-        message: 'Neural Router ready',
+        state: 'ready',
+        modelName: 'router',
+        message: '',
+        progress: null,
       });
 
       return session;
     } catch (err) {
+      this.lastFailed = 'router';
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Router',
-        message: 'Router load failed',
+        state: 'failed',
+        modelName: 'router',
+        message: String((err && err.message) || err),
+        progress: null,
       });
       throw err;
     }
@@ -199,16 +285,19 @@ class ModelManager {
    */
   async loadHTR() {
     if (this.sessions.htr) return this.sessions.htr;
+    await this.checkLargeDownload('htr', MODEL_PATHS.HTR);
 
     this.notifyStatus({
       isLoading: true,
-      modelName: 'Text OCR',
-      message: 'Loading Text Handwriting Model...',
+      state: 'loading',
+      modelName: 'htr',
+      message: '',
+      progress: null,
     });
 
     try {
       const [buffer, meta, vocab] = await Promise.all([
-        this.fetchWithCache(MODEL_PATHS.HTR, 'arrayBuffer'),
+        this.fetchWithCache(MODEL_PATHS.HTR, 'arrayBuffer', this.progressReporter('htr')),
         this.fetchWithCache(MODEL_PATHS.HTR_META, 'json'),
         this.fetchWithCache(MODEL_PATHS.HTR_VOCAB, 'json'),
       ]);
@@ -221,16 +310,21 @@ class ModelManager {
 
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Text OCR',
-        message: 'Text Model ready',
+        state: 'ready',
+        modelName: 'htr',
+        message: '',
+        progress: null,
       });
 
       return session;
     } catch (err) {
+      this.lastFailed = 'htr';
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Text OCR',
-        message: 'Text Model load failed',
+        state: 'failed',
+        modelName: 'htr',
+        message: String((err && err.message) || err),
+        progress: null,
       });
       throw err;
     }
@@ -241,16 +335,19 @@ class ModelManager {
    */
   async loadHMER() {
     if (this.sessions.hmer) return this.sessions.hmer;
+    await this.checkLargeDownload('hmer', MODEL_PATHS.HMER);
 
     this.notifyStatus({
       isLoading: true,
-      modelName: 'Math HMER',
-      message: 'Loading Math Equation Engine...',
+      state: 'loading',
+      modelName: 'hmer',
+      message: '',
+      progress: null,
     });
 
     try {
       const [buffer, meta, vocab] = await Promise.all([
-        this.fetchWithCache(MODEL_PATHS.HMER, 'arrayBuffer'),
+        this.fetchWithCache(MODEL_PATHS.HMER, 'arrayBuffer', this.progressReporter('hmer')),
         this.fetchWithCache(MODEL_PATHS.HMER_META, 'json'),
         this.fetchWithCache(MODEL_PATHS.HMER_VOCAB, 'json'),
       ]);
@@ -263,16 +360,21 @@ class ModelManager {
 
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Math HMER',
-        message: 'Math Engine ready',
+        state: 'ready',
+        modelName: 'hmer',
+        message: '',
+        progress: null,
       });
 
       return session;
     } catch (err) {
+      this.lastFailed = 'hmer';
       this.notifyStatus({
         isLoading: false,
-        modelName: 'Math HMER',
-        message: 'Math Engine load failed',
+        state: 'failed',
+        modelName: 'hmer',
+        message: String((err && err.message) || err),
+        progress: null,
       });
       throw err;
     }

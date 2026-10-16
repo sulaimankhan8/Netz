@@ -17,9 +17,9 @@ import AudioMemoBlock from './blocks/AudioMemoBlock';
 import ImageBlock from './blocks/ImageBlock';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 import PageManager from './PageManager';
+import PageSheet from './PageSheet';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import SoftEditorModal from './SoftEditorModal';
-import SemanticLassoModal from './SemanticLassoModal';
+import FixReadingDialog from './FixReadingDialog';
 import AIModelLoadingStatusPill from './AIModelLoadingStatusPill';
 import { startAudioRecording, stopAudioRecording } from '../utils/audioRecorder';
 
@@ -50,7 +50,7 @@ import { bboxOfStrokes } from '../utils/strokeTransform';
 import { FiCopy, FiTrash2 } from 'react-icons/fi';
 import { LuShapes } from 'react-icons/lu';
 import { prepareImage, fitImageBox } from '../utils/imageSizing';
-import { zoomAtPoint } from '../utils/viewportMath';
+import { zoomAtPoint, fitViewToBox } from '../utils/viewportMath';
 import ShapeLayer from './shapes/ShapeLayer';
 import ShapeSelectionOverlay, { rotateHandleAt } from './shapes/ShapeSelectionOverlay';
 import ShapeFormatBar from './shapes/ShapeFormatBar';
@@ -71,9 +71,26 @@ import {
 import { getGalleryItem } from '../utils/shapes/shapeGallery';
 import { captureTextTarget, insertIntoField, spliceText } from '../utils/symbols/insertAtCaret';
 import { latexForSymbol } from '../utils/symbols/symbols';
+import { UI, blockLabel } from '../utils/uiText';
+import { getPageBounds, shapeRects } from '../utils/pageSvg';
 
 // Pause after the last change before the session is written
 const SAVE_DELAY_MS = 350;
+
+// Undo histories kept for pages other than the open one (the most recently visited)
+const MAX_KEPT_PAGE_HISTORIES = 5;
+
+// Whether `el`, or something between it and `stop`, is a box with its own scrollbar and more
+// content than it shows: the wheel should scroll that box, not move the canvas.
+function scrollsItself(el, stop) {
+  for (let node = el; node && node !== stop && node.nodeType === 1; node = node.parentElement) {
+    const style = window.getComputedStyle(node);
+    const scrollsY = /(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1;
+    const scrollsX = /(auto|scroll)/.test(style.overflowX) && node.scrollWidth > node.clientWidth + 1;
+    if (scrollsY || scrollsX) return true;
+  }
+  return false;
+}
 
 // Single-key tool shortcuts (shown in the dock tooltips)
 const TOOL_SHORTCUTS = { p: 'pen', h: 'highlighter', e: 'eraser', l: 'lasso', s: 'shape', m: 'pan' };
@@ -95,6 +112,9 @@ export default function PlaygroundCanvasContainer() {
   const [strokeColor, setStrokeColor] = useState('#3B82F6');
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [strokeOpacity, setStrokeOpacity] = useState(1); // set by the pen presets (pencil, marker)
+  // The highlighter has its own colour and width (painted 4x wider and see-through)
+  const [highlighterColor, setHighlighterColor] = useState('#FACC15');
+  const [highlighterWidth, setHighlighterWidth] = useState(4);
   const [gridStyle, setGridStyle] = useState('dots');
 
   // Eraser: 'stroke' removes whole strokes, 'partial' rubs out only what it passes over.
@@ -102,15 +122,52 @@ export default function PlaygroundCanvasContainer() {
   const [eraserMode, setEraserMode] = useState('stroke');
   const [eraserSize, setEraserSize] = useState(16);
 
-  // Drawing & Live OCR Opt-In State (Default 'selection' = clean canvas, manual selection OCR!)
   const [isDrawing, setIsDrawing] = useState(false);
-  const [showLiveOcr, setShowLiveOcr] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState(null);
-  const [ocrMode, setOcrMode] = useState('selection'); // 'selection' (manual on selection) | 'live' (auto on draw)
 
-  // Notes Mode State — when true, enables lined paper, auto-OCR, and note-taking UI
-  const [notesMode, setNotesMode] = useState(false);
-  const ocrBeforeNotesRef = useRef(null);
+  // "Read my writing": 'off' (never), 'select' (when ink is lassoed; the default) or 'live' (as you
+  // write, with the readings shown). One setting, remembered on this device.
+  const [readMode, setReadModeState] = useState('select');
+  const setReadMode = useCallback((mode) => {
+    setReadModeState(mode);
+    try {
+      localStorage.setItem('netz_playground_read_mode', mode);
+    } catch (e) {}
+  }, []);
+
+  // Writing mode (stored as notesMode): lined paper, reading as you write, blocks snapped to the
+  // lines. It switches "Read my writing" to 'live' and puts the earlier choice back when it ends.
+  const [notesMode, setNotesModeState] = useState(false);
+  const readBeforeWritingRef = useRef(null);
+  useEffect(() => {
+    try {
+      const savedRead = localStorage.getItem('netz_playground_read_mode');
+      if (savedRead === 'off' || savedRead === 'select' || savedRead === 'live') setReadModeState(savedRead);
+      const savedWriting = localStorage.getItem('netz_playground_writing_mode');
+      if (savedWriting) {
+        const parsed = JSON.parse(savedWriting);
+        if (parsed && parsed.on) {
+          setNotesModeState(true);
+          readBeforeWritingRef.current = parsed.readBefore || 'select';
+        }
+      }
+    } catch (e) {}
+  }, []);
+  const readModeRef = useRef(readMode);
+  readModeRef.current = readMode;
+  const setNotesMode = useCallback((on) => {
+    if (on) {
+      readBeforeWritingRef.current = readModeRef.current;
+      setReadMode('live');
+    } else {
+      setReadMode(readBeforeWritingRef.current || 'select');
+      readBeforeWritingRef.current = null;
+    }
+    setNotesModeState(on);
+    try {
+      localStorage.setItem('netz_playground_writing_mode', JSON.stringify({ on, readBefore: readBeforeWritingRef.current }));
+    } catch (e) {}
+  }, [setReadMode]);
 
   // Touch preference: fingers draw like any other pointer (default), or move the page instead.
   // Two fingers always pan and zoom; mouse, trackpad and pen always draw.
@@ -126,12 +183,12 @@ export default function PlaygroundCanvasContainer() {
       document.removeEventListener('gesturestart', preventGesture);
     };
   }, []);
-  const handleSetFingerDraws = (value) => {
+  const handleSetFingerDraws = useCallback((value) => {
     setFingerDraws(value);
     try {
       localStorage.setItem('netz_playground_finger_draws', String(value));
     } catch (e) {}
-  };
+  }, []);
 
   // Multi-Page Notebook State (Samsung Notes / Apple Notes parity)
   const [pages, setPages] = useState([{ id: 'page_1', title: 'Page 1', strokes: [], blocks: [], links: [], shapes: [] }]);
@@ -157,7 +214,6 @@ export default function PlaygroundCanvasContainer() {
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const [pendingTargetUrl, setPendingTargetUrl] = useState(null);
   const [softEditorCluster, setSoftEditorCluster] = useState(null);
-  const [semanticLassoSelection, setSemanticLassoSelection] = useState(null);
 
   // Pan State, Canvas & Persistence Refs
   const containerRef = useRef(null);
@@ -253,6 +309,18 @@ export default function PlaygroundCanvasContainer() {
     if (typeof window !== 'undefined') window.__NETZ_PLAYGROUND_SAVE_PENDING__ = pending;
   };
 
+  // What the top bar says about saving: 'saved', 'saving' (a change is waiting or being written)
+  // or 'failed' (IndexedDB refused the last write; the next change or Retry tries again)
+  const [saveStatus, setSaveStatusState] = useState('saved');
+  const saveStatusRef = useRef('saved');
+  const setSaveStatus = useCallback((next) => {
+    if (saveStatusRef.current === next) return;
+    saveStatusRef.current = next;
+    setSaveStatusState(next);
+  }, []);
+  // Only the newest save's result counts (an older write can finish after a newer one started)
+  const saveSeqRef = useRef(0);
+
   // Centralized Bulletproof Session Persistence Helper
   const persistSession = useCallback((overridePages, overrideIndex, overrideBlocks, overrideLinks) => {
     if (!isSessionLoadedRef.current) return; // Prevent overwriting session before initial load finishes!
@@ -301,13 +369,22 @@ export default function PlaygroundCanvasContainer() {
       links: targetLinks,
     };
 
-    saveSession('default_session', sessionObj);
-  }, []);
+    const seq = ++saveSeqRef.current;
+    setSaveStatus('saving');
+    saveSession('default_session', sessionObj, {
+      onStored: (ok, err) => {
+        if (seq !== saveSeqRef.current) return;
+        if (!ok) console.error('[Playground] The session could not be saved:', err);
+        setSaveStatus(ok ? 'saved' : 'failed');
+      },
+    });
+  }, [setSaveStatus]);
 
   const scheduleSave = useCallback(() => {
     if (!isSessionLoadedRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setSavePending(true);
+    setSaveStatus('saving');
     const run = () => {
       if (drawingNowRef.current) {
         saveTimerRef.current = setTimeout(run, SAVE_DELAY_MS);
@@ -317,7 +394,7 @@ export default function PlaygroundCanvasContainer() {
       persistSession();
     };
     saveTimerRef.current = setTimeout(run, SAVE_DELAY_MS);
-  }, [persistSession]);
+  }, [persistSession, setSaveStatus]);
 
   // Writes a waiting save now (the tab is being hidden, closed or reloaded)
   const flushSave = useCallback(() => {
@@ -333,13 +410,51 @@ export default function PlaygroundCanvasContainer() {
   const [isSavedToastVisible, setIsSavedToastVisible] = useState(false);
 
   // Short message shown at the top of the page (export finished, nothing to export, ...)
+  // The second argument is a duration in ms, or { duration, action: { label, onClick } }: a notice
+  // with an action (Undo) stays 8 s, and while a pointer rests on it.
   const [notice, setNotice] = useState(null);
   const noticeTimerRef = useRef(null);
-  const showNotice = useCallback((message, durationMs = 3000) => {
+  const showNotice = useCallback((message, options = 3000) => {
+    const opts = typeof options === 'number' ? { duration: options } : options || {};
+    const action = opts.action || null;
+    const duration = opts.duration || (action ? 8000 : 3000);
     if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
-    setNotice(message);
-    noticeTimerRef.current = setTimeout(() => setNotice(null), durationMs);
+    setNotice({ message, action, duration });
+    noticeTimerRef.current = setTimeout(() => setNotice(null), duration);
   }, []);
+  // The zoom shown while two fingers pinch (null when no pinch is going on)
+  const [pinchZoom, setPinchZoom] = useState(null);
+  const holdNotice = useCallback(() => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = null;
+  }, []);
+  const releaseNotice = useCallback(() => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => setNotice(null), 3000);
+  }, []);
+
+  // One finger draws by default (handoff rule 2). After the first finger stroke, people are told
+  // once, with a way to make one finger scroll instead. Not shown if they ever chose.
+  const previousStrokeCountRef = useRef(0);
+  const routerWarmedRef = useRef(false);
+  const maybeShowFingerHint = useCallback(() => {
+    try {
+      if (localStorage.getItem('netz_playground_finger_draws') !== null) return;
+      if (localStorage.getItem('netz_playground_finger_hint_seen')) return;
+      localStorage.setItem('netz_playground_finger_hint_seen', '1');
+    } catch (e) {
+      return;
+    }
+    showNotice('One finger draws. Two fingers move the page.', {
+      action: {
+        label: 'Scroll with one finger',
+        onClick: () => {
+          handleSetFingerDraws(false);
+          showNotice('One finger now moves the page. Change it in Preferences.', 5000);
+        },
+      },
+    });
+  }, [showNotice, handleSetFingerDraws]);
 
   // Load Session on Mount (Restores Multi-Page Notebook, Page Index & Ink Strokes)
   useEffect(() => {
@@ -405,8 +520,6 @@ export default function PlaygroundCanvasContainer() {
 
     preloadOCREngine();
     initAutocompleteTrie();
-    // Warm up lightweight 400KB neural router in background
-    modelManager.loadRouter().catch(() => {});
     return () => clearTimeout(loadFallbackTimer);
   }, [resetHistory, applyShapes]);
 
@@ -464,6 +577,10 @@ export default function PlaygroundCanvasContainer() {
     applyHistorySnapshot(historyRef.current.redo());
   }, [applyHistorySnapshot]);
 
+  // For notices whose Undo button outlives the render that made them
+  const handleUndoRef = useRef(handleUndo);
+  handleUndoRef.current = handleUndo;
+
   // Ctrl/Cmd + key actions other than undo / redo. Filled in on every render (further down, once
   // the zoom and save handlers exist) so the key listener always calls the current ones.
   const shortcutActionsRef = useRef({});
@@ -505,28 +622,26 @@ export default function PlaygroundCanvasContainer() {
     };
   }, [persistSession]);
 
-  // Track if session has active content
-  const hasUnsavedContent = latestStrokesRef.current.length > 0 || blockState.blocks.length > 0 || shapes.length > 0;
-
-  // Expose global window handler for in-app navigation intercept (Sidebar links)
+  // Leaving the Playground from the app's sidebar. Everything is saved automatically, so leaving
+  // asks nothing; a save still waiting is written on the way out (the unmount above). Only when
+  // the last save failed does it ask, because changes since then may be lost.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__NETZ_PLAYGROUND_HAS_UNSAVED_CHANGES__ = hasUnsavedContent;
-      window.__NETZ_OPEN_UNSAVED_MODAL__ = (targetUrl) => {
+    if (typeof window === 'undefined') return undefined;
+    window.__NETZ_PLAYGROUND_HAS_UNSAVED_CHANGES__ = saveStatus !== 'saved';
+    window.__NETZ_OPEN_UNSAVED_MODAL__ = (targetUrl) => {
+      if (saveStatusRef.current === 'failed') {
         setPendingTargetUrl(targetUrl);
         setIsUnsavedModalOpen(true);
-      };
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.__NETZ_PLAYGROUND_HAS_UNSAVED_CHANGES__ = false;
-        window.__NETZ_OPEN_UNSAVED_MODAL__ = null;
+      } else {
+        flushSave();
+        router.push(targetUrl);
       }
     };
-  }, [hasUnsavedContent]);
-
-  // Auto-Save prevents data loss; native beforeunload disabled to eliminate ugly browser reload prompt
-  // (Reloads F5 cleanly like Google Docs/Figma while restoring drawings instantly; in-app nav uses WPS popup)
+    return () => {
+      window.__NETZ_PLAYGROUND_HAS_UNSAVED_CHANGES__ = false;
+      window.__NETZ_OPEN_UNSAVED_MODAL__ = null;
+    };
+  }, [saveStatus, flushSave, router]);
 
   // Window Resize Listener
   useEffect(() => {
@@ -588,8 +703,22 @@ export default function PlaygroundCanvasContainer() {
       clearTimeout(ocrDebounceTimerRef.current);
     }
 
-    // In 'selection' mode, do not auto-recompute OCR on every stroke write
-    if (ocrMode === 'selection') {
+    // A first stroke drawn with a finger: say once what one finger does, and how to change it
+    const newest = allStrokes.length > previousStrokeCountRef.current ? allStrokes[allStrokes.length - 1] : null;
+    previousStrokeCountRef.current = allStrokes.length;
+    if (newest && newest.points && newest.points[0] && newest.points[0].pointerType === 'touch') maybeShowFingerHint();
+
+    // The small router model (and the recognition runtime it brings, about 28 MB) warms up once
+    // the first stroke is down, not when the page opens; never while reading is off
+    if (newest && !routerWarmedRef.current && readModeRef.current !== 'off') {
+      routerWarmedRef.current = true;
+      const warm = () => modelManager.loadRouter().catch(() => {});
+      if (typeof window !== 'undefined' && window.requestIdleCallback) window.requestIdleCallback(warm, { timeout: 2000 });
+      else setTimeout(warm, 500);
+    }
+
+    // Reading as you write only in 'live'; 'select' reads lassoed ink, 'off' reads nothing
+    if (readModeRef.current !== 'live') {
       return;
     }
 
@@ -654,7 +783,7 @@ export default function PlaygroundCanvasContainer() {
         setSelectedClusterId(recognizedClusters[recognizedClusters.length - 1].clusterId);
       }
     }, delay);
-  }, [activeTool, ocrMode, notesMode, commitHistory, scheduleSave]);
+  }, [activeTool, notesMode, commitHistory, scheduleSave, maybeShowFingerHint]);
 
   // Convert OCR Handwriting Cluster to In-Place Editable Typed Block (Replacing Ink)
   // In Notes Mode, snaps position and dimensions directly to ruled paper grid lines
@@ -713,7 +842,7 @@ export default function PlaygroundCanvasContainer() {
   const handleSelectionCompleted = useCallback(async ({ strokes: selectedStrokes, bbox, lassoPolygon }) => {
     // Highlighter marks and snapped shapes inside the lasso are not writing and are left out of recognition
     const strokes = (selectedStrokes || []).filter((s) => s.tool !== 'highlighter' && !s.shape);
-    if (strokes.length === 0) return;
+    if (strokes.length === 0 || readModeRef.current === 'off') return;
     const strokeIds = strokes.map((s) => s.id);
 
     const selectionClusterId = `selection_${Date.now()}`;
@@ -790,6 +919,12 @@ export default function PlaygroundCanvasContainer() {
         if (e.repeat) return;
         if (e.key === 'Escape') {
           whiteboardCanvasRef.current?.clearSelection?.();
+          return;
+        }
+        // Shift+1: fit to content (as in Figma and other whiteboards)
+        if (e.shiftKey && e.code === 'Digit1') {
+          e.preventDefault();
+          handleFitToContentRef.current();
           return;
         }
         const tool = TOOL_SHORTCUTS[e.key.toLowerCase()];
@@ -1001,6 +1136,52 @@ export default function PlaygroundCanvasContainer() {
     if ((type === 'equation' && !defaultContent.latex) || type === 'theory') setAutoEditBlockId(newBlockId);
   };
 
+  // Send to Notes: a new note made from the chosen blocks, written where the Notes workspace reads.
+  // Returns { ok: true, noteId } or { ok: false, reason } so the dialog can say what happened.
+  const handleSendToNotes = (payload) => {
+    try {
+      const rawV2 = localStorage.getItem('netz_notes_v2_data');
+      const existingV2 = rawV2 ? JSON.parse(rawV2) : [];
+      const existingNotes = JSON.parse(localStorage.getItem('netz_notes') || '[]');
+      const now = new Date().toISOString();
+      const newNote = {
+        id: `note_${Date.now()}`,
+        title: payload.title || 'Playground notes',
+        subtitle: 'Sent from the Playground',
+        tags: ['Playground'],
+        createdAt: now,
+        updatedAt: now,
+        isPublic: false,
+        accessKey: `NETZ-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+        author: 'Student',
+        blocks: payload.blocks.map((b, idx) => ({
+          id: b.id || `b-${Date.now()}-${idx}`,
+          type: b.type === 'math' ? 'math' : 'paragraph',
+          content: typeof b.content === 'string' ? b.content : JSON.stringify(b.content),
+        })),
+      };
+      existingNotes.unshift(newNote);
+      existingV2.unshift(newNote);
+      localStorage.setItem('netz_notes', JSON.stringify(existingNotes));
+      localStorage.setItem('netz_notes_v2_data', JSON.stringify(existingV2));
+      return { ok: true, noteId: newNote.id };
+    } catch (err) {
+      console.error('Failed to send to Notes:', err);
+      const full = err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014);
+      return { ok: false, reason: full ? "Your browser's storage is full." : 'The note could not be saved on this device.' };
+    }
+  };
+
+  // Focus music (the lo-fi player): closed until opened from a menu
+  const [musicOpen, setMusicOpen] = useState(false);
+
+  // Deleting a block is one tap; the notice offers Undo (blocks are on the undo history)
+  const handleDeleteBlock = (blockId) => {
+    const block = blockStateRef.current.blocks.find((b) => b.blockId === blockId);
+    dispatch({ type: 'REMOVE_BLOCK', payload: blockId });
+    if (block) showNotice(`${blockLabel(block.type)} deleted`, { action: { label: UI.undo, onClick: () => handleUndoRef.current() } });
+  };
+
   // Insert > Equation: a new equation (empty, ready to edit) or a finished one, full-size as in WPS
   const handleInsertEquation = (latex = '') => handleAddBlock('equation', { latex, display: true });
 
@@ -1061,7 +1242,7 @@ export default function PlaygroundCanvasContainer() {
             content: {
               audioUrl: audioResult.dataUrl,
               durationSec: Math.round(audioResult.durationMs / 1000),
-              title: `Lecture Audio (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+              title: `Voice memo (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
             },
             linkedBlockIds: [],
             position: { x: spawnX, y: spawnY },
@@ -1087,12 +1268,24 @@ export default function PlaygroundCanvasContainer() {
     }
   };
 
-  // Native Playground Save (Persists session right here in Playground without popups)
+  // Ctrl+S and Retry: save now (the status chip in the top bar shows the result)
   const handleManualSave = () => {
     persistSession();
     setIsSavedToastVisible(true);
-    setTimeout(() => setIsSavedToastVisible(false), 2000);
+    setTimeout(() => setIsSavedToastVisible(false), 1500);
   };
+
+  // "Try again" in the leave prompt: once that save lands, leave as asked
+  const [retryLeaving, setRetryLeaving] = useState(false);
+  useEffect(() => {
+    if (!retryLeaving || saveStatus === 'saving') return;
+    setRetryLeaving(false);
+    if (saveStatus === 'saved') {
+      setIsUnsavedModalOpen(false);
+      if (pendingTargetUrl) router.push(pendingTargetUrl);
+      setPendingTargetUrl(null);
+    }
+  }, [retryLeaving, saveStatus, pendingTargetUrl, router]);
 
   // Helper to synchronize active page strokes and blocks before page transitions
   const getSyncedPagesState = () => {
@@ -1111,65 +1304,105 @@ export default function PlaygroundCanvasContainer() {
     });
   };
 
+  // Undo history per page: the open page's stack is historyRef; the stacks of the pages visited
+  // most recently wait here, keyed by page id (older pages start a fresh history when reopened).
+  const pageHistoriesRef = useRef(new Map());
+
+  // Makes targetPage's history the active one (keeping fromPageId's, unless it is gone) and returns
+  // the state to show. A kept history brings back the exact snapshot it was left at, so the
+  // stroke and block arrays are the very ones on its stack and no false undo step appears.
+  const activatePageHistory = useCallback((fromPageId, targetPage) => {
+    const kept = pageHistoriesRef.current;
+    if (fromPageId) {
+      kept.delete(fromPageId);
+      kept.set(fromPageId, historyRef.current);
+      while (kept.size > MAX_KEPT_PAGE_HISTORIES) kept.delete(kept.keys().next().value);
+    }
+    const existing = kept.get(targetPage.id);
+    let snapshot;
+    if (existing) {
+      kept.delete(targetPage.id);
+      historyRef.current = existing;
+      snapshot = existing.current();
+    } else {
+      snapshot = {
+        strokes: targetPage.strokes || [],
+        blocks: targetPage.blocks || [],
+        links: targetPage.links || [],
+        shapes: targetPage.shapes || [],
+      };
+      historyRef.current = createHistoryStack(100);
+      historyRef.current.reset(snapshot);
+    }
+    latestStrokesRef.current = snapshot.strokes;
+    syncHistoryFlags();
+    return snapshot;
+  }, [syncHistoryFlags]);
+
+  // Shows a page's content (ink, blocks, links, shapes) on the canvas
+  const showPageContent = (snapshot) => {
+    dispatch({ type: 'SET_SESSION', payload: { blocks: snapshot.blocks, links: snapshot.links } });
+    blockStateRef.current = { ...blockStateRef.current, blocks: snapshot.blocks, links: snapshot.links };
+    applyShapes(snapshot.shapes || []);
+    if (whiteboardCanvasRef.current) {
+      // loadStrokes, not clearStrokes: showing a page is not an edit to it
+      whiteboardCanvasRef.current.loadStrokes(snapshot.strokes);
+    }
+    previousStrokeCountRef.current = snapshot.strokes.length;
+    // Readings belong to the page that was open
+    if (ocrDebounceTimerRef.current) clearTimeout(ocrDebounceTimerRef.current);
+    ocrPassRef.current++;
+    setClusters([]);
+    setSelectedClusterId(null);
+  };
+
+  // Opens nextPages[newIdx] (pages already updated by the caller) and saves
+  const openPage = (nextPages, newIdx, fromPageId) => {
+    const target = nextPages[newIdx];
+    const snapshot = activatePageHistory(fromPageId, target);
+    const finalPages = nextPages.map((p, idx) =>
+      idx === newIdx ? { ...p, strokes: snapshot.strokes, blocks: snapshot.blocks, links: snapshot.links, shapes: snapshot.shapes || [] } : p
+    );
+    setPages(finalPages);
+    pagesRef.current = finalPages;
+    setCurrentPageIndex(newIdx);
+    currentPageIndexRef.current = newIdx;
+    showPageContent(snapshot);
+    persistSession(finalPages, newIdx, snapshot.blocks, snapshot.links);
+  };
+
+  // "Page N" for a new page: one more than the highest number in use, so names never repeat
+  const nextPageTitle = (list) => {
+    let highest = list.length;
+    list.forEach((p) => {
+      const match = /^Page (\d+)$/.exec(p.title || '');
+      if (match) highest = Math.max(highest, Number(match[1]));
+    });
+    return `Page ${highest + 1}`;
+  };
+
   // Multi-Page Actions
   const handleSelectPage = (newIdx) => {
     if (newIdx === currentPageIndexRef.current || newIdx < 0 || newIdx >= pagesRef.current.length) return;
-    
-    const updatedPages = getSyncedPagesState();
-    setPages(updatedPages);
-    pagesRef.current = updatedPages;
-
-    setCurrentPageIndex(newIdx);
-    currentPageIndexRef.current = newIdx;
-
-    const targetPage = updatedPages[newIdx];
-    dispatch({
-      type: 'SET_SESSION',
-      payload: {
-        blocks: targetPage.blocks || [],
-        links: targetPage.links || [],
-      },
-    });
-    applyShapes(targetPage.shapes || []);
-
-    if (whiteboardCanvasRef.current) {
-      whiteboardCanvasRef.current.loadStrokes(targetPage.strokes || []);
-    }
-    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || [], targetPage.shapes || []);
-
-    persistSession(updatedPages, newIdx, targetPage.blocks || [], targetPage.links || []);
+    commitHistory(); // an edit still settling belongs to the page being left
+    const fromPageId = pagesRef.current[currentPageIndexRef.current]?.id;
+    openPage(getSyncedPagesState(), newIdx, fromPageId);
   };
 
   const handleAddPage = () => {
+    commitHistory();
     const synced = getSyncedPagesState();
-    const newPageNum = synced.length + 1;
+    const fromPageId = synced[currentPageIndexRef.current]?.id;
     const newPage = {
       id: `page_${Date.now()}`,
-      title: `Page ${newPageNum}`,
+      title: nextPageTitle(synced),
       strokes: [],
       blocks: [],
       links: [],
       shapes: [],
     };
-
     const nextPages = [...synced, newPage];
-    const newIdx = nextPages.length - 1;
-
-    setPages(nextPages);
-    pagesRef.current = nextPages;
-
-    setCurrentPageIndex(newIdx);
-    currentPageIndexRef.current = newIdx;
-
-    dispatch({ type: 'SET_SESSION', payload: { blocks: [], links: [] } });
-    applyShapes([]);
-    if (whiteboardCanvasRef.current) {
-      // loadStrokes, not clearStrokes: showing an empty new page is not an edit to any page
-      whiteboardCanvasRef.current.loadStrokes([]);
-    }
-    resetHistory([], [], [], []);
-
-    persistSession(nextPages, newIdx, [], []);
+    openPage(nextPages, nextPages.length - 1, fromPageId);
   };
 
   const handleClearPage = () => {
@@ -1192,77 +1425,101 @@ export default function PlaygroundCanvasContainer() {
     pagesRef.current = synced;
 
     persistSession(synced, currentPageIndexRef.current, [], []);
+    showNotice('Page cleared', { action: { label: UI.undo, onClick: () => handleUndoRef.current() } });
   };
+
+  // The page sheet (all pages) is open
+  const [pageSheetOpen, setPageSheetOpen] = useState(false);
+
+  // The page deleted last, with its place and its undo history, until Undo or the next delete
+  const deletedPageRef = useRef(null);
 
   const handleDeletePage = (delIdx) => {
     if (pagesRef.current.length <= 1) return;
+    commitHistory();
     const synced = getSyncedPagesState();
+    const deleted = synced[delIdx];
+    const wasOpen = delIdx === currentPageIndexRef.current;
+    deletedPageRef.current = {
+      page: deleted,
+      index: delIdx,
+      history: wasOpen ? historyRef.current : pageHistoriesRef.current.get(deleted.id) || null,
+    };
+    pageHistoriesRef.current.delete(deleted.id);
+
     const remaining = synced.filter((_, idx) => idx !== delIdx);
-    const newIdx = Math.min(currentPageIndexRef.current, remaining.length - 1);
-
-    setPages(remaining);
-    pagesRef.current = remaining;
-
-    setCurrentPageIndex(newIdx);
-    currentPageIndexRef.current = newIdx;
-
-    const targetPage = remaining[newIdx];
-    dispatch({
-      type: 'SET_SESSION',
-      payload: {
-        blocks: targetPage.blocks || [],
-        links: targetPage.links || [],
-      },
-    });
-    applyShapes(targetPage.shapes || []);
-
-    if (whiteboardCanvasRef.current) {
-      whiteboardCanvasRef.current.loadStrokes(targetPage.strokes || []);
+    if (wasOpen) {
+      openPage(remaining, Math.min(delIdx, remaining.length - 1), null);
+    } else {
+      const newIdx = currentPageIndexRef.current > delIdx ? currentPageIndexRef.current - 1 : currentPageIndexRef.current;
+      setPages(remaining);
+      pagesRef.current = remaining;
+      setCurrentPageIndex(newIdx);
+      currentPageIndexRef.current = newIdx;
+      persistSession(remaining, newIdx);
     }
-    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || [], targetPage.shapes || []);
+    showNotice(`${deleted.title || 'Page'} deleted`, { action: { label: UI.undo, onClick: () => handleRestoreDeletedPage() } });
+  };
 
-    persistSession(remaining, newIdx, targetPage.blocks || [], targetPage.links || []);
+  // Undo for Delete page: the page comes back in its place, with its history, and opens
+  const handleRestoreDeletedPage = () => {
+    const deleted = deletedPageRef.current;
+    if (!deleted) return;
+    deletedPageRef.current = null;
+    commitHistory();
+    const synced = getSyncedPagesState();
+    const fromPageId = synced[currentPageIndexRef.current]?.id;
+    const index = Math.min(deleted.index, synced.length);
+    const nextPages = [...synced.slice(0, index), deleted.page, ...synced.slice(index)];
+    if (deleted.history) pageHistoriesRef.current.set(deleted.page.id, deleted.history);
+    openPage(nextPages, index, fromPageId);
   };
 
   const handleDuplicatePage = (dupIdx) => {
+    commitHistory();
     const synced = getSyncedPagesState();
     const srcPage = synced[dupIdx];
-    const currentStrokes = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [];
-    const srcStrokes = dupIdx === currentPageIndexRef.current ? currentStrokes : (srcPage.strokes || []);
+    const fromPageId = synced[currentPageIndexRef.current]?.id;
 
     const dupPage = {
       id: `page_${Date.now()}`,
       title: `${srcPage.title} (Copy)`,
-      strokes: JSON.parse(JSON.stringify(srcStrokes)),
-      blocks: JSON.parse(JSON.stringify(srcPage.blocks || blockStateRef.current.blocks)),
-      links: JSON.parse(JSON.stringify(srcPage.links || blockStateRef.current.links)),
-      shapes: JSON.parse(JSON.stringify(dupIdx === currentPageIndexRef.current ? latestShapesRef.current : srcPage.shapes || [])),
+      strokes: JSON.parse(JSON.stringify(srcPage.strokes || [])),
+      blocks: JSON.parse(JSON.stringify(srcPage.blocks || [])),
+      links: JSON.parse(JSON.stringify(srcPage.links || [])),
+      shapes: JSON.parse(JSON.stringify(srcPage.shapes || [])),
     };
 
     const nextPages = [...synced.slice(0, dupIdx + 1), dupPage, ...synced.slice(dupIdx + 1)];
-    const newIdx = dupIdx + 1;
+    openPage(nextPages, dupIdx + 1, fromPageId);
+  };
 
-    setPages(nextPages);
-    pagesRef.current = nextPages;
+  // Page sheet: rename a page
+  const handleRenamePage = (idx, title) => {
+    const clean = String(title || '').trim().slice(0, 60);
+    if (!clean) return;
+    const synced = getSyncedPagesState();
+    if (!synced[idx] || synced[idx].title === clean) return;
+    synced[idx] = { ...synced[idx], title: clean };
+    setPages(synced);
+    pagesRef.current = synced;
+    persistSession(synced, currentPageIndexRef.current);
+  };
 
+  // Page sheet: move a page from one place to another; the open page stays open
+  const handleMovePage = (fromIdx, toIdx) => {
+    const synced = getSyncedPagesState();
+    if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= synced.length || toIdx >= synced.length) return;
+    const openId = synced[currentPageIndexRef.current]?.id;
+    const moved = [...synced];
+    const [page] = moved.splice(fromIdx, 1);
+    moved.splice(toIdx, 0, page);
+    const newIdx = Math.max(0, moved.findIndex((p) => p.id === openId));
+    setPages(moved);
+    pagesRef.current = moved;
     setCurrentPageIndex(newIdx);
     currentPageIndexRef.current = newIdx;
-
-    dispatch({
-      type: 'SET_SESSION',
-      payload: {
-        blocks: dupPage.blocks,
-        links: dupPage.links,
-      },
-    });
-    applyShapes(dupPage.shapes);
-
-    if (whiteboardCanvasRef.current) {
-      whiteboardCanvasRef.current.loadStrokes(dupPage.strokes);
-    }
-    resetHistory(dupPage.strokes, dupPage.blocks, dupPage.links, dupPage.shapes);
-
-    persistSession(nextPages, newIdx, dupPage.blocks, dupPage.links);
+    persistSession(moved, newIdx);
   };
 
   // Plot Graph from Equation Block (Reuses or Appends if Already Linked)
@@ -1917,7 +2174,14 @@ export default function PlaygroundCanvasContainer() {
   startShapeTextRef.current = startShapeText;
 
   // Two-finger pinch / pan (and one-finger pan when fingers do not draw) report the new viewport here
+  // A pinch shows the zoom in the status area, until a second after the fingers stop
+  const pinchZoomTimerRef = useRef(null);
   const handleViewportGesture = useCallback((next) => {
+    if (next.zoom !== viewportRef.current.zoom) {
+      setPinchZoom(next.zoom);
+      if (pinchZoomTimerRef.current) clearTimeout(pinchZoomTimerRef.current);
+      pinchZoomTimerRef.current = setTimeout(() => setPinchZoom(null), 1000);
+    }
     viewportRef.current = next;
     setZoomLevel(next.zoom);
     setPanOffset(next.pan);
@@ -1928,6 +2192,20 @@ export default function PlaygroundCanvasContainer() {
   const handleZoomIn = () => zoomTo(viewportRef.current.zoom * 1.2, viewCentre());
   const handleZoomOut = () => zoomTo(viewportRef.current.zoom / 1.2, viewCentre());
   const handleResetZoom = () => zoomTo(1, viewCentre());
+
+  // Fit to content: everything on the page (ink, shapes, blocks) in the space between the top bar
+  // and the dock. An empty page goes back to 100%.
+  const handleFitToContent = () => {
+    const strokes = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : latestStrokesRef.current;
+    const blockRects = blockStateRef.current.blocks.map((b) => ({ x: b.position.x, y: b.position.y, width: b.size.width, height: b.size.height }));
+    const box = getPageBounds(strokes, [...blockRects, ...shapeRects(latestShapesRef.current)]);
+    const next = fitViewToBox(box, dimensions.width, dimensions.height, { top: 72, bottom: 88 }, { margin: 24, maxZoom: 2 });
+    viewportRef.current = next;
+    setZoomLevel(next.zoom);
+    setPanOffset(next.pan);
+  };
+  const handleFitToContentRef = useRef(handleFitToContent);
+  handleFitToContentRef.current = handleFitToContent;
 
   // Ctrl/Cmd + 0 / + / - zoom the page (not the browser), S saves, D duplicates the selection
   shortcutActionsRef.current = {
@@ -1941,6 +2219,13 @@ export default function PlaygroundCanvasContainer() {
 
   // Wheel Handler for Panning & Pinch-Zoom (zoom anchors at the cursor)
   const handleWheel = useCallback((e) => {
+    // Over something that scrolls by itself (a menu, the Shapes gallery, a dialog, a long text
+    // block), the wheel scrolls that, as everywhere else; only Ctrl + wheel is kept from the
+    // browser (it would zoom the whole page). Anywhere else the wheel pans or zooms the canvas.
+    if (scrollsItself(e.target, containerRef.current)) {
+      if (e.ctrlKey || e.metaKey) e.preventDefault();
+      return;
+    }
     e.preventDefault();
 
     if (e.ctrlKey || e.metaKey) {
@@ -2037,8 +2322,8 @@ export default function PlaygroundCanvasContainer() {
       <WhiteboardCanvas
         ref={whiteboardCanvasRef}
         activeTool={activeTool}
-        strokeColor={strokeColor}
-        strokeWidth={strokeWidth}
+        strokeColor={activeTool === 'highlighter' ? highlighterColor : strokeColor}
+        strokeWidth={activeTool === 'highlighter' ? highlighterWidth : strokeWidth}
         strokeOpacity={strokeOpacity}
         zoomLevel={zoomLevel}
         panOffset={panOffset}
@@ -2056,6 +2341,16 @@ export default function PlaygroundCanvasContainer() {
         onSelectionChange={handleInkSelectionChange}
         fingerDraws={fingerDraws}
         onViewportChange={handleViewportGesture}
+        onTwoFingerTap={() => {
+          if (!historyRef.current.canUndo()) return;
+          handleUndo();
+          showNotice('Undone', 1200);
+        }}
+        onThreeFingerTap={() => {
+          if (!historyRef.current.canRedo()) return;
+          handleRedo();
+          showNotice('Redone', 1200);
+        }}
         eraserMode={eraserMode}
         eraserSize={eraserSize}
       />
@@ -2078,7 +2373,7 @@ export default function PlaygroundCanvasContainer() {
           panOffset={panOffset}
           onUpdatePosition={(blockId, pos) => dispatch({ type: 'UPDATE_BLOCK_POSITION', payload: { blockId, position: pos } })}
           onUpdateSize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
-          onDeleteBlock={(blockId) => dispatch({ type: 'REMOVE_BLOCK', payload: blockId })}
+          onDeleteBlock={handleDeleteBlock}
           onSelectAiAction={handleSelectAiAction}
         >
           {block.type === 'equation' && (
@@ -2127,7 +2422,7 @@ export default function PlaygroundCanvasContainer() {
             <AudioMemoBlock
               block={block}
               onUpdateContent={handleUpdateBlockContent}
-              onDeleteBlock={(blockId) => dispatch({ type: 'REMOVE_BLOCK', payload: blockId })}
+              onDeleteBlock={handleDeleteBlock}
             />
           )}
 
@@ -2150,26 +2445,76 @@ export default function PlaygroundCanvasContainer() {
           onClearPage={handleClearPage}
           onDeletePage={handleDeletePage}
           onDuplicatePage={handleDuplicatePage}
-          onManualSave={handleManualSave}
+          onOpenPages={() => setPageSheetOpen(true)}
+          onRetrySave={handleManualSave}
+          saveStatus={saveStatus}
           isJustSaved={isSavedToastVisible}
+          isMobile={dimensions.width < 640}
         />
       </div>
+
+      {/* All pages: open, rename, reorder, duplicate, delete */}
+      {pageSheetOpen && (
+        <PageSheet
+          pages={getSyncedPagesState()}
+          currentPageIndex={currentPageIndex}
+          isMobile={dimensions.width < 640}
+          onClose={() => setPageSheetOpen(false)}
+          onSelectPage={handleSelectPage}
+          onAddPage={handleAddPage}
+          onDuplicatePage={handleDuplicatePage}
+          onDeletePage={handleDeletePage}
+          onRenamePage={handleRenamePage}
+          onMovePage={handleMovePage}
+        />
+      )}
 
       {/* Short status message */}
       {/* Insert > Screenshot: the editor, the countdown, the photo picker */}
       {screenshot.elements}
 
-      {notice && (
-        <div
-          role="status"
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-zinc-900/90 dark:bg-zinc-100/95 text-white dark:text-zinc-900 text-xs font-medium shadow-xl pointer-events-none"
-        >
-          {notice}
-        </div>
-      )}
-
-      {/* Floating AI Neural Engine Loading & Status Indicator */}
-      <AIModelLoadingStatusPill />
+      {/* Status area, under the top bar: model status, short notices (with Undo), the zoom while pinching */}
+      <div
+        data-status-area
+        className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-max max-w-[calc(100vw-24px)]"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 76px)' }}
+      >
+        <AIModelLoadingStatusPill
+          onDecline={() => {
+            setReadMode('off');
+            showNotice('Reading handwriting is off. Turn it on in Preferences.', 5000);
+          }}
+        />
+        {pinchZoom !== null && (
+          <div role="status" className="px-3 py-1.5 rounded-xl bg-zinc-900/85 text-white text-xs font-mono font-semibold shadow-lg">
+            {Math.round(pinchZoom * 100)}%
+          </div>
+        )}
+        {notice && (
+          <div
+            role="status"
+            onPointerEnter={notice.action ? holdNotice : undefined}
+            onPointerLeave={notice.action ? releaseNotice : undefined}
+            className={`flex items-center gap-2 ${notice.action ? 'pl-4 pr-1.5 py-1.5 pointer-events-auto' : 'px-4 py-2'} rounded-xl bg-zinc-900/90 dark:bg-zinc-100/95 text-white dark:text-zinc-900 text-xs font-medium shadow-xl`}
+          >
+            <span>{notice.message}</span>
+            {notice.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  const run = notice.action.onClick;
+                  setNotice(null);
+                  holdNotice();
+                  run();
+                }}
+                className="min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-3 rounded-lg font-bold text-sky-300 dark:text-sky-700 hover:bg-white/10 dark:hover:bg-black/5"
+              >
+                {notice.action.label}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Live Universal Text & KaTeX Preview Pill Overlay */}
       <LiveMathPreviewOverlay
@@ -2177,13 +2522,13 @@ export default function PlaygroundCanvasContainer() {
         zoomLevel={zoomLevel}
         panOffset={panOffset}
         isDrawing={isDrawing}
-        showLiveOcr={showLiveOcr || ocrMode === 'selection'}
+        visible={readMode !== 'off'}
         selectedClusterId={selectedClusterId}
         onConvertCluster={handleConvertClusterToBlock}
         onPlotClusterGraph={(cluster) => {
           handleConvertClusterToBlock(cluster);
         }}
-        onOpenSoftEditor={(cluster) => setSoftEditorCluster(cluster)}
+        onOpenFix={(cluster) => setSoftEditorCluster(cluster)}
         onReadAsMath={handleReadClusterAsMath}
         onReadAsText={handleReadClusterAsText}
       />
@@ -2382,86 +2727,30 @@ export default function PlaygroundCanvasContainer() {
         </div>
       )}
 
-      {/* Soft Editor & Hypotheses Resolver Modal */}
-      <SoftEditorModal
-        isOpen={Boolean(softEditorCluster)}
-        cluster={softEditorCluster}
-        onClose={() => setSoftEditorCluster(null)}
-        onApplyCorrection={(cluster, correctedText, assignedType) => {
-          const isMath = assignedType === 'MATH' || assignedType === 'FRACTION';
-          const updatedCluster = {
-            ...cluster,
-            detectedText: correctedText,
-            isMath,
-            type: assignedType,
-          };
-          handleConvertClusterToBlock(updatedCluster, correctedText);
-        }}
-      />
+      {/* Fix: correct how handwriting was read */}
+      {softEditorCluster && (
+        <FixReadingDialog
+          cluster={softEditorCluster}
+          isMobile={dimensions.width < 640}
+          onClose={() => setSoftEditorCluster(null)}
+          onApply={(cluster, correctedText, assignedType) => {
+            const isMath = assignedType === 'MATH' || assignedType === 'FRACTION';
+            handleConvertClusterToBlock({ ...cluster, detectedText: correctedText, isMath, type: assignedType }, correctedText);
+          }}
+        />
+      )}
 
-      {/* Semantic Lasso Modal */}
-      <SemanticLassoModal
-        isOpen={Boolean(semanticLassoSelection)}
-        selectedStrokes={semanticLassoSelection?.strokes || []}
-        strokeIds={semanticLassoSelection?.strokeIds || []}
-        bbox={semanticLassoSelection?.bbox || null}
-        onClose={() => setSemanticLassoSelection(null)}
-        onAssignSemanticType={async (typeId, strokes, strokeIds, bbox) => {
-          const isMath = typeId === 'MATH' || typeId === 'FRACTION';
-          const cluster = {
-            clusterId: `lasso_${Date.now()}`,
-            strokes,
-            strokeIds,
-            bbox,
-            detectedText: '',
-            isMath,
-            type: typeId,
-            ocrStatus: 'pending',
-          };
-          const currentMode = notesMode ? 'notes' : 'normal';
-          const res = await processClusterOCR(cluster, { forceRefresh: true, mode: currentMode });
-          if (res && res.detectedText) {
-            handleConvertClusterToBlock({ ...cluster, ...res });
-          } else {
-            setSoftEditorCluster(cluster);
-          }
-        }}
-      />
-
-      {/* Workspace Sync Modal */}
+      {/* Send to Notes */}
       <InkToBlockConverterModal
         isOpen={isSyncModalOpen}
+        isMobile={dimensions.width < 640}
         onClose={() => setIsSyncModalOpen(false)}
         blocks={blockState.blocks}
-        onConfirmSync={(payload) => {
-          // Save to Notes workspace via localStorage
-          try {
-            const rawV2 = localStorage.getItem('netz_notes_v2_data');
-            const existingV2 = rawV2 ? JSON.parse(rawV2) : [];
-            const existingNotes = JSON.parse(localStorage.getItem('netz_notes') || '[]');
-            const newNote = {
-              id: `note_${Date.now()}`,
-              title: payload.title || 'Playground Math Session Notes',
-              subtitle: 'Synced from Playground Whiteboard',
-              tags: ['Playground', 'Math'],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              isPublic: false,
-              accessKey: `NETZ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-              author: 'Student',
-              blocks: payload.blocks.map((b, idx) => ({
-                id: b.id || `b-${Date.now()}-${idx}`,
-                type: b.type === 'math' ? 'math' : b.type === 'graph' ? 'paragraph' : 'paragraph',
-                content: typeof b.content === 'string' ? b.content : JSON.stringify(b.content),
-              })),
-            };
-            existingNotes.unshift(newNote);
-            existingV2.unshift(newNote);
-            localStorage.setItem('netz_notes', JSON.stringify(existingNotes));
-            localStorage.setItem('netz_notes_v2_data', JSON.stringify(existingV2));
-          } catch (err) {
-            console.error('Failed to sync to Notes workspace:', err);
-          }
+        onConfirmSync={handleSendToNotes}
+        onOpenNote={(noteId) => {
+          setIsSyncModalOpen(false);
+          flushSave();
+          router.push(`/Notes?open=${encodeURIComponent(noteId)}`);
         }}
       />
 
@@ -2474,6 +2763,10 @@ export default function PlaygroundCanvasContainer() {
         strokeWidth={strokeWidth}
         setStrokeWidth={setStrokeWidth}
         strokeOpacity={strokeOpacity}
+        highlighterColor={highlighterColor}
+        setHighlighterColor={setHighlighterColor}
+        highlighterWidth={highlighterWidth}
+        setHighlighterWidth={setHighlighterWidth}
         setStrokeOpacity={setStrokeOpacity}
         gridStyle={gridStyle}
         setGridStyle={setGridStyle}
@@ -2496,24 +2789,12 @@ export default function PlaygroundCanvasContainer() {
         screenshot={screenshot}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
         onExportCanvas={handleExportCanvas}
-        showLiveOcr={notesMode ? true : showLiveOcr}
-        setShowLiveOcr={notesMode ? undefined : setShowLiveOcr}
-        ocrMode={ocrMode}
-        setOcrMode={setOcrMode}
+        readMode={readMode}
+        setReadMode={setReadMode}
         notesMode={notesMode}
-        setNotesMode={(mode) => {
-          setNotesMode(mode);
-          if (mode) {
-            // Auto-enable Live OCR when entering Notes Mode, remembering what was set before
-            ocrBeforeNotesRef.current = { showLiveOcr, ocrMode };
-            setShowLiveOcr(true);
-            setOcrMode('live');
-          } else if (ocrBeforeNotesRef.current) {
-            setShowLiveOcr(ocrBeforeNotesRef.current.showLiveOcr);
-            setOcrMode(ocrBeforeNotesRef.current.ocrMode);
-            ocrBeforeNotesRef.current = null;
-          }
-        }}
+        setNotesMode={setNotesMode}
+        onFitToContent={handleFitToContent}
+        onOpenMusic={() => setMusicOpen(true)}
         isRecording={isRecordingAudio}
         onToggleRecordAudio={handleToggleRecordAudio}
         onInsertImage={handleInsertImage}
@@ -2525,34 +2806,27 @@ export default function PlaygroundCanvasContainer() {
         onSymbolsClosed={handleSymbolsClosed}
       />
 
-      {/* Floating Ambient Background Music Player */}
-      <BackgroundMusicPlayer />
+      {/* Focus music: opened from More / Page; while it plays, a pause button sits by the top bar */}
+      <BackgroundMusicPlayer open={musicOpen} onClose={() => setMusicOpen(false)} isMobile={dimensions.width < 640} />
 
-      {/* Unsaved Changes WPS Prompt Modal */}
+      {/* Leaving after a failed save: the only time leaving asks anything */}
       <UnsavedChangesModal
         isOpen={isUnsavedModalOpen}
-        onClose={() => {
+        isMobile={dimensions.width < 640}
+        retrying={retryLeaving && saveStatus === 'saving'}
+        onRetry={() => {
+          setRetryLeaving(true);
+          persistSession();
+        }}
+        onLeave={() => {
           setIsUnsavedModalOpen(false);
+          setRetryLeaving(false);
+          if (pendingTargetUrl) router.push(pendingTargetUrl);
           setPendingTargetUrl(null);
         }}
-        pageTitle={pages[currentPageIndex]?.title || 'Page 1'}
-        onSave={() => {
-          handleManualSave();
+        onStay={() => {
           setIsUnsavedModalOpen(false);
-          if (pendingTargetUrl) {
-            router.push(pendingTargetUrl);
-            setPendingTargetUrl(null);
-          }
-        }}
-        onDontSave={() => {
-          setIsUnsavedModalOpen(false);
-          if (pendingTargetUrl) {
-            router.push(pendingTargetUrl);
-            setPendingTargetUrl(null);
-          }
-        }}
-        onCancel={() => {
-          setIsUnsavedModalOpen(false);
+          setRetryLeaving(false);
           setPendingTargetUrl(null);
         }}
       />

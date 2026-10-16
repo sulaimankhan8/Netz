@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, sleep, clickTitle, shot } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, withToolOptions } from './lib.mjs';
 
 const { browser, page, errors } = await launch();
 const results = [];
@@ -24,8 +24,11 @@ try {
   // Whole-stroke mode (default): one drag across all three
   await clickTitle(page, 'Eraser');
   await sleep(150);
-  const optionsShown = await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => b.innerText.trim() === 'Part of stroke'));
-  check('eraser options appear when the eraser is selected', optionsShown);
+  let optionsShown = false;
+  await withToolOptions(page, async () => {
+    optionsShown = await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => b.innerText.trim() === 'Part of stroke'));
+  });
+  check('with the eraser selected, its options button opens the eraser options', optionsShown);
   await page.mouse.move(450, 200);
   await sleep(100);
   check('hovering shows the eraser circle', (await regionInk(450, 200, 24, 'canvas.z-20')) > 0);
@@ -37,8 +40,7 @@ try {
   check('one undo brings all three back (the drag is one step)', (await strokeCount()) === 3, await strokeCount());
 
   // Part-of-stroke mode
-  await clickText('Part of stroke');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Part of stroke'));
   await drawStroke(page, [[500, 230], [500, 370]], { steps: 10 });
   await sleep(200);
   check('partial eraser: each line is cut in two', (await strokeCount()) === 6, await strokeCount());
@@ -51,12 +53,12 @@ try {
   check('the crossing is back', (await regionInk(500, 300, 8)) > 0);
 
   // Size: the eraser reach follows its own setting, not the pen width
-  await page.evaluate(() => document.querySelector('button[title="Small eraser"]').click());
+  await withToolOptions(page, () => page.evaluate(() => document.querySelector('button[title="Small eraser"]').click()));
   await sleep(100);
   await drawStroke(page, [[400, 318], [400, 322]], { steps: 2 }); // 18 px below the middle line: outside a small eraser
   await sleep(200);
   check('small eraser 18 px away does not touch the line', (await strokeCount()) === 3, await strokeCount());
-  await page.evaluate(() => document.querySelector('button[title="Large eraser"]').click());
+  await withToolOptions(page, () => page.evaluate(() => document.querySelector('button[title="Large eraser"]').click()));
   await sleep(100);
   await drawStroke(page, [[400, 318], [400, 322]], { steps: 2 });
   await sleep(200);

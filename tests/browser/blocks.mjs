@@ -42,12 +42,22 @@ try {
   blocks = await blockInfo();
   check('Enter closes the editor and the frame together', !blocks[0].editing && blocks[0].inputs === 0, JSON.stringify(blocks[0]));
 
-  // Clicking the block reopens it; the Done button closes it
-  await page.evaluate(() => document.querySelector('[data-block-id] .cursor-text').click());
+  // With a mouse, a click selects the block (bar and handles) without opening it
+  {
+    const body = await page.$('[data-block-id] [data-block-body]');
+    const box = await body.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await sleep(300);
+    blocks = await blockInfo();
+    const selected = await page.evaluate(() => Boolean(document.querySelector('[data-block-id] .ring-2')));
+    check('a click selects the block without opening it', selected && !blocks[0].editing, JSON.stringify(blocks[0]));
+    // A double click reopens it; the Done button closes it
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 2 });
+  }
   await page.waitForSelector('[data-block-id] math-field', { timeout: 30000 });
   await sleep(300);
   blocks = await blockInfo();
-  check('clicking the block reopens the editor with its content', blocks[0].editing && blocks[0].inputs === 1, JSON.stringify(blocks[0]));
+  check('a double click reopens the editor with its content', blocks[0].editing && blocks[0].inputs === 1, JSON.stringify(blocks[0]));
   const reopened = await page.evaluate(() => document.querySelector('[data-block-id] math-field').value);
   check('the equation text is kept', reopened === 'y=x^2-4x+3', reopened);
   check('Plot Graph is offered while editing', await clickButtonText('Plot Graph'));
@@ -80,11 +90,19 @@ try {
   // Sync to Notes: everything preselected, creates a note with the blocks
   await clickTitle(page, 'Sync Whiteboard to Notes Workspace');
   await sleep(400);
-  const syncDisabled = await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Transcribe to Notes Page/.test(b.innerText))?.disabled);
+  const sendButton = () => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.innerText.trim() === 'Send to Notes');
+  const syncDisabled = await page.evaluate((f) => eval(f)()?.disabled, sendButton.toString());
   check('Sync opens with the blocks already selected', syncDisabled === false, syncDisabled);
   await shot(page, 'blocks-sync');
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Transcribe to Notes Page/.test(b.innerText)).click());
+  await page.evaluate((f) => eval(f)().click(), sendButton.toString());
   await sleep(500);
+  const sent = await page.evaluate(() => ({
+    message: document.querySelector('[role="dialog"] [role="status"]')?.innerText || '',
+    open: Boolean([...document.querySelectorAll('[role="dialog"] button')].find((b) => b.innerText.trim() === 'Open note')),
+  }));
+  check('it says the note was sent and offers Open note', /Sent to Notes/.test(sent.message) && sent.open, JSON.stringify(sent));
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.innerText.trim() === 'Close').click());
+  await sleep(300);
   const note = await page.evaluate(() => {
     const notes = JSON.parse(localStorage.getItem('netz_notes_v2_data') || '[]');
     return notes[0] ? notes[0].blocks.map((b) => `${b.type}: ${String(b.content).slice(0, 40)}`) : null;

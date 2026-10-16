@@ -483,7 +483,9 @@ export default function TheoryBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => insertLinePrefix('# ')}
               title="Heading 1 (# )"
-              className="p-1.5 text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              aria-label="Heading"
+              type="button"
+              className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
               <FiHash className="w-3.5 h-3.5" />
             </button>
@@ -491,7 +493,9 @@ export default function TheoryBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => insertLinePrefix('- ')}
               title="Bullet List (- )"
-              className="p-1.5 text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              aria-label="Bulleted list"
+              type="button"
+              className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
               <FiList className="w-3.5 h-3.5" />
             </button>
@@ -499,7 +503,9 @@ export default function TheoryBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => insertLinePrefix('[ ] ')}
               title="Checkbox Task ([ ] )"
-              className="p-1.5 text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              aria-label="Task"
+              type="button"
+              className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
               <FiCheckSquare className="w-3.5 h-3.5" />
             </button>
@@ -508,7 +514,9 @@ export default function TheoryBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleBold}
               title="Bold Text (**text**)"
-              className="p-1.5 text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors font-bold"
+              aria-label="Bold"
+              type="button"
+              className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors font-bold"
             >
               <FiBold className="w-3.5 h-3.5" />
             </button>
@@ -516,7 +524,9 @@ export default function TheoryBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleItalic}
               title="Italic Text (*text*)"
-              className="p-1.5 text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors italic"
+              aria-label="Italic"
+              type="button"
+              className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors italic"
             >
               <FiItalic className="w-3.5 h-3.5" />
             </button>
@@ -568,8 +578,9 @@ export default function TheoryBlock({
                 }
               }}
               autoFocus
-              placeholder="Start typing notes... (use # for title, - for bullets, [ ] for tasks, $...$ for math)"
-              className="relative z-10 w-full h-full p-2.5 bg-transparent font-sans font-normal text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none whitespace-pre-wrap break-words"
+              placeholder="Type here. # starts a heading, - a list, [ ] a task, $x^2$ maths."
+              aria-label="Text"
+              className="relative z-10 w-full h-full p-2.5 bg-transparent font-sans font-normal text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl resize-none whitespace-pre-wrap break-words"
               style={{
                 minHeight: '80px',
                 fontSize: isRuledLineAligned ? '15px' : '12px',

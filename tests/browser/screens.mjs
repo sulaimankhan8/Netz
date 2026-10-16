@@ -64,22 +64,12 @@ for (const [name, width, height, dpr] of SIZES) {
     await clickTitle(page, 'Stroke & Canvas Settings').catch(() => {});
     await sleep(200);
 
-    // Dialog 1: Sync to Notes Modal (InkToBlockConverterModal)
-    const isMore = await page.evaluate(() => Boolean(document.querySelector('button[title^="More Tools"]')));
-    if (isMore) {
-      await clickTitle(page, 'More Tools').catch(() => {});
-      await sleep(250);
-    }
+    // Dialog 1: Send to Notes (InkToBlockConverterModal)
     await clickTitle(page, 'Sync Whiteboard to Notes Workspace').catch(() => {});
     await sleep(350);
     out.syncDialog = await page.evaluate(() => {
-      const h = [...document.querySelectorAll('h3')].find((el) => el.innerText.includes('Sync Whiteboard'));
-      if (!h) return 'not found';
-      let modal = h;
-      for (let i = 0; i < 6 && modal.parentElement; i++) {
-        modal = modal.parentElement;
-        if (modal.classList.contains('shadow-2xl')) break;
-      }
+      const modal = document.querySelector('[data-insert-dialog="Send to Notes"]');
+      if (!modal) return 'not found';
       const r = modal.getBoundingClientRect();
       return `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} (fits: ${r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight})`;
     });
@@ -90,26 +80,32 @@ for (const [name, width, height, dpr] of SIZES) {
     });
     await sleep(250);
 
-    // Dialog 2: Unsaved Changes Modal (UnsavedChangesModal)
+    // Dialog 2: the leave prompt (UnsavedChangesModal). It only shows after a failed save, so
+    // IndexedDB is made to fail and the page is changed first.
+    await page.evaluate(() => {
+      window.indexedDB.open = () => {
+        throw new Error('IndexedDB switched off for this check');
+      };
+    });
+    await page.mouse.move(width / 2 - 20, height / 2);
+    await page.mouse.down();
+    await page.mouse.move(width / 2 + 20, height / 2 + 10, { steps: 4 });
+    await page.mouse.up();
+    await sleep(1200);
     await page.evaluate(() => {
       if (window.__NETZ_OPEN_UNSAVED_MODAL__) window.__NETZ_OPEN_UNSAVED_MODAL__('/');
     });
     await sleep(350);
     out.unsavedDialog = await page.evaluate(() => {
-      const h = [...document.querySelectorAll('h3')].find((el) => el.innerText.trim() === 'Save');
-      if (!h) return 'not found';
-      let modal = h;
-      for (let i = 0; i < 6 && modal.parentElement; i++) {
-        modal = modal.parentElement;
-        if (modal.classList.contains('shadow-2xl')) break;
-      }
+      const modal = document.querySelector('[data-insert-dialog^="Your latest changes"]');
+      if (!modal) return 'not found';
       const r = modal.getBoundingClientRect();
       return `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} (fits: ${r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight})`;
     });
     await shot(page, `screen-${name}-unsaved`);
     await page.evaluate(() => {
-      const cancel = [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Cancel');
-      if (cancel) cancel.click();
+      const stay = [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Stay');
+      if (stay) stay.click();
     });
     await sleep(250);
   } catch (e) {

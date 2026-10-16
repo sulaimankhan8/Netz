@@ -400,7 +400,7 @@ export default function HandwritingCollector() {
             }}
             placeholder="Writer name or initials"
             aria-label="Writer name or initials"
-            className="px-3 py-1.5 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-blue-500 select-text"
+            className="px-3 py-1.5 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-blue-500 select-text"
           />
         </div>
 

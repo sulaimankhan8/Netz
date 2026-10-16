@@ -312,7 +312,7 @@ export default function GraphBlock({
                       if (formError) setFormError(null);
                     }}
                     placeholder="sin(x), x^2 - 4, 2x + 1..."
-                    className="w-full pl-12 pr-7 py-1 text-xs font-mono rounded-lg bg-white dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 shadow-sm"
+                    className="w-full pl-12 pr-7 py-1 text-xs font-mono rounded-lg bg-white dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-blue-500 shadow-sm"
                     autoFocus
                   />
                   {newEquationInput && (

@@ -22,12 +22,8 @@ try {
     const s = JSON.parse(localStorage.getItem('NETZ_PLAYGROUND_SESSION_BACKUP') || '{}');
     return ((s.pages && s.pages[0].blocks) || []).map((b) => `${b.type}@${b.position.x},${b.position.y}`);
   });
-  // Notes mode gives back the previous recognition settings
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  const mode = () => page.evaluate(() => {
-    const sel = [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Selection');
-    return sel ? (/bg-purple-500/.test(sel.className) ? 'selection' : 'live') : 'hidden';
-  });
+  // Writing mode gives back the previous "Read my writing" setting
+  const mode = () => page.evaluate(() => localStorage.getItem('netz_playground_read_mode') || 'select');
   out.ocrBefore = await mode();
   await clickTitle(page, 'Switch to Notes Mode');
   await sleep(200);

@@ -9,6 +9,8 @@ const SUITES = [
   'undo', 'touch', 'eraser', 'lasso', 'export', 'pen', 'blocks', 'workspace', 'render',
   // Insert group (PLAYGROUND_INSERT_TOOLS_PLAN.md)
   'insert-shapes', 'insert-shapes-format', 'insert-shapes-arrange', 'insert-symbols', 'insert-equations', 'insert-screenshot',
+  // UX fixes (PLAYGROUND_UX_FIX_PLAN.md)
+  'ux-fixes',
 ];
 const only = process.argv.slice(2);
 let failedSuites = 0;

@@ -1,50 +1,15 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { FiX } from 'react-icons/fi';
+import { Dialog } from '../ui/Dialog';
 import { SymbolCell } from './SymbolMenu';
 import {
   SPECIAL_CHARACTERS, VISIBLE_STAND_IN, readRecentSymbols, rememberRecentSymbol, readCustomSymbols, addCustomSymbol,
   removeCustomSymbol, parseCharacterCode, characterCode, displayName, searchSymbols,
 } from '../../utils/symbols/symbols';
 
-/** A dialog in the middle of the screen (a bottom sheet on phones), above everything else. */
-export function Dialog({ title, isMobile, onClose, children, footer, label }) {
-  useEffect(() => {
-    const key = (e) => {
-      if (e.key === 'Escape') {
-        e.stopImmediatePropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', key, true);
-    return () => window.removeEventListener('keydown', key, true);
-  }, [onClose]);
-
-  if (typeof document === 'undefined') return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/30" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        role="dialog"
-        aria-label={label || title}
-        aria-modal="true"
-        data-insert-dialog={label || title}
-        className={`${isMobile ? 'w-full h-[85vh] rounded-t-3xl' : 'w-[620px] max-w-[95vw] max-h-[85vh] rounded-2xl'} flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl text-xs text-zinc-700 dark:text-zinc-300`}
-      >
-        <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-          <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{title}</span>
-          <button type="button" onClick={onClose} aria-label={`Close ${title}`} className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <FiX className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3 flex flex-col gap-3">{children}</div>
-        {footer && <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">{footer}</div>}
-      </div>
-    </div>,
-    document.body
-  );
-}
+// The shared dialog (a bottom sheet on phones). Other Insert dialogs import it from here.
+export { Dialog };
 
 /**
  * More Symbols, as in WPS Office and Word: a Symbols tab (subset, a grid, search by name or
@@ -137,7 +102,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
   );
 
   return (
-    <Dialog title="Symbol" label="More Symbols" isMobile={isMobile} onClose={onClose} footer={footer}>
+    <Dialog title="Symbol" label="More Symbols" isMobile={isMobile} onClose={onClose} footer={footer} manageFocus={false}>
       <div className="flex gap-1" role="tablist">
         {[['symbols', 'Symbols'], ['special', 'Special Characters']].map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`px-3 h-8 rounded-lg font-semibold ${tab === id ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}>

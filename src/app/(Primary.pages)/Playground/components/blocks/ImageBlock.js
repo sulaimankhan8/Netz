@@ -51,7 +51,7 @@ export default function ImageBlock({
           value={caption}
           onChange={(e) => handleCaptionChange(e.target.value)}
           placeholder="Add title or caption (optional)..."
-          className="mt-1.5 w-full px-2 py-1 text-center text-xs rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-blue-500"
+          className="mt-1.5 w-full px-2 py-1 text-center text-xs rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-blue-500"
         />
       ) : (
         caption.trim() !== '' && (

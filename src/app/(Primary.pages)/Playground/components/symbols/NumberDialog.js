@@ -34,7 +34,7 @@ export default function NumberDialog({ isMobile, onInsert, onClose }) {
   );
 
   return (
-    <Dialog title="Number" isMobile={isMobile} onClose={onClose} footer={footer}>
+    <Dialog title="Number" isMobile={isMobile} onClose={onClose} footer={footer} manageFocus={false}>
       <label className="flex items-center gap-2">
         <span className="w-24 shrink-0 font-semibold">Number:</span>
         <input

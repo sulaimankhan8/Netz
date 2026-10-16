@@ -51,7 +51,7 @@ export default function SymbolMenu({ isMobile, onInsert, onMoreSymbols, onNumber
     >
       <div className="flex items-center justify-between">
         <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Symbol</span>
-        <button type="button" onClick={onClose} aria-label="Close Symbol" className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <button type="button" onClick={onClose} aria-label="Close Symbol" className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
           <FiX className="w-4 h-4" />
         </button>
       </div>

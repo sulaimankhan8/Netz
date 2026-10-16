@@ -1,74 +1,34 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  FiMusic,
-  FiPlay,
-  FiPause,
-  FiVolume2,
-  FiVolumeX,
-  FiRepeat,
-  FiUploadCloud,
-  FiChevronDown,
-  FiChevronUp,
-  FiDisc,
-  FiX,
-} from 'react-icons/fi';
+import React, { useState, useRef, useEffect } from 'react';
+import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiUploadCloud } from 'react-icons/fi';
+import { LuMusic } from 'react-icons/lu';
+import { Dialog } from './ui/Dialog';
+import { UI } from '../utils/uiText';
 
 const BUILTIN_AMBIENT_PRESETS = [
-  {
-    id: 'lofi_chill',
-    name: 'Lo-Fi Chill & Focus',
-    icon: '🎧',
-    src: '/audio/ambient/lofi-relax.mp3',
-    description: 'Warm mellow beats & Rhodes keys',
-  },
-  {
-    id: 'rain_window',
-    name: 'Rain on Window',
-    icon: '🌧️',
-    src: '/audio/ambient/rain.mp3',
-    description: 'Gentle steady rainfall & droplets',
-  },
-  {
-    id: 'forest_birds',
-    name: 'Forest Birds & Breeze',
-    icon: '🌲',
-    src: '/audio/ambient/forest-birds.mp3',
-    description: 'Natural birdsong & rustling trees',
-  },
-  {
-    id: 'cozy_cafe',
-    name: 'Cozy Study Cafe',
-    icon: '☕',
-    src: '/audio/ambient/cafe.mp3',
-    description: 'Coffee shop chatter & warm vibes',
-  },
-  {
-    id: 'ocean_waves',
-    name: 'Deep Ocean Waves',
-    icon: '🌊',
-    src: '/audio/ambient/ocean-waves.mp3',
-    description: 'Rhythmic rolling coastal surf',
-  },
-  {
-    id: 'campfire',
-    name: 'Night Campfire',
-    icon: '🔥',
-    src: '/audio/ambient/campfire.mp3',
-    description: 'Crackling firewood & evening calm',
-  },
+  { id: 'lofi_chill', name: 'Lo-fi chill', src: '/audio/ambient/lofi-relax.mp3', description: 'Mellow beats and keys' },
+  { id: 'rain_window', name: 'Rain on a window', src: '/audio/ambient/rain.mp3', description: 'Steady rainfall' },
+  { id: 'forest_birds', name: 'Forest birds', src: '/audio/ambient/forest-birds.mp3', description: 'Birdsong and breeze' },
+  { id: 'cozy_cafe', name: 'Study café', src: '/audio/ambient/cafe.mp3', description: 'Quiet café chatter' },
+  { id: 'ocean_waves', name: 'Ocean waves', src: '/audio/ambient/ocean-waves.mp3', description: 'Rolling surf' },
+  { id: 'campfire', name: 'Campfire', src: '/audio/ambient/campfire.mp3', description: 'Crackling fire' },
 ];
 
-export default function BackgroundMusicPlayer() {
+const PREFS_KEY = 'netz_playground_music';
+
+/**
+ * Focus music: ambient sounds to study with. Opened from the More or Page menu; never on the page
+ * by itself. While something plays, a small pause button sits at the top right of the screen.
+ * The chosen sound and volume are remembered on this device.
+ */
+export default function BackgroundMusicPlayer({ open = false, onClose, isMobile = false }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.65); // Default 65% clear audible volume
+  const [volume, setVolume] = useState(0.65);
   const [isMuted, setIsMuted] = useState(false);
-  const [isLooping, setIsLooping] = useState(true);
   const [activePreset, setActivePreset] = useState(BUILTIN_AMBIENT_PRESETS[0]);
   const [customAudioUrl, setCustomAudioUrl] = useState(null);
   const [customAudioName, setCustomAudioName] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const audioRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -77,195 +37,117 @@ export default function BackgroundMusicPlayer() {
   const currentSrc = customAudioUrl || activePreset.src;
   const currentTitle = customAudioName || activePreset.name;
 
-  // Sync volume & loop settings with HTML5 audio element
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+      if (saved) {
+        const preset = BUILTIN_AMBIENT_PRESETS.find((p) => p.id === saved.presetId);
+        if (preset) setActivePreset(preset);
+        if (Number.isFinite(saved.volume)) setVolume(Math.min(1, Math.max(0, saved.volume)));
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ presetId: activePreset.id, volume }));
+    } catch (e) {}
+  }, [activePreset, volume]);
+
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = effectiveVolume;
-      audioRef.current.loop = isLooping;
+      audioRef.current.loop = true;
     }
-  }, [effectiveVolume, isLooping]);
+  }, [effectiveVolume]);
 
-  // Clean pause on unmount
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      if (audio) audio.pause();
     };
   }, []);
 
-  const togglePlay = () => {
+  const play = () => {
     const audio = audioRef.current;
     if (!audio) return;
+    audio.volume = effectiveVolume;
+    audio.loop = true;
+    audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+  };
 
+  const togglePlay = () => {
     if (isPlaying) {
-      audio.pause();
+      audioRef.current?.pause();
       setIsPlaying(false);
     } else {
-      audio.volume = effectiveVolume;
-      audio.loop = isLooping;
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((err) => {
-          console.warn('Playback error:', err);
-          setIsPlaying(false);
-        });
+      play();
     }
+  };
+
+  const playSource = (src) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.src = src;
+    play();
   };
 
   const handlePresetSelect = (preset) => {
     setActivePreset(preset);
     setCustomAudioUrl(null);
     setCustomAudioName('');
-
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.src = preset.src;
-    audio.volume = effectiveVolume;
-    audio.loop = isLooping;
-    audio
-      .play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false));
+    playSource(preset.src);
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const fileUrl = URL.createObjectURL(file);
     setCustomAudioUrl(fileUrl);
     setCustomAudioName(file.name.replace(/\.[^/.]+$/, ''));
-
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.src = fileUrl;
-    audio.volume = effectiveVolume;
-    audio.loop = isLooping;
-    audio
-      .play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false));
+    playSource(fileUrl);
   };
 
+  const round = 'min-w-[40px] min-h-[40px] [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]';
+
   return (
-    <div className="fixed bottom-20 right-6 z-50 select-none">
-      {/* Real HTML5 Audio Player */}
+    <>
       <audio
         ref={audioRef}
         src={currentSrc}
-        loop={isLooping}
-        preload="metadata"
+        loop
+        preload="none"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onEnded={() => {
-          if (!isLooping) setIsPlaying(false);
-        }}
       />
 
-      {/* Main Compact Player Pill */}
-      <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-xl border border-zinc-700/80 shadow-2xl transition-all">
-        {/* Vinyl Disc Spin Animation when playing */}
-        <div
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2.5 cursor-pointer group"
-          title="Click to view soundscapes"
-        >
-          <div
-            className={`p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md ${
-              isPlaying ? 'animate-spin' : ''
-            }`}
-            style={{ animationDuration: '3.5s' }}
-          >
-            <FiDisc className="w-4 h-4 text-white" />
-          </div>
-
-          <div className="flex flex-col text-left max-w-[140px]">
-            <span className="text-[11px] font-semibold truncate leading-tight text-zinc-100">
-              {currentTitle}
-            </span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {isPlaying ? (
-                <div className="flex items-end gap-0.5 h-2.5">
-                  <span className="w-0.5 h-2.5 bg-blue-400 rounded-full animate-pulse" />
-                  <span className="w-0.5 h-1.5 bg-blue-400 rounded-full animate-pulse delay-75" />
-                  <span className="w-0.5 h-2 bg-blue-400 rounded-full animate-pulse delay-150" />
-                </div>
-              ) : null}
-              <span className="text-[9px] text-zinc-400 font-mono">
-                {isPlaying ? 'Playing Ambient' : 'Paused'}
-              </span>
-            </div>
-          </div>
+      {/* While playing: a small pause button at the top right */}
+      {isPlaying && !open && (
+        <div className="fixed z-40 right-3 sm:right-4 flex items-center gap-1 p-1 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-lg" style={{ top: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}>
+          <button type="button" onClick={togglePlay} aria-label={`Pause ${currentTitle}`} title={`Pause ${currentTitle}`} className={`${round} flex items-center justify-center rounded-xl text-blue-600 dark:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+            <FiPause className="w-4 h-4" />
+          </button>
         </div>
+      )}
 
-        {/* Play/Pause Button */}
-        <button
-          onClick={togglePlay}
-          title={isPlaying ? 'Pause Ambient Sound' : 'Play Ambient Sound'}
-          aria-label={isPlaying ? 'Pause Ambient Sound' : 'Play Ambient Sound'}
-          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-95 text-white shadow-md transition-all cursor-pointer"
-        >
-          {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4 ml-0.5" />}
-        </button>
-
-        {/* Expand Options Arrow */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          title={isExpanded ? 'Collapse' : 'Ambient sound options'}
-          aria-label={isExpanded ? 'Collapse' : 'Ambient sound options'}
-          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
-        >
-          {isExpanded ? <FiChevronDown className="w-4 h-4" /> : <FiChevronUp className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Expanded Controls Popover */}
-      {isExpanded && (
-        <div className="absolute bottom-14 right-0 w-[360px] p-3.5 rounded-2xl bg-zinc-900/95 text-white backdrop-blur-2xl border border-zinc-700/80 shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-            <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
-              <div className="p-1 rounded-md bg-blue-500/20 text-blue-400">
-                <FiMusic className="w-3.5 h-3.5" />
-              </div>
-              <span>Background Ambient Soundscapes</span>
+      {open && (
+        <Dialog title={UI.focusMusic} isMobile={isMobile} onClose={onClose} width="w-[420px]" fullHeight={false}>
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <LuMusic className={`w-5 h-5 ${isPlaying ? 'animate-pulse' : ''}`} aria-hidden="true" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{currentTitle}</div>
+              <div className="text-[12px] text-zinc-500 dark:text-zinc-400">{isPlaying ? 'Playing' : 'Paused'}</div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setIsLooping(!isLooping)}
-                title={isLooping ? 'Continuous Loop Enabled' : 'Loop Disabled'}
-                className={`p-1 rounded-md transition-colors ${
-                  isLooping ? 'bg-blue-500/20 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                <FiRepeat className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setIsExpanded(false)}
-                title="Close"
-                className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors rounded-md"
-              >
-                <FiX className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button type="button" onClick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'} className={`${round} flex items-center justify-center rounded-xl bg-blue-500 hover:bg-blue-600 text-white`}>
+              {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4 ml-0.5" />}
+            </button>
           </div>
 
-          {/* Volume Control Slider */}
-          <div className="flex items-center gap-2.5 px-1">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-              title={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted || volume === 0 ? (
-                <FiVolumeX className="w-4 h-4 text-rose-400" />
-              ) : (
-                <FiVolume2 className="w-4 h-4 text-blue-400" />
-              )}
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setIsMuted(!isMuted)} aria-label={isMuted ? 'Unmute' : 'Mute'} className={`${round} flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+              {isMuted || volume === 0 ? <FiVolumeX className="w-4 h-4 text-rose-500" /> : <FiVolume2 className="w-4 h-4" />}
             </button>
             <input
               type="range"
@@ -273,75 +155,47 @@ export default function BackgroundMusicPlayer() {
               max="1"
               step="0.02"
               value={isMuted ? 0 : volume}
+              aria-label="Volume"
               onChange={(e) => {
                 setVolume(parseFloat(e.target.value));
                 setIsMuted(false);
               }}
-              className="w-full h-1.5 bg-zinc-700/80 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="flex-1 accent-blue-500"
             />
-            <span className="text-[10px] font-mono text-zinc-400 w-8 text-right font-medium">
-              {Math.round((isMuted ? 0 : volume) * 100)}%
-            </span>
+            <span className="w-10 text-right font-mono text-[12px] text-zinc-500">{Math.round((isMuted ? 0 : volume) * 100)}%</span>
           </div>
 
-          {/* Preset Options Grid - Clean 2-column layout with 6 high-fidelity soundscapes */}
-          <div className="space-y-1.5 pt-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                Study Ambience Soundscapes
-              </span>
-              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
-                Studio Quality
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {BUILTIN_AMBIENT_PRESETS.map((preset) => {
-                const isSelected = !customAudioUrl && activePreset.id === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    onClick={() => handlePresetSelect(preset)}
-                    className={`flex flex-col gap-0.5 p-2 rounded-xl text-left transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-blue-500/20 border-blue-500/60 text-white shadow-sm ring-1 ring-blue-500/40'
-                        : 'bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 border-zinc-700/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{preset.icon}</span>
-                      <span className="text-[11px] font-semibold leading-tight truncate">
-                        {preset.name}
-                      </span>
-                    </div>
-                    <span className="text-[9px] text-zinc-400 leading-tight truncate pl-5">
-                      {preset.description}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            {BUILTIN_AMBIENT_PRESETS.map((preset) => {
+              const selected = !customAudioUrl && activePreset.id === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handlePresetSelect(preset)}
+                  aria-pressed={selected}
+                  className={`flex flex-col items-start gap-0.5 p-2.5 min-h-[44px] rounded-xl border text-left ${
+                    selected ? 'border-blue-500 bg-blue-500/10' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{preset.name}</span>
+                  <span className="text-[12px] text-zinc-500 dark:text-zinc-400">{preset.description}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Custom MP3 Upload */}
-          <div className="pt-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/mp3,audio/wav,audio/m4a,audio/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-xs font-semibold text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shadow-sm hover:border-zinc-600"
-            >
-              <FiUploadCloud className="w-4 h-4 text-blue-400" />
-              <span>Upload Custom MP3 Note Music</span>
-            </button>
-          </div>
-        </div>
+          <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileUpload} className="hidden" />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 min-h-[44px] rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <FiUploadCloud className="w-4 h-4" aria-hidden="true" />
+            Play your own audio file
+          </button>
+        </Dialog>
       )}
-    </div>
+    </>
   );
 }

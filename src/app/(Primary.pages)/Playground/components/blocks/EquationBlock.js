@@ -130,7 +130,7 @@ export default function EquationBlock({
                 autoFocus
                 data-latex-input
                 placeholder="Type equation (e.g. y = x^2 - 4x + 3, \sin(x))..."
-                className="w-full px-3 py-2 pr-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-blue-500 shadow-inner"
+                className="w-full px-3 py-2 pr-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-blue-500 shadow-inner"
               />
               <button
                 onClick={() => setIsEditing(false)}

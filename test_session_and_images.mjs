@@ -232,6 +232,15 @@ expect('a picture over the pixel limit is shrunk', needsShrinking(4032, 3024, 10
 expect('a heavy picture is re-encoded even when small in pixels', needsShrinking(800, 600, KEEP_AS_IS_BYTES + 1) === true);
 expect('a picture exactly at both limits is left alone', needsShrinking(MAX_IMAGE_SIDE, 900, KEEP_AS_IS_BYTES) === false);
 
+// ── A save reports whether IndexedDB (the real store) has it ─────────────────
+{
+  const stored = await new Promise((resolve) => {
+    saveSession('default_session', session(['idb']), { onStored: (ok, err) => resolve({ ok, err }) });
+  });
+  expect('without IndexedDB the save reports a failure (so the page can say "Couldn\'t save")', stored.ok === false && Boolean(stored.err));
+  expect('the localStorage copy is still written and returns true as before', saveSession('default_session', session(['idb2'])) === true);
+}
+
 if (failed > 0) {
   console.error(`\n ${failed}/${checks} session and image checks FAILED`);
   process.exit(1);

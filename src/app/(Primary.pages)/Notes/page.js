@@ -37,6 +37,11 @@ export default function NotesPage() {
       }
 
       const urlParams = new URLSearchParams(window.location.search);
+      // ?open=<note id>: a note just sent from the Playground ("Open note")
+      const openParam = urlParams.get('open');
+      if (openParam && loadedNotes.some((n) => n.id === openParam)) {
+        setActiveNoteId(openParam);
+      }
       const keyParam = urlParams.get('key');
       if (keyParam) {
         const imported = importNoteByKey(keyParam);

@@ -55,6 +55,11 @@ function applyWorldTransform(ctx, zoomLevel, panOffset) {
 const SELECTION_PADDING = 8; // px on screen between the selected ink and its box
 const SELECTION_HANDLE = 12; // px on screen, the resize handle at the box's bottom-right corner
 const SHAPE_TAP_DISTANCE = 6; // px on screen: a shorter drag with the Shapes tool is a tap (default size)
+// Two- and three-finger taps (undo, redo), as in drawing apps: the fingers land within this time
+// of the first, move less than this, and are all lifted within the last limit
+const MULTI_TAP_LAND_MS = 250;
+const MULTI_TAP_MOVE_PX = 10;
+const MULTI_TAP_MAX_MS = 400;
 
 const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   {
@@ -83,6 +88,8 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     onDrawingStateChange,
     onSelectionCompleted,
     onSelectionChange,
+    onTwoFingerTap, // two fingers tap together: undo
+    onThreeFingerTap, // three fingers tap together: redo
   },
   ref
 ) {
@@ -102,6 +109,9 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   const touchPointsRef = useRef(new Map()); // pointerId -> { x, y } relative to the canvas
   const gestureRef = useRef(null); // two-finger pinch/pan, or one-finger pan when fingers do not draw
   const penStateRef = useRef({ isDown: false, lastActive: -Infinity });
+  // A tap with several fingers (undo, redo): when it began, the most fingers down, where each
+  // finger started, and whether it is still a tap (fingers landed together and did not move)
+  const multiTapRef = useRef(null);
 
   // Lasso selection: the selected stroke ids with their bounding box, and a move / resize in progress
   const selectionRef = useRef(null);
@@ -694,6 +704,12 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       return;
     }
 
+    // A finger has no hover: once it lifts, the eraser ring under it goes too
+    if (activeTool === 'eraser' && e.pointerType === 'touch') {
+      const ctx = canvas ? canvas.getContext('2d') : null;
+      if (ctx) clearCanvas(ctx);
+    }
+
     // One eraser drag is one edit: report it once more, as final, so it becomes a single undo step
     if (activeTool === 'eraser' && erasedDuringDragRef.current) {
       erasedDuringDragRef.current = false;
@@ -877,7 +893,17 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
 
       const canvas = activeCanvasRef.current;
       if (!canvas) return;
-      touchPointsRef.current.set(e.pointerId, touchPosition(e));
+      const pos = touchPosition(e);
+      if (touchPointsRef.current.size === 0) {
+        multiTapRef.current = { start: now, starts: new Map(), most: 0, valid: true, view: { zoom: zoomLevel, pan: panOffset } };
+      }
+      const tap = multiTapRef.current;
+      if (tap) {
+        if (now - tap.start > MULTI_TAP_LAND_MS) tap.valid = false;
+        tap.starts.set(e.pointerId, pos);
+      }
+      touchPointsRef.current.set(e.pointerId, pos);
+      if (tap) tap.most = Math.max(tap.most, touchPointsRef.current.size);
 
       if (touchPointsRef.current.size === 2) {
         // Second finger: this is navigation, so the first finger's stroke is dropped
@@ -904,7 +930,11 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     if (e.pointerType === 'pen') penStateRef.current.lastActive = performance.now();
 
     if (e.pointerType === 'touch' && touchPointsRef.current.has(e.pointerId)) {
-      touchPointsRef.current.set(e.pointerId, touchPosition(e));
+      const pos = touchPosition(e);
+      touchPointsRef.current.set(e.pointerId, pos);
+      const tap = multiTapRef.current;
+      const from = tap && tap.starts.get(e.pointerId);
+      if (from && Math.hypot(pos.x - from.x, pos.y - from.y) > MULTI_TAP_MOVE_PX) tap.valid = false;
       const gesture = gestureRef.current;
 
       if (gesture && gesture.type === 'pinch') {
@@ -949,9 +979,23 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   };
 
   // Returns true when the event belonged to touch navigation and is fully handled
+  const finishMultiTap = () => {
+    const tap = multiTapRef.current;
+    multiTapRef.current = null;
+    if (!tap || !tap.valid || performance.now() - tap.start > MULTI_TAP_MAX_MS) return;
+    if (tap.most !== 2 && tap.most !== 3) return;
+    // The fingers may have nudged the zoom a little: a tap leaves the view as it was
+    if (onViewportChange && (tap.view.zoom !== zoomLevel || tap.view.pan.x !== panOffset.x || tap.view.pan.y !== panOffset.y)) {
+      onViewportChange(tap.view);
+    }
+    if (tap.most === 2) onTwoFingerTap?.();
+    else onThreeFingerTap?.();
+  };
+
   const releaseTouch = (e) => {
     if (e.pointerType !== 'touch' || !touchPointsRef.current.has(e.pointerId)) return false;
     touchPointsRef.current.delete(e.pointerId);
+    if (touchPointsRef.current.size === 0) finishMultiTap();
 
     const canvas = activeCanvasRef.current;
     const gesture = gestureRef.current;

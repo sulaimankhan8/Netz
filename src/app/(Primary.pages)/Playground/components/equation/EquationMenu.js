@@ -49,7 +49,7 @@ export default function EquationMenu({ isMobile, onNewEquation, onInsertLatex, o
     <div className="flex flex-col gap-2 min-w-0 flex-1" data-equation-gallery={gallery.id}>
       <div className="flex items-center gap-2">
         {isMobile && (
-          <button type="button" onClick={() => setSubject(null)} aria-label="Back" className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <button type="button" onClick={() => setSubject(null)} aria-label="Back" className="w-9 h-9 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <FiChevronLeft className="w-4 h-4" />
           </button>
         )}
@@ -70,7 +70,7 @@ export default function EquationMenu({ isMobile, onNewEquation, onInsertLatex, o
     >
       <div className="flex items-center justify-between">
         <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Equation</span>
-        <button type="button" onClick={onClose} aria-label="Close Equation" className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <button type="button" onClick={onClose} aria-label="Close Equation" className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
           <FiX className="w-4 h-4" />
         </button>
       </div>

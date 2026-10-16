@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, inkPixels, settle, BASE } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, inkPixels, settle, BASE, zoomLabel as readZoomLabel } from './lib.mjs';
 
 // Blocks moved by finger / pen / mouse, saving behaviour, pictures, storage safety, keyboard shortcuts.
 const { browser, page, errors } = await launch();
@@ -53,7 +53,7 @@ const idbRead = () => page.evaluate(() => new Promise((resolve) => {
   req.onerror = () => resolve(null);
 }));
 const savedStrokes = async () => (((await backup()) || {}).pages || [{ strokes: [] }])[0].strokes;
-const zoomLabel = () => page.evaluate(() => [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom'))?.innerText.trim());
+const zoomLabel = () => readZoomLabel(page);
 const clickButtonText = (text) => page.evaluate((t) => {
   const el = [...document.querySelectorAll('button')].find((x) => x.innerText.trim() === t);
   if (el) el.click();
@@ -213,7 +213,7 @@ try {
   check('the browser itself did not zoom', browserZoom === 1, browserZoom);
 
   // Letters typed into a block do not switch tools
-  await page.evaluate(() => document.querySelector('[data-block-id] .cursor-text').click());
+  await page.evaluate(() => document.querySelector('[data-block-id] [data-block-body]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))); // a double click opens a block
   await sleep(300);
   await page.keyboard.type(' hello');
   await clickButtonText('Done');
@@ -258,7 +258,7 @@ try {
   check('new blocks do not land exactly on top of each other', !(near(b[1].x, b[2].x, 1) && near(b[1].y, b[2].y, 1)), `${b[1].x},${b[1].y} / ${b[2].x},${b[2].y}`);
 
   // Caption can be edited (the block's edit state reaches the picture)
-  await page.evaluate(() => [...document.querySelectorAll('[data-block-id]')][1].querySelector('.cursor-text').click());
+  await page.evaluate(() => [...document.querySelectorAll('[data-block-id]')][1].querySelector('[data-block-body]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
   await sleep(300);
   const captionField = await page.evaluate(() => Boolean([...document.querySelectorAll('[data-block-id]')][1].querySelector('input[type="text"]')));
   check('a picture\'s caption can be edited', captionField);

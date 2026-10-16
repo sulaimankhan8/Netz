@@ -19,7 +19,7 @@ register(
 
 const base = './src/app/(Primary.pages)/Playground/utils/';
 const { createHistoryStack } = await import(base + 'historyStack.js');
-const { zoomAtPoint, MIN_ZOOM, MAX_ZOOM, visibleWorldRect, boxTouchesRect } = await import(base + 'viewportMath.js');
+const { zoomAtPoint, MIN_ZOOM, MAX_ZOOM, visibleWorldRect, boxTouchesRect, fitViewToBox } = await import(base + 'viewportMath.js');
 const { extractExpressionFromLatex, generateGraphDatasetFromLatex, upsertCurveForSource } = await import(base + 'equationToGraph.js');
 const { create, all } = await import('mathjs');
 const math = create(all);
@@ -240,6 +240,40 @@ const close = (a, b) => Math.abs(a - b) < 1e-6;
   }
   expect('2000 random views: no box with a point on screen is ever skipped', wronglyHidden === 0, `(${wronglyHidden} wrongly hidden)`);
   expect('2000 random views: off-screen boxes really are skipped', hidden > 500, `(${hidden} hidden)`);
+}
+
+// ── Fit to content (fitViewToBox) ─────────────────────────────────────────────
+{
+  const W = 1280, H = 800;
+  const insets = { top: 72, bottom: 88 };
+  const onScreen = (view, x, y) => ({ x: x * view.zoom + view.pan.x, y: y * view.zoom + view.pan.y });
+
+  const empty = fitViewToBox(null, W, H, insets);
+  expect('fit: an empty page goes back to 100%', empty.zoom === 1);
+
+  // A large drawing: every corner ends up inside the free area, with the margin
+  const big = { minX: -500, minY: -300, maxX: 3500, maxY: 2200 };
+  const v1 = fitViewToBox(big, W, H, insets, { margin: 24, maxZoom: 2 });
+  const tl = onScreen(v1, big.minX, big.minY);
+  const br = onScreen(v1, big.maxX, big.maxY);
+  expect('fit: a big drawing is zoomed out', v1.zoom < 1, `(zoom ${v1.zoom})`);
+  expect('fit: its top-left corner is clear of the top bar', tl.x >= 23.9 && tl.y >= 72 + 23.9, `(${tl.x}, ${tl.y})`);
+  expect('fit: its bottom-right corner is clear of the dock', br.x <= W - 23.9 && br.y <= H - 88 - 23.9, `(${br.x}, ${br.y})`);
+  const cx = (tl.x + br.x) / 2;
+  const cy = (tl.y + br.y) / 2;
+  expect('fit: it is centred in the free area', Math.abs(cx - W / 2) < 1 && Math.abs(cy - (72 + (H - 72 - 88) / 2)) < 1, `(${cx}, ${cy})`);
+
+  // A small drawing is not blown up past maxZoom
+  const small = { minX: 10, minY: 10, maxX: 40, maxY: 30 };
+  expect('fit: a tiny drawing stops at maxZoom', fitViewToBox(small, W, H, insets, { maxZoom: 2 }).zoom === 2);
+  expect('fit: by default it stops at 100%', fitViewToBox(small, W, H, insets).zoom === 1);
+
+  // A gigantic drawing is not zoomed out past MIN_ZOOM
+  const huge = { minX: 0, minY: 0, maxX: 1e6, maxY: 1e6 };
+  expect('fit: a gigantic drawing stops at MIN_ZOOM', fitViewToBox(huge, W, H, insets).zoom === MIN_ZOOM);
+
+  // A box that is not made of numbers counts as empty
+  expect('fit: a broken box counts as an empty page', fitViewToBox({ minX: NaN, minY: 0, maxX: 1, maxY: 1 }, W, H).zoom === 1);
 }
 
 if (failed > 0) {

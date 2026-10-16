@@ -154,6 +154,9 @@ Everything below was checked in a real browser (headless Chrome) with mouse, tou
 | B3. Touch targets >= 44px on coarse pointers (0 under 44px) | Done |
 | B4. Touch-first block interaction (tap select, 2nd tap edit, 350ms drag) | Done |
 | B5. Small-screen block clamping & bottom sheet dialogs (all fit) | Done |
+| UX fix plan (`PLAYGROUND_UX_FIX_PLAN.md`, 2026-10-16): Undo after deletes, honest save status, per-page undo, page sheet, smaller dock, pen options per tool, one reading setting and one Fix dialog, model progress and failure state, Send to Notes that reports failure, music off the page, plain wording | Done (ux-fixes.mjs 40/40; results in that plan's section 9) |
+| B8. Two-finger tap undo, three-finger tap redo, one-time "one finger draws" hint | Done (ux-fixes.mjs) |
+| C1. Fit to content (Shift+1, Zoom menu, phone More) | Done |
 
 ### Measured on a 3,000-stroke page (desktop Chrome)
 
@@ -233,12 +236,12 @@ Files: `PlaygroundCanvasContainer.js`, `InkToBlockConverterModal.js`, `SemanticL
 
 **B7. Rotation and resizing.** The page size comes from `window.innerWidth` and `innerHeight` on `resize`. Also react to `visualViewport` resize and `orientationchange`, and re-read `devicePixelRatio` (it changes when a window moves between screens). Done when rotating in `screens.mjs` (`page.setViewport`) leaves sharp ink, a correctly sized canvas and a fitting dock.
 
-**B8. Touch gestures.** Present today: one finger draws, two fingers pan and pinch, a palm is ignored around pen use. Add:
+**B8. Touch gestures.** [Done 2026-10-16 through the UX fix plan; checks in `ux-fixes.mjs`, not yet in `touch.mjs`.] Present today: one finger draws, two fingers pan and pinch, a palm is ignored around pen use. Add:
 - Two-finger tap for undo, three-finger tap for redo (the convention in drawing apps). They must never leave a mark.
 - Make the "Finger: draws / moves page" choice easy to find on phones, because someone reading a page with one finger will otherwise scribble on it.
 - Done when `touch.mjs` has checks for both taps, and the existing 20 still pass.
 
-**B9. Weight on phones.** Files on disk: maths model 28.4 MB, text model 7.4 MB, router 0.4 MB, plus a 28.3 MB runtime file. The router is loaded when the page opens; check when the two large models load and make sure neither is fetched before it is needed.
+**B9. Weight on phones.** [Mostly done 2026-10-16: nothing from `/models/` or `/onnx/` is fetched before the first stroke; loading shows progress in MB; failure shows a warning with Retry; Save-Data asks before the large download. Not yet measured on a real phone.] Files on disk: maths model 28.4 MB, text model 7.4 MB, router 0.4 MB, plus a 28.3 MB runtime file. The router is loaded when the page opens; check when the two large models load and make sure neither is fetched before it is needed.
 - Show loading progress, and if a model cannot load (memory, connection) say so and keep the whiteboard working without recognition.
 - Honour `navigator.connection.saveData`.
 - Do not change, re-export or quantise the maths model (rule 1).
@@ -268,7 +271,7 @@ None of this depends on handwriting recognition. Rough order of value:
 - **C7. Multi-page PDF.** Export all pages in one file. Blocks are captured from the live page (`html-to-image`), so other pages need to be rendered off screen first.
 - **C8. Pictures.** Crop, and replace the picture in an existing block.
 - **C9. Equation blocks.** A visual maths keyboard instead of typing LaTeX, which matters most on phones.
-- **C10. Accessibility.** `aria-label` and `aria-pressed` on all dock controls, focus order, visible focus rings.
+- **C10. Accessibility.** `aria-label` and `aria-pressed` on all dock controls, focus order, visible focus rings. [Largely done 2026-10-16 by the UX fix plan: shared Dialog with `role="dialog"`, focus moved in and back, `aria-pressed` on tools, focus rings on inputs, named colours. No automated accessibility checker has been run.]
 - **C11. Recognition off the main thread.** Run the models in a Web Worker so reading ink never freezes drawing. Infrastructure only: same models, same features, same decode. Results must be identical to today's (compare with `benchmark_recognition.mjs`).
 - **C12. Insert tools like WPS Office: Shapes, Screenshot, Symbol, Equation.** Proposed 2026-10-15, waiting for the owner's decisions. Full plan: `PLAYGROUND_INSERT_TOOLS_PLAN.md`. It covers C5 (shape tool) and C9 (visual maths input).
 

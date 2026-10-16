@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, sleep, clickTitle, seedStrokes, inkPixels } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, seedStrokes, inkPixels, withToolOptions } from './lib.mjs';
 
 // Painting only the new stroke, and skipping off-screen ink, must give exactly the picture a full repaint gives.
 // Chrome moves a canvas from GPU to software drawing after a few pixel read-backs, and the two
@@ -52,17 +52,12 @@ try {
   await compare('pressure ink: the same picture as a full repaint');
 
   // Translucent ink (Pencil, Marker) blends with what is underneath, so order matters
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  await clickText('Pencil');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Pencil'));
   await drawStroke(page, [[240, 180], [460, 400]], { steps: 10 });
-  await clickText('Marker');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Marker'));
   await drawStroke(page, [[200, 250], [540, 250]], { steps: 10 });
   await compare('translucent ink over other ink: the same picture as a full repaint');
-  await clickText('Ballpoint');
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  await sleep(100);
+  await withToolOptions(page, () => clickText('Ballpoint'));
 
   // A snapped shape
   await page.keyboard.press('s');

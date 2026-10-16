@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, sleep, clickTitle, shot } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, zoomLabel as readZoomLabel } from './lib.mjs';
 
 // Finger, two-finger and pen input, emulated through the Chrome DevTools protocol.
 const { browser, page, errors } = await launch();
@@ -33,7 +33,7 @@ const strokeCount = () => page.evaluate(() => {
   const s = JSON.parse(localStorage.getItem('NETZ_PLAYGROUND_SESSION_BACKUP') || '{}');
   return ((s.pages && s.pages[0].strokes) || []).length;
 });
-const zoomLabel = () => page.evaluate(() => [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom'))?.innerText);
+const zoomLabel = () => readZoomLabel(page);
 const regionInk = (x, y, r) => page.evaluate(({ x, y, r }) => {
   const c = document.querySelector('canvas.z-10');
   const d = c.getContext('2d').getImageData(x - r, y - r, 2 * r, 2 * r).data;
@@ -101,8 +101,10 @@ try {
 
   // Optional setting: one finger moves the page
   await sleep(900);
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Moves page').click());
+  await clickTitle(page, 'Preferences');
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Moves the page').click());
+  await sleep(200);
+  await page.keyboard.press('Escape');
   await sleep(200);
   const before = await strokeCount();
   await fingerDrag([600, 200], [700, 240]);
@@ -123,8 +125,8 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('canvas.touch-none', { timeout: 120000 });
   await sleep(2000);
-  await clickTitle(page, 'Stroke & Canvas Settings');
-  const remembered = await page.evaluate(() => /font-semibold/.test([...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Moves page').className));
+  await clickTitle(page, 'Preferences');
+  const remembered = await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Moves the page').getAttribute('aria-checked') === 'true');
   check('the finger setting is remembered after a reload', remembered);
   await shot(page, 'touch-final');
 } catch (e) {

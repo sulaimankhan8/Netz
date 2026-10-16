@@ -73,16 +73,91 @@ export async function shot(page, name) {
   return file;
 }
 
-/** Clicks the dock button whose title starts with the given text. */
-export async function clickTitle(page, titleStart) {
-  const ok = await page.evaluate((t) => {
-    const el = [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith(t));
+// Controls that moved into a menu in the UX fix plan (PLAYGROUND_UX_FIX_PLAN.md): the old name,
+// then the steps that reach it now. '@blocks' opens Blocks (laptop, tablet) or More (phone);
+// '@page' opens Page or More; '@pageActions' opens the phone's page actions (nothing elsewhere).
+const MOVED = {
+  'Add Theory': ['@blocks', '=Add Text Block'],
+  'Add Theory Block': ['@blocks', '=Add Text Block'],
+  'Add Graph Block': ['@blocks', '=Add Graph Block'],
+  'Record Voice Note': ['@blocks', '=Record a voice memo'],
+  'Stop Voice Recording': ['@blocks', '=Stop recording'],
+  'Sync Whiteboard to Notes Workspace': ['@page', '=Send to Notes'],
+  'Switch to Notes Mode': ['@page', '=Writing mode'],
+  'Switch to Whiteboard Mode': ['@page', '=Writing mode'],
+  'Export Canvas': ['@page'],
+  Preferences: ['@page', '=Preferences'],
+  'Add Fresh Blank Page': ['=Add page'],
+  'Clear Current Page': ['@pageActions', '=Clear page'],
+};
+
+// Clicks the first visible button whose title starts with `name`, or (when exact) whose
+// accessible name is `name`, or (otherwise) whose accessible name starts with it
+async function clickNamed(page, name, exact = false) {
+  return page.evaluate((t, ex) => {
+    const visible = (b) => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && !b.disabled;
+    };
+    const buttons = [...document.querySelectorAll('button')].filter(visible);
+    const el = ex
+      ? buttons.find((b) => b.getAttribute('aria-label') === t)
+      : buttons.find((b) => b.title && b.title.startsWith(t)) || buttons.find((b) => (b.getAttribute('aria-label') || '').startsWith(t));
     if (!el) return false;
     el.click();
     return true;
-  }, titleStart);
+  }, name, exact);
+}
+
+/** Clicks the dock button whose title (or accessible name) starts with the given text. */
+export async function clickTitle(page, titleStart) {
+  let ok = await clickNamed(page, titleStart);
+  if (!ok && MOVED[titleStart]) {
+    ok = true;
+    for (const step of MOVED[titleStart]) {
+      let done;
+      if (step === '@blocks') done = (await clickNamed(page, 'Blocks', true)) || (await clickNamed(page, 'More', true));
+      else if (step === '@page') done = (await clickNamed(page, 'Page', true)) || (await clickNamed(page, 'More', true));
+      else if (step === '@pageActions') done = true, await clickNamed(page, 'Page actions', true);
+      else done = await clickNamed(page, step.replace(/^=/, ''), step.startsWith('='));
+      if (!done) {
+        ok = false;
+        break;
+      }
+      await sleep(250);
+    }
+  }
   if (!ok) throw new Error('button not found: ' + titleStart);
   await sleep(150);
+}
+
+/** The zoom level the dock shows ("100%"): on the Zoom button, or the phone's Reset Zoom button. */
+export async function zoomLabel(page) {
+  return page.evaluate(() => {
+    const zoom = [...document.querySelectorAll('button[aria-label="Zoom"]')].find((b) => /%/.test(b.innerText));
+    if (zoom) return zoom.innerText.trim();
+    return [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom') && /%/.test(b.innerText))?.innerText.trim();
+  });
+}
+
+/** Opens the active tool's options (pen, highlighter, eraser), runs fn, then closes them. */
+export async function withToolOptions(page, fn) {
+  await clickTitle(page, 'Stroke & Canvas Settings');
+  await sleep(150);
+  await fn();
+  await page.keyboard.press('Escape');
+  await sleep(150);
+}
+
+/** Sets the pen width slider in the open pen options. */
+export async function setPenWidth(page, px) {
+  await page.evaluate((value) => {
+    const input = document.querySelector('input[aria-label="Pen width"]');
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    setter.call(input, String(value));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, px);
 }
 
 /**

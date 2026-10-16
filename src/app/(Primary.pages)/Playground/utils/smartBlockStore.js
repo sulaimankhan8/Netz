@@ -9,23 +9,48 @@ const INDEXEDDB_STORE_NAME = 'sessions';
 const SESSION_BACKUP_KEY = 'NETZ_PLAYGROUND_SESSION_BACKUP';
 
 // IndexedDB Helper
+/**
+ * @returns {Promise<void>} Resolves once the write is committed; rejects if the database cannot
+ * be opened (blocked, switched off) or the write fails (full, aborted). Rejects at once where
+ * there is no IndexedDB.
+ */
 export function saveSessionToIndexedDB(sessionId, sessionData) {
-  if (typeof window === 'undefined' || !window.indexedDB) return;
-
-  const request = window.indexedDB.open(INDEXEDDB_DB_NAME, 1);
-  request.onupgradeneeded = (e) => {
-    const db = e.target.result;
-    if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
-      db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'sessionId' });
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      reject(new Error('IndexedDB is not available'));
+      return;
     }
-  };
 
-  request.onsuccess = (e) => {
-    const db = e.target.result;
-    const tx = db.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(INDEXEDDB_STORE_NAME);
-    store.put({ sessionId, ...sessionData, updatedAt: sessionData.updatedAt || Date.now() });
-  };
+    let request;
+    try {
+      request = window.indexedDB.open(INDEXEDDB_DB_NAME, 1);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
+        db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'sessionId' });
+      }
+    };
+    request.onerror = () => reject(request.error || new Error('IndexedDB could not be opened'));
+    request.onblocked = () => reject(new Error('IndexedDB is blocked by another tab'));
+
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      try {
+        const tx = db.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('The save failed'));
+        tx.onabort = () => reject(tx.error || new Error('The save was aborted'));
+        const store = tx.objectStore(INDEXEDDB_STORE_NAME);
+        store.put({ sessionId, ...sessionData, updatedAt: sessionData.updatedAt || Date.now() });
+      } catch (err) {
+        reject(err);
+      }
+    };
+  });
 }
 
 /**
@@ -33,11 +58,16 @@ export function saveSessionToIndexedDB(sessionId, sessionData) {
  * the localStorage backup (read synchronously on start-up, capped at about 5 MB).
  * A backup that no longer fits is removed, so an old copy can never be mistaken for the latest.
  *
+ * onStored(ok, error): called once IndexedDB, the real store, has the session (ok) or has failed.
+ *
  * @returns {boolean} Whether the localStorage backup was written
  */
-export function saveSession(sessionId, sessionData) {
+export function saveSession(sessionId, sessionData, { onStored } = {}) {
   const stamped = { ...sessionData, updatedAt: Date.now() };
-  saveSessionToIndexedDB(sessionId, stamped);
+  saveSessionToIndexedDB(sessionId, stamped).then(
+    () => onStored && onStored(true, null),
+    (err) => onStored && onStored(false, err)
+  );
   if (typeof localStorage === 'undefined') return false;
 
   // A session that cannot fit is not serialised at all: turning 10 MB into text only to have

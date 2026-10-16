@@ -143,7 +143,7 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
           {!changing && <button
             onClick={onFreehand}
             title="Draw Freehand: rough shapes snap to lines, triangles, rectangles and circles (key S)"
-            className="px-2.5 py-1.5 h-9 flex items-center gap-1.5 rounded-xl font-medium text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="px-2.5 py-1.5 h-9 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center gap-1.5 rounded-xl font-medium text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
             <LuPencil className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Draw Freehand</span>
@@ -152,20 +152,24 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
             onClick={onClose}
             title={changing ? 'Close Change Shape' : 'Close Shapes'}
             aria-label={changing ? 'Close Change Shape' : 'Close Shapes'}
-            className="p-2 w-9 h-9 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-2 w-9 h-9 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <FiX className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Quick jumps, mostly for phones where the list is long */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 shrink-0">
+      {/* Quick jumps, mostly for phones where the list is long. Laptops: they wrap, so none is
+          hidden. Phones: one row that scrolls, faded at the edge to show there is more. */}
+      <div
+        className="flex items-center gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-1 shrink-0"
+        style={isMobile ? { WebkitMaskImage: 'linear-gradient(to right, black 82%, transparent)', maskImage: 'linear-gradient(to right, black 82%, transparent)' } : undefined}
+      >
         {sections.map((s) => (
           <button
             key={s.id}
             onClick={() => jumpTo(s.id)}
-            className="px-2.5 py-1 h-8 rounded-lg font-medium shrink-0 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="px-2.5 py-1 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] rounded-lg font-medium shrink-0 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             {s.id === 'recent' ? 'Recent' : s.label}
           </button>
@@ -185,7 +189,7 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
                   aria-label={item.name}
                   aria-pressed={armedId === item.id}
                   data-shape-item={item.id}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${
+                  className={`w-9 h-9 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 flex items-center justify-center rounded-lg border transition-colors ${
                     armedId === item.id
                       ? 'bg-indigo-500 text-white border-indigo-600'
                       : 'border-transparent text-zinc-700 dark:text-zinc-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700'

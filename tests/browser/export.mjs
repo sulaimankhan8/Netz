@@ -22,7 +22,8 @@ const waitForFile = async (ext) => {
 };
 const exportAs = async (label) => {
   await clickTitle(page, 'Export Canvas');
-  await page.evaluate((t) => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === t).click(), label);
+  const format = /PNG/.test(label) ? 'PNG' : /SVG/.test(label) ? 'SVG' : 'PDF';
+  await page.evaluate((f) => document.querySelector(`button[aria-label="Export as ${f}"]`).click(), format);
 };
 
 try {
@@ -31,7 +32,7 @@ try {
   // Empty page: nothing to export, and it says so
   await exportAs('Export PNG Image');
   await sleep(700);
-  const emptyNotice = await page.evaluate(() => document.querySelector('[role="status"]')?.innerText || '');
+  const emptyNotice = await page.evaluate(() => [...document.querySelectorAll('[data-status-area] [role="status"]')].map((n) => n.innerText).join(' | '));
   check('empty page: says there is nothing to export', /nothing on this page/i.test(emptyNotice), emptyNotice);
   check('empty page: no file is written', fs.readdirSync(downloads).length === 0);
 
@@ -90,7 +91,7 @@ try {
     const buf = fs.readFileSync(pdfFile);
     check('PDF: is a PDF with one page', buf.slice(0, 5).toString() === '%PDF-' && (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length === 1);
   }
-  const doneNotice = await page.evaluate(() => document.querySelector('[role="status"]')?.innerText || '');
+  const doneNotice = await page.evaluate(() => [...document.querySelectorAll('[data-status-area] [role="status"]')].map((n) => n.innerText).join(' | '));
   check('a message confirms the export', /Saved netz-page-1\.pdf/.test(doneNotice), doneNotice);
 } catch (e) {
   check('script ran to the end', false, String((e && e.stack) || e).slice(0, 400));
