@@ -1,4 +1,4 @@
-import { launch, openPlayground, drawStroke, shot, inkPixels, sleep, clickTitle } from './lib.mjs';
+import { launch, openPlayground, drawStroke, shot, inkPixels, sleep, clickTitle, addEquationBlock } from './lib.mjs';
 
 const { browser, page, errors } = await launch();
 page.on('dialog', (d) => d.accept());
@@ -67,8 +67,8 @@ try {
 
   // ── Blocks are undoable ──
   const b0 = await blockCount();
-  await clickTitle(page, 'Add Equation Block');
-  await sleep(700);
+  await addEquationBlock(page);
+  await sleep(300);
   check('block added', (await blockCount()) === b0 + 1, await blockCount());
   await clickTitle(page, 'Undo');
   await sleep(200);
@@ -121,12 +121,22 @@ try {
   await drawStroke(page, [[636, 400], [644, 400]]); // small mark at the screen centre (640, 400)
   await sleep(150);
   check('mark drawn at the centre', (await regionInk(640, 400, 14)) > 0);
-  await clickTitle(page, 'Zoom In'); await clickTitle(page, 'Zoom In'); await clickTitle(page, 'Zoom In');
+  // A dock short of room folds its three zoom buttons into one Zoom menu (it shows the level)
+  const zoomButton = async (title) => {
+    const shown = await page.evaluate((t) => Boolean([...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith(t))), title);
+    if (!shown) await clickTitle(page, 'Zoom (');
+    await clickTitle(page, title);
+  };
+  await zoomButton('Zoom In'); await zoomButton('Zoom In'); await zoomButton('Zoom In');
   await sleep(200);
   check('zoom-in button keeps the centre mark at the centre', (await regionInk(640, 400, 22)) > 0, await regionInk(640, 400, 22));
-  const zoomLabel = await page.evaluate(() => [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom'))?.innerText);
+  const zoomLabel = await page.evaluate(() => {
+    const folded = document.querySelector('button[aria-label="Zoom"]');
+    if (folded) return folded.innerText;
+    return [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom'))?.innerText;
+  });
   check('zoom label shows 173%', zoomLabel === '173%', zoomLabel);
-  await clickTitle(page, 'Reset Zoom');
+  await zoomButton('Reset Zoom');
   await sleep(200);
   check('reset zoom keeps the centre mark at the centre', (await regionInk(640, 400, 14)) > 0);
 

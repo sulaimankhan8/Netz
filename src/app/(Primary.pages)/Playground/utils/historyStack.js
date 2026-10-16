@@ -1,7 +1,7 @@
 /**
  * Undo / Redo History Stack for the Playground page
  *
- * Holds whole-page snapshots ({ strokes, blocks, links }). Snapshots share their stroke and block
+ * Holds whole-page snapshots ({ strokes, blocks, links, shapes }). Snapshots share their stroke, block and shape
  * objects by reference (those are never mutated in place), so a snapshot costs three array
  * references rather than a copy of the page.
  *
@@ -16,7 +16,7 @@ function sameList(a, b) {
 }
 
 export function isSameSnapshot(a, b) {
-  return Boolean(a && b) && sameList(a.strokes, b.strokes) && sameList(a.blocks, b.blocks) && sameList(a.links, b.links);
+  return Boolean(a && b) && sameList(a.strokes, b.strokes) && sameList(a.blocks, b.blocks) && sameList(a.links, b.links) && sameList(a.shapes || [], b.shapes || []);
 }
 
 export function createHistoryStack(limit = 100) {

@@ -1,4 +1,4 @@
-import { launch, openPlayground, sleep, clickTitle, shot } from './lib.mjs';
+import { launch, openPlayground, sleep, clickTitle, shot, addEquationBlock } from './lib.mjs';
 
 // Blocks in the real app: new blocks open ready to type, Done closes them,
 // Equation -> Plot Graph -> Sync to Notes.
@@ -8,7 +8,7 @@ const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), d
 const blockInfo = () => page.evaluate(() => [...document.querySelectorAll('[data-block-id]')].map((b) => ({
   id: b.getAttribute('data-block-id'),
   editing: b.className.includes('border-blue-500'),
-  inputs: b.querySelectorAll('input[type="text"], textarea').length,
+  inputs: b.querySelectorAll('input[type="text"], textarea, math-field').length,
   text: b.innerText.slice(0, 80).replace(/\n/g, ' | '),
   transform: b.style.transform,
 })));
@@ -22,17 +22,19 @@ const clickButtonText = (text) => page.evaluate((t) => {
 try {
   await openPlayground(page);
 
-  // Equation block: opens empty, in edit mode, with the caret in the field
-  await clickTitle(page, 'Add Equation Block');
-  await sleep(500);
+  // Equation block (Insert > Equation): opens empty, in edit mode, with the cursor in the visual editor
+  await addEquationBlock(page);
+  await page.waitForSelector('[data-block-id] math-field', { timeout: 30000 });
+  await sleep(300);
   let blocks = await blockInfo();
   check('a new equation block opens in edit mode', blocks.length === 1 && blocks[0].editing && blocks[0].inputs === 1, JSON.stringify(blocks));
   const focus = await page.evaluate(() => ({ tag: document.activeElement.tagName, value: document.activeElement.value }));
-  check('it is empty and focused, ready to type', focus.tag === 'INPUT' && focus.value === '', JSON.stringify(focus));
+  check('it is empty and focused, ready to type', focus.tag === 'MATH-FIELD' && focus.value === '', JSON.stringify(focus));
   await page.keyboard.type('y = x^2 - 4x + 3');
   await sleep(200);
   const typed = await page.evaluate(() => document.activeElement.value);
-  check('typing goes into the equation', typed === 'y = x^2 - 4x + 3', typed);
+  // The visual editor writes the equation without spaces
+  check('typing goes into the equation', typed === 'y=x^2-4x+3', typed);
 
   // Enter finishes editing (frame and content together)
   await page.keyboard.press('Enter');
@@ -42,11 +44,12 @@ try {
 
   // Clicking the block reopens it; the Done button closes it
   await page.evaluate(() => document.querySelector('[data-block-id] .cursor-text').click());
+  await page.waitForSelector('[data-block-id] math-field', { timeout: 30000 });
   await sleep(300);
   blocks = await blockInfo();
   check('clicking the block reopens the editor with its content', blocks[0].editing && blocks[0].inputs === 1, JSON.stringify(blocks[0]));
-  const reopened = await page.evaluate(() => document.querySelector('[data-block-id] input[type="text"]').value);
-  check('the equation text is kept', reopened === 'y = x^2 - 4x + 3', reopened);
+  const reopened = await page.evaluate(() => document.querySelector('[data-block-id] math-field').value);
+  check('the equation text is kept', reopened === 'y=x^2-4x+3', reopened);
   check('Plot Graph is offered while editing', await clickButtonText('Plot Graph'));
   await sleep(900);
   blocks = await blockInfo();

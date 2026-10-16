@@ -317,6 +317,8 @@ export default function SmartBlockWrapper({
   // ----------------------------------------------------
   // MODE 2: EDIT MODE (Active Card Editor)
   // ----------------------------------------------------
+  // An equation being edited grows to fit its ribbon and editor (never shorter than its size)
+  const editHeight = type === 'equation' ? { height: 'auto', minHeight: blockHeight } : { height: blockHeight };
   return (
     <div
       ref={wrapperRef}
@@ -324,7 +326,7 @@ export default function SmartBlockWrapper({
         transform: `translate(${screenX}px, ${screenY}px) scale(${zoomLevel})`,
         transformOrigin: 'top left',
         width: blockWidth,
-        height: blockHeight,
+        ...editHeight,
       }}
       data-block-id={block.blockId}
       className={`absolute top-0 left-0 z-50 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-2 border-blue-500 shadow-2xl group flex flex-col ${

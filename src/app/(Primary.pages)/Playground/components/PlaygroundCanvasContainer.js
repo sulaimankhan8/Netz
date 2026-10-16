@@ -30,7 +30,7 @@ import { modelManager } from '../utils/recognition/modelManager';
 import { recordUserCorrection } from '../utils/recognition/telemetryStore';
 import { initAutocompleteTrie } from '../utils/autocompleteTrie';
 import { generateGraphDatasetFromLatex, upsertCurveForSource } from '../utils/equationToGraph';
-import { exportPage } from '../utils/exportEngine';
+import { exportPage, renderView } from '../utils/exportEngine';
 import {
   differentiateExpression,
   integrateExpression,
@@ -48,8 +48,29 @@ import {
 import { createHistoryStack } from '../utils/historyStack';
 import { bboxOfStrokes } from '../utils/strokeTransform';
 import { FiCopy, FiTrash2 } from 'react-icons/fi';
-import { zoomAtPoint } from '../utils/viewportMath';
+import { LuShapes } from 'react-icons/lu';
 import { prepareImage, fitImageBox } from '../utils/imageSizing';
+import { zoomAtPoint } from '../utils/viewportMath';
+import ShapeLayer from './shapes/ShapeLayer';
+import ShapeSelectionOverlay, { rotateHandleAt } from './shapes/ShapeSelectionOverlay';
+import ShapeFormatBar from './shapes/ShapeFormatBar';
+import ShapeTextEditor from './shapes/ShapeTextEditor';
+import ShapeContextMenu from './shapes/ShapeContextMenu';
+import FormatShapePane from './shapes/FormatShapePane';
+import { useShapeEditor } from './shapes/useShapeEditor';
+import useScreenshot from './screenshot/useScreenshot';
+import ShapeGallery, { rememberRecentShape } from './shapes/ShapeGallery';
+import {
+  createShape, boundsOfShapes, isLineShape, hitTestShapes, shapeDefaultsFrom, DEFAULT_TEXT, lineEndpoints,
+} from '../utils/shapes/shapeModel';
+import { browserMeasure, shapeWithText } from '../utils/shapes/shapeText';
+import {
+  rerouteConnectors, canGroup, canUngroup, isWholeGroup, canChangeShape, isConvertibleStroke, shapeFromStroke,
+  nearestConnection, lineBetween, setConnection, shapesNear, connectionPoints,
+} from '../utils/shapes/shapeArrange';
+import { getGalleryItem } from '../utils/shapes/shapeGallery';
+import { captureTextTarget, insertIntoField, spliceText } from '../utils/symbols/insertAtCaret';
+import { latexForSymbol } from '../utils/symbols/symbols';
 
 // Pause after the last change before the session is written
 const SAVE_DELAY_MS = 350;
@@ -69,6 +90,8 @@ export default function PlaygroundCanvasContainer() {
 
   // Inking Tool State
   const [activeTool, setActiveTool] = useState('pen');
+  // The gallery shape armed for drawing with the Shapes tool (null: freehand shapes snap)
+  const [armedShape, setArmedShape] = useState(null);
   const [strokeColor, setStrokeColor] = useState('#3B82F6');
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [strokeOpacity, setStrokeOpacity] = useState(1); // set by the pen presets (pencil, marker)
@@ -111,7 +134,7 @@ export default function PlaygroundCanvasContainer() {
   };
 
   // Multi-Page Notebook State (Samsung Notes / Apple Notes parity)
-  const [pages, setPages] = useState([{ id: 'page_1', title: 'Page 1', strokes: [], blocks: [], links: [] }]);
+  const [pages, setPages] = useState([{ id: 'page_1', title: 'Page 1', strokes: [], blocks: [], links: [], shapes: [] }]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   // Audio Voice Memo State
@@ -151,6 +174,16 @@ export default function PlaygroundCanvasContainer() {
   const blockStateRef = useRef(blockState);
   const latestStrokesRef = useRef([]);
 
+  // Shapes on the active page (Insert > Shapes). The ref is always current, also between renders.
+  const [shapes, setShapes] = useState([]);
+  const latestShapesRef = useRef([]);
+  // Connector ends attached to shapes follow them, whatever changed the shapes
+  const applyShapes = useCallback((next) => {
+    const routed = rerouteConnectors(next);
+    latestShapesRef.current = routed;
+    setShapes(routed);
+  }, []);
+
   useEffect(() => {
     pagesRef.current = pages;
   }, [pages]);
@@ -171,10 +204,13 @@ export default function PlaygroundCanvasContainer() {
       strokes: latestStrokesRef.current,
       blocks: INITIAL_SMART_BLOCK_STATE.blocks,
       links: INITIAL_SMART_BLOCK_STATE.links,
+      shapes: latestShapesRef.current,
     });
   }
   // Set while one user action changes both ink and blocks, so it becomes a single undo step
   const holdStrokeCommitRef = useRef(false);
+  // Set while a shape is being dragged, resized or rotated: the whole drag is one undo step
+  const holdHistoryRef = useRef(false);
   const [historyFlags, setHistoryFlags] = useState({ canUndo: false, canRedo: false });
 
   const syncHistoryFlags = useCallback(() => {
@@ -185,27 +221,28 @@ export default function PlaygroundCanvasContainer() {
 
   // Records the page's current state as a new undo step (no-op when nothing changed)
   const commitHistory = useCallback(() => {
-    if (!isSessionLoadedRef.current) return;
+    if (!isSessionLoadedRef.current || holdHistoryRef.current) return;
     const committed = historyRef.current.commit({
       strokes: latestStrokesRef.current,
       blocks: blockStateRef.current.blocks,
       links: blockStateRef.current.links,
+      shapes: latestShapesRef.current,
     });
     if (committed) syncHistoryFlags();
   }, [syncHistoryFlags]);
 
   // Starts a fresh history from this state (another page was opened, or the session was restored)
-  const resetHistory = useCallback((strokes, blocks, links) => {
+  const resetHistory = useCallback((strokes, blocks, links, pageShapes = []) => {
     latestStrokesRef.current = strokes;
-    historyRef.current.reset({ strokes, blocks, links });
+    historyRef.current.reset({ strokes, blocks, links, shapes: pageShapes });
     syncHistoryFlags();
   }, [syncHistoryFlags]);
 
-  // Block edits arrive in bursts (dragging, typing): one undo step once they settle
+  // Block and shape edits arrive in bursts (dragging, typing): one undo step once they settle
   useEffect(() => {
     const timer = setTimeout(commitHistory, 350);
     return () => clearTimeout(timer);
-  }, [blockState.blocks, blockState.links, commitHistory]);
+  }, [blockState.blocks, blockState.links, shapes, commitHistory]);
 
   // A save writes the whole session, which on a full page takes long enough to interrupt
   // writing. Changes are therefore saved after a short pause, and never while a stroke is
@@ -249,6 +286,7 @@ export default function PlaygroundCanvasContainer() {
           strokes: strokesToSave,
           blocks: targetBlocks,
           links: targetLinks,
+          shapes: latestShapesRef.current,
         };
       }
       return p;
@@ -319,6 +357,7 @@ export default function PlaygroundCanvasContainer() {
       const activeStrokes = activePage.strokes || [];
       const activeBlocks = activePage.blocks || saved.blocks || [];
       const activeLinks = activePage.links || saved.links || [];
+      const activeShapes = activePage.shapes || [];
 
       dispatch({
         type: 'SET_SESSION',
@@ -330,8 +369,9 @@ export default function PlaygroundCanvasContainer() {
       // The dispatch only lands on the next render, but saving is allowed from this point on.
       // Without this the first save writes the still-empty block list over the restored one.
       blockStateRef.current = { ...blockStateRef.current, blocks: activeBlocks, links: activeLinks };
+      applyShapes(activeShapes);
       // The restored page is the starting point: undo must never step back to an empty page
-      resetHistory(activeStrokes, activeBlocks, activeLinks);
+      resetHistory(activeStrokes, activeBlocks, activeLinks, activeShapes);
 
       // Retry loadStrokes to ensure static canvas is ready in DOM
       const tryLoad = (attempts = 0) => {
@@ -368,12 +408,12 @@ export default function PlaygroundCanvasContainer() {
     // Warm up lightweight 400KB neural router in background
     modelManager.loadRouter().catch(() => {});
     return () => clearTimeout(loadFallbackTimer);
-  }, [resetHistory]);
+  }, [resetHistory, applyShapes]);
 
-  // Save Session when blocks or links change (dragging or typing changes them many times a second)
+  // Save Session when blocks, links or shapes change (dragging or typing changes them many times a second)
   useEffect(() => {
     scheduleSave();
-  }, [blockState.blocks, blockState.links, scheduleSave]);
+  }, [blockState.blocks, blockState.links, shapes, scheduleSave]);
 
   // A save still waiting must not be lost when the tab is hidden, closed or reloaded
   useEffect(() => {
@@ -396,11 +436,12 @@ export default function PlaygroundCanvasContainer() {
       whiteboardCanvasRef.current.loadStrokes(snapshot.strokes);
     }
     dispatch({ type: 'SET_SESSION', payload: { blocks: snapshot.blocks, links: snapshot.links } });
+    applyShapes(snapshot.shapes || []);
 
     const activePageIndex = currentPageIndexRef.current;
     setPages((prevPages) =>
       prevPages.map((p, idx) =>
-        idx === activePageIndex ? { ...p, strokes: snapshot.strokes, blocks: snapshot.blocks, links: snapshot.links } : p
+        idx === activePageIndex ? { ...p, strokes: snapshot.strokes, blocks: snapshot.blocks, links: snapshot.links, shapes: snapshot.shapes || [] } : p
       )
     );
 
@@ -412,7 +453,7 @@ export default function PlaygroundCanvasContainer() {
 
     persistSession(undefined, undefined, snapshot.blocks, snapshot.links);
     syncHistoryFlags();
-  }, [persistSession, syncHistoryFlags]);
+  }, [persistSession, syncHistoryFlags, applyShapes]);
 
   const handleUndo = useCallback(() => {
     commitHistory(); // make sure an edit still waiting to settle is on the stack first
@@ -465,7 +506,7 @@ export default function PlaygroundCanvasContainer() {
   }, [persistSession]);
 
   // Track if session has active content
-  const hasUnsavedContent = latestStrokesRef.current.length > 0 || blockState.blocks.length > 0;
+  const hasUnsavedContent = latestStrokesRef.current.length > 0 || blockState.blocks.length > 0 || shapes.length > 0;
 
   // Expose global window handler for in-app navigation intercept (Sidebar links)
   useEffect(() => {
@@ -901,8 +942,9 @@ export default function PlaygroundCanvasContainer() {
     }
   }, []);
 
-  // Spawn New Smart Block with Compact Type-Specific Dimensions
-  const handleAddBlock = (type) => {
+  // Spawn New Smart Block with Compact Type-Specific Dimensions.
+  // content: starting content (Insert > Equation passes the LaTeX and display style)
+  const handleAddBlock = (type, content = null) => {
     const newBlockId = `block_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     // Each new block lands a little down and to the right of the last, so they do not stack
     const cascade = (blockStateRef.current.blocks.length % 6) * 28;
@@ -915,8 +957,9 @@ export default function PlaygroundCanvasContainer() {
     let defaultSize = { width: Math.min(360, maxVisibleWidth), height: 140 };
 
     if (type === 'equation') {
-      defaultContent = { latex: '' };
-      defaultSize = { width: Math.min(360, maxVisibleWidth), height: 140 };
+      defaultContent = { latex: '', ...(content || {}) };
+      // A finished equation (Common Equations, LaTeX) gets room for its full width
+      defaultSize = { width: Math.min(defaultContent.latex ? 520 : 400, maxVisibleWidth), height: 140 };
     } else if (type === 'graph') {
       const graphDataset = generateGraphDatasetFromLatex('y = x^2 - 4x + 3', 'f(x) = x² - 4x + 3', [-10, 10], 0);
       defaultContent = {
@@ -954,9 +997,12 @@ export default function PlaygroundCanvasContainer() {
     };
 
     dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-    // Equation and text blocks open in edit mode, with the cursor in them
-    if (type === 'equation' || type === 'theory') setAutoEditBlockId(newBlockId);
+    // New empty equation and text blocks open in edit mode, with the cursor in them
+    if ((type === 'equation' && !defaultContent.latex) || type === 'theory') setAutoEditBlockId(newBlockId);
   };
+
+  // Insert > Equation: a new equation (empty, ready to edit) or a finished one, full-size as in WPS
+  const handleInsertEquation = (latex = '') => handleAddBlock('equation', { latex, display: true });
 
   // Handle Image Insertion onto Canvas
   // Large photos are scaled down first (they are stored inside the session), and the block
@@ -1058,6 +1104,7 @@ export default function PlaygroundCanvasContainer() {
           strokes: currentStrokes,
           blocks: blockStateRef.current.blocks,
           links: blockStateRef.current.links,
+          shapes: latestShapesRef.current,
         };
       }
       return p;
@@ -1083,11 +1130,12 @@ export default function PlaygroundCanvasContainer() {
         links: targetPage.links || [],
       },
     });
+    applyShapes(targetPage.shapes || []);
 
     if (whiteboardCanvasRef.current) {
       whiteboardCanvasRef.current.loadStrokes(targetPage.strokes || []);
     }
-    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || []);
+    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || [], targetPage.shapes || []);
 
     persistSession(updatedPages, newIdx, targetPage.blocks || [], targetPage.links || []);
   };
@@ -1101,6 +1149,7 @@ export default function PlaygroundCanvasContainer() {
       strokes: [],
       blocks: [],
       links: [],
+      shapes: [],
     };
 
     const nextPages = [...synced, newPage];
@@ -1113,11 +1162,12 @@ export default function PlaygroundCanvasContainer() {
     currentPageIndexRef.current = newIdx;
 
     dispatch({ type: 'SET_SESSION', payload: { blocks: [], links: [] } });
+    applyShapes([]);
     if (whiteboardCanvasRef.current) {
       // loadStrokes, not clearStrokes: showing an empty new page is not an edit to any page
       whiteboardCanvasRef.current.loadStrokes([]);
     }
-    resetHistory([], [], []);
+    resetHistory([], [], [], []);
 
     persistSession(nextPages, newIdx, [], []);
   };
@@ -1130,11 +1180,13 @@ export default function PlaygroundCanvasContainer() {
     }
     holdStrokeCommitRef.current = false;
     dispatch({ type: 'SET_SESSION', payload: { blocks: [], links: [] } });
+    applyShapes([]);
 
     const synced = getSyncedPagesState();
     synced[currentPageIndexRef.current].strokes = [];
     synced[currentPageIndexRef.current].blocks = [];
     synced[currentPageIndexRef.current].links = [];
+    synced[currentPageIndexRef.current].shapes = [];
 
     setPages(synced);
     pagesRef.current = synced;
@@ -1162,11 +1214,12 @@ export default function PlaygroundCanvasContainer() {
         links: targetPage.links || [],
       },
     });
+    applyShapes(targetPage.shapes || []);
 
     if (whiteboardCanvasRef.current) {
       whiteboardCanvasRef.current.loadStrokes(targetPage.strokes || []);
     }
-    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || []);
+    resetHistory(targetPage.strokes || [], targetPage.blocks || [], targetPage.links || [], targetPage.shapes || []);
 
     persistSession(remaining, newIdx, targetPage.blocks || [], targetPage.links || []);
   };
@@ -1183,6 +1236,7 @@ export default function PlaygroundCanvasContainer() {
       strokes: JSON.parse(JSON.stringify(srcStrokes)),
       blocks: JSON.parse(JSON.stringify(srcPage.blocks || blockStateRef.current.blocks)),
       links: JSON.parse(JSON.stringify(srcPage.links || blockStateRef.current.links)),
+      shapes: JSON.parse(JSON.stringify(dupIdx === currentPageIndexRef.current ? latestShapesRef.current : srcPage.shapes || [])),
     };
 
     const nextPages = [...synced.slice(0, dupIdx + 1), dupPage, ...synced.slice(dupIdx + 1)];
@@ -1201,11 +1255,12 @@ export default function PlaygroundCanvasContainer() {
         links: dupPage.links,
       },
     });
+    applyShapes(dupPage.shapes);
 
     if (whiteboardCanvasRef.current) {
       whiteboardCanvasRef.current.loadStrokes(dupPage.strokes);
     }
-    resetHistory(dupPage.strokes, dupPage.blocks, dupPage.links);
+    resetHistory(dupPage.strokes, dupPage.blocks, dupPage.links, dupPage.shapes);
 
     persistSession(nextPages, newIdx, dupPage.blocks, dupPage.links);
   };
@@ -1268,8 +1323,12 @@ export default function PlaygroundCanvasContainer() {
   };
 
   // Handle Contextual CAS AI Actions
-  const handleSelectAiAction = (block, actionKey) => {
-    const latexStr = block.content?.latex || 'x^2 - 4';
+  // exampleLatex: an example picked in the menu goes into the equation first, then the action runs on it
+  const handleSelectAiAction = (block, actionKey, exampleLatex) => {
+    if (exampleLatex) {
+      dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId: block.blockId, content: { latex: exampleLatex } } });
+    }
+    const latexStr = exampleLatex || block.content?.latex || 'x^2 - 4';
 
     if (actionKey === 'PLOT_GRAPH') {
       handlePlotGraph(block, latexStr);
@@ -1338,6 +1397,8 @@ export default function PlaygroundCanvasContainer() {
     const result = await exportPage(format, {
       strokes: whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [],
       blocks: blockStateRef.current.blocks,
+      shapes: latestShapesRef.current,
+      darkPage: isDark,
       containerElement: containerRef.current,
       fileBaseName: `netz-${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page'}`,
       background: isDark ? '#09090B' : '#FFFFFF',
@@ -1364,6 +1425,496 @@ export default function PlaygroundCanvasContainer() {
     setZoomLevel(next.zoom);
     setPanOffset(next.pan);
   }, []);
+
+  // ── Shapes: selecting and editing (useShapeEditor), drawing a new one with the Shapes tool ──
+  // A drag holds saving and undo steps until it ends, so the whole drag is one undo step
+  const handleShapeGestureActive = useCallback((active) => {
+    holdHistoryRef.current = active;
+    handleDrawingStateChange(active);
+    if (!active) commitHistory();
+  }, [handleDrawingStateChange, commitHistory]);
+
+  // Typing in a shape (its id), the shape menu (where it opened) and the Format Shape pane (its tab)
+  const [editingShapeId, setEditingShapeId] = useState(null);
+  // Where the cursor goes when typing reopens after a symbol (key: a new editor each time)
+  const [editingCaret, setEditingCaret] = useState(null);
+  const [shapeMenu, setShapeMenu] = useState(null);
+  const [shapePaneTab, setShapePaneTab] = useState(null);
+  const [changeShapeOpen, setChangeShapeOpen] = useState(false); // the Change Shape gallery
+
+  const startShapeText = useCallback((id) => {
+    const shape = latestShapesRef.current.find((s) => s.id === id);
+    if (!shape || isLineShape(shape)) return;
+    // A shape gets its text settings the first time it is typed in (Word: white, centred)
+    if (!shape.text) {
+      const defaults = shapeDefaultsRef.current;
+      applyShapes(latestShapesRef.current.map((s) => (s.id === id ? { ...s, text: { ...DEFAULT_TEXT, ...((defaults && defaults.text) || {}), value: '' } } : s)));
+    }
+    shapeEditorRef.current.select([id]);
+    setShapeMenu(null);
+    setEditingCaret(null);
+    setEditingShapeId(id);
+  }, [applyShapes]);
+
+  const shapeEditor = useShapeEditor({
+    shapes,
+    shapesRef: latestShapesRef,
+    applyShapes,
+    viewportRef,
+    containerRef,
+    onGestureActive: handleShapeGestureActive,
+    onDoubleTap: startShapeText,
+    // The menu opens beside the finger, not under it
+    onLongPress: (point) => setShapeMenu({ x: point.x + 18, y: point.y - 24 }),
+  });
+  const shapeEditorRef = useRef(shapeEditor);
+  shapeEditorRef.current = shapeEditor;
+
+  // Typing: "Resize shape to fit text" grows or shrinks the shape with its text, top edge fixed
+  const setShapeTextValue = useCallback((id, value) => {
+    applyShapes(latestShapesRef.current.map((s) => (s.id === id ? shapeWithText(s, value, browserMeasure) : s)));
+  }, [applyShapes]);
+  const handleShapeTextChange = useCallback((value) => setShapeTextValue(editingShapeIdRef.current, value), [setShapeTextValue]);
+  const editingShapeIdRef = useRef(editingShapeId);
+  editingShapeIdRef.current = editingShapeId;
+
+  // Finishing: an empty text box would be invisible, so it is removed (not while a symbol is
+  // being chosen for it: the Symbol button takes the focus, which ends the typing)
+  const symbolSessionRef = useRef(false);
+  const finishShapeText = useCallback(() => {
+    const id = editingShapeIdRef.current;
+    setEditingShapeId(null);
+    if (symbolSessionRef.current) return;
+    const shape = latestShapesRef.current.find((s) => s.id === id);
+    if (shape && shape.textBox && !(shape.text && shape.text.value && shape.text.value.trim())) {
+      applyShapes(latestShapesRef.current.filter((s) => s.id !== id));
+    }
+  }, [applyShapes]);
+
+  // ── Insert > Symbol: into the field that had the cursor when Symbol was pressed ──
+  const capturedTextTargetRef = useRef(null);
+  const handleCaptureTextTarget = useCallback(() => {
+    capturedTextTargetRef.current = captureTextTarget();
+    symbolSessionRef.current = true;
+  }, []);
+
+  // Typing in a shape reopens with the cursor at `caret`
+  const reopenShapeText = useCallback((id, caret) => {
+    setActiveTool('lasso');
+    shapeEditorRef.current.select([id]);
+    setEditingCaret({ at: caret, key: Date.now() });
+    setEditingShapeId(id);
+  }, []);
+
+  const handleInsertSymbol = useCallback((text) => {
+    const target = capturedTextTargetRef.current;
+
+    // The text of a shape: changed in the page (its editor closed when Symbol took the focus)
+    if (target && target.shapeId) {
+      const shape = latestShapesRef.current.find((s) => s.id === target.shapeId);
+      if (shape) {
+        const { value, caret } = spliceText((shape.text && shape.text.value) || '', target.start, target.end, text);
+        setShapeTextValue(shape.id, value);
+        capturedTextTargetRef.current = { ...target, el: null, start: caret, end: caret };
+        reopenShapeText(shape.id, caret);
+        return;
+      }
+    }
+
+    // A block's field (equation, text, caption): typed in, as LaTeX for an equation
+    if (target && target.el) {
+      const next = insertIntoField(target, target.latex ? latexForSymbol(text) : text);
+      if (next) {
+        capturedTextTargetRef.current = next;
+        return;
+      }
+    }
+
+    // No cursor anywhere: a new text box in the middle of the view, holding the symbol
+    const { zoom, pan } = viewportRef.current;
+    const cx = (dimensions.width / 2 - pan.x) / zoom;
+    const cy = (dimensions.height / 2 - pan.y) / zoom;
+    const box = shapeWithText(createShape(getGalleryItem('textbox'), { x: cx - 80, y: cy - 20, w: 160, h: 40 }), text, browserMeasure);
+    applyShapes([...latestShapesRef.current, box]);
+    capturedTextTargetRef.current = { el: null, shapeId: box.id, start: text.length, end: text.length, latex: false };
+    reopenShapeText(box.id, text.length);
+  }, [applyShapes, dimensions.width, dimensions.height, setShapeTextValue, reopenShapeText]);
+
+  // The Symbol menu and dialogs have closed. Typing that Symbol interrupted carries on; a text
+  // box left empty goes away.
+  const handleSymbolsClosed = useCallback((inserted) => {
+    symbolSessionRef.current = false;
+    const target = capturedTextTargetRef.current;
+    capturedTextTargetRef.current = null;
+    if (inserted || !target || !target.shapeId) return;
+    const shape = latestShapesRef.current.find((s) => s.id === target.shapeId);
+    if (!shape) return;
+    if (shape.textBox && !(shape.text && shape.text.value && shape.text.value.trim())) {
+      applyShapes(latestShapesRef.current.filter((s) => s.id !== shape.id));
+    } else {
+      reopenShapeText(shape.id, target.start);
+    }
+  }, [applyShapes, reopenShapeText]);
+
+  // "Set as Default Shape": the look new shapes start with, remembered on this device
+  const [shapeDefaults, setShapeDefaults] = useState(null);
+  const shapeDefaultsRef = useRef(null);
+  shapeDefaultsRef.current = shapeDefaults;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('netz_playground_default_shape') || 'null');
+      if (saved && typeof saved === 'object') setShapeDefaults(saved);
+    } catch (e) {}
+  }, []);
+  const setDefaultShapeFromSelection = useCallback(() => {
+    const shape = shapeEditorRef.current.selectedShapes[0];
+    if (!shape || isLineShape(shape) || shape.textBox) return;
+    const look = shapeDefaultsFrom(shape);
+    setShapeDefaults(look);
+    try {
+      localStorage.setItem('netz_playground_default_shape', JSON.stringify(look));
+    } catch (e) {}
+    showNotice('New shapes will look like this one');
+  }, [showNotice]);
+
+  const handleShapeMenuChoice = useCallback((id) => {
+    const editor = shapeEditorRef.current;
+    const first = editor.selectedShapes[0];
+    switch (id) {
+      case 'cut': editor.cutSelected(); break;
+      case 'copy': editor.copySelected(); break;
+      case 'paste': editor.paste(); break;
+      case 'duplicate': editor.duplicateSelected(); break;
+      case 'delete': editor.deleteSelected(); break;
+      case 'text': if (first) startShapeText(first.id); break;
+      case 'front': case 'back': case 'forward': case 'backward': editor.reorderSelected(id); break;
+      case 'group': editor.groupSelected(); break;
+      case 'ungroup': editor.ungroupSelected(); break;
+      case 'change': setChangeShapeOpen(true); break;
+      case 'default': setDefaultShapeFromSelection(); break;
+      case 'format': setShapePaneTab('fill'); break;
+      default: break;
+    }
+  }, [startShapeText, setDefaultShapeFromSelection]);
+
+  // Right-click on a shape with the Select tool opens its menu (the browser's own menu otherwise)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const handleContextMenu = (e) => {
+      if (activeToolRef.current !== 'lasso') return;
+      if (e.target.closest && e.target.closest('[data-shape-format-bar], [data-format-pane], [data-block-id], [data-shape-context-menu]')) return;
+      const { zoom, pan } = viewportRef.current;
+      const rect = container.getBoundingClientRect();
+      const point = { x: (e.clientX - rect.left - pan.x) / zoom, y: (e.clientY - rect.top - pan.y) / zoom };
+      const hit = hitTestShapes(latestShapesRef.current, point, 6 / zoom);
+      if (!hit) return;
+      e.preventDefault();
+      if (!shapeEditorRef.current.selectedIds.includes(hit.id)) shapeEditorRef.current.select([hit.id]);
+      setShapeMenu({ x: e.clientX, y: e.clientY });
+    };
+    container.addEventListener('contextmenu', handleContextMenu);
+    return () => container.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+  const activeToolRef = useRef(activeTool);
+  activeToolRef.current = activeTool;
+
+  // A phone bottom sheet (shape menus, Format Shape) covers the lower 60% of the screen: the page
+  // moves so the selected shapes sit in the free part above it, under the top bar
+  const SHEET_TOP_SHARE = 0.4;
+  const revealSelectionAboveSheet = useCallback(() => {
+    const box = boundsOfShapes(shapeEditorRef.current.selectedShapes);
+    if (!box) return;
+    const { zoom, pan } = viewportRef.current;
+    const top = box.minY * zoom + pan.y;
+    const bottom = box.maxY * zoom + pan.y;
+    const areaTop = 72;
+    const areaBottom = window.innerHeight * SHEET_TOP_SHARE - 8;
+    if (top >= areaTop && bottom <= areaBottom) return;
+    const height = bottom - top;
+    // Centred in the free area, or its top just under the bar when it is taller than the area
+    const targetTop = height < areaBottom - areaTop ? areaTop + (areaBottom - areaTop - height) / 2 : areaTop;
+    const next = { zoom, pan: { x: pan.x, y: pan.y + (targetTop - top) } };
+    viewportRef.current = next;
+    setPanOffset(next.pan);
+  }, []);
+  useEffect(() => {
+    if (shapePaneTab && dimensions.width < 640) revealSelectionAboveSheet();
+  }, [shapePaneTab, dimensions.width, revealSelectionAboveSheet]);
+
+  // Phones and tablets: the maths keyboard of the equation editor (MathLive) covers the lower part
+  // of the screen. The page moves so the equation being edited sits above it, its top kept
+  // under the top bar.
+  useEffect(() => {
+    let watched = null;
+    let timer = null;
+    const reveal = () => {
+      const keyboard = window.mathVirtualKeyboard;
+      if (!keyboard || !keyboard.visible) return;
+      const field = document.activeElement && document.activeElement.tagName === 'MATH-FIELD' ? document.activeElement : null;
+      const block = field && field.closest('[data-block-id]');
+      const top = keyboard.boundingRect && keyboard.boundingRect.height > 0 ? keyboard.boundingRect.top : null;
+      if (!block || !top) return;
+      const r = block.getBoundingClientRect();
+      const limit = top - 12;
+      if (r.bottom <= limit) return;
+      const shift = Math.min(r.bottom - limit, Math.max(0, r.top - 72));
+      if (shift <= 0) return;
+      const { zoom, pan } = viewportRef.current;
+      const next = { zoom, pan: { x: pan.x, y: pan.y - shift } };
+      viewportRef.current = next;
+      setPanOffset(next.pan);
+    };
+    const onFocus = (e) => {
+      if (!e.target || e.target.tagName !== 'MATH-FIELD') return;
+      const keyboard = window.mathVirtualKeyboard;
+      if (keyboard && watched !== keyboard) {
+        watched = keyboard;
+        keyboard.addEventListener('geometrychange', reveal);
+      }
+      clearTimeout(timer);
+      timer = setTimeout(reveal, 400); // once the keyboard has slid up
+    };
+    document.addEventListener('focusin', onFocus);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('focusin', onFocus);
+      if (watched) watched.removeEventListener('geometrychange', reveal);
+    };
+  }, []);
+
+  // The menu, pane and typing belong to a selection: they close when it goes
+  useEffect(() => {
+    if (shapeEditor.selectedIds.length === 0) {
+      setShapeMenu(null);
+      setShapePaneTab(null);
+      setChangeShapeOpen(false);
+    }
+    if (editingShapeId && !shapeEditor.selectedIds.includes(editingShapeId)) setEditingShapeId(null);
+  }, [shapeEditor.selectedIds, editingShapeId]);
+
+  // Touch screens get larger handles and colour swatches
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const query = window.matchMedia('(pointer: coarse)');
+    const update = () => setCoarsePointer(query.matches);
+    update();
+    query.addEventListener?.('change', update);
+    return () => query.removeEventListener?.('change', update);
+  }, []);
+
+  // Insert > Screenshot. Screen Grab Main Window: the part of the page on screen, as shown
+  const renderPlaygroundView = useCallback(async () => {
+    const container = containerRef.current;
+    const { zoom, pan } = viewportRef.current;
+    const isDark = document.documentElement.classList.contains('dark');
+    const rect = container.getBoundingClientRect();
+    return renderView({
+      strokes: whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [],
+      blocks: blockStateRef.current.blocks,
+      shapes: latestShapesRef.current,
+      darkPage: isDark,
+      containerElement: container,
+      view: { x: -pan.x / zoom, y: -pan.y / zoom, width: rect.width / zoom, height: rect.height / zoom },
+      pixelsPerUnit: zoom * (window.devicePixelRatio || 1),
+      grid: container.querySelector('[data-grid-background]'),
+      background: isDark ? '#09090B' : '#FFFFFF',
+    });
+  }, []);
+  // Finish puts the screenshot on the page as a picture, like Insert > Picture
+  const insertImageRef = useRef(handleInsertImage);
+  insertImageRef.current = handleInsertImage;
+  const insertScreenshot = useCallback((dataUrl) => insertImageRef.current(dataUrl), []);
+  const screenshot = useScreenshot({ renderView: renderPlaygroundView, onInsert: insertScreenshot, showNotice, coarse: coarsePointer });
+
+  // The Change Shape gallery closes on Escape (the selection stays) or a press outside it
+  useEffect(() => {
+    if (!changeShapeOpen) return undefined;
+    const key = (e) => {
+      if (e.key !== 'Escape') return;
+      e.stopImmediatePropagation();
+      setChangeShapeOpen(false);
+    };
+    const outside = (e) => {
+      if (!(e.target.closest && e.target.closest('[data-shape-gallery="change"]'))) setChangeShapeOpen(false);
+    };
+    window.addEventListener('keydown', key, true);
+    const timer = setTimeout(() => window.addEventListener('pointerdown', outside, true), 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', key, true);
+      window.removeEventListener('pointerdown', outside, true);
+    };
+  }, [changeShapeOpen]);
+
+  // Drawing a connector: the connection points of shapes near its ends (it attaches on release)
+  const connectionHintsFor = useCallback((start, end) => {
+    const zoom = viewportRef.current.zoom || 1;
+    const all = latestShapesRef.current;
+    const hints = [];
+    for (const point of [start, end]) {
+      const near = nearestConnection(all, point, 16 / zoom);
+      for (const shape of shapesNear(all, point, 40 / zoom)) {
+        for (const c of connectionPoints(shape)) hints.push({ x: c.x, y: c.y, attached: Boolean(near && near.id === shape.id && near.idx === c.idx) });
+      }
+    }
+    return hints;
+  }, []);
+
+  // A lasso drawn around shapes selects them (Shift adds to the selection)
+  const handleLassoFinished = useCallback((polygon, e) => {
+    shapeEditorRef.current.selectEnclosed(polygon, Boolean(e && e.shiftKey));
+  }, []);
+
+  // Convert to Shape: ink that snapped to a line, triangle, rectangle, circle or polygon becomes
+  // an editable shape (one undo step: the shapes are added, then the ink is removed)
+  const handleConvertInkToShapes = useCallback(() => {
+    const canvas = whiteboardCanvasRef.current;
+    const ids = inkSelectionRef.current ? inkSelectionRef.current.strokeIds : [];
+    if (!canvas || ids.length === 0) return;
+    const strokes = canvas.getStrokes().filter((st) => ids.includes(st.id) && isConvertibleStroke(st));
+    const made = strokes.map(shapeFromStroke).filter(Boolean);
+    if (made.length === 0) return;
+    applyShapes([...latestShapesRef.current, ...made]);
+    canvas.eraseStrokesByIds(strokes.map((st) => st.id));
+    shapeEditorRef.current.select(made.map((sh) => sh.id));
+    showNotice(made.length === 1 ? 'Converted to a shape: drag its handles to change it' : `Converted to ${made.length} shapes`);
+  }, [applyShapes, showNotice]);
+  const inkSelectionRef = useRef(inkSelection);
+  inkSelectionRef.current = inkSelection;
+
+  // A shape picked in the gallery is armed: drag on the page to draw it, or tap for its default size
+  const handlePickShape = useCallback((item) => {
+    setArmedShape(item);
+    setActiveTool('shape');
+    showNotice(`${item.name}: drag on the page to draw it, or tap for the default size`, 3000);
+  }, [showNotice]);
+
+  // The Shapes tool without a picked shape: rough shapes drawn by hand snap into shape
+  const handleFreehandShape = useCallback(() => {
+    setArmedShape(null);
+    setActiveTool('shape');
+    showNotice('Draw a rough line, triangle, rectangle or circle: it snaps into shape', 3000);
+  }, [showNotice]);
+
+  // As in Word, a new shape is selected and the tool goes back to selecting
+  const handleShapeDrawn = useCallback((box, item) => {
+    let shape = createShape(item, box, shapeDefaultsRef.current);
+    // A line or connector drawn from a shape's connection point to another's attaches to them
+    if (isLineShape(shape)) {
+      const reach = 16 / (viewportRef.current.zoom || 1);
+      const ends = lineEndpoints(shape);
+      const from = nearestConnection(latestShapesRef.current, ends.start, reach);
+      const to = nearestConnection(latestShapesRef.current, ends.end, reach);
+      if (from || to) {
+        shape = lineBetween(shape, from || ends.start, to || ends.end);
+        if (from) shape = setConnection(shape, 'start', from);
+        if (to) shape = setConnection(shape, 'end', to);
+      }
+    }
+    applyShapes([...latestShapesRef.current, shape]);
+    rememberRecentShape(item.id);
+    setNotice(null); // the "drag on the page" hint has done its job
+    setArmedShape(null);
+    setActiveTool('lasso');
+    shapeEditorRef.current.select([shape.id]);
+    // A text box opens ready to type, as in Word
+    if (item.textBox) {
+      setEditingCaret(null);
+      setEditingShapeId(shape.id);
+    }
+  }, [applyShapes]);
+
+  // A selection belongs to the Select tool; the armed shape belongs to the Shapes tool
+  useEffect(() => {
+    if (activeTool !== 'lasso') shapeEditorRef.current.clearSelection();
+    if (activeTool !== 'shape') setArmedShape(null);
+  }, [activeTool]);
+
+  // Keys for selected shapes (left to the browser inside text fields): Delete, Escape,
+  // arrows nudge 1 px (Shift: 10 px), Ctrl+D duplicates
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const target = e.target;
+      const tag = target && target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (target && target.isContentEditable)) return;
+      const editor = shapeEditorRef.current;
+      if (editor.selectedIds.length === 0) return;
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === 'g') {
+          // Ctrl+G groups, Ctrl+Shift+G ungroups
+          e.preventDefault();
+          if (e.shiftKey) editor.ungroupSelected();
+          else editor.groupSelected();
+          return;
+        }
+        if (e.shiftKey && (e.key === '>' || e.key === '<' || e.code === 'Period' || e.code === 'Comma')) {
+          // Ctrl+Shift+> and Ctrl+Shift+<: text one size larger or smaller
+          e.preventDefault();
+          editor.stepTextSize(e.key === '>' || e.code === 'Period');
+          return;
+        }
+        if (key === 'd') {
+          e.preventDefault();
+          editor.duplicateSelected();
+        } else if (key === 'c') {
+          editor.copySelected();
+        } else if (key === 'x') {
+          e.preventDefault();
+          editor.cutSelected();
+        }
+        return;
+      }
+      if (e.altKey) return;
+      if (e.key === 'Tab') {
+        // Tab: the next shape (Shift+Tab: the previous one), as in Word. Not while moving
+        // through the toolbar's buttons with Tab
+        if (target && target !== document.body && target.closest && target.closest('button, a, [role="menu"], [role="dialog"]')) return;
+        e.preventDefault();
+        editor.selectNext(e.shiftKey);
+        return;
+      }
+      if ((e.key === 'Enter' || e.key === 'F2') && editor.selectedIds.length === 1) {
+        e.preventDefault();
+        startShapeTextRef.current(editor.selectedIds[0]);
+        return;
+      }
+      const step = e.shiftKey ? 10 : 1;
+      const arrows = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        editor.deleteSelected();
+      } else if (e.key === 'Escape') {
+        editor.clearSelection();
+      } else if (arrows[e.key]) {
+        e.preventDefault();
+        editor.nudge(...arrows[e.key]);
+      }
+    };
+    // Ctrl+V: cut or copied shapes are pasted when the clipboard holds no picture (pictures are inserted as before)
+    const handlePaste = (e) => {
+      const target = e.target;
+      const tag = target && target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
+      const items = (e.clipboardData && e.clipboardData.items) || [];
+      for (let i = 0; i < items.length; i++) if (items[i].type.indexOf('image') !== -1) return;
+      if (shapeEditorRef.current.canPaste()) {
+        e.preventDefault();
+        setActiveTool('lasso');
+        shapeEditorRef.current.paste();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, []);
+  const startShapeTextRef = useRef(startShapeText);
+  startShapeTextRef.current = startShapeText;
 
   // Two-finger pinch / pan (and one-finger pan when fingers do not draw) report the new viewport here
   const handleViewportGesture = useCallback((next) => {
@@ -1479,6 +2030,9 @@ export default function PlaygroundCanvasContainer() {
         height={dimensions.height}
       />
 
+      {/* Shapes, under the ink so the pen writes on them */}
+      <ShapeLayer shapes={shapes} zoomLevel={zoomLevel} panOffset={panOffset} width={dimensions.width} height={dimensions.height} editingId={editingShapeId} />
+
       {/* Layer 2 & 3: Hardware Accelerated Whiteboard Canvas */}
       <WhiteboardCanvas
         ref={whiteboardCanvasRef}
@@ -1490,6 +2044,12 @@ export default function PlaygroundCanvasContainer() {
         panOffset={panOffset}
         width={dimensions.width}
         height={dimensions.height}
+        shapeItem={activeTool === 'shape' ? armedShape : null}
+        shapeDefaults={shapeDefaults}
+        onShapeDrawn={handleShapeDrawn}
+        onSelectPress={shapeEditor.handleSelectPress}
+        onLassoFinished={handleLassoFinished}
+        connectionHints={connectionHintsFor}
         onStrokesUpdated={handleStrokesUpdated}
         onDrawingStateChange={handleDrawingStateChange}
         onSelectionCompleted={handleSelectionCompleted}
@@ -1596,6 +2156,9 @@ export default function PlaygroundCanvasContainer() {
       </div>
 
       {/* Short status message */}
+      {/* Insert > Screenshot: the editor, the countdown, the photo picker */}
+      {screenshot.elements}
+
       {notice && (
         <div
           role="status"
@@ -1640,6 +2203,16 @@ export default function PlaygroundCanvasContainer() {
             }}
             className="absolute top-0 left-0 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl select-none"
           >
+            {(whiteboardCanvasRef.current?.getStrokes?.() || []).some((st) => inkSelection.strokeIds.includes(st.id) && isConvertibleStroke(st)) && (
+              <button
+                onClick={handleConvertInkToShapes}
+                title="Convert to Shape: turn the snapped ink into shapes you can resize, colour and type in"
+                aria-label="Convert to Shape"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+              >
+                <LuShapes className="w-5 h-5" />
+              </button>
+            )}
             <button
               onClick={() => whiteboardCanvasRef.current?.duplicateSelection()}
               title="Duplicate selection"
@@ -1667,6 +2240,147 @@ export default function PlaygroundCanvasContainer() {
           </div>
         );
       })()}
+
+      {/* Selected shapes: handles, and the format bar once nothing is being dragged */}
+      {activeTool === 'lasso' && shapeEditor.selectedShapes.length > 0 && (
+        <ShapeSelectionOverlay
+          shapes={shapeEditor.selectedShapes}
+          zoomLevel={zoomLevel}
+          panOffset={panOffset}
+          width={dimensions.width}
+          height={dimensions.height}
+          coarse={coarsePointer}
+          group={isWholeGroup(shapes, shapeEditor.selectedShapes)}
+          guides={shapeEditor.gestureInfo && shapeEditor.gestureInfo.guides}
+          connections={shapeEditor.gestureInfo && shapeEditor.gestureInfo.connections}
+          attached={shapeEditor.gestureInfo && shapeEditor.gestureInfo.attached}
+          onBeginGesture={shapeEditor.beginGesture}
+          onBodyContextMenu={(point) => setShapeMenu(point)}
+        />
+      )}
+      {editingShapeId && (() => {
+        const shape = shapes.find((s) => s.id === editingShapeId);
+        if (!shape) return null;
+        return (
+          <ShapeTextEditor
+            key={`${shape.id}-${editingCaret ? editingCaret.key : 0}`}
+            caret={editingCaret ? editingCaret.at : null}
+            shape={shape}
+            zoomLevel={zoomLevel}
+            panOffset={panOffset}
+            darkPage={typeof document !== 'undefined' && document.documentElement.classList.contains('dark')}
+            onChange={handleShapeTextChange}
+            onDone={finishShapeText}
+          />
+        );
+      })()}
+      {activeTool === 'lasso' && shapeEditor.selectedShapes.length > 0 && !shapeEditor.gestureInfo && !editingShapeId && (() => {
+        const box = boundsOfShapes(shapeEditor.selectedShapes);
+        const screenBox = {
+          minX: box.minX * zoomLevel + panOffset.x,
+          minY: box.minY * zoomLevel + panOffset.y,
+          maxX: box.maxX * zoomLevel + panOffset.x,
+          maxY: box.maxY * zoomLevel + panOffset.y,
+        };
+        // The bar keeps clear of the rotate handle too (it sits above the top edge)
+        const rotateAt = rotateHandleAt(shapeEditor.selectedShapes, zoomLevel, panOffset, coarsePointer);
+        if (rotateAt) {
+          const reach = coarsePointer ? 22 : 12;
+          screenBox.minX = Math.min(screenBox.minX, rotateAt.x - reach);
+          screenBox.maxX = Math.max(screenBox.maxX, rotateAt.x + reach);
+          screenBox.minY = Math.min(screenBox.minY, rotateAt.y - reach);
+          screenBox.maxY = Math.max(screenBox.maxY, rotateAt.y + reach);
+        }
+        return (
+          <ShapeFormatBar
+            shapes={shapeEditor.selectedShapes}
+            screenBox={screenBox}
+            viewport={dimensions}
+            isMobile={dimensions.width < 640}
+            coarse={coarsePointer}
+            onStyle={shapeEditor.applyStyle}
+            onReorder={shapeEditor.reorderSelected}
+            onRotate={shapeEditor.rotateSelectedBy}
+            onFlip={shapeEditor.flipSelected}
+            onAlign={shapeEditor.alignSelected}
+            onDistribute={shapeEditor.distributeSelected}
+            onGroup={shapeEditor.groupSelected}
+            onUngroup={shapeEditor.ungroupSelected}
+            onChangeShape={() => setChangeShapeOpen(true)}
+            canGroup={canGroup(shapeEditor.selectedShapes)}
+            canUngroup={canUngroup(shapeEditor.selectedShapes)}
+            canChangeShape={shapeEditor.selectedShapes.some(canChangeShape)}
+            onDuplicate={shapeEditor.duplicateSelected}
+            onDelete={shapeEditor.deleteSelected}
+            onEditText={() => shapeEditor.selectedShapes[0] && startShapeText(shapeEditor.selectedShapes[0].id)}
+            onOpenPane={(tab) => setShapePaneTab(tab || 'fill')}
+            onSheetOpen={revealSelectionAboveSheet}
+          />
+        );
+      })()}
+      {shapePaneTab && shapeEditor.selectedShapes.length > 0 && (
+        <FormatShapePane
+          shape={shapeEditor.selectedShapes[0]}
+          initialTab={shapePaneTab}
+          isMobile={dimensions.width < 640}
+          coarse={coarsePointer}
+          onStyle={shapeEditor.applyStyle}
+          onUpdate={shapeEditor.updateSelected}
+          onClose={() => setShapePaneTab(null)}
+        />
+      )}
+      {changeShapeOpen && shapeEditor.selectedShapes.length > 0 && (
+        <div className="contents" data-change-shape onPointerDown={(e) => e.stopPropagation()}>
+          <ShapeGallery
+            mode="change"
+            isMobile={dimensions.width < 640}
+            placement="fixed left-1/2 top-20 -translate-x-1/2 w-[560px] max-w-[calc(100vw-16px)] max-h-[70vh] rounded-2xl p-3 border"
+            onPick={(item) => {
+              shapeEditor.changeSelected(item.preset);
+              setChangeShapeOpen(false);
+            }}
+            onClose={() => setChangeShapeOpen(false)}
+          />
+        </div>
+      )}
+      {shapeMenu && shapeEditor.selectedShapes.length > 0 && (
+        <ShapeContextMenu
+          x={shapeMenu.x}
+          y={shapeMenu.y}
+          onClose={() => setShapeMenu(null)}
+          onChoose={handleShapeMenuChoice}
+          items={[
+            { id: 'cut', label: 'Cut', shortcut: 'Ctrl+X' },
+            { id: 'copy', label: 'Copy', shortcut: 'Ctrl+C' },
+            { id: 'paste', label: 'Paste', shortcut: 'Ctrl+V', disabled: !shapeEditor.canPaste() },
+            { id: 'duplicate', label: 'Duplicate', shortcut: 'Ctrl+D' },
+            { id: 'delete', label: 'Delete', shortcut: 'Del' },
+            { separator: true },
+            ...(shapeEditor.selectedShapes.some((s) => !isLineShape(s)) ? [{ id: 'text', label: 'Edit Text', shortcut: 'F2' }, { separator: true }] : []),
+            ...(canGroup(shapeEditor.selectedShapes) ? [{ id: 'group', label: 'Group', shortcut: 'Ctrl+G' }] : []),
+            ...(canUngroup(shapeEditor.selectedShapes) ? [{ id: 'ungroup', label: 'Ungroup', shortcut: 'Ctrl+Shift+G' }] : []),
+            { id: 'front', label: 'Bring to Front' },
+            { id: 'forward', label: 'Bring Forward' },
+            { id: 'backward', label: 'Send Backward' },
+            { id: 'back', label: 'Send to Back' },
+            { separator: true },
+            { id: 'change', label: 'Change Shape...', disabled: !shapeEditor.selectedShapes.some(canChangeShape) },
+            { id: 'default', label: 'Set as Default Shape', disabled: !shapeEditor.selectedShapes.some((s) => !isLineShape(s) && !s.textBox) },
+            { id: 'format', label: 'Format Shape...' },
+          ]}
+        />
+      )}
+      {shapeEditor.gestureInfo && (shapeEditor.gestureInfo.kind === 'rotate' || shapeEditor.gestureInfo.kind === 'resize') && (
+        <div
+          role="status"
+          style={{ left: shapeEditor.gestureInfo.x + 18, top: shapeEditor.gestureInfo.y + 18 }}
+          className="fixed z-50 px-2 py-1 rounded-md bg-zinc-900/85 text-white text-[11px] font-semibold tabular-nums pointer-events-none"
+        >
+          {shapeEditor.gestureInfo.kind === 'rotate'
+            ? `${Math.round(shapeEditor.gestureInfo.rot)}°`
+            : `${Math.round(shapeEditor.gestureInfo.w)} × ${Math.round(shapeEditor.gestureInfo.h)}`}
+        </div>
+      )}
 
       {/* Soft Editor & Hypotheses Resolver Modal */}
       <SoftEditorModal
@@ -1778,6 +2492,8 @@ export default function PlaygroundCanvasContainer() {
         canUndo={historyFlags.canUndo}
         canRedo={historyFlags.canRedo}
         onAddBlock={handleAddBlock}
+        onInsertEquation={handleInsertEquation}
+        screenshot={screenshot}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
         onExportCanvas={handleExportCanvas}
         showLiveOcr={notesMode ? true : showLiveOcr}
@@ -1801,6 +2517,12 @@ export default function PlaygroundCanvasContainer() {
         isRecording={isRecordingAudio}
         onToggleRecordAudio={handleToggleRecordAudio}
         onInsertImage={handleInsertImage}
+        armedShape={armedShape}
+        onPickShape={handlePickShape}
+        onFreehandShape={handleFreehandShape}
+        onCaptureTextTarget={handleCaptureTextTarget}
+        onInsertSymbol={handleInsertSymbol}
+        onSymbolsClosed={handleSymbolsClosed}
       />
 
       {/* Floating Ambient Background Music Player */}

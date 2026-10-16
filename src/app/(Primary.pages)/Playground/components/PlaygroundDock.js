@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   FiEdit2,
   FiMove,
@@ -24,7 +24,14 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { FaHighlighter, FaEraser } from 'react-icons/fa6';
-import { LuLassoSelect, LuPencil, LuShapes } from 'react-icons/lu';
+import { LuLassoSelect, LuPencil, LuShapes, LuScissors, LuPlusSquare as LuInsert } from 'react-icons/lu';
+import ShapeGallery, { ShapeIcon } from './shapes/ShapeGallery';
+import SymbolMenu from './symbols/SymbolMenu';
+import SymbolDialog from './symbols/SymbolDialog';
+import NumberDialog from './symbols/NumberDialog';
+import EquationMenu from './equation/EquationMenu';
+import InsertLatexDialog from './equation/InsertLatexDialog';
+import ScreenshotMenu from './screenshot/ScreenshotMenu';
 
 // Each preset sets width and opacity together, so they look different on the page.
 const PEN_PRESETS = [
@@ -100,14 +107,57 @@ export default function PlaygroundDock({
   setEraserMode,
   eraserSize = 16,
   setEraserSize,
+  armedShape = null,
+  onPickShape,
+  onFreehandShape,
+  onCaptureTextTarget,
+  onInsertSymbol,
+  onSymbolsClosed,
+  onInsertEquation,
+  screenshot = null,
 }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showShapes, setShowShapes] = useState(false);
+  const [showInsertMenu, setShowInsertMenu] = useState(false); // tablet: the Insert group folded into one button
+  const [showSymbols, setShowSymbols] = useState(false);
+  const showSymbolsRef = useRef(false);
+  showSymbolsRef.current = showSymbols;
+  const [symbolDialog, setSymbolDialog] = useState(null); // 'more' | 'number' | null
+  const [showZoomMenu, setShowZoomMenu] = useState(false); // a folded dock: the zoom buttons in one menu
+  const [showEquation, setShowEquation] = useState(false);
+  const [latexDialog, setLatexDialog] = useState(false);
+  const [showScreenshot, setShowScreenshot] = useState(false);
+  const symbolInsertedRef = useRef(false);
   const [windowWidth, setWindowWidth] = useState(1280);
+
+  const armed = activeTool === 'shape' ? armedShape : null;
 
   const fileInputRef = useRef(null);
   const moreMenuRef = useRef(null);
+  const dockRef = useRef(null);
+
+  useEffect(() => {
+    if (!showShapes && !showInsertMenu && !showSymbols && !showZoomMenu && !showEquation && !showScreenshot) return;
+    // The press only closes the menu: it does not also draw on the page
+    const handleOutside = (e) => {
+      if (dockRef.current && !dockRef.current.contains(e.target)) {
+        e.stopPropagation();
+        setShowShapes(false);
+        setShowInsertMenu(false);
+        setShowZoomMenu(false);
+        setShowEquation(false);
+        setShowScreenshot(false);
+        if (showSymbols) {
+          setShowSymbols(false);
+          endSymbolsRef.current();
+        }
+      }
+    };
+    window.addEventListener('pointerdown', handleOutside, true);
+    return () => window.removeEventListener('pointerdown', handleOutside, true);
+  }, [showShapes, showInsertMenu, showSymbols, showZoomMenu, showEquation, showScreenshot]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -120,6 +170,53 @@ export default function PlaygroundDock({
   const isTablet = windowWidth >= 640 && windowWidth < 1100;
   const isDesktop = windowWidth >= 1100;
 
+  // The dock keeps clear of the app's left sidebar (72 px collapsed, wider when open; on phones it
+  // is a sliding overlay, so it does not count) and sits centred in the space that is left.
+  const [sidebarRight, setSidebarRight] = useState(0);
+  useEffect(() => {
+    const sidebar = document.querySelector('[data-app-sidebar]');
+    const measure = () => {
+      const r = sidebar ? sidebar.getBoundingClientRect() : null;
+      setSidebarRight(r && window.innerWidth >= 768 && r.right > 0 && r.width < window.innerWidth / 2 ? Math.round(r.right) : 0);
+    };
+    measure();
+    const observer = sidebar && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (observer) observer.observe(sidebar);
+    window.addEventListener('resize', measure);
+    return () => {
+      if (observer) observer.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
+  // When the buttons do not fit, the dock folds step by step:
+  //   1: no text labels   2: the zoom buttons become one   3: less used tools move to More
+  // The level is worked out again, from 0, whenever the space changes (key)
+  const fitKey = `${windowWidth}:${sidebarRight}`;
+  const [fit, setFit] = useState({ key: '', level: 0 });
+  const compact = fit.key === fitKey ? fit.level : 0;
+  const barRef = useRef(null);
+  useLayoutEffect(() => {
+    if (fit.key !== fitKey) {
+      setFit({ key: fitKey, level: 0 });
+      return;
+    }
+    const bar = barRef.current;
+    if (bar && fit.level < 3 && bar.scrollWidth > bar.clientWidth + 1) setFit({ key: fitKey, level: fit.level + 1 });
+  }, [fit, fitKey]);
+  const showLabels = compact === 0;
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const query = window.matchMedia('(pointer: coarse)');
+    const update = () => setCoarsePointer(query.matches);
+    update();
+    query.addEventListener?.('change', update);
+    return () => query.removeEventListener?.('change', update);
+  }, []);
+  const foldZoom = compact >= 2;
+  const toolsInMore = compact >= 3;
+
   // Close menus on escape
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -127,16 +224,196 @@ export default function PlaygroundDock({
         setShowSettings(false);
         setShowExportMenu(false);
         setShowMoreMenu(false);
+        setShowShapes(false);
+        setShowInsertMenu(false);
+        setShowEquation(false);
+        setShowScreenshot(false);
+        if (showSymbolsRef.current) {
+          setShowSymbols(false);
+          endSymbolsRef.current();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // A Symbol session (menu, then perhaps More Symbols or Number) ends when they all close
+  const endSymbols = () => {
+    onSymbolsClosed?.(symbolInsertedRef.current);
+    symbolInsertedRef.current = false;
+  };
+  const endSymbolsRef = useRef(endSymbols);
+  endSymbolsRef.current = endSymbols;
+
+  const closePanels = () => {
+    setShowSettings(false);
+    setShowExportMenu(false);
+    setShowMoreMenu(false);
+    setShowShapes(false);
+    setShowInsertMenu(false);
+    setShowZoomMenu(false);
+    setShowEquation(false);
+    setShowScreenshot(false);
+    if (showSymbols) {
+      setShowSymbols(false);
+      endSymbols();
+    }
+  };
+  const openSymbols = () => {
+    const open = !showSymbols;
+    closePanels();
+    symbolInsertedRef.current = false;
+    setShowSymbols(open);
+  };
+  const insertSymbol = (text) => {
+    symbolInsertedRef.current = true;
+    onInsertSymbol?.(text);
+  };
+  // The cursor's field is remembered at the press, before the button takes the focus
+  const captureTarget = () => onCaptureTextTarget?.();
+
+  const openEquation = () => {
+    const open = !showEquation;
+    closePanels();
+    setShowEquation(open);
+  };
+  const newEquation = () => {
+    closePanels();
+    onInsertEquation?.('');
+  };
+  // Insert > Equation, as in WPS: on a laptop the button inserts a new equation and its arrow opens
+  // the menu; on a touch screen (two targets side by side would be too small) the button opens the menu
+  const equationButton = (
+    <div className={`flex items-center rounded-xl ${showEquation ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'text-zinc-600 dark:text-zinc-400'}`}>
+      <button
+        onClick={coarsePointer ? openEquation : newEquation}
+        title={coarsePointer ? 'Equation (New Equation, LaTeX, Common Equations)' : 'Equation: Insert New Equation'}
+        aria-label="Equation"
+        aria-expanded={coarsePointer ? showEquation : undefined}
+        className={`h-11 min-w-[44px] min-h-[44px] px-2 flex items-center justify-center gap-1 rounded-xl transition-all ${showEquation ? '' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+      >
+        <span className="text-base leading-none font-serif italic" aria-hidden="true">π</span>
+        {isDesktop && showLabels && <span className="text-[11px] font-semibold not-italic">Equation</span>}
+      </button>
+      {!coarsePointer && (
+        <button
+          onClick={openEquation}
+          title="Equation menu: Insert LaTeX, Common Equations"
+          aria-label="Equation menu"
+          aria-expanded={showEquation}
+          className={`h-11 min-h-[44px] w-5 flex items-center justify-center rounded-xl text-[10px] ${showEquation ? '' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+        >
+          ▾
+        </button>
+      )}
+    </div>
+  );
+
+  // Insert > Screenshot, as in WPS: on a laptop the button takes a screenshot the ticked way
+  // (Screenshot, or Hide Current Window During Screenshot) and its arrow opens the menu. On a
+  // touch screen, or where the browser cannot capture the screen, the button opens the menu.
+  const openScreenshot = () => {
+    const open = !showScreenshot;
+    closePanels();
+    setShowScreenshot(open);
+  };
+  const screenshotDirect = Boolean(screenshot && screenshot.canCapture && !coarsePointer);
+  const hideMode = Boolean(screenshot && screenshot.mode === 'hide');
+  const takeScreenshot = () => {
+    closePanels();
+    screenshot.capture('rect', { hide: hideMode });
+  };
+  const screenshotButton = screenshot && (
+    <div className={`flex items-center rounded-xl ${showScreenshot ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'text-zinc-600 dark:text-zinc-400'}`}>
+      <button
+        onClick={screenshotDirect ? takeScreenshot : openScreenshot}
+        title={
+          screenshotDirect
+            ? hideMode
+              ? 'Screenshot: Hide Current Window During Screenshot (Ctrl+Alt+C)'
+              : 'Screenshot (Ctrl+Alt+X)'
+            : 'Screenshot (the Playground view, a photo or a pasted picture, cropped to a shape)'
+        }
+        aria-label="Screenshot"
+        aria-expanded={screenshotDirect ? undefined : showScreenshot}
+        className={`h-11 min-w-[44px] min-h-[44px] px-2 flex items-center justify-center gap-1 rounded-xl transition-all ${showScreenshot ? '' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+      >
+        <LuScissors className="w-4 h-4" />
+        {isDesktop && showLabels && <span className="text-[11px] font-semibold">Screenshot</span>}
+      </button>
+      {screenshotDirect && (
+        <button
+          onClick={openScreenshot}
+          title="Screenshot menu: oval, rounded, polygon, Hide Current Window, Screen Grab Main Window"
+          aria-label="Screenshot menu"
+          aria-expanded={showScreenshot}
+          className={`h-11 min-h-[44px] w-5 flex items-center justify-center rounded-xl text-[10px] ${showScreenshot ? '' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+        >
+          ▾
+        </button>
+      )}
+    </div>
+  );
+
+  // Insert > Symbol: the field that had the cursor gets the symbol
+  const symbolButton = (
+    <button
+      onPointerDown={captureTarget}
+      onClick={openSymbols}
+      title="Symbol (Insert a symbol: ©, ℃, ≤, α, ①...)"
+      aria-label="Symbol"
+      aria-expanded={showSymbols}
+      className={`h-11 min-w-[44px] min-h-[44px] px-2 flex items-center justify-center gap-1 rounded-xl transition-all ${
+        showSymbols || symbolDialog ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+      }`}
+    >
+      <span className="text-base leading-none font-semibold" aria-hidden="true">Ω</span>
+      {isDesktop && showLabels && <span className="text-[11px] font-semibold">Symbol</span>}
+    </button>
+  );
+  const openShapes = () => {
+    const open = !showShapes;
+    closePanels();
+    setShowShapes(open);
+  };
+  const openPicture = () => {
+    closePanels();
+    fileInputRef.current?.click();
+  };
+
+  // Insert > Shapes: the button shows the armed shape while one is picked, as WPS does
+  const shapesButton = (
+    <button
+      onClick={openShapes}
+      title={armed ? `Shapes: ${armed.name} (drag on the page to draw it)` : 'Shapes (Insert a rectangle, arrow, flowchart symbol, callout...)'}
+      aria-label="Shapes"
+      aria-expanded={showShapes}
+      className={`h-11 min-w-[44px] min-h-[44px] px-2 flex items-center justify-center gap-1 rounded-xl transition-all relative ${
+        activeTool === 'shape' || showShapes
+          ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
+          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+      }`}
+    >
+      {armed ? <ShapeIcon item={armed} className="w-5 h-5" /> : <LuShapes className="w-4 h-4" />}
+      {isDesktop && showLabels && <span className="text-[11px] font-semibold">Shapes</span>}
+    </button>
+  );
+
   return (
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 max-w-[calc(100vw-16px)] pointer-events-auto select-none"
+      ref={dockRef}
+      // Centred with auto margins, not a transform: a transform would pin the phone bottom sheets
+      // inside the dock to the dock instead of the screen
+      // An open menu sits above everything on the page: blocks being edited (z-50), the music player (z-50)
+      className={`fixed right-0 mx-auto w-fit ${
+        showSettings || showMoreMenu || showShapes || showExportMenu || showSymbols || showInsertMenu || showZoomMenu || showEquation || showScreenshot ? 'z-[60]' : 'z-40'
+      } flex flex-col items-center gap-2 pointer-events-auto select-none`}
       style={{
+        left: sidebarRight,
+        maxWidth: `calc(100vw - ${sidebarRight + 16}px)`,
+        // Pop-ups above the dock are centred on it, so this width keeps them clear of the sidebar too
+        '--dock-panel-max': `calc(100vw - ${sidebarRight + 16}px)`,
         bottom: 'max(0.75rem, env(safe-area-inset-bottom, 12px))',
       }}
     >
@@ -146,8 +423,8 @@ export default function PlaygroundDock({
           className={`${
             isMobile
               ? 'fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl p-5 border-t'
-              : 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 max-w-[95vw] rounded-2xl p-3 border'
-          } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl z-50 overflow-y-auto flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-4 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150`}
+              : 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 max-w-[var(--dock-panel-max,95vw)] rounded-2xl p-3 border'
+          } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl z-50 overflow-y-auto flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3.5 sm:gap-4 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150`}
         >
           {isMobile && (
             <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
@@ -403,6 +680,171 @@ export default function PlaygroundDock({
         </div>
       )}
 
+      {/* 2b. Insert > Shapes gallery (WPS / Word categories) */}
+      {showShapes && (
+        <ShapeGallery
+          isMobile={isMobile}
+          armedId={armed ? armed.id : null}
+          onPick={(item) => {
+            setShowShapes(false);
+            onPickShape?.(item);
+          }}
+          onFreehand={() => {
+            setShowShapes(false);
+            onFreehandShape?.();
+          }}
+          onClose={() => setShowShapes(false)}
+        />
+      )}
+
+      {/* 2b'. Insert > Symbol menu, and its More Symbols and Number dialogs */}
+      {showSymbols && (
+        <SymbolMenu
+          isMobile={isMobile}
+          onInsert={(char) => {
+            insertSymbol(char);
+            setShowSymbols(false);
+            endSymbols();
+          }}
+          onMoreSymbols={() => {
+            setShowSymbols(false);
+            setSymbolDialog('more');
+          }}
+          onNumber={() => {
+            setShowSymbols(false);
+            setSymbolDialog('number');
+          }}
+          onClose={() => {
+            setShowSymbols(false);
+            endSymbols();
+          }}
+        />
+      )}
+      {symbolDialog === 'more' && (
+        <SymbolDialog
+          isMobile={isMobile}
+          onInsert={insertSymbol}
+          onClose={() => {
+            setSymbolDialog(null);
+            endSymbols();
+          }}
+        />
+      )}
+      {symbolDialog === 'number' && (
+        <NumberDialog
+          isMobile={isMobile}
+          onInsert={insertSymbol}
+          onClose={() => {
+            setSymbolDialog(null);
+            endSymbols();
+          }}
+        />
+      )}
+
+      {/* 2b''. Insert > Equation menu, and the Insert LaTeX dialog */}
+      {showEquation && (
+        <EquationMenu
+          isMobile={isMobile}
+          onNewEquation={newEquation}
+          onInsertLatex={() => {
+            setShowEquation(false);
+            setLatexDialog(true);
+          }}
+          onInsertCommon={(latex) => {
+            setShowEquation(false);
+            onInsertEquation?.(latex);
+          }}
+          onClose={() => setShowEquation(false)}
+        />
+      )}
+      {latexDialog && <InsertLatexDialog isMobile={isMobile} onInsert={(latex) => onInsertEquation?.(latex)} onClose={() => setLatexDialog(false)} />}
+
+      {/* 2b'''. Insert > Screenshot menu */}
+      {showScreenshot && screenshot && (
+        <ScreenshotMenu
+          isMobile={isMobile}
+          canCapture={screenshot.canCapture}
+          mode={screenshot.mode}
+          onCapture={(shape, options) => {
+            closePanels();
+            screenshot.capture(shape, options);
+          }}
+          onGrabView={() => {
+            closePanels();
+            screenshot.grabView();
+          }}
+          onFromPhotos={() => {
+            closePanels();
+            screenshot.fromPhotos();
+          }}
+          onPaste={() => {
+            closePanels();
+            screenshot.paste();
+          }}
+          onClose={() => setShowScreenshot(false)}
+        />
+      )}
+
+      {/* 2c. Tablet: the Insert group, folded into one menu */}
+      {showInsertMenu && (
+        <div
+          role="menu"
+          aria-label="Insert"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[var(--dock-panel-max,95vw)] rounded-2xl p-2 border bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl z-50 flex items-center gap-1.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2 duration-150"
+        >
+          {onInsertImage && (
+            <button
+              role="menuitem"
+              onClick={openPicture}
+              title="Picture: insert an image or photo"
+              className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+            >
+              <FiImage className="w-4 h-4" />
+              <span>Picture</span>
+            </button>
+          )}
+          {screenshot && (
+            <button
+              role="menuitem"
+              onClick={openScreenshot}
+              title="Screenshot: capture and crop to a rectangle, oval, rounded rectangle or polygon"
+              className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+            >
+              <LuScissors className="w-4 h-4" />
+              <span>Screenshot</span>
+            </button>
+          )}
+          <button
+            role="menuitem"
+            onClick={openShapes}
+            title="Shapes: rectangles, arrows, flowchart symbols, callouts..."
+            className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+          >
+            <LuShapes className="w-4 h-4" />
+            <span>Shapes</span>
+          </button>
+          <button
+            role="menuitem"
+            onPointerDown={captureTarget}
+            onClick={openSymbols}
+            title="Symbol: ©, ℃, ≤, α, ①..."
+            className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+          >
+            <span className="text-base leading-none" aria-hidden="true">Ω</span>
+            <span>Symbol</span>
+          </button>
+          <button
+            role="menuitem"
+            onClick={openEquation}
+            title="Equation: New Equation, LaTeX, Common Equations"
+            className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+          >
+            <span className="text-base leading-none font-serif italic" aria-hidden="true">π</span>
+            <span>Equation</span>
+          </button>
+        </div>
+      )}
+
       {/* 3. Export Format Popover Menu */}
       {showExportMenu && (
         <div
@@ -449,7 +891,7 @@ export default function PlaygroundDock({
           className={`${
             isMobile
               ? 'fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl p-5 border-t'
-              : 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[95vw] rounded-2xl p-4 border'
+              : 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[var(--dock-panel-max,95vw)] rounded-2xl p-4 border'
           } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl z-50 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-150`}
         >
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-200 dark:border-zinc-800">
@@ -465,11 +907,70 @@ export default function PlaygroundDock({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs font-semibold">
-            {/* Mobile-only secondary primary tools */}
-            {isMobile && (
-              <>
+          {/* Insert (WPS order): Picture, Screenshot, Shapes, Symbol, Equation */}
+          {isMobile && (
+            <div className="mb-3">
+              <div className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">Insert</div>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                {onInsertImage && (
+                  <button
+                    onClick={openPicture}
+                    title="Picture: insert an image or photo"
+                    aria-label="Insert Picture"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 p-2 min-h-[56px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300"
+                  >
+                    <FiImage className="w-4 h-4" />
+                    <span>Picture</span>
+                  </button>
+                )}
+                {screenshot && (
+                  <button
+                    onClick={openScreenshot}
+                    title="Screenshot: the Playground view, a photo or a pasted picture, cropped to a shape"
+                    aria-label="Insert Screenshot"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 p-2 min-h-[56px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300"
+                  >
+                    <LuScissors className="w-4 h-4" />
+                    <span>Screenshot</span>
+                  </button>
+                )}
                 <button
+                  onClick={openShapes}
+                  title="Shapes: rectangles, arrows, flowchart symbols, callouts..."
+                  aria-label="Insert Shapes"
+                  className="flex-1 flex flex-col items-center justify-center gap-1 p-2 min-h-[56px] rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                >
+                  <LuShapes className="w-4 h-4" />
+                  <span>Shapes</span>
+                </button>
+                <button
+                  onPointerDown={captureTarget}
+                  onClick={openSymbols}
+                  title="Symbol: ©, ℃, ≤, α, ①..."
+                  aria-label="Insert Symbol"
+                  className="flex-1 flex flex-col items-center justify-center gap-1 p-2 min-h-[56px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300"
+                >
+                  <span className="text-base leading-none" aria-hidden="true">Ω</span>
+                  <span>Symbol</span>
+                </button>
+                <button
+                  onClick={openEquation}
+                  title="Equation: New Equation, LaTeX, Common Equations"
+                  aria-label="Insert Equation"
+                  className="flex-1 flex flex-col items-center justify-center gap-1 p-2 min-h-[56px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300"
+                >
+                  <span className="text-base leading-none font-serif italic" aria-hidden="true">π</span>
+                  <span>Equation</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs font-semibold">
+            {/* Mobile-only secondary primary tools (Move and Notes also on a folded tablet dock) */}
+            {(isMobile || (isTablet && toolsInMore)) && (
+              <>
+                {isMobile && <button
                   onClick={() => {
                     onRedo?.();
                     setShowMoreMenu(false);
@@ -481,23 +982,7 @@ export default function PlaygroundDock({
                 >
                   <FiCornerUpRight className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                   <span>Redo</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setActiveTool('shape');
-                    setShowMoreMenu(false);
-                  }}
-                  title="Shape Tool (Auto-Snaps to Lines, Triangles, Rectangles, Polygons, Circles) - key S"
-                  className={`flex items-center gap-2.5 p-3 min-h-[44px] rounded-xl ${
-                    activeTool === 'shape'
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300'
-                  }`}
-                >
-                  <LuShapes className="w-4 h-4" />
-                  <span>Shape Tool</span>
-                </button>
+                </button>}
 
                 <button
                   onClick={() => {
@@ -538,19 +1023,6 @@ export default function PlaygroundDock({
             {/* Smart Blocks */}
             {onAddBlock && (
               <>
-                <button
-                  onClick={() => {
-                    onAddBlock('equation');
-                    setShowMoreMenu(false);
-                  }}
-                  title="Add Equation Block"
-                  aria-label="Add Equation Block"
-                  className="flex items-center gap-2.5 p-3 min-h-[44px] rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
-                >
-                  <FiPlus className="w-4 h-4" />
-                  <span>Equation Block</span>
-                </button>
-
                 <button
                   onClick={() => {
                     onAddBlock('graph');
@@ -595,22 +1067,6 @@ export default function PlaygroundDock({
               >
                 <FiMic className="w-4 h-4" />
                 <span>{isRecording ? 'Stop Recording' : 'Voice Memo'}</span>
-              </button>
-            )}
-
-            {/* Insert Image */}
-            {onInsertImage && (
-              <button
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  fileInputRef.current?.click();
-                }}
-                title="Insert Image / Photo"
-                aria-label="Insert Image / Photo"
-                className="flex items-center gap-2.5 p-3 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/60 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300"
-              >
-                <FiImage className="w-4 h-4" />
-                <span>Insert Picture</span>
               </button>
             )}
 
@@ -697,7 +1153,8 @@ export default function PlaygroundDock({
 
       {/* 5. Main Dock Toolbar */}
       {/* CRITICAL: Must have button[title^="Pen"] as a direct child to satisfy screens.mjs audit */}
-      <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl max-w-full">
+      {/* Items never shrink: a dock that does not fit overflows, which is what makes it fold */}
+      <div ref={barRef} className="flex items-center [&>*]:shrink-0 gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl max-w-full">
         {/* Undo */}
         {onUndo && (
           <button
@@ -782,24 +1239,29 @@ export default function PlaygroundDock({
           <LuLassoSelect className="w-4 h-4" />
         </button>
 
-        {/* Shape Tool: Visible on tablet & desktop */}
-        {!isMobile && (
+        {/* Tablet: one Insert button for the Insert group */}
+        {isTablet && (
           <button
-            onClick={() => setActiveTool('shape')}
-            title="Shape Tool (Auto-Snaps to Lines, Triangles, Rectangles, Polygons, Circles) - key S"
-            aria-label="Shape Tool"
-            className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all ${
-              activeTool === 'shape'
+            onClick={() => {
+              const open = !showInsertMenu;
+              closePanels();
+              setShowInsertMenu(open);
+            }}
+            title="Insert (Picture, Screenshot, Shapes, Symbol, Equation)"
+            aria-label="Insert"
+            aria-expanded={showInsertMenu}
+            className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all relative ${
+              activeTool === 'shape' || showInsertMenu || showShapes || showSymbols || symbolDialog || showEquation || showScreenshot
                 ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
                 : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             }`}
           >
-            <LuShapes className="w-4 h-4" />
+            {armed ? <ShapeIcon item={armed} className="w-5 h-5" /> : <LuInsert className="w-4 h-4" />}
           </button>
         )}
 
-        {/* Pan / Move: Visible on tablet & desktop */}
-        {!isMobile && (
+        {/* Pan / Move: Visible on tablet & desktop (in More on a folded tablet dock) */}
+        {!isMobile && !(isTablet && toolsInMore) && (
           <button
             onClick={() => setActiveTool('pan')}
             title="Move the Page - key M"
@@ -814,10 +1276,10 @@ export default function PlaygroundDock({
           </button>
         )}
 
-        {!isMobile && <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />}
+        {!isMobile && !(isTablet && toolsInMore) && <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />}
 
-        {/* Notes Mode Toggle: Visible on tablet & desktop */}
-        {!isMobile && setNotesMode && (
+        {/* Notes Mode Toggle: Visible on tablet & desktop (in More on a folded tablet dock) */}
+        {!isMobile && !(isTablet && toolsInMore) && setNotesMode && (
           <button
             onClick={() => setNotesMode(!notesMode)}
             title={notesMode ? 'Switch to Whiteboard Mode' : 'Switch to Notes Mode'}
@@ -830,28 +1292,38 @@ export default function PlaygroundDock({
             }`}
           >
             <FiBookOpen className="w-4 h-4" />
-            <span className="text-[11px] font-semibold hidden md:inline">Notes</span>
+            {showLabels && <span className="text-[11px] font-semibold">Notes</span>}
           </button>
         )}
 
-        {/* Desktop-only Direct Tools (Eq, Graph, Theory, Mic, Image, Sync, Export) */}
+        {/* Desktop-only Direct Tools (Insert group, Eq, Graph, Theory, Mic, Sync, Export) */}
         {isDesktop && (
           <>
             <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
-            {/* Smart Blocks */}
-            {onAddBlock && (
-              <div className="flex items-center gap-1">
+            {/* Insert group, in WPS order: Picture, Screenshot, Shapes, Symbol, Equation */}
+            <div className="flex items-center gap-1" role="group" aria-label="Insert">
+              {onInsertImage && (
                 <button
-                  onClick={() => onAddBlock('equation')}
-                  title="Add Equation Block"
-                  aria-label="Add Equation Block"
-                  className="px-3 h-11 min-w-[44px] min-h-[44px] rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1"
+                  onClick={openPicture}
+                  title="Picture: insert an image or photo"
+                  aria-label="Insert Picture"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 >
-                  <FiPlus className="w-3.5 h-3.5" />
-                  <span>Eq</span>
+                  <FiImage className="w-4 h-4" />
                 </button>
+              )}
+              {screenshotButton}
+              {shapesButton}
+              {symbolButton}
+              {equationButton}
+            </div>
 
+            {!toolsInMore && <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />}
+
+            {/* Smart Blocks */}
+            {onAddBlock && !toolsInMore && (
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => onAddBlock('graph')}
                   title="Add Graph Block"
@@ -859,7 +1331,7 @@ export default function PlaygroundDock({
                   className="px-3 h-11 min-w-[44px] min-h-[44px] rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-1"
                 >
                   <FiBarChart2 className="w-3.5 h-3.5" />
-                  <span>Graph</span>
+                  {showLabels && <span>Graph</span>}
                 </button>
 
                 <button
@@ -869,15 +1341,15 @@ export default function PlaygroundDock({
                   className="px-3 h-11 min-w-[44px] min-h-[44px] rounded-xl text-xs font-semibold bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-all flex items-center justify-center gap-1"
                 >
                   <FiFileText className="w-3.5 h-3.5" />
-                  <span>Theory</span>
+                  {showLabels && <span>Theory</span>}
                 </button>
               </div>
             )}
 
-            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
+            {!toolsInMore && <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />}
 
             {/* Voice Memo Recording */}
-            {onToggleRecordAudio && (
+            {onToggleRecordAudio && !toolsInMore && (
               <button
                 onClick={onToggleRecordAudio}
                 title={isRecording ? 'Stop Voice Recording' : 'Record Voice Note'}
@@ -892,22 +1364,10 @@ export default function PlaygroundDock({
               </button>
             )}
 
-            {/* Insert Image */}
-            {onInsertImage && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                title="Insert Image / Photo"
-                aria-label="Insert Image / Photo"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-              >
-                <FiImage className="w-4 h-4" />
-              </button>
-            )}
-
-            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
+            {!toolsInMore && <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />}
 
             {/* Workspace Sync */}
-            {onOpenSyncModal && (
+            {onOpenSyncModal && !toolsInMore && (
               <button
                 onClick={onOpenSyncModal}
                 title="Sync Whiteboard to Notes Workspace"
@@ -919,9 +1379,13 @@ export default function PlaygroundDock({
             )}
 
             {/* Export Canvas */}
-            {onExportCanvas && (
+            {onExportCanvas && !toolsInMore && (
               <button
-                onClick={() => setShowExportMenu(!showExportMenu)}
+                onClick={() => {
+                  const open = !showExportMenu;
+                  closePanels();
+                  setShowExportMenu(open);
+                }}
                 title="Export Canvas (PNG / SVG / PDF)"
                 aria-label="Export Canvas (PNG / SVG / PDF)"
                 className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
@@ -937,8 +1401,9 @@ export default function PlaygroundDock({
         {/* Toggle Style Settings Panel */}
         <button
           onClick={() => {
-            setShowSettings(!showSettings);
-            setShowMoreMenu(false);
+            const open = !showSettings;
+            closePanels();
+            setShowSettings(open);
           }}
           title="Stroke & Canvas Settings"
           aria-label="Stroke & Canvas Settings"
@@ -960,6 +1425,37 @@ export default function PlaygroundDock({
           <>
             <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
+            {foldZoom && (
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    const open = !showZoomMenu;
+                    closePanels();
+                    setShowZoomMenu(open);
+                  }}
+                  title="Zoom (Ctrl + / Ctrl - / Ctrl 0)"
+                  aria-label="Zoom"
+                  aria-expanded={showZoomMenu}
+                  className="h-11 min-h-[44px] px-2.5 min-w-[44px] flex items-center justify-center text-xs font-mono font-semibold rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  {Math.round(zoomLevel * 100)}%
+                </button>
+                {showZoomMenu && (
+                  <div role="menu" aria-label="Zoom" className="absolute bottom-full right-0 mb-3 flex items-center gap-0.5 p-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl">
+                    <button onClick={onZoomOut} title="Zoom Out (Ctrl -)" aria-label="Zoom Out" className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <FiZoomOut className="w-4 h-4" />
+                    </button>
+                    <button onClick={onResetZoom} title="Reset Zoom to 100% (Ctrl 0)" aria-label="Reset Zoom to 100%" className="h-11 px-2.5 min-w-[44px] flex items-center justify-center text-xs font-mono font-semibold rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      100%
+                    </button>
+                    <button onClick={onZoomIn} title="Zoom In (Ctrl +)" aria-label="Zoom In" className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <FiZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {!foldZoom && (
             <div className="flex items-center gap-0.5">
               <button
                 onClick={onZoomOut}
@@ -988,18 +1484,20 @@ export default function PlaygroundDock({
                 <FiZoomIn className="w-4 h-4" />
               </button>
             </div>
+            )}
           </>
         )}
 
-        {/* "More Tools" Button (on mobile and tablet) */}
-        {!isDesktop && (
+        {/* "More Tools" Button (on mobile and tablet, and on a folded laptop dock) */}
+        {(!isDesktop || toolsInMore) && (
           <>
             <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
             <button
               onClick={() => {
-                setShowMoreMenu(!showMoreMenu);
-                setShowSettings(false);
+                const open = !showMoreMenu;
+                closePanels();
+                setShowMoreMenu(open);
               }}
               title="More Tools"
               aria-label="More Tools"

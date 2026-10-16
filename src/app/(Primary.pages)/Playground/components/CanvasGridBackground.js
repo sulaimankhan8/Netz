@@ -84,6 +84,7 @@ export default function CanvasGridBackground({
       height={Math.round(height * pixelRatio)}
       style={{ width, height }}
       className="absolute inset-0 pointer-events-none z-0"
+      data-grid-background
     />
   );
 }

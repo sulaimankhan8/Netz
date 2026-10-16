@@ -270,6 +270,7 @@ None of this depends on handwriting recognition. Rough order of value:
 - **C9. Equation blocks.** A visual maths keyboard instead of typing LaTeX, which matters most on phones.
 - **C10. Accessibility.** `aria-label` and `aria-pressed` on all dock controls, focus order, visible focus rings.
 - **C11. Recognition off the main thread.** Run the models in a Web Worker so reading ink never freezes drawing. Infrastructure only: same models, same features, same decode. Results must be identical to today's (compare with `benchmark_recognition.mjs`).
+- **C12. Insert tools like WPS Office: Shapes, Screenshot, Symbol, Equation.** Proposed 2026-10-15, waiting for the owner's decisions. Full plan: `PLAYGROUND_INSERT_TOOLS_PLAN.md`. It covers C5 (shape tool) and C9 (visual maths input).
 
 ### Phase D: handwriting accuracy (blocked)
 

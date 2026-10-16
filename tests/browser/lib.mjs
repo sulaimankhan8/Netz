@@ -85,6 +85,41 @@ export async function clickTitle(page, titleStart) {
   await sleep(150);
 }
 
+/**
+ * Insert > Equation > Insert New Equation, however this screen offers it: the Equation button on
+ * a laptop; the Equation menu on a touch screen (in the dock, the tablet's Insert menu, or the
+ * phone's More Tools sheet).
+ */
+export async function addEquationBlock(page) {
+  const clickFirst = (selectors) => page.evaluate((list) => {
+    for (const sel of list) {
+      const el = [...document.querySelectorAll(sel.css)].find((b) => !sel.text || b.innerText.trim().endsWith(sel.text));
+      if (el) {
+        el.click();
+        return true;
+      }
+    }
+    return false;
+  }, selectors);
+  if (await clickFirst([{ css: 'button[title^="Equation: Insert New Equation"]' }])) {
+    await sleep(600);
+    return;
+  }
+  if (!(await clickFirst([{ css: 'button[aria-label="Equation"]' }]))) {
+    if (await clickFirst([{ css: 'button[title^="More Tools"]' }])) {
+      await sleep(300);
+      await clickFirst([{ css: 'button[aria-label="Insert Equation"]' }]);
+    } else {
+      await clickFirst([{ css: 'button[title^="Insert ("]' }]);
+      await sleep(250);
+      await clickFirst([{ css: '[role="menuitem"]', text: 'Equation' }]);
+    }
+  }
+  await sleep(300);
+  if (!(await clickFirst([{ css: '[data-equation-menu] button', text: 'Insert New Equation' }]))) throw new Error('Insert New Equation not found');
+  await sleep(600);
+}
+
 /** Number of non-transparent pixels on the committed-ink canvas (the first canvas with pointer-events-none and z-10). */
 export async function inkPixels(page) {
   return page.evaluate(() => {

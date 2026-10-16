@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { launch, openPlayground, drawStroke, sleep, clickTitle, SHOTS } from './lib.mjs';
+import { launch, openPlayground, drawStroke, sleep, clickTitle, SHOTS, addEquationBlock } from './lib.mjs';
 
 const downloads = path.join(SHOTS, '..', 'downloads');
 fs.rmSync(downloads, { recursive: true, force: true });
@@ -39,11 +39,13 @@ try {
   await drawStroke(page, [[300, 300], [360, 250], [420, 300], [480, 350], [540, 300]]);
   await clickTitle(page, 'Highlighter');
   await drawStroke(page, [[300, 300], [540, 300]]);
-  await clickTitle(page, 'Shape Tool');
+  // S picks the Shapes tool with no gallery shape: freehand shapes snap
+  await page.keyboard.press('s');
+  await sleep(150);
   await drawStroke(page, [[620, 240], [760, 236], [764, 340], [618, 344], [620, 244]], { steps: 12 });
   await clickTitle(page, 'Pen');
   await drawStroke(page, [[1100, 620], [1200, 660]]);
-  await clickTitle(page, 'Add Equation Block');
+  await addEquationBlock(page);
   await sleep(600);
   // Pan the view so the first strokes are off the screen
   await page.mouse.move(640, 400);

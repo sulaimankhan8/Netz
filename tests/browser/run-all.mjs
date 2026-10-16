@@ -5,7 +5,11 @@
 // Another Chrome:  CHROME_PATH="/path/to/chrome" node run-all.mjs
 import { spawnSync } from 'node:child_process';
 
-const SUITES = ['undo', 'touch', 'eraser', 'lasso', 'export', 'pen', 'blocks', 'workspace', 'render'];
+const SUITES = [
+  'undo', 'touch', 'eraser', 'lasso', 'export', 'pen', 'blocks', 'workspace', 'render',
+  // Insert group (PLAYGROUND_INSERT_TOOLS_PLAN.md)
+  'insert-shapes', 'insert-shapes-format', 'insert-shapes-arrange', 'insert-symbols', 'insert-equations', 'insert-screenshot',
+];
 const only = process.argv.slice(2);
 let failedSuites = 0;
 
@@ -18,7 +22,7 @@ for (const suite of SUITES) {
   const match = summary.match(/(\d+)\/(\d+)/);
   const ok = match && match[1] === match[2] && failures.length === 0;
   if (!ok) failedSuites++;
-  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${suite.padEnd(10)} ${summary.trim()}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${suite.padEnd(20)} ${summary.trim()}`);
   for (const line of failures) console.log(`        ${line}`);
 }
 

@@ -71,6 +71,7 @@ const MIN_BACKUP_LIMIT_CHARS = 200000;
 const CHARS_PER_POINT = 110; // measured on saved ink: coordinates, pressure, timestamp, pointer type
 const CHARS_PER_STROKE = 160; // id, colour, width, tool, bounding box
 const CHARS_PER_BLOCK = 300;
+const CHARS_PER_SHAPE = 400; // id, preset, box, rotation, fill, outline (measured: 280 to 340 per shape, before text)
 
 function stringChars(value, depth = 0) {
   if (typeof value === 'string') return value.length + 2;
@@ -101,6 +102,8 @@ export function estimateSessionChars(session) {
     const blocks = page.blocks || [];
     for (let i = 0; i < blocks.length; i++) total += CHARS_PER_BLOCK + stringChars(blocks[i].content);
     total += ((page.links && page.links.length) || 0) * 150;
+    const shapes = page.shapes || [];
+    for (let i = 0; i < shapes.length; i++) total += CHARS_PER_SHAPE + ((shapes[i].text && shapes[i].text.value) || '').length;
   }
   // The active page's blocks are also stored at the top level
   const topBlocks = session.blocks || [];

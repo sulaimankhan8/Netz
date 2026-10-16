@@ -10,6 +10,8 @@ import { detectScratchOutGesture } from '../utils/spatialClusterer';
 import { recognizeAndSnapShape } from '../utils/shapeRecognizer';
 import { eraseFromStroke, strokeTouchesCircle } from '../utils/strokeEraser';
 import { bboxOfStrokes, translateStroke, scaleStroke, duplicateStroke, recolorStroke } from '../utils/strokeTransform';
+import { createShape, boxFromDrag, LINE_PRESETS } from '../utils/shapes/shapeModel';
+import { drawShapeOnCanvas } from '../utils/shapes/shapeRender';
 
 /**
  * Ray-casting algorithm to test whether a 2D point is enclosed in a polygon.
@@ -52,6 +54,7 @@ function applyWorldTransform(ctx, zoomLevel, panOffset) {
 
 const SELECTION_PADDING = 8; // px on screen between the selected ink and its box
 const SELECTION_HANDLE = 12; // px on screen, the resize handle at the box's bottom-right corner
+const SHAPE_TAP_DISTANCE = 6; // px on screen: a shorter drag with the Shapes tool is a tap (default size)
 
 const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   {
@@ -64,6 +67,12 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     width,
     height,
     snapShapes = false,
+    shapeItem = null, // a gallery shape armed for drawing (Shapes tool), or null for freehand snapping
+    shapeDefaults = null, // the user's default shape style
+    onShapeDrawn,
+    onSelectPress, // Select tool: (worldPoint, event) => true when a shape took the press
+    onLassoFinished, // Select tool: (polygon, event) after every lasso (shapes inside it are selected)
+    connectionHints, // Drawing a line: (start, end) => connection points of shapes near its ends ({ x, y, attached })
     fingerDraws = true,
     onViewportChange,
     eraserMode = 'stroke',
@@ -87,6 +96,7 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   const activePointsRef = useRef([]);
   const activePointerTypeRef = useRef(null);
   const activePointerIdRef = useRef(null);
+  const shapeOriginRef = useRef(null);
 
   // Touch navigation & palm rejection state
   const touchPointsRef = useRef(new Map()); // pointerId -> { x, y } relative to the canvas
@@ -276,6 +286,43 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     };
   };
 
+  // The shape a drag from `start` to the pointer makes (Shift: equal sides or 15° lines,
+  // Ctrl: from the centre), or null while the press is still a tap
+  const shapeFromPointer = (e, start) => {
+    const end = toCanvasPoint(e);
+    if (Math.hypot(end.x - start.x, end.y - start.y) * zoomLevel < SHAPE_TAP_DISTANCE) return null;
+    const box = boxFromDrag(shapeItem, start, end, { keepRatio: e.shiftKey, fromCentre: e.ctrlKey || e.metaKey });
+    return { box, shape: createShape(shapeItem, box, shapeDefaults) };
+  };
+
+  // Dashed box around a shape being drawn, with its size underneath (world transform already set)
+  const drawShapeGuide = (ctx, box) => {
+    const w = Math.round(box.w);
+    const h = Math.round(box.h);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+    ctx.lineWidth = 1.5 / zoomLevel;
+    ctx.setLineDash([5 / zoomLevel, 4 / zoomLevel]);
+    ctx.strokeRect(box.x, box.y, Math.max(1, box.w), Math.max(1, box.h));
+    ctx.setLineDash([]);
+    const label = `${w} × ${h}`;
+    ctx.font = `600 ${11 / zoomLevel}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    const badgeW = ctx.measureText(label).width + 12 / zoomLevel;
+    const badgeH = 18 / zoomLevel;
+    const badgeX = box.x + box.w - badgeW;
+    const badgeY = box.y + box.h + 6 / zoomLevel;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4 / zoomLevel);
+    else ctx.rect(badgeX, badgeY, badgeW, badgeH);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, badgeX + badgeW / 2, badgeY + badgeH / 2);
+    ctx.restore();
+  };
+
   // Returns true when the press landed on the selection (or its handle) and a drag has begun
   const beginSelectionDrag = (e) => {
     const selection = selectionRef.current;
@@ -379,7 +426,11 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
 
   // A selection belongs to the lasso; leaving any tool also clears what it drew on the top layer
   useEffect(() => {
-    if (activeTool !== 'lasso') clearSelection('cleared');
+    if (activeTool !== 'lasso') {
+      clearSelection('cleared');
+    } else if (selectionRef.current) {
+      drawSelectionOverlay();
+    }
     if (!isDrawingRef.current && !selectionRef.current) {
       const ctx = activeCanvasRef.current ? activeCanvasRef.current.getContext('2d') : null;
       if (ctx) clearCanvas(ctx);
@@ -475,6 +526,9 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       clearSelection('cleared');
     }
 
+    // A press on a shape selects it and starts moving it; anywhere else the lasso starts
+    if (activeTool === 'lasso' && onSelectPress && onSelectPress(toCanvasPoint(e), e)) return;
+
     canvas.setPointerCapture(e.pointerId);
     isDrawingRef.current = true;
     activePointerTypeRef.current = e.pointerType;
@@ -487,6 +541,13 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     const points = extractPointerPoints(e.nativeEvent, rect, transform);
 
     activePointsRef.current = points;
+
+    if (activeTool === 'shape' && shapeItem) {
+      shapeOriginRef.current = toCanvasPoint(e);
+      const ctx = canvas.getContext('2d');
+      if (ctx) clearCanvas(ctx);
+      return;
+    }
 
     if (activeTool === 'eraser') {
       lastEraserPointRef.current = null;
@@ -525,6 +586,35 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     const newPoints = extractPointerPoints(e.nativeEvent, rect, transform);
 
     activePointsRef.current.push(...newPoints);
+
+    // Drawing an armed shape: a live preview inside a dashed box, with its size
+    if (activeTool === 'shape' && shapeItem) {
+      const ctx = canvas.getContext('2d');
+      const start = shapeOriginRef.current;
+      if (!ctx || !start) return;
+      clearCanvas(ctx);
+      const preview = shapeFromPointer(e, start);
+      if (preview) {
+        applyWorldTransform(ctx, zoomLevel, panOffset);
+        drawShapeOnCanvas(ctx, preview.shape, { scale: zoomLevel * getPixelRatio() });
+        drawShapeGuide(ctx, preview.box);
+        // A connector being drawn: the connection points near its ends, the one it attaches to filled
+        if (connectionHints && LINE_PRESETS.has(shapeItem.preset)) {
+          ctx.save();
+          ctx.lineWidth = 1.5 / zoomLevel;
+          ctx.strokeStyle = '#3B82F6';
+          for (const hint of connectionHints(start, toCanvasPoint(e))) {
+            ctx.beginPath();
+            ctx.arc(hint.x, hint.y, (hint.attached ? 6 : 4) / zoomLevel, 0, Math.PI * 2);
+            ctx.fillStyle = hint.attached ? '#3B82F6' : '#FFFFFF';
+            ctx.fill();
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      }
+      return;
+    }
 
     if (activeTool === 'eraser') {
       eraseAlong(newPoints);
@@ -590,6 +680,20 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       return;
     }
 
+    // Finishing an armed shape: the dragged box, or the shape's default size for a tap
+    if (activeTool === 'shape' && shapeItem) {
+      const start = shapeOriginRef.current;
+      shapeOriginRef.current = null;
+      activePointsRef.current = [];
+      const ctx = canvas ? canvas.getContext('2d') : null;
+      if (ctx) clearCanvas(ctx);
+      if (start && onShapeDrawn) {
+        const preview = shapeFromPointer(e, start);
+        onShapeDrawn(preview ? preview.box : boxFromDrag(shapeItem, start, start, { tapped: true }), shapeItem);
+      }
+      return;
+    }
+
     // One eraser drag is one edit: report it once more, as final, so it becomes a single undo step
     if (activeTool === 'eraser' && erasedDuringDragRef.current) {
       erasedDuringDragRef.current = false;
@@ -630,6 +734,8 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
         // Include stroke if majority of points or centroid is strictly inside the lasso polygon
         return ratio >= 0.50 || (ratio >= 0.30 && centroidInside);
       });
+
+      if (onLassoFinished) onLassoFinished(pts, e);
 
       // Clear the temporary lasso selection line from active canvas
       const canvas = activeCanvasRef.current;
@@ -731,6 +837,7 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
       canvas.releasePointerCapture(activePointerIdRef.current);
     }
     isDrawingRef.current = false;
+    shapeOriginRef.current = null;
     activePointerTypeRef.current = null;
     activePointerIdRef.current = null;
     activePointsRef.current = [];

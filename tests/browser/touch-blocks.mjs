@@ -1,4 +1,4 @@
-import { launch, openPlayground, sleep, clickTitle, shot } from './lib.mjs';
+import { launch, openPlayground, sleep, clickTitle, shot, addEquationBlock } from './lib.mjs';
 
 // Task B4: Touch-only block interaction on a 390x844 mobile phone.
 // Moves, resizes, edits, and deletes a block using touch events only.
@@ -36,14 +36,8 @@ try {
   await openPlayground(page);
   await sleep(600);
 
-  // 1. Add an Equation block on mobile (via More Tools sheet if compact dock)
-  const isMoreVisible = await page.evaluate(() => Boolean(document.querySelector('button[title^="More Tools"]')));
-  if (isMoreVisible) {
-    await clickTitle(page, 'More Tools');
-    await sleep(350);
-  }
-  await clickTitle(page, 'Add Equation Block');
-  await sleep(600);
+  // 1. Add an Equation block on mobile (Insert > Equation in the More Tools sheet)
+  await addEquationBlock(page);
 
   const blockBox1 = await page.evaluate(() => {
     const el = document.querySelector('[data-block-id]');

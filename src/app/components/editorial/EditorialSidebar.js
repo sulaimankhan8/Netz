@@ -303,8 +303,9 @@ export default function EditorialSidebar({ className = '' }) {
         />
       )}
 
-      {/* Main Sidebar Shell */}
+      {/* Main Sidebar Shell (data-app-sidebar: pages measure it to keep their toolbars clear of it) */}
       <aside
+        data-app-sidebar
         className={`fixed top-0 left-0 h-screen z-40 bg-[#FAF9F6] dark:bg-[#121212] border-r border-neutral-300 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 transition-all duration-300 ease-in-out flex flex-col justify-between select-none ${
           isCollapsed ? 'w-[72px] overflow-visible' : 'w-[290px]'
         } ${mobileOpen ? 'translate-x-0 w-[290px]' : '-translate-x-full md:translate-x-0'} ${className}`}
@@ -799,7 +800,7 @@ export default function EditorialSidebar({ className = '' }) {
                 href="https://www.linkedin.com/in/suleman-khan-b4ab2b275/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex justify-center"
+                className="w-full flex items-center justify-center [@media(pointer:coarse)]:min-h-[44px]"
                 title="Sulaiman Khan (LinkedIn)"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs hover:scale-105 transition-transform">

@@ -10,7 +10,9 @@ const saved = () =>
   });
 try {
   await openPlayground(page);
-  await clickTitle(page, 'Shape Tool');
+  // S picks the Shapes tool with no gallery shape: freehand shapes snap
+  await page.keyboard.press('s');
+  await sleep(150);
   // wobbly triangle
   await drawStroke(page, [[300, 200], [382, 331], [221, 328], [298, 204]], { steps: 14 });
   // wobbly rectangle, started mid-edge

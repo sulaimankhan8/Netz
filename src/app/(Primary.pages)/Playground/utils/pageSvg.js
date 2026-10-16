@@ -9,6 +9,8 @@
  */
 
 import { pressureWidth } from './strokeSmoother.js';
+import { shapeToSvg } from './shapes/shapeRender.js';
+import { shapeWorldBounds } from './shapes/shapeModel.js';
 
 const PAGE_MARGIN = 32; // canvas px of empty space kept around the content
 
@@ -64,6 +66,14 @@ export function getPageBounds(strokes = [], blockRects = []) {
   maxX = Math.ceil(maxX + PAGE_MARGIN);
   maxY = Math.ceil(maxY + PAGE_MARGIN);
   return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+}
+
+/** Shapes as { x, y, width, height } boxes (rotation and outline included), for getPageBounds. */
+export function shapeRects(shapes = []) {
+  return shapes.map((s) => {
+    const b = shapeWorldBounds(s);
+    return { x: b.minX, y: b.minY, width: b.maxX - b.minX, height: b.maxY - b.minY };
+  });
 }
 
 /**
@@ -129,17 +139,24 @@ export function strokeToSvg(stroke) {
  *
  * @param {Object} page
  * @param {Array<Object>} page.strokes
+ * @param {Array<Object>} [page.shapes] - Shapes, painted under the ink as on screen
+ * @param {Object} [page.shapeOptions] - { measure, darkPage }: how shape text is measured, and the page colour for automatic text
  * @param {Array<{ x, y, width, height, dataUrl }>} [page.blockImages] - Blocks rendered to images, placed over the ink as on screen
  * @param {Object} page.bounds - From getPageBounds()
  * @param {string|null} [page.background] - Fill colour, or null for a transparent page
  * @returns {string}
  */
-export function buildPageSvg({ strokes = [], blockImages = [], bounds, background = null }) {
+export function buildPageSvg({ strokes = [], shapes = [], shapeOptions = {}, blockImages = [], bounds, background = null }) {
   const parts = [
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${bounds.width}" height="${bounds.height}" viewBox="${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}">`,
   ];
   if (background) {
     parts.push(`<rect x="${bounds.minX}" y="${bounds.minY}" width="${bounds.width}" height="${bounds.height}" fill="${background}"/>`);
+  }
+
+  for (let i = 0; i < shapes.length; i++) {
+    const markup = shapeToSvg(shapes[i], shapeOptions);
+    if (markup) parts.push(markup);
   }
 
   const ordered = orderStrokesForPainting(strokes);

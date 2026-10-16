@@ -14,7 +14,9 @@
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { drawSmoothStroke } from './strokeSmoother';
-import { getPageBounds, buildPageSvg, orderStrokesForPainting } from './pageSvg';
+import { getPageBounds, buildPageSvg, orderStrokesForPainting, shapeRects } from './pageSvg';
+import { drawShapeOnCanvas } from './shapes/shapeRender';
+import { browserMeasure } from './shapes/shapeText';
 
 const BLOCK_PIXEL_RATIO = 2;
 const MAX_RASTER_SIDE = 8000; // px: keeps very large pages within what browsers can allocate
@@ -70,10 +72,11 @@ async function captureBlockImages(blocks, containerElement) {
 }
 
 /**
- * Draws the page onto a new canvas at the given scale.
+ * Draws the page onto a new canvas: at 2 pixels per page unit, or at `pixelsPerUnit` when given.
+ * underlay: a canvas stretched over the whole result before anything else (the grid on screen).
  */
-async function renderPageToCanvas({ strokes, blockImages, bounds, background }) {
-  const scale = Math.min(2, MAX_RASTER_SIDE / Math.max(bounds.width, bounds.height));
+async function renderPageToCanvas({ strokes, shapes = [], darkPage = false, blockImages, bounds, background, pixelsPerUnit = 2, underlay = null }) {
+  const scale = Math.min(pixelsPerUnit, MAX_RASTER_SIDE / Math.max(bounds.width, bounds.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(bounds.width * scale));
   canvas.height = Math.max(1, Math.round(bounds.height * scale));
@@ -83,7 +86,11 @@ async function renderPageToCanvas({ strokes, blockImages, bounds, background }) 
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
+  if (underlay && underlay.width > 0 && underlay.height > 0) ctx.drawImage(underlay, 0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0, scale, -bounds.minX * scale, -bounds.minY * scale);
+
+  // Shapes under the ink, as on screen
+  for (let i = 0; i < shapes.length; i++) drawShapeOnCanvas(ctx, shapes[i], { scale, measure: browserMeasure, darkPage });
 
   const ordered = orderStrokesForPainting(strokes);
   for (let i = 0; i < ordered.length; i++) {
@@ -108,32 +115,64 @@ async function renderPageToCanvas({ strokes, blockImages, bounds, background }) 
 }
 
 /**
+ * The part of the page that is on screen, as a picture (Insert > Screenshot > Screen Grab Main
+ * Window): ink, shapes, blocks and the grid as they are shown, at the screen's own sharpness,
+ * rebuilt from the page's data so none of the app's toolbars or menus appear in it.
+ *
+ * @param {Object} page - As for exportPage, plus:
+ * @param {{ x: number, y: number, width: number, height: number }} page.view - What is on screen, in page units
+ * @param {number} page.pixelsPerUnit - Screen pixels per page unit (zoom × device pixel ratio)
+ * @param {HTMLCanvasElement} [page.grid] - The grid canvas on screen, drawn under everything
+ * @returns {Promise<HTMLCanvasElement>}
+ */
+export async function renderView({ strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, view, pixelsPerUnit = 1, grid = null, background = '#FFFFFF' }) {
+  const onScreen = blocks.filter((b) => {
+    const w = (b.size && b.size.width) || 0;
+    const h = (b.size && typeof b.size.height === 'number' ? b.size.height : 0) || 0;
+    return b.position && b.position.x < view.x + view.width && b.position.x + w > view.x && b.position.y < view.y + view.height && b.position.y + h > view.y;
+  });
+  const blockImages = await captureBlockImages(onScreen, containerElement);
+  return renderPageToCanvas({
+    strokes,
+    shapes,
+    darkPage,
+    blockImages,
+    bounds: { minX: view.x, minY: view.y, width: view.width, height: view.height },
+    background,
+    pixelsPerUnit,
+    underlay: grid,
+  });
+}
+
+/**
  * Exports the whole page.
  *
  * @param {'PNG'|'SVG'|'PDF'} format
  * @param {Object} page
  * @param {Array<Object>} page.strokes - All ink strokes on the page
  * @param {Array<Object>} page.blocks - Smart Blocks on the page
+ * @param {Array<Object>} [page.shapes] - Shapes on the page
+ * @param {boolean} [page.darkPage] - The page is dark (automatic text colour in text boxes)
  * @param {HTMLElement} page.containerElement - Element that contains the rendered blocks
  * @param {string} [page.fileBaseName='netz-whiteboard']
  * @param {string} [page.background] - Page colour
  * @returns {Promise<{ ok: boolean, reason?: string, fileName?: string, width?: number, height?: number }>}
  */
-export async function exportPage(format, { strokes = [], blocks = [], containerElement, fileBaseName = 'netz-whiteboard', background = '#FFFFFF' }) {
+export async function exportPage(format, { strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, fileBaseName = 'netz-whiteboard', background = '#FFFFFF' }) {
   try {
     const blockImages = await captureBlockImages(blocks, containerElement);
-    const bounds = getPageBounds(strokes, blockImages);
+    const bounds = getPageBounds(strokes, [...blockImages, ...shapeRects(shapes)]);
     if (!bounds) return { ok: false, reason: 'empty' };
 
     if (format === 'SVG') {
-      const svg = buildPageSvg({ strokes, blockImages, bounds, background });
+      const svg = buildPageSvg({ strokes, shapes, shapeOptions: { measure: browserMeasure, darkPage }, blockImages, bounds, background });
       const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
       downloadFile(url, `${fileBaseName}.svg`);
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       return { ok: true, fileName: `${fileBaseName}.svg`, width: bounds.width, height: bounds.height };
     }
 
-    const canvas = await renderPageToCanvas({ strokes, blockImages, bounds, background });
+    const canvas = await renderPageToCanvas({ strokes, shapes, darkPage, blockImages, bounds, background });
     const dataUrl = canvas.toDataURL('image/png');
 
     if (format === 'PDF') {
