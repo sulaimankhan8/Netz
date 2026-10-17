@@ -157,6 +157,8 @@ Everything below was checked in a real browser (headless Chrome) with mouse, tou
 | UX fix plan (`PLAYGROUND_UX_FIX_PLAN.md`, 2026-10-16): Undo after deletes, honest save status, per-page undo, page sheet, smaller dock, pen options per tool, one reading setting and one Fix dialog, model progress and failure state, Send to Notes that reports failure, music off the page, plain wording | Done (ux-fixes.mjs 40/40; results in that plan's section 9) |
 | B8. Two-finger tap undo, three-finger tap redo, one-time "one finger draws" hint | Done (ux-fixes.mjs) |
 | C1. Fit to content (Shift+1, Zoom menu, phone More) | Done |
+| Visual redesign (`PLAYGROUND_VISUAL_REDESIGN_PLAN.md`, 2026-10-17): design tokens and DM Sans, one graphite active look, indigo selection, top-left page bar and top-right document bar, phone + sheet and page menu, one context bar, pen types that keep their width, graphite default ink | Done (visual.mjs; results in that plan's section 10) |
+| Blocks round (same plan): lighter Equation, Text, Voice memo and Graph blocks, a little colour per type, memoized blocks, Graph drawn as SVG instead of Chart.js | Done (visual.mjs: nothing inside a block changes while the page pans) |
 
 ### Measured on a 3,000-stroke page (desktop Chrome)
 
@@ -172,7 +174,7 @@ The picture on screen is pixel-identical before and after (`render.mjs`).
 ### Not yet verified
 
 - **Nothing has been tried on a real phone, tablet or stylus.** All touch and pen results come from emulated input in desktop Chrome.
-- **The browser suites now pass 100% against the production build** (`next start -p 3210`): 9/9 suites, 213/213 checks, plus 13/13 in `touch-blocks.mjs` and 4/4 screen audit in `screens.mjs`.
+- **Browser suites against the production build (2026-10-17, after the visual redesign):** 15 of 17 suites pass, including the new `visual.mjs` (88/88); `touch-blocks.mjs` 13/13; `screens.mjs` 0 touch controls under 44 px. `insert-equations.mjs` (32/35) and `insert-shapes-format.mjs` (40/41) fail on the same checks as before the redesign: decide whether the checks or the code should change. Details in `PLAYGROUND_VISUAL_REDESIGN_PLAN.md` section 10.
 - The "∑ Maths" re-read button on recognition pills has no browser check.
 - Whether the Notes-mode text shortcut triggers on real handwriting is unknown (it needs router confidence of at least 0.85; synthetic shapes reached 0.66).
 

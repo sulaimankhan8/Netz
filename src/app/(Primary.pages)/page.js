@@ -74,7 +74,7 @@ export default function Home() {
     {ImageSrc: "/page.svg",ImageAlt: "pages icon",title: "Explore Pages",description: "Discover a wealth of knowledge created by us for you! Access an array of pages filled with useful information and resources to enhance your math understanding and skills.",buttonText: "Explore",buttonRoute: "/",buttonIcon: "/explore.svg",},
     {ImageSrc: "/Step.svg",ImageAlt: "polynomial steps icon",title: "Polynomial Steps",description: "Dive deep into polynomial equations with structured step-by-step breakdowns, helping you understand each part of the problem-solving process.",buttonText: "Follow Steps",buttonRoute: "/",buttonIcon: "/Step.svg",},
     {ImageSrc: "/graph.svg",ImageAlt: "graph icon",title: "Visualize with Graph",description: "Graphs are more than just lines and dots—they’re powerful tools for understanding mathematical concepts! Netz provides visualizations to help you grasp complex ideas intuitively, making math feel more relatable.",buttonText: "View Graph",buttonRoute: "/",buttonIcon: "/graph.svg",},
-    {ImageSrc: "/icon.svg",ImageAlt: "math companion icon",title: "Your Essential Math Companion",description: "Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you’re always prepared for your next challenge.",buttonText: "Start Learning",buttonRoute: "/Gauss-seidal?tour=true",buttonIcon: "/icon.svg",},
+    {ImageSrc: "/icons/icon.svg",ImageAlt: "math companion icon",title: "Your Essential Math Companion",description: "Stay informed about the crucial math concepts you need to know. With Math6thSense, you can easily access vital information and resources to ensure you’re always prepared for your next challenge.",buttonText: "Start Learning",buttonRoute: "/Gauss-seidal?tour=true",buttonIcon: "/icons/icon.svg",},
     {ImageSrc: "/globe.svg",ImageAlt: "practice icon",title: "Practice Anywhere, Anytime",description: "Take your math practice on the go! Netz empowers you to work on problems wherever you are. Whether commuting or waiting in line, your math studies never have to pause. Stay sharp and keep progressing!",buttonText: "Practice Now!",buttonRoute: "/",buttonIcon: "/function.svg",},
   ];
   
@@ -99,7 +99,7 @@ export default function Home() {
         />
         <meta property="og:url" content="https://netz-ruby.vercel.app" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
+        <meta property="og:image" content="https://netz-ruby.vercel.app/icons/icon-512x512.png" />
         <meta property="og:image" content="https://netz-ruby.vercel.app/images/og-image.jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Netz - Math Problem Solving Platform" />
@@ -107,7 +107,7 @@ export default function Home() {
           name="twitter:description"
           content="Explore Netz for quick problem-solving techniques and a fun learning experience."
         />
-           <meta name="twitter:image" content="https://netz-ruby.vercel.app/images/icon.svg" />
+           <meta name="twitter:image" content="https://netz-ruby.vercel.app/icons/icon-512x512.png" />
         <meta name="twitter:image:src" content="https://netz-ruby.vercel.app/images/twitter-card.jpeg" />
      
     </Head>
@@ -198,7 +198,7 @@ export default function Home() {
         <div className=" text-white p-2 w-[8rem] rounded items-center active ">
           <a href="https://netz-git-main-sulaimankhan8s-projects.vercel.app/" target="_blank" rel="noopener noreferrer">
             <Image height={80}
-                    width={100} src="/logo1.svg" alt="logo"/> </a>
+                    width={100} src="/icons/icon.svg" alt="logo"/> </a>
         </div>
         <div className=" text-white px-5 ">
           <h2 className="font-semibold">SPONSOR</h2>
@@ -237,7 +237,7 @@ export default function Home() {
       <div className="bg-black bg-opacity-60 rounded-md w-[80%] h-[20rem]  mx-auto flex flex-row items-center px-5  gap-5 relative">
         <div className=" text-white p-2 w-[18rem] rounded items-center active ">
           <a href="https://netz-git-main-sulaimankhan8s-projects.vercel.app/" target="_blank" rel="noopener noreferrer">
-            < Image  src="/logo1.svg"  alt="logo Icon" width={50}height={50} />
+            < Image  src="/icons/icon.svg"  alt="logo Icon" width={50}height={50} />
           </a>
         </div>
         <div className=" text-white px-5 ">

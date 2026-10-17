@@ -97,7 +97,7 @@ export default function ShapeLayer({ shapes, zoomLevel, panOffset, width, height
 
   return (
     <svg
-      className="absolute inset-0 z-[5] pointer-events-none text-zinc-900 dark:text-zinc-100"
+      className="absolute inset-0 z-[5] pointer-events-none text-pg-ink"
       width={width}
       height={height}
       aria-hidden="true"

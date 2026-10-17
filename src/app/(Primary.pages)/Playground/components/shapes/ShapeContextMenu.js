@@ -56,11 +56,11 @@ export default function ShapeContextMenu({ x, y, items, onChoose, onClose }) {
       onPointerDown={() => {
         pressedInsideRef.current = true;
       }}
-      className="fixed z-[70] min-w-[220px] py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-2xl text-xs text-zinc-800 dark:text-zinc-200 select-none"
+      className="fixed z-[70] min-w-[220px] py-1.5 rounded-xl bg-pg-surface backdrop-blur-xl border border-pg-line shadow-2xl text-xs text-pg-ink select-none"
     >
       {items.map((item, i) =>
         item.separator ? (
-          <div key={`sep-${i}`} className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" role="separator" />
+          <div key={`sep-${i}`} className="my-1 h-px bg-pg-line" role="separator" />
         ) : (
           <button
             key={item.id}
@@ -73,10 +73,10 @@ export default function ShapeContextMenu({ x, y, items, onChoose, onClose }) {
               onChoose(item.id);
               onClose();
             }}
-            className="w-full h-8 px-3 flex items-center justify-between gap-6 text-left hover:bg-indigo-50 dark:hover:bg-indigo-950/40 disabled:opacity-40 disabled:hover:bg-transparent"
+            className="w-full h-8 px-3 flex items-center justify-between gap-6 text-left hover:bg-pg-tray disabled:opacity-40 disabled:hover:bg-transparent"
           >
             <span>{item.label}</span>
-            {item.shortcut && <span className="text-zinc-400 tabular-nums">{item.shortcut}</span>}
+            {item.shortcut && <span className="text-pg-text2 tabular-nums">{item.shortcut}</span>}
           </button>
         )
       )}

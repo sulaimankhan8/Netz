@@ -68,7 +68,7 @@ try {
   // Verify block is now in view mode
   const inViewMode = await page.evaluate(() => {
     const el = document.querySelector('[data-block-id]');
-    return el && !el.className.includes('border-blue-500');
+    return el && el.getAttribute('data-editing') !== 'true';
   });
   check('block entered view mode after Done', inViewMode);
 
@@ -83,8 +83,8 @@ try {
   await sleep(300);
 
   const isSelected = await page.evaluate(() => {
-    const el = document.querySelector('[data-block-id] > div');
-    return el && el.className.includes('ring-2 ring-blue-500');
+    const el = document.querySelector('[data-block-id]');
+    return el && el.hasAttribute('data-selected');
   });
   check('touch tap selects the block without entering edit mode', isSelected);
 
@@ -147,7 +147,7 @@ try {
 
   const isEditingAgain = await page.evaluate(() => {
     const el = document.querySelector('[data-block-id]');
-    return el && el.className.includes('border-blue-500');
+    return el && el.getAttribute('data-editing') === 'true';
   });
   const debugInfo = await page.evaluate(() => ({
     blockClass: document.querySelector('[data-block-id]')?.className,

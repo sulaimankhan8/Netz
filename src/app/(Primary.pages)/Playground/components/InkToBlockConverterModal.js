@@ -57,19 +57,19 @@ export default function InkToBlockConverterModal({ isOpen, isMobile = false, onC
   const button = 'px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-xs font-semibold';
   const footer = sentOk ? (
     <>
-      <button type="button" onClick={onClose} className={`${button} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+      <button type="button" onClick={onClose} className={`${button} text-pg-text2 hover:bg-pg-tray`}>
         Close
       </button>
-      <button type="button" onClick={() => onOpenNote?.(result.noteId)} className={`${button} bg-blue-600 hover:bg-blue-700 text-white`}>
+      <button type="button" onClick={() => onOpenNote?.(result.noteId)} className={`${button} bg-pg-accent-fill hover:bg-pg-accent-fill/90 text-white`}>
         Open note
       </button>
     </>
   ) : (
     <>
-      <button type="button" onClick={onClose} className={`${button} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}>
+      <button type="button" onClick={onClose} className={`${button} text-pg-text2 hover:bg-pg-tray`}>
         Cancel
       </button>
-      <button type="button" onClick={send} disabled={selectedBlockIds.length === 0} className={`${button} bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50`}>
+      <button type="button" onClick={send} disabled={selectedBlockIds.length === 0} className={`${button} bg-pg-accent-fill hover:bg-pg-accent-fill/90 text-white disabled:opacity-50`}>
         {UI.sendToNotes}
       </button>
     </>
@@ -79,18 +79,18 @@ export default function InkToBlockConverterModal({ isOpen, isMobile = false, onC
 
   return (
     <Dialog title={UI.sendToNotes} isMobile={isMobile} onClose={onClose} footer={footer} width="w-[520px]" fullHeight={false}>
-      <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+      <p className="text-pg-text2 leading-relaxed">
         Sends typed blocks to a new note. Handwriting stays on this page; turn it into typed text first to send it.
       </p>
 
       {sentOk && (
-        <div role="status" className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold">
+        <div role="status" className="flex items-center gap-2 p-3 rounded-xl bg-pg-tray text-pg-ink font-semibold">
           <FiCheckCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
           Sent to Notes as “{noteTitle.trim() || 'Playground notes'}”.
         </div>
       )}
       {result && !result.ok && (
-        <div role="alert" className="flex items-start gap-2 p-3 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400">
+        <div role="alert" className="flex items-start gap-2 p-3 rounded-xl bg-pg-danger-tint text-pg-danger">
           <FiAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
           <span>
             <span className="font-semibold">Couldn&apos;t send to Notes.</span> {result.reason}
@@ -101,21 +101,21 @@ export default function InkToBlockConverterModal({ isOpen, isMobile = false, onC
       {!sentOk && (
         <>
           <label className="flex flex-col gap-1.5">
-            <span className="font-semibold text-zinc-600 dark:text-zinc-300">Note title</span>
+            <span className="font-semibold text-pg-text2">Note title</span>
             <input
               type="text"
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
-              className="w-full px-3 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-3 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-pg-surface border border-pg-text2/30 text-sm text-pg-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-pg-accent"
             />
           </label>
 
           <div>
-            <div className="font-semibold text-zinc-600 dark:text-zinc-300 mb-1.5">
+            <div className="font-semibold text-pg-text2 mb-1.5">
               Blocks to send ({selectedBlockIds.length} of {sendable.length})
             </div>
             {blocks.length === 0 ? (
-              <div className="p-4 text-center text-zinc-500 dark:text-zinc-400">There are no typed blocks on this page yet.</div>
+              <div className="p-4 text-center text-pg-text2">There are no typed blocks on this page yet.</div>
             ) : (
               <ul className="flex flex-col gap-2">
                 {blocks.map((block) => {
@@ -131,17 +131,17 @@ export default function InkToBlockConverterModal({ isOpen, isMobile = false, onC
                         disabled={!can}
                         onClick={() => toggle(block.blockId)}
                         className={`w-full flex items-center justify-between gap-3 p-3 min-h-[44px] rounded-xl border text-left ${
-                          ticked ? 'bg-blue-500/10 border-blue-500/60' : 'border-zinc-200 dark:border-zinc-800'
-                        } ${can ? 'hover:border-zinc-400' : 'opacity-60 cursor-not-allowed'}`}
+                          ticked ? 'bg-pg-tray border-pg-text2/40' : 'border-pg-line'
+                        } ${can ? 'hover:border-pg-text2/50' : 'opacity-60 cursor-not-allowed'}`}
                       >
-                        <span className="flex items-center gap-2 min-w-0 text-zinc-800 dark:text-zinc-200">
-                          <span className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">{blockLabel(block.type)}</span>
+                        <span className="flex items-center gap-2 min-w-0 text-pg-ink">
+                          <span className="px-1.5 py-0.5 rounded bg-pg-line text-pg-cap font-semibold text-pg-text2 shrink-0">{blockLabel(block.type)}</span>
                           {block.type === 'equation' && block.content?.latex && <InlineMath math={block.content.latex} />}
                           {block.type === 'theory' && <span className="truncate">{block.content?.text}</span>}
                           {block.type === 'graph' && <span>Its curves, as equations</span>}
-                          {!can && <span className="text-zinc-500 dark:text-zinc-400">Notes can&apos;t hold this yet</span>}
+                          {!can && <span className="text-pg-text2">Notes can&apos;t hold this yet</span>}
                         </span>
-                        <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${ticked ? 'bg-blue-500 border-blue-500 text-white' : 'border-zinc-400'}`}>
+                        <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${ticked ? 'bg-pg-accent-fill border-pg-accent-fill text-white' : 'border-pg-text2/50'}`}>
                           {ticked && <FiCheck className="w-3.5 h-3.5" aria-hidden="true" />}
                         </span>
                       </button>

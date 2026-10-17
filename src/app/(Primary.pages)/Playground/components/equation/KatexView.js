@@ -22,6 +22,6 @@ export function renderLatex(latex, displayMode = false) {
 export default function KatexView({ latex, display = false, showError = false, className = '' }) {
   const result = useMemo(() => renderLatex(latex, display), [latex, display]);
   if (result.html) return <span className={className} dangerouslySetInnerHTML={{ __html: result.html }} />;
-  if (showError) return <span className={`text-rose-600 text-xs ${className}`}>{result.error}</span>;
+  if (showError) return <span className={`text-pg-danger text-xs ${className}`}>{result.error}</span>;
   return <span className={`font-mono text-xs ${className}`}>{latex}</span>;
 }

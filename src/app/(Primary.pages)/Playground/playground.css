@@ -1,0 +1,76 @@
+/*
+ * Playground design tokens (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 0.1).
+ *
+ * Graphite marks where you are (the active tool), indigo marks what you are acting on (selection,
+ * focus, main buttons), and every other colour belongs to the ink.
+ *
+ * The tokens sit on :root, not on a Playground element, because dialogs and sheets are portalled
+ * to document.body. The --pg- prefix keeps them away from the rest of NETZ. Each colour is stored
+ * as RGB channels so Tailwind's opacity modifiers work (bg-pg-ink/50).
+ *
+ * Canvas and SVG code cannot read these: components/ui/tokens.js holds the same colours as hex.
+ * Change the two files together.
+ */
+
+:root {
+  --pg-paper: 246 246 243;
+  --pg-surface: 255 255 255;
+  --pg-tray: 239 239 235;
+  --pg-line: 228 228 223;
+  --pg-ink: 29 29 31;
+  --pg-on-ink: 255 255 255;
+  --pg-text2: 85 85 90;
+  --pg-muted: 173 173 178;
+  --pg-accent: 79 70 229;
+  --pg-accent-fill: 79 70 229;
+  --pg-accent-tint: 238 240 255;
+  --pg-accent-on-tint: 55 48 163;
+  --pg-danger: 180 35 24;
+  --pg-danger-tint: 253 236 234;
+  --pg-notice-action: 199 203 255;
+
+  --pg-shadow-bar: 0 1px 2px rgb(29 29 31 / 0.06), 0 8px 24px rgb(29 29 31 / 0.08);
+  --pg-shadow-menu: 0 2px 4px rgb(29 29 31 / 0.05), 0 16px 40px rgb(29 29 31 / 0.14);
+
+  /* A little colour per kind of block (each strong colour is at least 4.5:1 on its tint and on
+     white): Equation teal, Text amber, Graph blue, Voice memo rose. Used sparingly: the card's
+     edge, the type badge, the one main control. */
+  --pg-eq: 15 118 110;
+  --pg-eq-tint: 231 245 242;
+  --pg-note: 180 83 9;
+  --pg-note-tint: 253 243 225;
+  --pg-plot: 37 99 235;
+  --pg-plot-tint: 234 240 254;
+  --pg-voice: 190 24 93;
+  --pg-voice-tint: 252 232 241;
+}
+
+html.dark {
+  --pg-paper: 20 20 21;
+  --pg-surface: 30 30 32;
+  --pg-tray: 42 42 45;
+  --pg-line: 52 52 58;
+  --pg-ink: 244 244 242;
+  --pg-on-ink: 29 29 31;
+  --pg-text2: 180 180 186;
+  --pg-muted: 107 107 114;
+  --pg-accent: 165 180 252;
+  --pg-accent-fill: 79 70 229;
+  --pg-accent-tint: 43 45 82;
+  --pg-accent-on-tint: 199 203 255;
+  --pg-danger: 249 112 102;
+  --pg-danger-tint: 58 29 27;
+  --pg-notice-action: 67 56 202;
+
+  --pg-shadow-bar: 0 1px 2px rgb(0 0 0 / 0.30), 0 8px 24px rgb(0 0 0 / 0.35);
+  --pg-shadow-menu: 0 2px 4px rgb(0 0 0 / 0.30), 0 16px 40px rgb(0 0 0 / 0.50);
+
+  --pg-eq: 94 234 212;
+  --pg-eq-tint: 18 48 44;
+  --pg-note: 251 191 36;
+  --pg-note-tint: 51 39 15;
+  --pg-plot: 147 197 253;
+  --pg-plot-tint: 23 34 56;
+  --pg-voice: 249 168 212;
+  --pg-voice-tint: 53 24 38;
+}

@@ -32,7 +32,7 @@ const NavBar = () => {
             <div className="flex justify-between items-center">
                 {/* Logo with navigation to home */}
                 <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}>
-                    <Image src="/icon.svg" alt="icon logo" width={50} height={50}/>
+                    <Image src="/icons/icon.svg" alt="icon logo" width={50} height={50}/>
                 </div>
 
                 {/* Dropdown and sidebar toggle button */}

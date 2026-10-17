@@ -5,10 +5,10 @@ import {
   RESIZE_HANDLES, frameToWorld, localToWorld, shapeGeometry, isLineShape, lineEndpoints,
 } from '../../utils/shapes/shapeModel';
 import { framesBounds } from '../../utils/shapes/shapeArrange';
+import { pgColour } from '../ui/tokens';
 
 const HANDLE_ANGLES = { n: -90, ne: -45, e: 0, se: 45, s: 90, sw: 135, w: 180, nw: -135 };
 const CURSORS = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'];
-const ACCENT = '#3B82F6';
 const GUIDE = '#EC4899'; // smart guides, as Word draws them in a bright colour
 
 const rotateOffsetFor = (coarse) => (coarse ? 36 : 26); // screen px above the top edge
@@ -55,6 +55,10 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
   const single = shapes.length === 1 ? shapes[0] : null;
   const hitR = coarse ? 22 : 10;
   const dotR = coarse ? 7 : 5;
+  // The selection look shared with ink and blocks: outline and handle edges in the selection
+  // colour, square resize handles, a round rotate handle
+  const ACCENT = pgColour('accent');
+  const SURFACE = pgColour('surface');
 
   const grab = (kind, opts, cursor) => ({
     style: { pointerEvents: 'all', cursor, touchAction: 'none' },
@@ -72,12 +76,12 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
       {look}
     </g>
   );
-  const resizeLook = <circle r={dotR} fill="#FFFFFF" stroke="#52525B" strokeWidth="1" />;
+  const resizeLook = <rect x={-dotR} y={-dotR} width={dotR * 2} height={dotR * 2} rx="1.5" fill={SURFACE} stroke={ACCENT} strokeWidth="1.5" />;
   const rotateLook = (
     <g>
-      <circle r={dotR + 3} fill="#FFFFFF" stroke="#52525B" strokeWidth="1" />
-      <path d="M3.2 -2.2 A3.6 3.6 0 1 0 3.4 1.8" fill="none" stroke="#3F3F46" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M1.4 -3.6 L3.6 -2.1 L1.6 -0.4" fill="none" stroke="#3F3F46" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle r={dotR + 3} fill={SURFACE} stroke={ACCENT} strokeWidth="1.5" />
+      <path d="M3.2 -2.2 A3.6 3.6 0 1 0 3.4 1.8" fill="none" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M1.4 -3.6 L3.6 -2.1 L1.6 -0.4" fill="none" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
     </g>
   );
 
@@ -97,7 +101,7 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
         for (const [which, at] of [['start', a], ['end', b]]) {
           // An attached end is drawn filled, as Word marks a glued connector end
           const glued = shape.conn && shape.conn[which];
-          items.push(handleDot(`${shape.id}-${which}`, at, 'line-end', { which }, 'move', <circle r={dotR + 1} fill={glued ? ACCENT : '#FFFFFF'} stroke={ACCENT} strokeWidth="1.5" />));
+          items.push(handleDot(`${shape.id}-${which}`, at, 'line-end', { which }, 'move', <circle r={dotR + 1} fill={glued ? ACCENT : SURFACE} stroke={ACCENT} strokeWidth="1.5" />));
         }
       }
     } else {
@@ -118,7 +122,7 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
           data-shape-body={shape.id}
         />
       );
-      items.push(<polygon key={`${shape.id}-frame`} points={points} fill="none" stroke={ACCENT} strokeWidth="1" strokeOpacity={single ? 1 : 0.6} strokeDasharray={group ? '3 3' : undefined} pointerEvents="none" />);
+      items.push(<polygon key={`${shape.id}-frame`} points={points} fill="none" stroke={ACCENT} strokeWidth="1.5" strokeOpacity={single ? 1 : 0.6} strokeDasharray={group ? '3 3' : undefined} pointerEvents="none" />);
 
       if (single) {
         const screenW = shape.w * zoomLevel;
@@ -149,7 +153,7 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
     const b = toScreen({ x: box.maxX, y: box.maxY });
     const w = b.x - a.x;
     const h = b.y - a.y;
-    items.push(<rect key="all-frame" x={a.x} y={a.y} width={w} height={h} fill="none" stroke={ACCENT} strokeWidth="1.25" pointerEvents="none" data-selection-frame={group ? 'group' : 'many'} />);
+    items.push(<rect key="all-frame" x={a.x} y={a.y} width={w} height={h} fill="none" stroke={ACCENT} strokeWidth="1.5" pointerEvents="none" data-selection-frame={group ? 'group' : 'many'} />);
     for (const [handle, [fx, fy]] of Object.entries(RESIZE_HANDLES)) {
       const edge = fx === 0.5 || fy === 0.5;
       if (edge && ((fx === 0.5 && w < 40) || (fy === 0.5 && h < 40))) continue;
@@ -170,7 +174,7 @@ export default function ShapeSelectionOverlay({ shapes, zoomLevel, panOffset, wi
     const on = attached && Math.abs(attached.x - c.x) < 1e-6 && Math.abs(attached.y - c.y) < 1e-6;
     items.push(
       <g key={`cxn-${c.x}-${c.y}-${c.idx}`} transform={`translate(${at.x} ${at.y})`} pointerEvents="none" data-connection-point={on ? 'attached' : 'free'}>
-        <circle r={on ? 6 : 4} fill={on ? ACCENT : '#FFFFFF'} stroke={ACCENT} strokeWidth="1.5" />
+        <circle r={on ? 6 : 4} fill={on ? ACCENT : SURFACE} stroke={ACCENT} strokeWidth="1.5" />
       </g>
     );
   }

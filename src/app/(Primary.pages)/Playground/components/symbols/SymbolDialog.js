@@ -87,15 +87,15 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
           type="button"
           disabled={!selected}
           onClick={() => setCustom(isCustom ? removeCustomSymbol(selected, custom) : addCustomSymbol(selected, custom))}
-          className="mr-auto px-3 h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40"
+          className="mr-auto px-3 h-9 rounded-lg border border-pg-line hover:bg-pg-tray disabled:opacity-40"
         >
           {isCustom ? 'Remove from Custom Symbols' : 'Add to Custom Symbols'}
         </button>
       )}
-      <button type="button" onClick={onClose} className="px-4 h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button type="button" onClick={onClose} className="px-4 h-9 rounded-lg border border-pg-line hover:bg-pg-tray">
         Close
       </button>
-      <button type="button" disabled={!current} onClick={() => insert(current)} className="px-4 h-9 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-40">
+      <button type="button" disabled={!current} onClick={() => insert(current)} className="px-4 h-9 rounded-lg bg-pg-accent-fill text-white font-semibold hover:bg-pg-accent-fill/90 disabled:opacity-40">
         Insert
       </button>
     </>
@@ -105,7 +105,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
     <Dialog title="Symbol" label="More Symbols" isMobile={isMobile} onClose={onClose} footer={footer} manageFocus={false}>
       <div className="flex gap-1" role="tablist">
         {[['symbols', 'Symbols'], ['special', 'Special Characters']].map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`px-3 h-8 rounded-lg font-semibold ${tab === id ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}>
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`px-3 h-8 rounded-lg font-semibold ${tab === id ? 'bg-pg-ink text-pg-on-ink' : 'hover:bg-pg-tray'}`}>
             {label}
           </button>
         ))}
@@ -120,7 +120,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or code (integral, arrow, 2211)"
               aria-label="Search symbols"
-              className="flex-1 h-9 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+              className="flex-1 h-9 px-3 rounded-lg bg-pg-tray border border-pg-line"
             />
             <label className="flex items-center gap-2">
               <span className="shrink-0">Subset:</span>
@@ -131,16 +131,16 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
                   setQuery('');
                 }}
                 aria-label="Subset"
-                className="h-9 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 max-w-[260px]"
+                className="h-9 px-2 rounded-lg bg-pg-tray border border-pg-line max-w-[260px]"
               >
                 {(blocks || []).map((b, i) => <option key={b.name} value={i}>{b.name}</option>)}
               </select>
             </label>
           </div>
 
-          <div className={`${isMobile ? 'flex-1 min-h-[180px]' : 'h-[260px]'} overflow-y-auto overscroll-contain rounded-lg border border-zinc-200 dark:border-zinc-800 p-1.5`} data-symbol-grid>
-            {!blocks && <div className="p-3 text-zinc-500">Loading symbols...</div>}
-            {blocks && shown.length === 0 && <div className="p-3 text-zinc-500">No symbol matches &ldquo;{query}&rdquo;.</div>}
+          <div className={`${isMobile ? 'flex-1 min-h-[180px]' : 'h-[260px]'} overflow-y-auto overscroll-contain rounded-lg border border-pg-line p-1.5`} data-symbol-grid>
+            {!blocks && <div className="p-3 text-pg-text2">Loading symbols...</div>}
+            {blocks && shown.length === 0 && <div className="p-3 text-pg-text2">No symbol matches &ldquo;{query}&rdquo;.</div>}
             <div className="flex flex-wrap gap-1">
               {shown.map(([code, name]) => {
                 const char = String.fromCodePoint(code);
@@ -156,21 +156,21 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
           <div>
             <div className="font-semibold mb-1">Recently used symbols:</div>
             <div className="flex flex-wrap gap-1 min-h-[32px]">
-              {recent.length === 0 && <span className="text-zinc-400 self-center">None yet</span>}
+              {recent.length === 0 && <span className="text-pg-text2 self-center">None yet</span>}
               {recent.map((c) => <SymbolCell key={c} char={c} selected={selected === c} onPick={choose} />)}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="text-3xl w-12 h-12 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100" aria-hidden="true">
+            <span className="text-3xl w-12 h-12 flex items-center justify-center rounded-lg border border-pg-line text-pg-ink" aria-hidden="true">
               {selected ? VISIBLE_STAND_IN[selected] || selected : ''}
             </span>
-            <span className="flex-1 min-w-[140px] font-semibold text-zinc-900 dark:text-zinc-100" data-symbol-name>
+            <span className="flex-1 min-w-[140px] font-semibold text-pg-ink" data-symbol-name>
               {selectedName ? displayName(selectedName) : selected ? '' : 'Pick a symbol'}
             </span>
             <label className="flex items-center gap-1.5">
               <span>Character code:</span>
-              <input value={codeText} onChange={(e) => typeCode(e.target.value)} aria-label="Character code" className="w-20 h-9 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono uppercase" />
+              <input value={codeText} onChange={(e) => typeCode(e.target.value)} aria-label="Character code" className="w-20 h-9 px-2 rounded-lg bg-pg-tray border border-pg-line font-mono uppercase" />
             </label>
             <label className="flex items-center gap-1.5">
               <span>from:</span>
@@ -181,7 +181,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
                   if (selected) setCodeText(characterCode(selected, e.target.value));
                 }}
                 aria-label="Code from"
-                className="h-9 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                className="h-9 px-2 rounded-lg bg-pg-tray border border-pg-line"
               >
                 <option value="hex">Unicode (hex)</option>
                 <option value="decimal">Unicode (decimal)</option>
@@ -192,7 +192,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
       )}
 
       {tab === 'special' && (
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-800" role="listbox" aria-label="Special Characters">
+        <div className="rounded-lg border border-pg-line divide-y divide-pg-line" role="listbox" aria-label="Special Characters">
           {SPECIAL_CHARACTERS.map((s) => (
             <button
               key={s.name}
@@ -201,7 +201,7 @@ export default function SymbolDialog({ isMobile, onInsert, onClose }) {
               aria-selected={special === s.char}
               onClick={() => setSpecial(s.char)}
               onDoubleClick={() => insert(s.char)}
-              className={`w-full flex items-center gap-4 px-3 h-9 text-left ${special === s.char ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+              className={`w-full flex items-center gap-4 px-3 h-9 text-left ${special === s.char ? 'bg-pg-ink text-pg-on-ink' : 'hover:bg-pg-tray'}`}
             >
               <span className="w-8 text-center text-base">{VISIBLE_STAND_IN[s.char] || s.char}</span>
               <span>{s.name}</span>

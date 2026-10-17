@@ -80,7 +80,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
     let hs = await handles(page);
     const keys = hs.map((h) => h.key).sort().join(',');
     check('the new shape is selected with 8 resize handles, a rotate handle and a yellow handle', keys === 'adj-0,e,n,ne,nw,rotate,s,se,sw,w', keys);
-    const lassoActive = await page.evaluate(() => document.querySelector('button[aria-label="Lasso Select"]').className.includes('bg-purple-500'));
+    const lassoActive = await page.evaluate(() => document.querySelector('button[aria-label="Lasso Select"]').getAttribute('aria-pressed') === 'true');
     check('the tool goes back to Select, as in Word', lassoActive);
     const bar = await page.evaluate(() => Boolean(document.querySelector('[data-shape-format-bar]')));
     check('the format bar appears', bar);

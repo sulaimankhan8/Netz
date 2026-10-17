@@ -20,7 +20,7 @@ const round1 = (n) => Math.round(n * 10) / 10;
 function Row({ label, children }) {
   return (
     <label className="flex items-center gap-2 min-h-[36px]">
-      <span className="w-28 shrink-0 text-zinc-600 dark:text-zinc-400">{label}</span>
+      <span className="w-28 shrink-0 text-pg-text2">{label}</span>
       <span className="flex-1 flex items-center gap-2 min-w-0">{children}</span>
     </label>
   );
@@ -40,9 +40,9 @@ function NumberField({ value, onChange, min, max, step = 1, suffix, label }) {
           const v = Number(e.target.value);
           if (e.target.value !== '' && Number.isFinite(v)) onChange(min !== undefined ? Math.max(min, max !== undefined ? Math.min(max, v) : v) : v);
         }}
-        className="w-20 h-8 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 tabular-nums"
+        className="w-20 h-8 px-2 rounded-lg bg-pg-tray border border-pg-line tabular-nums"
       />
-      {suffix && <span className="text-zinc-500">{suffix}</span>}
+      {suffix && <span className="text-pg-text2">{suffix}</span>}
     </span>
   );
 }
@@ -50,7 +50,7 @@ function NumberField({ value, onChange, min, max, step = 1, suffix, label }) {
 function Slider({ value, onChange, min = 0, max = 100, label, suffix = '%' }) {
   return (
     <>
-      <input type="range" min={min} max={max} value={Math.round(value)} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-indigo-500" aria-label={label} />
+      <input type="range" min={min} max={max} value={Math.round(value)} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[rgb(var(--pg-ink))]" aria-label={label} />
       <span className="w-10 text-right tabular-nums">{Math.round(value)}{suffix}</span>
     </>
   );
@@ -58,7 +58,7 @@ function Slider({ value, onChange, min = 0, max = 100, label, suffix = '%' }) {
 
 function Choice({ options, value, onChange, label }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="flex-1 min-w-0 h-8 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+    <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="flex-1 min-w-0 h-8 px-2 rounded-lg bg-pg-tray border border-pg-line">
       {options.map(([id, text]) => (
         <option key={id} value={id}>{text}</option>
       ))}
@@ -76,7 +76,7 @@ function ColorButton({ value, onPick, coarse, label }) {
         onClick={() => setOpen(!open)}
         aria-label={label}
         aria-expanded={open}
-        className="h-8 flex items-center gap-2 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-left"
+        className="h-8 flex items-center gap-2 px-2 rounded-lg bg-pg-tray border border-pg-line text-left"
       >
         <span className="w-6 h-4 rounded-sm border border-black/10" style={{ backgroundColor: value || 'transparent' }} />
         <span className="tabular-nums">{value || 'None'}</span>
@@ -133,15 +133,15 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
       onPointerDown={(e) => e.stopPropagation()}
       className={`${
         isMobile ? 'fixed bottom-0 left-0 right-0 h-[60vh] rounded-t-3xl border-t' : 'fixed right-3 top-20 bottom-24 w-[340px] rounded-2xl border'
-      } z-[60] flex flex-col bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200 dark:border-zinc-800 shadow-2xl text-xs text-zinc-800 dark:text-zinc-200`}
+      } z-[60] flex flex-col bg-pg-surface backdrop-blur-2xl border-pg-line shadow-2xl text-xs text-pg-ink`}
     >
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <span className="font-bold text-sm">Format Shape</span>
-        <button type="button" onClick={onClose} aria-label="Close Format Shape" className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <button type="button" onClick={onClose} aria-label="Close Format Shape" className="w-8 h-8 flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray">
           <FiX className="w-4 h-4" />
         </button>
       </div>
-      <div className="flex gap-1 px-3 pb-2 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto" role="tablist">
+      <div className="flex gap-1 px-3 pb-2 border-b border-pg-line overflow-x-auto" role="tablist">
         {TABS.filter((t) => !(lineShape && t.id === 'text')).map((t) => (
           <button
             key={t.id}
@@ -149,7 +149,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`px-2.5 h-8 rounded-lg font-semibold whitespace-nowrap ${tab === t.id ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            className={`px-2.5 h-8 rounded-lg font-semibold whitespace-nowrap ${tab === t.id ? 'bg-pg-ink text-pg-on-ink' : 'hover:bg-pg-tray'}`}
           >
             {t.label}
           </button>
@@ -161,7 +161,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
           <>
             {!lineShape && (
               <>
-                <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500">Fill</div>
+                <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2">Fill</div>
                 <Row label="Fill">
                   <Choice
                     label="Fill type"
@@ -200,7 +200,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
               </>
             )}
 
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500 mt-2">Line</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2 mt-2">Line</div>
             <Row label="Line">
               <Choice
                 label="Line type"
@@ -240,7 +240,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
 
         {tab === 'effects' && (
           <>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500">Shadow</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2">Shadow</div>
             <Row label="Presets">
               <Choice label="Shadow preset" value={shadow ? shadow.id : 'none'} options={[['none', 'No Shadow'], ...SHADOW_PRESETS.map((p) => [p.id, p.label])]} onChange={(id) => onUpdate((s) => ({ ...s, shadow: id === 'none' ? null : { preset: id, ...(s.shadow && s.shadow.color ? { color: s.shadow.color, alpha: s.shadow.alpha } : {}) } }))} />
             </Row>
@@ -268,7 +268,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
 
         {tab === 'size' && (
           <>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500">Size</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2">Size</div>
             <Row label="Height">
               <NumberField label="Height" value={shape.h} min={0} step={1} suffix="px" onChange={(h) => onUpdate((s) => ({ ...s, h, ...(s.lockRatio && s.h > 0 ? { w: (s.w * h) / s.h } : {}) }))} />
             </Row>
@@ -279,9 +279,9 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
               <NumberField label="Rotation" value={shape.rot || 0} min={-360} max={360} step={1} suffix="°" onChange={(deg) => onUpdate((s) => ({ ...s, rot: ((deg % 360) + 360) % 360 }))} />
             </Row>
             <Row label="Lock aspect ratio">
-              <input type="checkbox" checked={Boolean(shape.lockRatio)} onChange={(e) => onUpdate((s) => ({ ...s, lockRatio: e.target.checked }))} className="w-4 h-4 accent-indigo-500" aria-label="Lock aspect ratio" />
+              <input type="checkbox" checked={Boolean(shape.lockRatio)} onChange={(e) => onUpdate((s) => ({ ...s, lockRatio: e.target.checked }))} className="w-4 h-4 accent-[rgb(var(--pg-accent-fill))]" aria-label="Lock aspect ratio" />
             </Row>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500 mt-2">Position</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2 mt-2">Position</div>
             <Row label="Horizontal">
               <NumberField label="Horizontal position" value={shape.x} step={1} suffix="px" onChange={(x) => onUpdate((s) => ({ ...s, x }))} />
             </Row>
@@ -293,7 +293,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
 
         {tab === 'text' && !lineShape && (
           <>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500">Font</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2">Font</div>
             <Row label="Font">
               <Choice label="Font" value={text.font || 'sans'} options={FONT_CHOICES.map((f) => [f.id, f.label])} onChange={(font) => setText({ font })} />
             </Row>
@@ -308,7 +308,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
                   aria-label={name}
                   aria-pressed={Boolean(text[key])}
                   onClick={() => setText({ [key]: !text[key] })}
-                  className={`w-8 h-8 rounded-lg border ${text[key] ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700'} ${key === 'bold' ? 'font-bold' : key === 'italic' ? 'italic' : 'underline'}`}
+                  className={`w-8 h-8 rounded-lg border ${text[key] ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line'} ${key === 'bold' ? 'font-bold' : key === 'italic' ? 'italic' : 'underline'}`}
                 >
                   {mark}
                 </button>
@@ -317,7 +317,7 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
             <Row label="Color">
               <ColorButton label="Text color" value={text.color === 'auto' ? null : text.color} coarse={coarse} onPick={(hex) => setText({ color: hex })} />
             </Row>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500 mt-2">Text Box</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2 mt-2">Text Box</div>
             <Row label="Horizontal">
               <Choice label="Horizontal alignment" value={text.align || 'center'} options={[['left', 'Left'], ['center', 'Center'], ['right', 'Right']]} onChange={(align) => setText({ align })} />
             </Row>
@@ -328,9 +328,9 @@ export default function FormatShapePane({ shape, initialTab = 'fill', isMobile, 
               <Choice label="Autofit" value={text.autofit || 'none'} options={[['none', 'Do not Autofit'], ['shrink', 'Shrink text on overflow'], ['resize', 'Resize shape to fit text']]} onChange={(autofit) => setText({ autofit })} />
             </Row>
             <Row label="Wrap text in shape">
-              <input type="checkbox" checked={text.wrap !== false} onChange={(e) => setText({ wrap: e.target.checked })} className="w-4 h-4 accent-indigo-500" aria-label="Wrap text in shape" />
+              <input type="checkbox" checked={text.wrap !== false} onChange={(e) => setText({ wrap: e.target.checked })} className="w-4 h-4 accent-[rgb(var(--pg-accent-fill))]" aria-label="Wrap text in shape" />
             </Row>
-            <div className="font-bold text-[11px] uppercase tracking-wide text-zinc-500 mt-2">Margins</div>
+            <div className="font-bold text-pg-cap uppercase tracking-wide text-pg-text2 mt-2">Margins</div>
             {[['l', 'Left margin'], ['r', 'Right margin'], ['t', 'Top margin'], ['b', 'Bottom margin']].map(([key, label]) => (
               <Row key={key} label={label}>
                 <NumberField label={label} value={((text.insets || DEFAULT_INSETS)[key])} min={0} max={200} step={1} suffix="px" onChange={(v) => setText({ insets: { ...(text.insets || DEFAULT_INSETS), [key]: v } })} />

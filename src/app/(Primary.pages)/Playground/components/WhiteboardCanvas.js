@@ -12,6 +12,7 @@ import { eraseFromStroke, strokeTouchesCircle } from '../utils/strokeEraser';
 import { bboxOfStrokes, translateStroke, scaleStroke, duplicateStroke, recolorStroke } from '../utils/strokeTransform';
 import { createShape, boxFromDrag, LINE_PRESETS } from '../utils/shapes/shapeModel';
 import { drawShapeOnCanvas } from '../utils/shapes/shapeRender';
+import { pgColour, isDarkPage } from './ui/tokens';
 
 /**
  * Ray-casting algorithm to test whether a 2D point is enclosed in a polygon.
@@ -64,7 +65,7 @@ const MULTI_TAP_MAX_MS = 400;
 const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
   {
     activeTool = 'pen',
-    strokeColor = '#3B82F6',
+    strokeColor = '#18181B',
     strokeWidth = 3,
     strokeOpacity = 1,
     zoomLevel = 1,
@@ -233,7 +234,8 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     );
   };
 
-  // Dashed box around the selected ink, with a resize handle at its bottom-right corner
+  // The selection look shared with shapes and blocks: a solid outline in the selection colour,
+  // with a square resize handle at its bottom-right corner (the only handle the lasso has)
   const drawSelectionOverlay = () => {
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
@@ -250,12 +252,10 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     const { minX, minY, maxX, maxY } = selection.bbox;
 
     ctx.save();
-    ctx.strokeStyle = '#8B5CF6';
+    ctx.strokeStyle = pgColour('accent');
     ctx.lineWidth = 1.5 / zoomLevel;
-    ctx.setLineDash([6 / zoomLevel, 4 / zoomLevel]);
     ctx.strokeRect(minX - pad, minY - pad, maxX - minX + 2 * pad, maxY - minY + 2 * pad);
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = pgColour('surface');
     ctx.fillRect(maxX + pad - handle / 2, maxY + pad - handle / 2, handle, handle);
     ctx.strokeRect(maxX + pad - handle / 2, maxY + pad - handle / 2, handle, handle);
     ctx.restore();
@@ -310,23 +310,27 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     const w = Math.round(box.w);
     const h = Math.round(box.h);
     ctx.save();
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+    ctx.strokeStyle = pgColour('accent');
+    ctx.globalAlpha = 0.6;
     ctx.lineWidth = 1.5 / zoomLevel;
     ctx.setLineDash([5 / zoomLevel, 4 / zoomLevel]);
     ctx.strokeRect(box.x, box.y, Math.max(1, box.w), Math.max(1, box.h));
     ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
     const label = `${w} × ${h}`;
-    ctx.font = `600 ${11 / zoomLevel}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    // The interface font (the canvas inherits it from the Playground)
+    const family = (activeCanvasRef.current && getComputedStyle(activeCanvasRef.current).fontFamily) || '"Segoe UI", sans-serif';
+    ctx.font = `600 ${12 / zoomLevel}px ${family}`;
     const badgeW = ctx.measureText(label).width + 12 / zoomLevel;
     const badgeH = 18 / zoomLevel;
     const badgeX = box.x + box.w - badgeW;
     const badgeY = box.y + box.h + 6 / zoomLevel;
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = pgColour('ink');
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4 / zoomLevel);
     else ctx.rect(badgeX, badgeY, badgeW, badgeH);
     ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = pgColour('onInk');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, badgeX + badgeW / 2, badgeY + badgeH / 2);
@@ -516,8 +520,9 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.beginPath();
     ctx.arc(clientX - rect.left, clientY - rect.top, eraserSize, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(244, 63, 94, 0.10)';
-    ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
+    // A grey ring, like the eraser sizes in its options: the eraser is a tool, not a warning
+    ctx.fillStyle = isDarkPage() ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+    ctx.strokeStyle = pgColour('text2');
     ctx.lineWidth = 1.5;
     ctx.fill();
     ctx.stroke();
@@ -612,11 +617,11 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
         if (connectionHints && LINE_PRESETS.has(shapeItem.preset)) {
           ctx.save();
           ctx.lineWidth = 1.5 / zoomLevel;
-          ctx.strokeStyle = '#3B82F6';
+          ctx.strokeStyle = pgColour('accent');
           for (const hint of connectionHints(start, toCanvasPoint(e))) {
             ctx.beginPath();
             ctx.arc(hint.x, hint.y, (hint.attached ? 6 : 4) / zoomLevel, 0, Math.PI * 2);
-            ctx.fillStyle = hint.attached ? '#3B82F6' : '#FFFFFF';
+            ctx.fillStyle = hint.attached ? pgColour('accent') : pgColour('surface');
             ctx.fill();
             ctx.stroke();
           }
@@ -640,7 +645,7 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
           ctx.save();
           ctx.beginPath();
           ctx.setLineDash([6, 5]);
-          ctx.strokeStyle = '#8B5CF6';
+          ctx.strokeStyle = pgColour('accent');
           ctx.lineWidth = 2;
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';

@@ -96,7 +96,7 @@ try {
   await page.evaluate(() => document.querySelector('button[title="Apply the current pen colour to the selection"]').click());
   await sleep(300);
   s = await saved();
-  check('recolour applies the pen colour to the selection only', s[0].color === '#F43F5E' && s[1].color === '#F43F5E' && s[2].color === '#3B82F6', JSON.stringify(s.map((x) => x.color)));
+  check('recolour applies the pen colour to the selection only', s[0].color === '#F43F5E' && s[1].color === '#F43F5E' && s[2].color === '#18181B', JSON.stringify(s.map((x) => x.color)));
   await shot(page, 'lasso-selected');
 
   // Letting go

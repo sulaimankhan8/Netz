@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 
 /**
  * ImageBlock Component
  * Displays an inserted or pasted image on the canvas.
  * Supports editable titles/captions in Edit Mode and clean, textless rendering when empty in View Mode.
  */
-export default function ImageBlock({
+function ImageBlock({
   block,
   onUpdateContent,
   isEditing,
@@ -39,7 +39,7 @@ export default function ImageBlock({
           className="w-full h-full object-contain rounded-lg pointer-events-none select-none"
         />
       ) : (
-        <div className="p-8 text-center text-xs text-zinc-400">
+        <div className="p-8 text-center text-xs text-pg-text2">
           No image attached.
         </div>
       )}
@@ -51,11 +51,11 @@ export default function ImageBlock({
           value={caption}
           onChange={(e) => handleCaptionChange(e.target.value)}
           placeholder="Add title or caption (optional)..."
-          className="mt-1.5 w-full px-2 py-1 text-center text-xs rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-blue-500"
+          className="mt-1.5 w-full px-2 py-1 text-center text-xs rounded-lg bg-pg-tray border border-pg-line text-pg-ink placeholder-pg-text2/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-pg-accent focus:border-pg-accent"
         />
       ) : (
         caption.trim() !== '' && (
-          <span className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300 font-medium italic text-center truncate max-w-full px-1">
+          <span className="mt-1 text-pg-cap text-pg-text2 font-medium italic text-center truncate max-w-full px-1">
             {caption}
           </span>
         )
@@ -63,3 +63,6 @@ export default function ImageBlock({
     </div>
   );
 }
+
+// Memoized: panning and zooming the page do not draw it again
+export default memo(ImageBlock);

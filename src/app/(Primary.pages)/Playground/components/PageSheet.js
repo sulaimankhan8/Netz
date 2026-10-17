@@ -83,7 +83,7 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
     setDrag(null);
   };
 
-  const small = `w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30`;
+  const small = `w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray disabled:opacity-30`;
 
   const footer = (
     <button
@@ -92,7 +92,7 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
         onAddPage();
         onClose();
       }}
-      className="flex items-center gap-1.5 px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold"
+      className="flex items-center gap-1.5 px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-pg-accent-fill hover:bg-pg-accent-fill/90 text-white text-xs font-semibold"
     >
       <FiPlus className="w-4 h-4" aria-hidden="true" />
       {UI.addPage}
@@ -111,8 +111,8 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
               data-page-row
               onPointerDown={(e) => onRowPointerDown(e, idx)}
               className={`flex items-center gap-3 p-2 rounded-xl border select-none touch-pan-y ${
-                open ? 'border-blue-500 bg-blue-500/5' : 'border-zinc-200 dark:border-zinc-800'
-              } ${dropHere ? 'ring-2 ring-blue-400' : ''} ${drag && drag.from === idx ? 'opacity-50' : ''}`}
+                open ? 'border-pg-ink bg-pg-tray' : 'border-pg-line'
+              } ${dropHere ? 'ring-2 ring-pg-accent' : ''} ${drag && drag.from === idx ? 'opacity-50' : ''}`}
             >
               <button
                 type="button"
@@ -122,13 +122,13 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
                 }}
                 aria-label={`Open ${page.title || `Page ${idx + 1}`}`}
                 aria-current={open ? 'page' : undefined}
-                className="w-20 h-14 shrink-0 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white overflow-hidden flex items-center justify-center"
+                className="w-20 h-14 shrink-0 rounded-lg border border-pg-line bg-white overflow-hidden flex items-center justify-center"
               >
                 {thumbs[idx] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={thumbs[idx]} alt="" className="max-w-full max-h-full object-contain" draggable={false} />
                 ) : (
-                  <span className="text-[11px] text-zinc-400">Empty</span>
+                  <span className="text-pg-cap text-pg-text2">Empty</span>
                 )}
               </button>
 
@@ -148,19 +148,19 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
                     }}
                     aria-label="Page name"
                     maxLength={60}
-                    className="w-full px-2 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] rounded-lg border border-blue-500 bg-white dark:bg-zinc-950 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="w-full px-2 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] rounded-lg border border-pg-accent bg-pg-surface text-sm text-pg-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-pg-accent"
                   />
                 ) : (
                   <button
                     type="button"
                     onClick={() => startRename(page)}
                     title="Rename"
-                    className="max-w-full min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-2 -mx-2 rounded-lg text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="max-w-full min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-2 -mx-2 rounded-lg text-left text-sm font-semibold text-pg-ink truncate hover:bg-pg-tray"
                   >
                     {page.title || `Page ${idx + 1}`}
                   </button>
                 )}
-                <div className="text-[12px] text-zinc-500 dark:text-zinc-400">{open ? 'Open now' : `Page ${idx + 1} of ${pages.length}`}</div>
+                <div className="text-[12px] text-pg-text2">{open ? 'Open now' : `Page ${idx + 1} of ${pages.length}`}</div>
               </div>
 
               <div className="flex items-center gap-0.5 shrink-0">
@@ -179,7 +179,7 @@ export default function PageSheet({ pages, currentPageIndex, isMobile, onClose, 
                   disabled={pages.length <= 1}
                   aria-label={`Delete ${page.title}`}
                   title={UI.deletePage}
-                  className={`${small} hover:text-rose-500`}
+                  className={`${small} hover:text-pg-danger`}
                 >
                   <FiTrash2 className="w-4 h-4" />
                 </button>

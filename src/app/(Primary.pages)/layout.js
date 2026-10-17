@@ -49,9 +49,22 @@ export const metadata = {
     google: 'WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU',
   },
   icons: {
-    icon: ['/favicon.ico?v=4'],
-    apple: ['/apple-touch-icon.png?v=4'],
-    shortcut: ['/apple-touch-icon.png'],
+    icon: [
+      { url: '/favicon.ico?v=6', sizes: 'any' },
+      { url: '/icons/favicon.svg?v=6', type: 'image/svg+xml' },
+      { url: '/icons/icon-16x16.png?v=6', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/icon-32x32.png?v=6', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-48x48.png?v=6', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-96x96.png?v=5', sizes: '96x96', type: 'image/png' },
+      { url: '/icons/icon-192x192.png?v=5', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png?v=5', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png?v=5', sizes: '180x180' },
+      { url: '/icons/icon-152x152.png?v=5', sizes: '152x152' },
+      { url: '/icons/icon-167x167.png?v=5', sizes: '167x167' },
+    ],
+    shortcut: ['/favicon.ico?v=6'],
   },
 };
 

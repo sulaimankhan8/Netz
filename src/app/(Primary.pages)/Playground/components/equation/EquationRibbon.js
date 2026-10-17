@@ -6,6 +6,8 @@ import { FiX } from 'react-icons/fi';
 import { STRUCTURES, SYMBOL_PALETTES, templatePreview } from '../../utils/equations/equationTemplates';
 import { latexForSymbol } from '../../utils/symbols/symbols';
 import { COMMON_EQUATIONS } from '../../utils/equations/commonEquations';
+import { PG_FONT } from '../../utils/fonts';
+import { TOUCH_TARGET } from '../ui/Dialog';
 import KatexView from './KatexView';
 import CommonEquationList from './CommonEquationList';
 
@@ -13,6 +15,10 @@ import CommonEquationList from './CommonEquationList';
 const keepFocus = (e) => {
   if (e.pointerType === 'mouse') e.preventDefault();
 };
+
+// Ribbon buttons: outlined; the one whose gallery is open is pressed in (tray)
+const ribbonButton = (open) =>
+  `shrink-0 h-9 rounded-lg border text-pg-label font-semibold ${open ? 'bg-pg-tray border-pg-text2/40 text-pg-ink' : 'border-pg-line hover:bg-pg-tray text-pg-ink'}`;
 
 /** A gallery opened from a ribbon button, placed by the button and kept on screen. */
 function GalleryPopover({ anchor, title, onClose, children }) {
@@ -56,12 +62,12 @@ function GalleryPopover({ anchor, title, onClose, children }) {
       aria-label={title}
       data-equation-gallery-popover={title}
       style={pos}
-      className="fixed z-[75] w-[440px] max-w-[calc(100vw-16px)] max-h-[60vh] overflow-y-auto overscroll-contain p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl text-xs text-zinc-700 dark:text-zinc-300"
+      className={`${PG_FONT} fixed z-[75] w-[440px] max-w-[calc(100vw-16px)] max-h-[60vh] overflow-y-auto overscroll-contain p-3 rounded-2xl bg-pg-surface border border-pg-line shadow-pg-menu text-pg-label text-pg-text2`}
       onPointerDown={keepFocus}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{title}</span>
-        <button type="button" onClick={onClose} aria-label={`Close ${title}`} className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <span className="font-semibold text-pg-body text-pg-ink">{title}</span>
+        <button type="button" onClick={onClose} aria-label={`Close ${title}`} className={`w-8 h-8 ${TOUCH_TARGET} flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray`}>
           <FiX className="w-4 h-4" />
         </button>
       </div>
@@ -112,11 +118,11 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
           title="Equation: common equations (Math, Physics, Chemistry)"
           aria-label="Equation"
           data-equation-tool="equations"
-          className={`shrink-0 h-9 px-2.5 rounded-lg flex items-center gap-1 border text-[11px] font-semibold ${open === 'equations' ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}`}
+          className={`${ribbonButton(open === 'equations')} px-2.5 flex items-center gap-1`}
         >
           <span className="text-sm font-serif italic font-normal" aria-hidden="true">π</span>
           Equation
-          <span className="text-[9px]" aria-hidden="true">▾</span>
+          <span className="text-pg-cap" aria-hidden="true">▾</span>
         </button>
       )}
       <button
@@ -125,7 +131,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
         onClick={onToggleLinear}
         aria-pressed={linear}
         title={linear ? 'Professional: edit the equation as it looks' : 'Linear: edit the equation as LaTeX'}
-        className={`shrink-0 h-9 px-2.5 rounded-lg text-[11px] font-semibold border ${linear ? 'bg-zinc-800 text-white border-zinc-800 dark:bg-zinc-200 dark:text-zinc-900' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+        className={`shrink-0 h-9 px-2.5 rounded-lg text-pg-label font-semibold border ${linear ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line hover:bg-pg-tray text-pg-ink'}`}
       >
         {linear ? 'LaTeX' : 'Visual'}
       </button>
@@ -136,7 +142,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
         aria-expanded={open === 'symbols'}
         title="Symbols"
         data-equation-tool="symbols"
-        className={`shrink-0 h-9 px-2.5 rounded-lg text-sm border ${open === 'symbols' ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+        className={`${ribbonButton(open === 'symbols')} px-2.5 text-sm font-normal`}
       >
         ±∞
       </button>
@@ -150,7 +156,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
           title={s.label}
           aria-label={s.label}
           data-equation-tool={s.id}
-          className={`shrink-0 h-9 min-w-[44px] px-2 rounded-lg flex items-center justify-center border text-[11px] ${open === s.id ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}`}
+          className={`${ribbonButton(open === s.id)} min-w-[44px] px-2 flex items-center justify-center font-normal`}
         >
           <span className="scale-[0.8] origin-center pointer-events-none">
             <KatexView latex={s.icon} />
@@ -162,14 +168,14 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
         <GalleryPopover anchor={anchor} title="Symbols" onClose={close}>
           <div className="flex flex-wrap gap-1 mb-2">
             {SYMBOL_PALETTES.map((p) => (
-              <button key={p.id} type="button" onClick={() => setPalette(p.id)} aria-pressed={palette === p.id} className={`h-8 px-2 rounded-lg ${palette === p.id ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}>
+              <button key={p.id} type="button" onClick={() => setPalette(p.id)} aria-pressed={palette === p.id} className={`h-8 px-2.5 rounded-full font-semibold ${palette === p.id ? 'bg-pg-ink text-pg-on-ink' : 'text-pg-text2 hover:bg-pg-tray'}`}>
                 {p.label}
               </button>
             ))}
           </div>
           <div className="flex flex-wrap gap-1">
             {[...symbols.symbols].map((ch) => (
-              <button key={ch} type="button" onClick={() => pick(latexForSymbol(ch))} title={ch} data-equation-symbol={ch} className="w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-base text-zinc-900 dark:text-zinc-100">
+              <button key={ch} type="button" onClick={() => pick(latexForSymbol(ch))} title={ch} data-equation-symbol={ch} className="w-8 h-8 flex items-center justify-center rounded-md border border-pg-line hover:bg-pg-tray text-base text-pg-ink">
                 {ch}
               </button>
             ))}
@@ -189,7 +195,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
                   aria-selected={subject === c.id}
                   onClick={() => setSubject(c.id)}
                   data-equation-subject-tab={c.id}
-                  className={`h-8 px-3 rounded-lg font-semibold ${subject === c.id ? 'bg-indigo-500 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                  className={`h-8 px-3 rounded-full font-semibold ${subject === c.id ? 'bg-pg-ink text-pg-on-ink' : 'text-pg-text2 hover:bg-pg-tray'}`}
                 >
                   {c.label}
                 </button>
@@ -212,7 +218,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
           <div className="flex flex-col gap-3">
             {structure.groups.map((g) => (
               <section key={g.label}>
-                <div className="font-semibold text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">{g.label}</div>
+                <div className="font-semibold text-pg-cap text-pg-text2 mb-1">{g.label}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {g.items.map((item) => (
                     <button
@@ -222,7 +228,7 @@ export default function EquationRibbon({ linear, onToggleLinear, onInsert, onIns
                       title={item.name}
                       aria-label={item.name}
                       data-equation-template={item.name}
-                      className="min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center justify-center text-zinc-900 dark:text-zinc-100"
+                      className="min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-lg border border-pg-line hover:border-pg-text2/40 hover:bg-pg-tray flex items-center justify-center text-pg-ink"
                     >
                       <span className="pointer-events-none">
                         <KatexView latex={templatePreview(item.latex)} />

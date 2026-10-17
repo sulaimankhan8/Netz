@@ -47,17 +47,17 @@ export default function AIModelLoadingStatusPill({ onDecline }) {
   }, []);
 
   const large = status.modelName === 'htr' || status.modelName === 'hmer';
-  const pill = 'flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl text-xs';
+  const pill = 'flex items-center gap-2.5 px-3.5 py-1.5 min-h-[40px] rounded-[14px] bg-pg-surface border border-pg-line shadow-pg-bar text-pg-label';
   const button = 'min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] px-3 rounded-lg font-semibold';
 
   if (status.state === 'needs-consent') {
     return (
       <div role="status" className={`${pill} pointer-events-auto flex-wrap justify-center`}>
-        <span className="text-zinc-800 dark:text-zinc-200">
+        <span className="text-pg-ink">
           Reading handwriting needs a one-time download of about {LARGE_DOWNLOAD_MB} MB.
         </span>
         <span className="flex items-center gap-1">
-          <button type="button" onClick={() => modelManager.acceptLargeDownloads()} className={`${button} bg-blue-500 text-white hover:bg-blue-600`}>
+          <button type="button" onClick={() => modelManager.acceptLargeDownloads()} className={`${button} bg-pg-accent-fill text-white hover:bg-pg-accent-fill/90`}>
             Download
           </button>
           <button
@@ -66,7 +66,7 @@ export default function AIModelLoadingStatusPill({ onDecline }) {
               modelManager.declineLargeDownloads();
               onDecline?.();
             }}
-            className={`${button} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}
+            className={`${button} text-pg-text2 hover:bg-pg-tray`}
           >
             Not now
           </button>
@@ -77,19 +77,19 @@ export default function AIModelLoadingStatusPill({ onDecline }) {
 
   if (status.state === 'failed' && !dismissed) {
     return (
-      <div role="alert" className={`${pill} pointer-events-auto`}>
-        <FiAlertTriangle className="w-4 h-4 text-amber-500 shrink-0" aria-hidden="true" />
-        <span className="text-zinc-800 dark:text-zinc-200">
+      <div role="alert" className={`${pill} !bg-pg-danger-tint !border-pg-danger/30 pointer-events-auto`}>
+        <FiAlertTriangle className="w-4 h-4 text-pg-danger shrink-0" aria-hidden="true" />
+        <span className="text-pg-ink">
           <span className="font-semibold">{UI.readerFailed}.</span> You can keep writing.
         </span>
-        <button type="button" onClick={() => modelManager.retry()} className={`${button} text-blue-600 dark:text-blue-400 hover:bg-blue-500/10`}>
+        <button type="button" onClick={() => modelManager.retry()} className={`${button} text-pg-accent hover:bg-pg-tray`}>
           {UI.retry}
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
           aria-label="Dismiss"
-          className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray"
         >
           <FiX className="w-4 h-4" />
         </button>
@@ -101,11 +101,11 @@ export default function AIModelLoadingStatusPill({ onDecline }) {
     const p = status.progress;
     return (
       <div role="status" className={pill}>
-        <FiLoader className="w-3.5 h-3.5 text-blue-500 animate-spin shrink-0" aria-hidden="true" />
-        <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+        <FiLoader className="w-3.5 h-3.5 text-pg-text2 animate-spin shrink-0" aria-hidden="true" />
+        <span className="font-semibold text-pg-ink">
           {UI.readerLoading}
           {p && p.loaded > 0 && (
-            <span className="ml-1.5 font-normal text-zinc-500 dark:text-zinc-400 tabular-nums">
+            <span className="ml-1.5 font-normal text-pg-text2 tabular-nums">
               {p.total ? `${mb(p.loaded)} of ${mb(p.total)} MB` : `${mb(p.loaded)} MB`}
             </span>
           )}
@@ -117,8 +117,8 @@ export default function AIModelLoadingStatusPill({ onDecline }) {
   if (showReady) {
     return (
       <div role="status" className={pill}>
-        <FiCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" aria-hidden="true" />
-        <span className="font-semibold text-emerald-700 dark:text-emerald-400">{UI.readerReady}</span>
+        <FiCheck className="w-3.5 h-3.5 text-pg-text2 shrink-0" aria-hidden="true" />
+        <span className="font-semibold text-pg-text2">{UI.readerReady}</span>
       </div>
     );
   }

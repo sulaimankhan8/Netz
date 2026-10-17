@@ -27,7 +27,8 @@ export async function launch({ width = 1280, height = 800, deviceScaleFactor = 1
   page.on('console', (m) => {
     const text = m.text();
     logs.push(`[${m.type()}] ${text}`);
-    if (m.type() === 'error' && !/favicon|Failed to load resource|adsbygoogle|googletagmanager|net::ERR/i.test(text)) errors.push('console.error: ' + text.slice(0, 300));
+    // Third-party noise (Google's ads, analytics and frame policy) is not the Playground's
+    if (m.type() === 'error' && !/favicon|Failed to load resource|adsbygoogle|googletagmanager|net::ERR|Framing 'https:\/\/www\.google\.com/i.test(text)) errors.push('console.error: ' + text.slice(0, 300));
   });
   return { browser, page, errors, logs };
 }
@@ -73,22 +74,29 @@ export async function shot(page, name) {
   return file;
 }
 
-// Controls that moved into a menu in the UX fix plan (PLAYGROUND_UX_FIX_PLAN.md): the old name,
-// then the steps that reach it now. '@blocks' opens Blocks (laptop, tablet) or More (phone);
-// '@page' opens Page or More; '@pageActions' opens the phone's page actions (nothing elsewhere).
+// Controls that moved into a menu (PLAYGROUND_UX_FIX_PLAN.md, then PLAYGROUND_VISUAL_REDESIGN_PLAN.md):
+// the old name, then the steps that reach it now. '@blocks' opens Blocks (laptop, tablet) or the
+// phone's + "Add to page" sheet; '@page' opens the page menu (the ⋯ "Page" button in the top bars,
+// on every screen size); '@toolOptions' opens the active tool's options (the pen chip, or ● on phones).
 const MOVED = {
+  'More Tools': ['=Add to page'],
+  More: ['=Add to page'],
+  'Stroke & Canvas Settings': ['@toolOptions'],
+  'Delete page': ['@page', '=Delete page'],
+  'Clear page': ['@page', '=Clear page'],
+  'Duplicate page': ['@page', '=Duplicate page'],
   'Add Theory': ['@blocks', '=Add Text Block'],
   'Add Theory Block': ['@blocks', '=Add Text Block'],
   'Add Graph Block': ['@blocks', '=Add Graph Block'],
   'Record Voice Note': ['@blocks', '=Record a voice memo'],
   'Stop Voice Recording': ['@blocks', '=Stop recording'],
-  'Sync Whiteboard to Notes Workspace': ['@page', '=Send to Notes'],
+  'Sync Whiteboard to Notes Workspace': ['@sendToNotes'],
   'Switch to Notes Mode': ['@page', '=Writing mode'],
   'Switch to Whiteboard Mode': ['@page', '=Writing mode'],
   'Export Canvas': ['@page'],
   Preferences: ['@page', '=Preferences'],
   'Add Fresh Blank Page': ['=Add page'],
-  'Clear Current Page': ['@pageActions', '=Clear page'],
+  'Clear Current Page': ['@page', '=Clear page'],
 };
 
 // Clicks the first visible button whose title starts with `name`, or (when exact) whose
@@ -116,9 +124,22 @@ export async function clickTitle(page, titleStart) {
     ok = true;
     for (const step of MOVED[titleStart]) {
       let done;
-      if (step === '@blocks') done = (await clickNamed(page, 'Blocks', true)) || (await clickNamed(page, 'More', true));
-      else if (step === '@page') done = (await clickNamed(page, 'Page', true)) || (await clickNamed(page, 'More', true));
-      else if (step === '@pageActions') done = true, await clickNamed(page, 'Page actions', true);
+      // (while recording, the Blocks button is "Blocks, recording": match the start of its name)
+      if (step === '@blocks') done = (await clickNamed(page, 'Blocks')) || (await clickNamed(page, 'Add to page', true));
+      else if (step === '@page') done = await clickNamed(page, 'Page', true);
+      // Send to Notes is a button in the top-right bar (laptop, tablet), or in the page menu (phone)
+      else if (step === '@sendToNotes') {
+        done = await clickNamed(page, 'Send to Notes', true);
+        if (!done && (await clickNamed(page, 'Page', true))) {
+          await sleep(250);
+          done = await clickNamed(page, 'Send to Notes', true);
+        }
+      }
+      else if (step === '@toolOptions') done = await page.evaluate(() => {
+        const b = document.querySelector('button[data-tool-options]');
+        if (b) b.click();
+        return Boolean(b);
+      });
       else done = await clickNamed(page, step.replace(/^=/, ''), step.startsWith('='));
       if (!done) {
         ok = false;
@@ -131,18 +152,19 @@ export async function clickTitle(page, titleStart) {
   await sleep(150);
 }
 
-/** The zoom level the dock shows ("100%"): on the Zoom button, or the phone's Reset Zoom button. */
+/** The zoom level shown ("100%"): on the Zoom button of the top-right bar, or (phones, where the
+ *  zoom row is inside the page menu) the level the Playground root records. */
 export async function zoomLabel(page) {
   return page.evaluate(() => {
     const zoom = [...document.querySelectorAll('button[aria-label="Zoom"]')].find((b) => /%/.test(b.innerText));
     if (zoom) return zoom.innerText.trim();
-    return [...document.querySelectorAll('button[title]')].find((b) => b.title.startsWith('Reset Zoom') && /%/.test(b.innerText))?.innerText.trim();
+    return document.querySelector('[data-playground]')?.getAttribute('data-zoom-level') || undefined;
   });
 }
 
 /** Opens the active tool's options (pen, highlighter, eraser), runs fn, then closes them. */
 export async function withToolOptions(page, fn) {
-  await clickTitle(page, 'Stroke & Canvas Settings');
+  await clickTitle(page, 'Stroke & Canvas Settings'); // the pen chip, through MOVED
   await sleep(150);
   await fn();
   await page.keyboard.press('Escape');
@@ -163,7 +185,7 @@ export async function setPenWidth(page, px) {
 /**
  * Insert > Equation > Insert New Equation, however this screen offers it: the Equation button on
  * a laptop; the Equation menu on a touch screen (in the dock, the tablet's Insert menu, or the
- * phone's More Tools sheet).
+ * phone's + "Add to page" sheet).
  */
 export async function addEquationBlock(page) {
   const clickFirst = (selectors) => page.evaluate((list) => {
@@ -181,7 +203,7 @@ export async function addEquationBlock(page) {
     return;
   }
   if (!(await clickFirst([{ css: 'button[aria-label="Equation"]' }]))) {
-    if (await clickFirst([{ css: 'button[title^="More Tools"]' }])) {
+    if (await clickFirst([{ css: 'button[aria-label="Add to page"]' }])) {
       await sleep(300);
       await clickFirst([{ css: 'button[aria-label="Insert Equation"]' }]);
     } else {

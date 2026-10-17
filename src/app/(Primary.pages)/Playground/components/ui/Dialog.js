@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
+import { PG_FONT } from '../../utils/fonts';
 
 // A control at least 44 x 44 px on touch screens (coarse pointers), its own size with a mouse
 export const TOUCH_TARGET = '[@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]';
@@ -73,11 +74,16 @@ function CloseButton({ title, onClose }) {
       onClick={onClose}
       aria-label={`Close ${title}`}
       title="Close"
-      className={`w-8 h-8 ${TOUCH_TARGET} shrink-0 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800`}
+      className={`w-8 h-8 ${TOUCH_TARGET} shrink-0 flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray hover:text-pg-ink`}
     >
       <FiX className="w-4 h-4" />
     </button>
   );
+}
+
+/** The bar at the top of a phone sheet (a cue that it is a sheet; it does not drag). */
+function SheetHandle() {
+  return <span aria-hidden="true" className="block mx-auto mb-1 w-9 h-[5px] rounded-full bg-pg-line" />;
 }
 
 /**
@@ -95,7 +101,7 @@ export function Dialog({ title, isMobile, onClose, children, footer, label, mana
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/30"
+      className={`${PG_FONT} fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/20`}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault();
@@ -112,18 +118,19 @@ export function Dialog({ title, isMobile, onClose, children, footer, label, mana
         aria-label={label && label !== title ? label : undefined}
         aria-labelledby={label && label !== title ? undefined : titleId}
         data-insert-dialog={label || title}
-        className={`${isMobile ? `w-full ${fullHeight ? 'h-[85vh]' : 'max-h-[85vh]'} rounded-t-3xl` : `${width} max-w-[95vw] max-h-[85vh] rounded-2xl`} flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl text-xs text-zinc-700 dark:text-zinc-300 outline-none`}
+        className={`${isMobile ? `w-full ${fullHeight ? 'h-[85vh]' : 'max-h-[85vh]'} rounded-t-3xl pt-2` : `${width} max-w-[95vw] max-h-[85vh] rounded-2xl`} flex flex-col bg-pg-surface border border-pg-line shadow-pg-menu text-pg-label text-pg-text2 outline-none`}
         style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom, 0px)' } : undefined}
       >
-        <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-          <span id={titleId} className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{title}</span>
+        {isMobile && <SheetHandle />}
+        <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1">
+          <span id={titleId} className={`font-semibold text-pg-ink ${isMobile ? 'text-pg-title' : 'text-pg-body'}`}>{title}</span>
           <div className="flex items-center gap-1">
             {headerExtra}
             <CloseButton title={title} onClose={onClose} />
           </div>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3 flex flex-col gap-3">{children}</div>
-        {footer && <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">{footer}</div>}
+        {footer && <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 border-t border-pg-line">{footer}</div>}
       </div>
     </div>,
     document.body
@@ -136,8 +143,14 @@ export function Dialog({ title, isMobile, onClose, children, footer, label, mana
  * never draws on the page; a press on the button that opened it (anchorRef) is left to that
  * button, so the button can toggle it.
  *
- * placement: the classes that position it on tablets and laptops (relative to its parent).
+ * placement: the classes that position it on tablets and laptops (relative to its parent); the
+ * PLACE_* presets cover the dock (above) and the top bars (below).
  */
+export const PLACE_ABOVE = 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2';
+export const PLACE_ABOVE_RIGHT = 'absolute bottom-full right-0 mb-2';
+export const PLACE_BELOW_LEFT = 'absolute top-full left-0 mt-2';
+export const PLACE_BELOW_RIGHT = 'absolute top-full right-0 mt-2';
+
 export function Popover({ title, isMobile, onClose, children, anchorRef, placement = 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2', className = '', showHeader = true, manageFocus = true, role = 'dialog' }) {
   const panelRef = useRef(null);
   const titleId = useId();
@@ -170,15 +183,16 @@ export function Popover({ title, isMobile, onClose, children, anchorRef, placeme
       aria-label={showHeader ? undefined : title}
       className={`${
         isMobile
-          ? 'fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl p-5 border-t z-[70]'
+          ? `${PG_FONT} fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl px-4 pt-2 border-t z-[70]`
           : `${placement} max-w-[var(--dock-panel-max,95vw)] rounded-2xl p-3 border z-50`
-      } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl overflow-y-auto text-xs outline-none animate-in fade-in slide-in-from-bottom-2 duration-150 ${className}`}
+      } bg-pg-surface border-pg-line shadow-pg-menu overflow-y-auto text-pg-label text-pg-text2 outline-none animate-in fade-in slide-in-from-bottom-2 duration-150 ${className}`}
       // Above the dock, never taller than the room there is (a phone on its side is only ~390 px high)
-      style={isMobile ? { paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))' } : { maxHeight: 'calc(100dvh - 96px)' }}
+      style={isMobile ? { paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' } : { maxHeight: 'calc(100dvh - 96px)' }}
     >
+      {isMobile && <SheetHandle />}
       {showHeader && (
-        <div className="flex items-center justify-between gap-2 pb-2 mb-3 border-b border-zinc-200 dark:border-zinc-800">
-          <span id={titleId} className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{title}</span>
+        <div className={`flex items-center justify-between gap-2 ${isMobile ? 'mb-3' : 'mb-2 pl-1'}`}>
+          <span id={titleId} className={`font-semibold text-pg-ink ${isMobile ? 'text-pg-title' : 'text-pg-body'}`}>{title}</span>
           <CloseButton title={title} onClose={onClose} />
         </div>
       )}
@@ -191,7 +205,7 @@ export function Popover({ title, isMobile, onClose, children, anchorRef, placeme
   // Phones: a sheet over a dimmed page (the backdrop takes the press that closes it)
   return createPortal(
     <>
-      <div className="fixed inset-0 z-[65] bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 z-[65] bg-black/20" aria-hidden="true" />
       {panel}
     </>,
     document.body

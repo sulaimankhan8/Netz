@@ -71,7 +71,8 @@ try {
   await drawStroke(page, [[300, 500], [700, 500]], { steps: 20 });
   await sleep(150);
   s = await saved();
-  check('Ballpoint preset: 2 px and fully opaque', s[4].width === 2 && s[4].opacity === undefined, JSON.stringify(s[4]));
+  // Each pen type keeps its own width (PLAYGROUND_VISUAL_REDESIGN_PLAN.md 5.1): Ballpoint was set to 8 px at the start
+  check('Ballpoint keeps its own width (8 px) and is fully opaque', s[4].width === 8 && s[4].opacity === undefined, JSON.stringify(s[4]));
 
   // Colours: black swatch and the custom picker
   await withToolOptions(page, () => page.evaluate(() => document.querySelector('button[aria-label="Black"]').click()));
@@ -80,12 +81,16 @@ try {
   s = await saved();
   check('black is in the palette', s[5].color === '#18181B', s[5].color);
   await withToolOptions(page, () => page.evaluate(() => {
+    // Any colour sits behind More colours, with Slate and White
+    document.querySelector('button[aria-label="More colours"]').click();
+    return new Promise((done) => setTimeout(done, 200));
+  }).then(() => page.evaluate(() => {
     const input = document.querySelector('input[type="color"]');
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     setter.call(input, '#12ab9c');
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-  }));
+  })));
   await drawStroke(page, [[300, 600], [700, 600]], { steps: 10 });
   await sleep(150);
   s = await saved();
@@ -96,7 +101,8 @@ try {
   await drawStroke(page, [[300, 320], [700, 320]], { steps: 10 }); // over the 8 px mouse line
   await sleep(200);
   const inkPixel = await page.evaluate(() => [...document.querySelector('canvas.z-10').getContext('2d').getImageData(500, 320, 1, 1).data]);
-  check('ink keeps its full colour under a highlighter stroke drawn later', inkPixel[0] === 59 && inkPixel[1] === 130 && inkPixel[2] === 246 && inkPixel[3] === 255, inkPixel.join(','));
+  // The 8 px line was drawn in the default ink, graphite #18181B
+  check('ink keeps its full colour under a highlighter stroke drawn later', inkPixel[0] === 24 && inkPixel[1] === 24 && inkPixel[2] === 27 && inkPixel[3] === 255, inkPixel.join(','));
   await shot(page, 'pen-final');
 } catch (e) {
   check('script ran to the end', false, String((e && e.stack) || e).slice(0, 400));

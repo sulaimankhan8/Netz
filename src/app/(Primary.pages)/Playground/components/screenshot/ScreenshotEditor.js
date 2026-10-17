@@ -10,6 +10,8 @@ import {
   closesPolygon, cropPicture, mosaic,
 } from '../../utils/screenCapture';
 import { SHAPE_CHOICES, ShapeOutlineIcon } from './screenshotShapes';
+import { PG_FONT } from '../../utils/fonts';
+import { pgColour } from '../ui/tokens';
 
 const HANDLES = { nw: [0, 0], n: [0.5, 0], ne: [1, 0], e: [1, 0.5], se: [1, 1], s: [0.5, 1], sw: [0, 1], w: [0, 0.5] };
 const MARK_TOOLS = [
@@ -315,14 +317,16 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
     ? { left: 8, right: 8, bottom: 8 }
     : { left: Math.max(8, Math.min(viewport.width - barWidth - 8, (regionScreen ? regionScreen.x + regionScreen.w : viewport.width / 2 + barWidth / 2) - barWidth)), top: toolbarTop, maxWidth: viewport.width - 16 };
   const toolButton = (id, label, icon, onClick, pressed, disabled) => (
-    <button key={id} type="button" title={label} aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick} className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-lg ${pressed ? 'bg-indigo-500 text-white' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'} disabled:opacity-30`}>
+    <button key={id} type="button" title={label} aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick} className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-lg ${pressed ? 'bg-pg-ink text-pg-on-ink' : 'text-pg-ink hover:bg-pg-tray'} disabled:opacity-30`}>
       {icon}
     </button>
   );
 
+  // The chosen part is outlined in the selection colour
+  const accent = pgColour('accent');
   const content = (
     <div
-      className="fixed inset-0 z-[90] bg-black select-none touch-none"
+      className={`${PG_FONT} fixed inset-0 z-[90] bg-black select-none touch-none`}
       role="dialog"
       aria-label="Screenshot"
       data-screenshot-editor
@@ -349,20 +353,20 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
               </mask>
             </defs>
             <rect x="0" y="0" width={viewport.width} height={viewport.height} fill="rgba(0,0,0,0.5)" mask="url(#netz-shot-mask)" />
-            <path d={outline} transform={`translate(${regionScreen.x} ${regionScreen.y}) scale(${fit.scale})`} fill="none" stroke="#3B82F6" strokeWidth={2} vectorEffect="non-scaling-stroke" data-screenshot-region />
+            <path d={outline} transform={`translate(${regionScreen.x} ${regionScreen.y}) scale(${fit.scale})`} fill="none" stroke={accent} strokeWidth={2} vectorEffect="non-scaling-stroke" data-screenshot-region />
           </>
         )}
         {shape === 'polygon' && !selected && points.length > 0 && (
-          <polyline points={[...points, ...(hover ? [hover] : [])].map((q) => { const t = scr(q); return `${t.x},${t.y}`; }).join(' ')} fill="none" stroke="#3B82F6" strokeWidth="2" strokeDasharray="6 4" />
+          <polyline points={[...points, ...(hover ? [hover] : [])].map((q) => { const t = scr(q); return `${t.x},${t.y}`; }).join(' ')} fill="none" stroke={accent} strokeWidth="2" strokeDasharray="6 4" />
         )}
-        {shape === 'polygon' && points.map((q, i) => { const t = scr(q); return <circle key={i} cx={t.x} cy={t.y} r={i === 0 && !selected ? 7 : 4} fill={i === 0 ? '#3B82F6' : '#FFFFFF'} stroke="#3B82F6" strokeWidth="2" />; })}
+        {shape === 'polygon' && points.map((q, i) => { const t = scr(q); return <circle key={i} cx={t.x} cy={t.y} r={i === 0 && !selected ? 7 : 4} fill={i === 0 ? accent : '#FFFFFF'} stroke={accent} strokeWidth="2" />; })}
         {marks.map(markSvg)}
         {draft && markSvg(draft, 'draft')}
       </svg>
 
       {/* Size of the chosen part, in the picture's pixels */}
       {regionScreen && isUsableRegion(region) && (
-        <div className="absolute px-2 py-0.5 rounded bg-black/75 text-white text-[11px] font-semibold tabular-nums pointer-events-none" style={{ left: regionScreen.x, top: Math.max(4, regionScreen.y - 24) }} data-screenshot-size>
+        <div className="absolute px-2 py-0.5 rounded bg-black/75 text-white text-pg-cap font-semibold tabular-nums pointer-events-none" style={{ left: regionScreen.x, top: Math.max(4, regionScreen.y - 24) }} data-screenshot-size>
           {Math.round(region.w)} × {Math.round(region.h)}
         </div>
       )}
@@ -378,7 +382,7 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
             className="absolute flex items-center justify-center"
             style={{ width: hit, height: hit, left: regionScreen.x + fx * regionScreen.w - hit / 2, top: regionScreen.y + fy * regionScreen.h - hit / 2, cursor: `${h}-resize`, touchAction: 'none' }}
           >
-            <span className="block rounded-full bg-white border-2 border-blue-500 pointer-events-none" style={{ width: coarse ? 18 : 12, height: coarse ? 18 : 12 }} />
+            <span className="block rounded-full bg-white border-2 border-pg-accent pointer-events-none" style={{ width: coarse ? 18 : 12, height: coarse ? 18 : 12 }} />
           </div>
         );
       })}
@@ -408,7 +412,7 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
             setTextAt(null);
           }}
           aria-label="Text on the screenshot"
-          className="absolute px-1 bg-white/90 text-black text-sm rounded border border-blue-500 outline-none"
+          className="absolute px-1 bg-white/90 text-black text-sm rounded border border-pg-accent outline-none"
           style={{ left: textAt.screen.x, top: textAt.screen.y, minWidth: 140 }}
         />
       )}
@@ -424,7 +428,7 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
       <div
         ref={toolbarRef}
         data-screenshot-toolbar
-        className="absolute flex items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-zinc-900 shadow-2xl"
+        className="absolute flex items-center gap-1 p-1.5 rounded-2xl bg-pg-surface border border-pg-line shadow-pg-menu"
         style={toolbarStyle}
         onPointerDown={(e) => e.stopPropagation()}
       >
@@ -437,23 +441,23 @@ export default function ScreenshotEditor({ source, initialShape = 'rect', coarse
           setMarks([]);
           setTool(null);
         }, shape === c.id))}
-        <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+        <div className="w-px h-6 bg-pg-line mx-0.5 shrink-0" />
         {MARK_TOOLS.map(({ id, label, Icon }) => toolButton(id, label, <Icon className="w-4 h-4" />, () => setTool(tool === id ? null : id), tool === id, !selected))}
         <div className="flex items-center gap-0.5 shrink-0">
           {MARK_COLORS.map((c) => (
             <button key={c} type="button" title={`Colour ${c}`} aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} className="w-7 h-11 flex items-center justify-center">
-              <span className={`w-5 h-5 rounded-full border ${color === c ? 'ring-2 ring-indigo-500 ring-offset-1' : 'border-zinc-300'}`} style={{ backgroundColor: c }} />
+              <span className={`w-5 h-5 rounded-full border ${color === c ? 'ring-2 ring-pg-ink ring-offset-1' : 'border-pg-line'}`} style={{ backgroundColor: c }} />
             </button>
           ))}
         </div>
-        <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+        <div className="w-px h-6 bg-pg-line mx-0.5 shrink-0" />
         {toolButton('undo', 'Undo (Ctrl+Z)', <LuUndo2 className="w-4 h-4" />, () => setMarks((list) => list.slice(0, -1)), false, marks.length === 0)}
         {toolButton('copy', 'Copy', <LuCopy className="w-4 h-4" />, copy, false, !selected)}
         {toolButton('save', 'Save as picture', <LuDownload className="w-4 h-4" />, save, false, !selected)}
         </div>
-        <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+        <div className="w-px h-6 bg-pg-line mx-0.5 shrink-0" />
         {toolButton('cancel', 'Cancel (Esc)', <LuX className="w-4 h-4" />, onCancel)}
-        <button type="button" onClick={finish} disabled={!selected} title="Finish: put it on the page (Enter)" aria-label="Finish" className="h-11 px-3 shrink-0 flex items-center gap-1.5 rounded-lg bg-indigo-500 text-white font-semibold text-sm disabled:opacity-40">
+        <button type="button" onClick={finish} disabled={!selected} title="Finish: put it on the page (Enter)" aria-label="Finish" className="h-11 px-3 shrink-0 flex items-center gap-1.5 rounded-lg bg-pg-accent-fill text-white font-semibold hover:bg-pg-accent-fill/90 text-sm disabled:opacity-40">
           <LuCheck className="w-4 h-4" />
           Finish
         </button>

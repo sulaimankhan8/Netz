@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { FiPlay, FiPause, FiMic, FiRotateCcw } from 'react-icons/fi';
+import React, { useState, useRef, useEffect, memo } from 'react';
+import { LuPlay, LuPause, LuRotateCcw } from 'react-icons/lu';
+import { TOUCH_TARGET } from '../ui/Dialog';
 
 const SPEEDS = [1, 1.5, 2];
 
@@ -13,13 +14,15 @@ function formatTime(secs) {
   return `${mins}:${rest < 10 ? '0' : ''}${rest}`;
 }
 
-const control = 'min-w-[36px] min-h-[36px] [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-xl transition-colors';
-
 /**
- * A voice memo: play and pause, go back 10 seconds, move through it, play faster.
- * Its name can be changed while the block is being edited.
+ * A voice memo, as one compact row: a round play button in the memo's rose, the name over a
+ * progress track, the time, back 10 s and the speed. Its name can be changed while editing.
+ *
+ * The recording loads only its length until it is played (preload="metadata"), the progress
+ * moves with the browser's own ~4 updates a second, and the block is memoized, so panning the
+ * page does not draw it again.
  */
-export default function AudioMemoBlock({ block, onUpdateContent, isEditing = false }) {
+function AudioMemoBlock({ block, onUpdateContent, isEditing = false }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(() => {
@@ -72,55 +75,72 @@ export default function AudioMemoBlock({ block, onUpdateContent, isEditing = fal
     if (audioRef.current) audioRef.current.currentTime = t;
   };
 
+  const progress = duration ? Math.min(1, currentTime / duration) : 0;
+  // Presses on the controls stay with them (the rest of the block selects and drags it)
+  const stop = (e) => e.stopPropagation();
+  const small = `h-9 min-w-[36px] ${TOUCH_TARGET} flex items-center justify-center rounded-[10px] text-pg-text2 hover:text-pg-ink hover:bg-pg-tray transition-colors shrink-0`;
+
   return (
-    <div className="w-full h-full flex flex-col justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/95 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-800 shadow-sm select-none gap-2">
+    <div className="w-full h-full flex items-center gap-3 px-3 py-2.5 select-none">
       {audioSrc ? <audio ref={audioRef} src={audioSrc} preload="metadata" /> : null}
 
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="p-1.5 rounded-lg bg-blue-500 text-white shrink-0">
-          <FiMic className="w-3.5 h-3.5" aria-hidden="true" />
-        </span>
-        {isEditing ? (
+      <button
+        type="button"
+        onPointerDown={stop}
+        onClick={togglePlay}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        className="w-12 h-12 shrink-0 flex items-center justify-center rounded-full bg-pg-voice text-pg-surface hover:brightness-110 active:scale-95 transition"
+      >
+        {isPlaying ? <LuPause className="w-5 h-5" fill="currentColor" /> : <LuPlay className="w-5 h-5 ml-0.5" fill="currentColor" />}
+      </button>
+
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-baseline justify-between gap-2 min-w-0">
+          {isEditing ? (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => onUpdateContent?.(block.blockId, { title: e.target.value })}
+              onPointerDown={stop}
+              aria-label="Voice memo name"
+              maxLength={80}
+              className="flex-1 min-w-0 h-8 [@media(pointer:coarse)]:h-11 px-2 -mx-2 rounded-lg bg-pg-paper border border-pg-line text-pg-label font-semibold text-pg-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-pg-accent"
+            />
+          ) : (
+            <span className="flex-1 min-w-0 truncate text-pg-label font-semibold text-pg-ink">{title}</span>
+          )}
+          <span className="shrink-0 text-pg-cap tabular-nums text-pg-text2">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
+        </div>
+        {/* The track: drawn as a bar, with an invisible range on top that takes the press */}
+        <div className="relative h-5 flex items-center" onPointerDown={stop}>
+          <div className="w-full h-1.5 rounded-full bg-pg-voice-tint overflow-hidden">
+            <div className="h-full rounded-full bg-pg-voice" style={{ width: `${progress * 100}%` }} />
+          </div>
           <input
-            type="text"
-            value={title}
-            onChange={(e) => onUpdateContent?.(block.blockId, { title: e.target.value })}
-            onPointerDown={(e) => e.stopPropagation()}
-            aria-label="Voice memo name"
-            maxLength={80}
-            className="flex-1 min-w-0 px-2 min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] rounded-lg bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            type="range"
+            min={0}
+            max={duration || 0}
+            step="0.1"
+            value={Math.min(currentTime, duration || 0)}
+            onChange={(e) => seek(parseFloat(e.target.value))}
+            aria-label="Position in the recording"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
-        ) : (
-          <span className="flex-1 min-w-0 font-semibold text-xs truncate">{title}</span>
-        )}
-        <span className="text-[12px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1.5" onPointerDown={(e) => e.stopPropagation()}>
-        <button type="button" onClick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'} className={`${control} bg-blue-500 hover:bg-blue-600 text-white shrink-0`}>
-          {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4 ml-0.5" />}
+      <div className="flex items-center gap-0.5 shrink-0" onPointerDown={stop}>
+        <button type="button" onClick={() => seek(currentTime - 10)} aria-label="Back 10 seconds" title="Back 10 seconds" className={small}>
+          <LuRotateCcw className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => seek(currentTime - 10)} aria-label="Back 10 seconds" title="Back 10 seconds" className={`${control} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 shrink-0`}>
-          <FiRotateCcw className="w-4 h-4" />
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={duration || 0}
-          step="0.1"
-          value={Math.min(currentTime, duration || 0)}
-          onChange={(e) => seek(parseFloat(e.target.value))}
-          aria-label="Position in the recording"
-          className="flex-1 min-w-0 accent-blue-500 min-h-[32px]"
-        />
         <button
           type="button"
           onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}
           aria-label={`Playback speed ${speed}x`}
           title="Playback speed"
-          className={`${control} px-2 text-[12px] font-mono font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 shrink-0`}
+          className={`${small} px-2 text-pg-cap font-semibold tabular-nums ${speed !== 1 ? '!text-pg-voice' : ''}`}
         >
           {speed}×
         </button>
@@ -128,3 +148,5 @@ export default function AudioMemoBlock({ block, onUpdateContent, isEditing = fal
     </div>
   );
 }
+
+export default memo(AudioMemoBlock);

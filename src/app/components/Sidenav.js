@@ -246,7 +246,7 @@ const Sidebar = () => {
       </ul>
       <div className="profile-details">
         <div className="profile-content">
-          <Image src="/icon.svg" alt="Profile Icon" width={30} height={30}/>
+          <Image src="/icons/icon.svg" alt="Profile Icon" width={30} height={30}/>
           <div className="name-job">
             <div className="name">Sulaiman Khan</div>
             <div className="job">Web Developer</div>

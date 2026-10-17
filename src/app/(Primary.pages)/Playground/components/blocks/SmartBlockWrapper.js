@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { FiTrash2, FiMove, FiEdit2, FiCheck } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiCheck } from 'react-icons/fi';
 import AIActionButton from '../AIActionButton';
 import { resizeKeepingAspect } from '../../utils/imageSizing';
 import { TOUCH_TARGET } from '../ui/Dialog';
+import { CTX_BUTTON, CtxDivider } from '../ui/ContextBar';
 import { blockLabel } from '../../utils/uiText';
+import { BlockBadge, blockHue } from './blockStyle';
 
 // A mouse press on a selected block that moves this far (px) starts moving the block
 const MOUSE_DRAG_START = 4;
@@ -19,6 +21,7 @@ export default function SmartBlockWrapper({
   onUpdateSize,
   onDeleteBlock,
   onSelectAiAction,
+  actions = [],
   children,
 }) {
   const [isSelected, setIsSelected] = useState(false);
@@ -223,18 +226,36 @@ export default function SmartBlockWrapper({
   const screenX = position.x * zoomLevel + panOffset.x;
   const screenY = position.y * zoomLevel + panOffset.y;
 
-  const minHeightForType = type === 'audio' ? 180 : type === 'graph' ? 320 : 100;
+  const minHeightForType = type === 'audio' ? 96 : type === 'graph' ? 240 : 64;
   const blockWidth = size?.width 
     ? (type === 'audio' ? Math.max(size.width, 360) : size.width)
     : (type === 'graph' ? 440 : type === 'audio' ? 360 : 360);
   const blockHeight = size?.height 
     ? `${Math.max(size.height, minHeightForType)}px` 
-    : (type === 'graph' ? '320px' : type === 'audio' ? '180px' : 'auto');
+    : (type === 'graph' ? '320px' : type === 'audio' ? '104px' : 'auto');
+  const hue = blockHue(type);
+  // Pictures and sketches sit in a little padding; the other blocks lay out their own
+  const cardPadding = type === 'image' || type === 'sketch' ? 'p-2' : 'p-0';
+
+  // The resize handle: a square edged in the selection colour, as for shapes and lassoed ink
+  const resizeLook = <span className="w-3 h-3 rounded-[3px] bg-pg-surface border-[1.5px] border-pg-accent" />;
+
+  // Where the block's bar goes: 8 px above the block, or below it when the top bars are in the
+  // way; in screen pixels whatever the zoom (the block itself is scaled, so the bar is scaled back)
+  const BAR_ROOM = 60; // the bar's height and its gap, on screen
+  const TOP_CLEAR = 78; // the bottom of the top bars
+  const barBelow = screenY - BAR_ROOM < TOP_CLEAR;
+  const nudgeX = screenX < 12 ? 12 - screenX : 0;
+  const inv = 1 / zoomLevel;
+  const barPlacement = barBelow
+    ? { top: '100%', transform: `translate(${nudgeX * inv}px, ${8 * inv}px) scale(${inv})`, transformOrigin: 'top left' }
+    : { bottom: '100%', transform: `translate(${nudgeX * inv}px, ${-8 * inv}px) scale(${inv})`, transformOrigin: 'bottom left' };
 
   // ----------------------------------------------------
   // MODE 1: DONE / VIEW MODE (Clean, lightweight card)
   // ----------------------------------------------------
   if (!isEditing) {
+    const showBar = isSelected || isDragging || isResizing;
     return (
       <div
         ref={wrapperRef}
@@ -243,67 +264,21 @@ export default function SmartBlockWrapper({
           transformOrigin: 'top left',
           width: blockWidth,
           height: blockHeight,
+          // What happens inside a block never makes the rest of the page lay out again
+          contain: 'layout style',
         }}
         data-block-id={block.blockId}
+        data-selected={isSelected ? 'true' : undefined}
         className="absolute top-0 left-0 z-40 group"
       >
-        <div className={`relative w-full h-full p-2 rounded-2xl ${
-          isSelected ? 'ring-2 ring-blue-500 shadow-xl' : ''
+        {/* The card: no chrome of its own at rest. Selected: the one selection outline */}
+        <div className={`relative w-full h-full ${cardPadding} rounded-xl ${
+          isSelected ? 'outline outline-[1.5px] outline-offset-1 outline-pg-accent' : ''
         } ${
           block.isRuledLineAligned
-            ? 'bg-transparent hover:bg-white/85 dark:hover:bg-zinc-900/85 border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 shadow-none hover:shadow-lg'
-            : 'bg-white/70 dark:bg-zinc-900/70 hover:bg-white/95 dark:hover:bg-zinc-900/95 border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-lg backdrop-blur-md'
-        } transition-[background-color,border-color,box-shadow] flex flex-col justify-between`}>
-          {/* Top Grab & Action Toolbar: visible when selected, dragging, resizing, or hovered */}
-          <div className={`flex items-center justify-between w-full pb-1 transition-opacity ${
-            (isSelected || isDragging || isResizing)
-              ? 'opacity-100 pointer-events-auto'
-              : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
-          }`}>
-            {/* Grab Handle */}
-            <div
-              onPointerDown={handleDragPointerDown}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300 cursor-grab active:cursor-grabbing select-none touch-none min-h-[36px]"
-            >
-              <FiMove className="w-3.5 h-3.5" />
-              <span>{blockLabel(type)}</span>
-            </div>
-
-            {/* Quick actions: Delete set apart from Edit, so one is not pressed for the other */}
-            <div className="flex items-center gap-3" onPointerDown={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteBlock(block.blockId);
-                }}
-                title="Delete Block"
-                aria-label={`Delete ${blockLabel(type)}`}
-                className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-600 dark:text-zinc-300 hover:text-rose-500 transition-colors cursor-pointer`}
-              >
-                <FiTrash2 className="w-4 h-4 pointer-events-none" />
-              </button>
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                title="Edit Block"
-                aria-label={`Edit ${blockLabel(type)}`}
-                className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center rounded-lg bg-zinc-200/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-200 hover:text-blue-500 transition-colors cursor-pointer`}
-              >
-                <FiEdit2 className="w-4 h-4 pointer-events-none" />
-              </button>
-            </div>
-          </div>
-
+            ? 'bg-transparent hover:bg-pg-surface/90 border border-transparent hover:border-pg-line'
+            : `bg-pg-surface border ${hue.border}`
+        } transition-[background-color,border-color] flex flex-col justify-between`}>
           {/* Block Content Body: supports tap selection and 350ms long press to drag */}
           <div
             data-block-body
@@ -329,7 +304,7 @@ export default function SmartBlockWrapper({
               setIsEditing(true);
             }}
             title={isSelected ? 'Double-click to edit, drag to move' : undefined}
-            className={`flex-1 w-full h-full overflow-hidden touch-none ${isSelected ? 'cursor-move' : 'cursor-pointer'}`}
+            className={`flex-1 w-full h-full overflow-hidden rounded-xl touch-none ${isSelected ? 'cursor-move' : 'cursor-pointer'}`}
           >
             {childElement}
           </div>
@@ -339,10 +314,80 @@ export default function SmartBlockWrapper({
             onPointerDown={handleResizePointerDown}
             title="Drag to resize block"
             data-resize-handle
-            className={`${(isSelected || isDragging || isResizing) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'} absolute -bottom-4 -right-4 z-50 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-se-resize touch-none transition-opacity`}
+            className={`${showBar ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'} absolute -bottom-4 -right-4 z-50 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-se-resize touch-none transition-opacity`}
           >
-            <span className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+            {resizeLook}
           </div>
+        </div>
+
+        {/* The block's context bar, above it and outside its content: the type (drag it to move
+            the block), Edit, and Delete kept apart at the far end. It keeps one size at every
+            zoom (scaled back by 1 / zoom) and drops below the block when the top bars are in the
+            way. Shown while selected, and on hover with a mouse. */}
+        <div
+          role="toolbar"
+          aria-label={`${blockLabel(type)} actions`}
+          data-context-bar
+          onPointerDown={(e) => e.stopPropagation()}
+          style={barPlacement}
+          className={`absolute left-0 flex items-center gap-0.5 p-1 rounded-[14px] bg-pg-surface border border-pg-line shadow-pg-bar text-pg-label select-none whitespace-nowrap transition-opacity ${
+            showBar ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
+          }`}
+        >
+          <div
+            onPointerDown={handleDragPointerDown}
+            title="Drag to move the block"
+            className={`${CTX_BUTTON} !pl-1 !text-pg-ink font-semibold cursor-grab active:cursor-grabbing touch-none`}
+          >
+            <BlockBadge type={type} />
+            <span>{blockLabel(type)}</span>
+          </div>
+          {/* What this kind of block offers (an equation: Plot) */}
+          {actions.map((action) => (
+            <button
+              key={action.key}
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                action.onClick();
+              }}
+              title={action.title || action.label}
+              aria-label={action.label}
+              className={`${CTX_BUTTON} cursor-pointer`}
+            >
+              {action.icon}
+              <span className="pointer-events-none">{action.label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            title="Edit Block"
+            aria-label={`Edit ${blockLabel(type)}`}
+            className={`${CTX_BUTTON} cursor-pointer`}
+          >
+            <FiEdit2 className="w-4 h-4 pointer-events-none" aria-hidden="true" />
+            <span className="pointer-events-none">Edit</span>
+          </button>
+          <CtxDivider />
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteBlock(block.blockId);
+            }}
+            title="Delete Block"
+            aria-label={`Delete ${blockLabel(type)}`}
+            className={`${CTX_BUTTON} hover:!text-pg-danger cursor-pointer`}
+          >
+            <FiTrash2 className="w-4 h-4 pointer-events-none" aria-hidden="true" />
+          </button>
         </div>
       </div>
     );
@@ -351,8 +396,8 @@ export default function SmartBlockWrapper({
   // ----------------------------------------------------
   // MODE 2: EDIT MODE (Active Card Editor)
   // ----------------------------------------------------
-  // An equation being edited grows to fit its ribbon and editor (never shorter than its size)
-  const editHeight = type === 'equation' ? { height: 'auto', minHeight: blockHeight } : { height: blockHeight };
+  // An equation or a graph being edited grows to fit its tools (never shorter than its size)
+  const editHeight = type === 'equation' || type === 'graph' ? { height: 'auto', minHeight: blockHeight } : { height: blockHeight };
   return (
     <div
       ref={wrapperRef}
@@ -361,24 +406,26 @@ export default function SmartBlockWrapper({
         transformOrigin: 'top left',
         width: blockWidth,
         ...editHeight,
+        contain: 'layout style',
       }}
       data-block-id={block.blockId}
-      className={`absolute top-0 left-0 z-50 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-2 border-blue-500 shadow-2xl group flex flex-col ${
-        isLinked ? 'ring-2 ring-blue-500/30' : ''
+      data-editing="true"
+      className={`absolute top-0 left-0 z-50 rounded-xl bg-pg-surface border-[1.5px] border-pg-accent shadow-pg-menu group flex flex-col ${
+        isLinked ? 'ring-4 ring-pg-accent/15' : ''
       }`}
     >
-      {/* Header Toolbar */}
+      {/* Header: it belongs to the editor (the label moves the block; Delete, then Done) */}
       <div
         onPointerDown={handleDragPointerDown}
-        className="flex items-center justify-between px-3.5 py-2 border-b border-zinc-200/70 dark:border-zinc-800/70 cursor-grab active:cursor-grabbing select-none flex-shrink-0 touch-none"
+        className="flex items-center justify-between min-h-[44px] px-3 py-1 border-b border-pg-line cursor-grab active:cursor-grabbing select-none flex-shrink-0 touch-none"
       >
         <div className="flex items-center gap-2">
-          <FiMove className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-200">
+          <BlockBadge type={type} />
+          <span className="text-pg-label font-semibold text-pg-ink">
             {blockLabel(type)}
           </span>
           {isLinked && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-mono font-semibold">
+            <span className="text-pg-cap px-2 py-0.5 rounded-full bg-pg-accent-tint text-pg-accent-on-tint font-semibold">
               Linked
             </span>
           )}
@@ -395,13 +442,13 @@ export default function SmartBlockWrapper({
               e.stopPropagation();
               onDeleteBlock(block.blockId);
             }}
-            className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center p-1 text-zinc-500 hover:text-rose-500 rounded-lg cursor-pointer`}
+            className={`w-9 h-9 ${TOUCH_TARGET} flex items-center justify-center p-1 text-pg-text2 hover:text-pg-danger rounded-lg cursor-pointer`}
             title="Delete Block"
             aria-label={`Delete ${blockLabel(type)}`}
           >
             <FiTrash2 className="w-4 h-4 pointer-events-none" />
           </button>
-          <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+          <div className="w-px h-5 bg-pg-line mx-1" />
 
           {/* AI Action Popover Button (FOR EQUATION BLOCKS WITH CAS ACTIONS) */}
           {onSelectAiAction && type === 'equation' && (
@@ -418,7 +465,7 @@ export default function SmartBlockWrapper({
               setIsEditing(false);
             }}
             title="Done Editing"
-            className={`flex items-center gap-1 px-3 py-1.5 min-h-[36px] ${TOUCH_TARGET} text-xs font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow-xs transition-colors cursor-pointer`}
+            className={`flex items-center gap-1 px-3 py-1.5 min-h-[36px] ${TOUCH_TARGET} text-pg-label font-semibold rounded-[10px] bg-pg-accent-fill hover:bg-pg-accent-fill/90 text-white transition-colors cursor-pointer`}
           >
             <FiCheck className="w-3.5 h-3.5 pointer-events-none" />
             <span className="pointer-events-none">Done</span>
@@ -436,7 +483,7 @@ export default function SmartBlockWrapper({
         data-resize-handle
         className="absolute -bottom-4 -right-4 z-50 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-se-resize touch-none"
       >
-        <span className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+        {resizeLook}
       </div>
     </div>
   );

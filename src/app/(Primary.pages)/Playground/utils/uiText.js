@@ -17,12 +17,25 @@ export const UI = {
   redo: 'Redo',
 
   // Panels and menus
-  penOptions: 'Pen and page',
-  more: 'More',
+  penOptions: 'Pen options',
+  highlighterOptions: 'Highlighter options',
+  eraserOptions: 'Eraser options',
   blocks: 'Blocks',
   pageMenu: 'Page',
+  thisPage: 'This page',
   preferences: 'Preferences',
   insert: 'Insert',
+  addToPage: 'Add to page',
+  background: 'Background',
+  zoom: 'Zoom',
+  moreColours: 'More colours',
+  penTypes: { ballpoint: 'Ballpoint', fountain: 'Fountain', pencil: 'Pencil', marker: 'Marker' },
+  pageOf: (n, total) => `Page ${n} of ${total}`,
+  recording: 'Recording',
+
+  // A new, empty page
+  emptyTitle: 'Write anything.',
+  emptyHint: 'End a sum with = and the answer appears.',
 
   // Blocks
   graph: 'Graph',

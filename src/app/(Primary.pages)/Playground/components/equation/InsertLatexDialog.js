@@ -25,7 +25,7 @@ export default function InsertLatexDialog({ isMobile, initial = '', onInsert, on
 
   const footer = (
     <>
-      <button type="button" onClick={onClose} className="px-4 h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button type="button" onClick={onClose} className="px-4 h-9 rounded-lg border border-pg-line hover:bg-pg-tray">
         Cancel
       </button>
       <button
@@ -35,7 +35,7 @@ export default function InsertLatexDialog({ isMobile, initial = '', onInsert, on
           onInsert(latex.trim());
           onClose();
         }}
-        className="px-4 h-9 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-40"
+        className="px-4 h-9 rounded-lg bg-pg-accent-fill text-white font-semibold hover:bg-pg-accent-fill/90 disabled:opacity-40"
       >
         Insert
       </button>
@@ -54,22 +54,22 @@ export default function InsertLatexDialog({ isMobile, initial = '', onInsert, on
           spellCheck={false}
           aria-label="LaTeX"
           placeholder="\frac{-b \pm \sqrt{b^2-4ac}}{2a}"
-          className="w-full p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-sm"
+          className="w-full p-3 rounded-lg bg-pg-tray border border-pg-line font-mono text-sm"
         />
       </label>
       <div className="flex flex-col gap-1">
         <span className="font-semibold">Preview</span>
-        <div className="min-h-[72px] p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-x-auto text-zinc-900 dark:text-zinc-100 text-base" data-latex-preview>
-          {!latex.trim() && <span className="text-zinc-400 text-xs">The equation appears here as you type.</span>}
+        <div className="min-h-[72px] p-3 rounded-lg border border-pg-line overflow-x-auto text-pg-ink text-base" data-latex-preview>
+          {!latex.trim() && <span className="text-pg-text2 text-xs">The equation appears here as you type.</span>}
           {latex.trim() && result.html && <KatexView latex={latex} display />}
-          {latex.trim() && !result.html && <span className="text-rose-600 text-xs" data-latex-error>This is not valid LaTeX yet: {result.error}</span>}
+          {latex.trim() && !result.html && <span className="text-pg-danger text-xs" data-latex-error>This is not valid LaTeX yet: {result.error}</span>}
         </div>
       </div>
       <div className="flex flex-col gap-1">
         <span className="font-semibold">Examples</span>
         <div className="flex flex-wrap gap-1.5">
           {EXAMPLES.map((ex) => (
-            <button key={ex.label} type="button" onClick={() => setLatex(ex.latex)} title={ex.latex} className="h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <button key={ex.label} type="button" onClick={() => setLatex(ex.latex)} title={ex.latex} className="h-9 px-3 rounded-lg border border-pg-line hover:bg-pg-tray">
               {ex.label}
             </button>
           ))}

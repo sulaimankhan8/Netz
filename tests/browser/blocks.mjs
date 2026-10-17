@@ -7,7 +7,7 @@ const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: String(detail) });
 const blockInfo = () => page.evaluate(() => [...document.querySelectorAll('[data-block-id]')].map((b) => ({
   id: b.getAttribute('data-block-id'),
-  editing: b.className.includes('border-blue-500'),
+  editing: b.getAttribute('data-editing') === 'true',
   inputs: b.querySelectorAll('input[type="text"], textarea, math-field').length,
   text: b.innerText.slice(0, 80).replace(/\n/g, ' | '),
   transform: b.style.transform,
@@ -49,7 +49,7 @@ try {
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await sleep(300);
     blocks = await blockInfo();
-    const selected = await page.evaluate(() => Boolean(document.querySelector('[data-block-id] .ring-2')));
+    const selected = await page.evaluate(() => Boolean(document.querySelector('[data-block-id][data-selected]')));
     check('a click selects the block without opening it', selected && !blocks[0].editing, JSON.stringify(blocks[0]));
     // A double click reopens it; the Done button closes it
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 2 });
@@ -64,8 +64,9 @@ try {
   await sleep(900);
   blocks = await blockInfo();
   check('Plot Graph adds a linked graph block', blocks.length === 2, JSON.stringify(blocks.map((b) => b.text)));
-  const charts = await page.evaluate(() => document.querySelectorAll('[data-block-id] canvas').length);
-  check('the graph draws a chart', charts >= 1, charts);
+  // The graph is drawn as SVG (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, blocks round): one path per curve
+  const charts = await page.evaluate(() => document.querySelectorAll('[data-block-id] svg[data-graph-plot] path').length);
+  check('the graph draws its curve', charts >= 1, charts);
   const links = await page.evaluate(() => document.querySelectorAll('svg.z-30 path').length);
   check('a link is drawn between equation and graph', links >= 1, links);
   check('the Done button closes the editor', await clickButtonText('Done'));

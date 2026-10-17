@@ -117,13 +117,13 @@ const MathEditor = forwardRef(function MathEditor({ value, onChange, onDone, onF
   if (state === 'failed') return null;
   return (
     <div className="relative" data-math-editor={state}>
-      {state === 'loading' && <div className="px-3 py-2 text-xs text-zinc-400">Loading the equation editor...</div>}
+      {state === 'loading' && <div className="px-3 min-h-[52px] flex items-center rounded-xl bg-pg-paper border border-pg-line text-pg-label text-pg-text2">Loading the equation editor…</div>}
       {state === 'ready' && (
         <math-field
           ref={fieldRef}
           aria-label="Equation"
           data-math-field
-          style={{ display: 'block', width: '100%', minHeight: 48, fontSize: 22, padding: '6px 10px', borderRadius: 12, border: '1px solid rgba(113,113,122,0.35)', background: 'transparent' }}
+          style={{ display: 'block', width: '100%', minHeight: 52, fontSize: 22, padding: '8px 12px', borderRadius: 12, border: '1px solid rgb(var(--pg-line))', background: 'rgb(var(--pg-paper))', color: 'rgb(var(--pg-ink))' }}
         />
       )}
     </div>

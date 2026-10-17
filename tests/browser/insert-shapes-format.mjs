@@ -62,7 +62,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
     await sleep(500);
     let shapes = await savedShapes(page);
     check('typing goes into the shape', shapes[0].text && shapes[0].text.value === 'Hello shapes, hello pen', JSON.stringify(shapes[0].text));
-    const tool = await page.evaluate(() => document.querySelector('button[aria-label="Lasso Select"]').className.includes('bg-purple-500'));
+    const tool = await page.evaluate(() => document.querySelector('button[aria-label="Lasso Select"]').getAttribute('aria-pressed') === 'true');
     check('letters that are tool keys (h, e, p, l, s) go into the text, not the toolbar', tool);
     check('the shape\'s own text is hidden while typing (no double text)', (await page.evaluate(() => document.querySelectorAll('[data-shape-text]').length)) === 0);
     await page.keyboard.press('Escape');

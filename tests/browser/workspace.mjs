@@ -32,7 +32,7 @@ async function mouseDrag(from, to, steps = 12) {
 // Screen rectangle and world size of every block, in page order
 const blocks = () => page.evaluate(() => [...document.querySelectorAll('[data-block-id]')].map((b) => {
   const r = b.getBoundingClientRect();
-  return { id: b.getAttribute('data-block-id'), x: r.left, y: r.top, w: r.width, h: r.height, editing: b.className.includes('border-blue-500') };
+  return { id: b.getAttribute('data-block-id'), x: r.left, y: r.top, w: r.width, h: r.height, editing: b.getAttribute('data-editing') === 'true' };
 }));
 const handleCentre = (index, selector) => page.evaluate(({ index, selector }) => {
   const b = [...document.querySelectorAll('[data-block-id]')][index];
@@ -249,10 +249,14 @@ try {
   check('its block has the picture\'s proportions (3:2)', near(b[1].w, 360, 2) && near(b[1].h, 240, 2), `${b[1].w} x ${b[1].h}`);
 
   const bigBytes = await pasteImage(3000, 2000, 'noise');
-  await sleep(2500);
+  // Reading, scaling and re-encoding a 20 MB picture takes 2.5 to 3.5 s on this machine: wait for the block
+  const pasteStart = Date.now();
+  await page.waitForFunction(() => document.querySelectorAll('[data-block-id] img').length >= 2, { timeout: 8000 }).catch(() => {});
+  const pasteMs = Date.now() - pasteStart;
+  await sleep(300);
   b = await blocks();
   img = await imageInfo(1);
-  check('a large photo becomes a block too', b.length === 3 && img, JSON.stringify(b.length));
+  check('a large photo becomes a block too', b.length === 3 && img, `${b.length} blocks after ${pasteMs} ms`);
   check('it is scaled down to 1600 px on the long side', img && img.naturalWidth === 1600 && img.naturalHeight === 1067, JSON.stringify(img));
   check('and stored much smaller than the original', img && img.chars < bigBytes * 0.5, `${img && Math.round(img.chars / 1024)} KB of text vs ${Math.round(bigBytes / 1024)} KB original`);
   check('new blocks do not land exactly on top of each other', !(near(b[1].x, b[2].x, 1) && near(b[1].y, b[2].y, 1)), `${b[1].x},${b[1].y} / ${b[2].x},${b[2].y}`);

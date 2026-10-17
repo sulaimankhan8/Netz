@@ -2,7 +2,8 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { FiX } from 'react-icons/fi';
-import { LuPencil, LuShapes } from 'react-icons/lu';
+import { LuPencil } from 'react-icons/lu';
+import { Tabs, BTN_SECONDARY } from '../ui/parts';
 import { SHAPE_CATEGORIES, getGalleryItem } from '../../utils/shapes/shapeGallery';
 import { createShape, isLineShape, boxFromDrag, shapeGeometry, LINE_PRESETS } from '../../utils/shapes/shapeModel';
 import { shapePaint, matrixAttribute } from '../../utils/shapes/shapeRender';
@@ -111,9 +112,21 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
       .filter((section) => section.shapes.length > 0);
   }, [recent, changing]);
 
+  // The tab of the category in view: set by a tab press, and followed while the list scrolls
+  const [current, setCurrent] = useState(sections[0] ? sections[0].id : null);
   const jumpTo = (id) => {
+    setCurrent(id);
     const el = listRef.current && listRef.current.querySelector(`[data-shape-section="${id}"]`);
     if (el && listRef.current) listRef.current.scrollTo({ top: el.offsetTop - listRef.current.offsetTop, behavior: 'smooth' });
+  };
+  const followScroll = () => {
+    const list = listRef.current;
+    if (!list) return;
+    let inView = sections[0] && sections[0].id;
+    for (const el of list.querySelectorAll('[data-shape-section]')) {
+      if (el.offsetTop - list.offsetTop <= list.scrollTop + 12) inView = el.getAttribute('data-shape-section');
+    }
+    if (inView && inView !== current) setCurrent(inView);
   };
 
   return (
@@ -123,27 +136,23 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
       data-shape-gallery={changing ? 'change' : 'insert'}
       className={`${
         isMobile
-          ? 'fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl p-4 border-t'
+          ? 'fixed bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl px-4 pt-2 pb-4 border-t'
           : placement || 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[560px] max-w-[var(--dock-panel-max,95vw)] max-h-[70vh] rounded-2xl p-3 border'
-      } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl ${changing ? 'z-[70]' : 'z-50'} flex flex-col gap-2 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150`}
+      } bg-pg-surface border-pg-line shadow-pg-menu ${changing ? 'z-[70]' : 'z-50'} flex flex-col gap-2 text-pg-label text-pg-text2 animate-in fade-in slide-in-from-bottom-2 duration-150`}
     >
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500">
-            <LuShapes className="w-4 h-4" />
+      {isMobile && <span aria-hidden="true" className="block mx-auto w-9 h-[5px] rounded-full bg-pg-line" />}
+      <div className="flex items-center justify-between gap-2 pl-1">
+        <div className="min-w-0">
+          <span className={`font-semibold text-pg-ink block leading-tight ${isMobile ? 'text-pg-title' : 'text-pg-body'}`}>{changing ? 'Change Shape' : 'Shapes'}</span>
+          <span className="text-pg-cap text-pg-text2">
+            {changing ? 'Pick the new shape: its size, colours and text stay' : 'Pick a shape, then drag on the page (or tap for the default size)'}
           </span>
-          <div>
-            <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 block leading-tight">{changing ? 'Change Shape' : 'Shapes'}</span>
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              {changing ? 'Pick the new shape: its size, colours and text stay' : 'Pick a shape, then drag on the page (or tap for the default size)'}
-            </span>
-          </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {!changing && <button
             onClick={onFreehand}
             title="Draw Freehand: rough shapes snap to lines, triangles, rectangles and circles (key S)"
-            className="px-2.5 py-1.5 h-9 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center gap-1.5 rounded-xl font-medium text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className={`${BTN_SECONDARY} px-3`}
           >
             <LuPencil className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Draw Freehand</span>
@@ -152,34 +161,26 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
             onClick={onClose}
             title={changing ? 'Close Change Shape' : 'Close Shapes'}
             aria-label={changing ? 'Close Change Shape' : 'Close Shapes'}
-            className="p-2 w-9 h-9 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray hover:text-pg-ink transition-colors"
           >
-            <FiX className="w-5 h-5" />
+            <FiX className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Quick jumps, mostly for phones where the list is long. Laptops: they wrap, so none is
-          hidden. Phones: one row that scrolls, faded at the edge to show there is more. */}
-      <div
-        className="flex items-center gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-1 shrink-0"
-        style={isMobile ? { WebkitMaskImage: 'linear-gradient(to right, black 82%, transparent)', maskImage: 'linear-gradient(to right, black 82%, transparent)' } : undefined}
-      >
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => jumpTo(s.id)}
-            className="px-2.5 py-1 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] rounded-lg font-medium shrink-0 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {s.id === 'recent' ? 'Recent' : s.label}
-          </button>
-        ))}
-      </div>
+      {/* Quick jumps to each category: one row that never wraps, faded where there is more */}
+      <Tabs
+        label="Shape categories"
+        className="pb-2 border-b border-pg-line"
+        items={sections.map((s) => ({ id: s.id, label: s.id === 'recent' ? 'Recent' : s.label }))}
+        value={current}
+        onSelect={jumpTo}
+      />
 
-      <div ref={listRef} className="relative flex flex-col gap-3 overflow-y-auto overscroll-contain pr-1 min-h-0">
+      <div ref={listRef} onScroll={followScroll} className="relative flex flex-col gap-3 overflow-y-auto overscroll-contain pr-1 min-h-0">
         {sections.map((section) => (
           <section key={section.id} data-shape-section={section.id} className="flex flex-col gap-1.5">
-            <h4 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">{section.label}</h4>
+            <h4 className="text-pg-cap font-semibold text-pg-text2">{section.label}</h4>
             <div className="flex flex-wrap gap-1">
               {section.shapes.map((item) => (
                 <button
@@ -189,10 +190,8 @@ export default function ShapeGallery({ isMobile, armedId, onPick, onFreehand, on
                   aria-label={item.name}
                   aria-pressed={armedId === item.id}
                   data-shape-item={item.id}
-                  className={`w-9 h-9 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 flex items-center justify-center rounded-lg border transition-colors ${
-                    armedId === item.id
-                      ? 'bg-indigo-500 text-white border-indigo-600'
-                      : 'border-transparent text-zinc-700 dark:text-zinc-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700'
+                  className={`w-9 h-9 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 flex items-center justify-center rounded-lg transition-colors ${
+                    armedId === item.id ? 'bg-pg-ink text-pg-on-ink' : 'text-pg-ink hover:bg-pg-tray'
                   }`}
                 >
                   <ShapeIcon item={item} />

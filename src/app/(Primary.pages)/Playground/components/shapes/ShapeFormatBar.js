@@ -48,7 +48,7 @@ function ArrowIcon({ type, atStart }) {
 }
 
 function SectionTitle({ children }) {
-  return <div className="font-semibold text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">{children}</div>;
+  return <div className="font-semibold text-pg-cap text-pg-text2 mb-1">{children}</div>;
 }
 
 function MenuButton({ icon, label, onClick, pressed, disabled, shortcut }) {
@@ -58,11 +58,11 @@ function MenuButton({ icon, label, onClick, pressed, disabled, shortcut }) {
       onClick={onClick}
       aria-pressed={pressed}
       disabled={disabled}
-      className={`w-full flex items-center gap-2.5 px-2 h-9 rounded-lg text-left disabled:opacity-40 ${pressed ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:hover:bg-transparent'}`}
+      className={`w-full flex items-center gap-2.5 px-2 h-9 rounded-lg text-left disabled:opacity-40 ${pressed ? 'bg-pg-tray text-pg-ink font-semibold' : 'hover:bg-pg-tray disabled:hover:bg-transparent'}`}
     >
       {icon}
       <span>{label}</span>
-      {shortcut && <span className="ml-auto pl-4 text-zinc-400 tabular-nums">{shortcut}</span>}
+      {shortcut && <span className="ml-auto pl-4 text-pg-text2 tabular-nums">{shortcut}</span>}
     </button>
   );
 }
@@ -72,7 +72,7 @@ function StylePreview({ style }) {
   const fill = style.fill.type === 'gradient' ? `linear-gradient(180deg, ${style.fill.stops[0]}, ${style.fill.stops[1]})` : style.fill.color;
   return (
     <span
-      className="w-full h-full rounded-[3px] flex items-center justify-center text-[10px] font-semibold"
+      className="w-full h-full rounded-[3px] flex items-center justify-center text-pg-cap font-semibold"
       style={{
         background: fill,
         border: style.line.type === 'none' ? '1px solid transparent' : `${Math.min(2, style.line.width)}px solid ${style.line.color}`,
@@ -90,7 +90,7 @@ function ShadowPreview({ preset }) {
   const rad = (preset.angle * Math.PI) / 180;
   const dx = Math.round(Math.cos(rad) * preset.dist * 0.75);
   const dy = Math.round(Math.sin(rad) * preset.dist * 0.75);
-  return <span className="w-6 h-6 bg-white border border-zinc-300" style={{ boxShadow: `${dx}px ${dy}px ${Math.round(preset.blur * 0.75)}px rgba(0,0,0,0.45)` }} />;
+  return <span className="w-6 h-6 bg-white border border-pg-line" style={{ boxShadow: `${dx}px ${dy}px ${Math.round(preset.blur * 0.75)}px rgba(0,0,0,0.45)` }} />;
 }
 
 /**
@@ -171,9 +171,9 @@ export default function ShapeFormatBar({
       title={label}
       aria-label={label}
       aria-expanded={id ? menu === id : undefined}
-      className={`w-11 h-11 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center gap-0.5 rounded-lg transition-colors ${
-        id && menu === id ? 'bg-zinc-200 dark:bg-zinc-700' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-      } text-zinc-700 dark:text-zinc-200`}
+      className={`w-10 h-10 min-w-[40px] min-h-[40px] [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex flex-col items-center justify-center gap-0.5 rounded-[10px] transition-colors ${
+        id && menu === id ? 'bg-pg-tray text-pg-ink' : 'text-pg-text2 hover:bg-pg-tray hover:text-pg-ink'
+      }`}
     >
       {icon}
       {colour !== undefined && (
@@ -184,7 +184,7 @@ export default function ShapeFormatBar({
       )}
     </button>
   );
-  const divider = (k) => <div key={k} className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />;
+  const divider = (k) => <div key={k} className="w-px h-6 bg-pg-line mx-1" />;
 
   const stylesButton = !allLines && button('styles', 'Shape Styles', <LuPalette className="w-4 h-4" />);
   const fillButton = !allLines && button('fill', 'Fill', <LuPaintBucket className="w-4 h-4" />, fillColor);
@@ -214,7 +214,7 @@ export default function ShapeFormatBar({
     <div>
       <SectionTitle>Shadow</SectionTitle>
       <div className="flex flex-wrap gap-1">
-        <button type="button" onClick={() => onStyle({ shadow: null })} aria-pressed={!first.shadow} className={`h-11 px-3 rounded-lg border ${!first.shadow ? 'border-indigo-500 bg-indigo-500/10' : 'border-zinc-200 dark:border-zinc-700'}`}>
+        <button type="button" onClick={() => onStyle({ shadow: null })} aria-pressed={!first.shadow} className={`h-11 px-3 rounded-lg border ${!first.shadow ? 'border-pg-ink bg-pg-tray' : 'border-pg-line'}`}>
           No Shadow
         </button>
         {SHADOW_PRESETS.map((p) => (
@@ -225,13 +225,13 @@ export default function ShapeFormatBar({
             aria-label={`Shadow: ${p.label}`}
             aria-pressed={first.shadow && first.shadow.preset === p.id}
             onClick={() => onStyle({ shadow: { preset: p.id } })}
-            className={`w-11 h-11 flex items-center justify-center rounded-lg border ${first.shadow && first.shadow.preset === p.id ? 'border-indigo-500 bg-indigo-500/10' : 'border-zinc-200 dark:border-zinc-700'}`}
+            className={`w-11 h-11 flex items-center justify-center rounded-lg border ${first.shadow && first.shadow.preset === p.id ? 'border-pg-ink bg-pg-tray' : 'border-pg-line'}`}
           >
             <ShadowPreview preset={p} />
           </button>
         ))}
       </div>
-      <button type="button" onClick={() => { setMenu(null); onOpenPane('effects'); }} className="mt-2 px-2 h-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button type="button" onClick={() => { setMenu(null); onOpenPane('effects'); }} className="mt-2 px-2 h-8 rounded-lg hover:bg-pg-tray">
         Shadow Options...
       </button>
     </div>
@@ -239,17 +239,17 @@ export default function ShapeFormatBar({
 
   // Align needs two or more (a group counts as one); Distribute three or more
   const units = new Set(shapes.map((s) => s.groupId || s.id)).size;
-  const sep = <div className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" />;
+  const sep = <div className="my-1 h-px bg-pg-line" />;
   const rotateMenu = (
     <div className="flex flex-col gap-0.5 min-w-[220px]" data-rotate-menu>
       <MenuButton icon={<LuRotateCw className="w-4 h-4" />} label="Rotate Right 90°" onClick={() => onRotate(90)} />
       <MenuButton icon={<LuRotateCcw className="w-4 h-4" />} label="Rotate Left 90°" onClick={() => onRotate(-90)} />
       <MenuButton icon={<LuFlipVertical className="w-4 h-4" />} label="Flip Vertical" onClick={() => onFlip('v')} />
       <MenuButton icon={<LuFlipHorizontal className="w-4 h-4" />} label="Flip Horizontal" onClick={() => onFlip('h')} />
-      <button type="button" onClick={() => { setMenu(null); onOpenPane('size'); }} className="mt-1 px-2 h-8 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button type="button" onClick={() => { setMenu(null); onOpenPane('size'); }} className="mt-1 px-2 h-8 rounded-lg text-left hover:bg-pg-tray">
         More Rotation Options...
       </button>
-      <p className="px-2 pt-1 text-[11px] text-zinc-500 dark:text-zinc-400">Or drag the round handle above the shape to turn it freely (Shift: 15° steps).</p>
+      <p className="px-2 pt-1 text-pg-cap text-pg-text2">Or drag the round handle above the shape to turn it freely (Shift: 15° steps).</p>
     </div>
   );
 
@@ -285,7 +285,7 @@ export default function ShapeFormatBar({
         <MenuButton icon={<LuRotateCcw className="w-4 h-4" />} label="Rotate Left 90°" onClick={() => onRotate(-90)} />
         <MenuButton icon={<LuFlipVertical className="w-4 h-4" />} label="Flip Vertical" onClick={() => onFlip('v')} />
         <MenuButton icon={<LuFlipHorizontal className="w-4 h-4" />} label="Flip Horizontal" onClick={() => onFlip('h')} />
-        <button type="button" onClick={() => { setMenu(null); onOpenPane('size'); }} className="mt-1 px-2 h-8 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <button type="button" onClick={() => { setMenu(null); onOpenPane('size'); }} className="mt-1 px-2 h-8 rounded-lg text-left hover:bg-pg-tray">
           More Rotation Options...
         </button>
       </div>
@@ -301,15 +301,15 @@ export default function ShapeFormatBar({
       data-shape-format-bar
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <div ref={barRef} className="flex items-center gap-1 p-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl">
+      <div ref={barRef} role="toolbar" aria-label="Shape" data-context-bar className="flex items-center gap-0.5 p-1 rounded-[14px] bg-pg-surface border border-pg-line shadow-pg-bar">
         {bar.filter(Boolean)}
       </div>
 
       {menu && (
-        <div className={`${panelClass} bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-zinc-200/90 dark:border-zinc-800/90 shadow-2xl z-50 flex flex-col gap-3 text-xs text-zinc-700 dark:text-zinc-300`} style={isMobile ? undefined : { maxHeight: menuMaxHeight }} data-shape-menu={menu}>
+        <div className={`${panelClass} bg-pg-surface border-pg-line shadow-pg-menu z-50 flex flex-col gap-3 text-pg-label text-pg-ink`} style={isMobile ? undefined : { maxHeight: menuMaxHeight }} data-shape-menu={menu}>
           <div className="flex items-center justify-between">
-            <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{titles[menu]}</span>
-            <button type="button" onClick={() => setMenu(null)} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <span className={`font-semibold text-pg-ink ${isMobile ? 'text-pg-title' : 'text-pg-body'}`}>{titles[menu]}</span>
+            <button type="button" onClick={() => setMenu(null)} aria-label="Close" className="w-8 h-8 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px] flex items-center justify-center rounded-lg text-pg-text2 hover:bg-pg-tray hover:text-pg-ink">
               <FiX className="w-4 h-4" />
             </button>
           </div>
@@ -326,7 +326,7 @@ export default function ShapeFormatBar({
                       aria-label={item.name}
                       data-shape-style={item.id}
                       onClick={() => onStyle({ fill: item.style.fill, line: item.style.line, shadow: item.style.shadow, text: { color: item.style.text.color } })}
-                      className={`${coarse ? 'w-11 h-11' : 'w-12 h-8'} p-0.5 rounded-md border border-transparent hover:border-indigo-400`}
+                      className={`${coarse ? 'w-11 h-11' : 'w-12 h-8'} p-0.5 rounded-md border border-transparent hover:border-pg-text2/40`}
                     >
                       <StylePreview style={item.style} />
                     </button>
@@ -354,13 +354,13 @@ export default function ShapeFormatBar({
                     max="100"
                     value={Math.round((1 - (first.fill.alpha ?? 1)) * 100)}
                     onChange={(e) => onStyle({ fill: { alpha: 1 - Number(e.target.value) / 100 } })}
-                    className="flex-1 accent-indigo-500"
+                    className="flex-1 accent-[rgb(var(--pg-ink))]"
                     aria-label="Fill transparency"
                   />
                   <span className="w-9 text-right tabular-nums">{Math.round((1 - (first.fill.alpha ?? 1)) * 100)}%</span>
                 </label>
               )}
-              <button type="button" onClick={() => { setMenu(null); onOpenPane('fill'); }} className="px-2 h-8 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              <button type="button" onClick={() => { setMenu(null); onOpenPane('fill'); }} className="px-2 h-8 rounded-lg text-left hover:bg-pg-tray">
                 Gradient and more fill options...
               </button>
             </>
@@ -384,7 +384,7 @@ export default function ShapeFormatBar({
                       type="button"
                       onClick={() => onStyle({ line: { type: 'solid', width: ptToPx(pt) } })}
                       aria-pressed={lineWidthPt === pt}
-                      className={`flex items-center gap-2 px-2 h-8 rounded-lg ${lineWidthPt === pt ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                      className={`flex items-center gap-2 px-2 h-8 rounded-lg ${lineWidthPt === pt ? 'bg-pg-tray text-pg-ink font-semibold' : 'hover:bg-pg-tray'}`}
                     >
                       <span className="w-8 shrink-0 bg-current rounded-sm" style={{ height: Math.max(1, ptToPx(pt)) }} />
                       <span>{pt} pt</span>
@@ -402,7 +402,7 @@ export default function ShapeFormatBar({
                       title={dash.label}
                       onClick={() => onStyle({ line: { type: 'solid', dash: dash.id } })}
                       aria-pressed={(first.line?.dash || 'solid') === dash.id}
-                      className={`flex items-center gap-2 px-2 h-8 rounded-lg ${(first.line?.dash || 'solid') === dash.id ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                      className={`flex items-center gap-2 px-2 h-8 rounded-lg ${(first.line?.dash || 'solid') === dash.id ? 'bg-pg-tray text-pg-ink font-semibold' : 'hover:bg-pg-tray'}`}
                     >
                       <svg viewBox="0 0 48 6" className="w-12 h-1.5 shrink-0" aria-hidden="true">
                         <line x1="0" y1="3" x2="48" y2="3" stroke="currentColor" strokeWidth="2" strokeDasharray={dash.pattern ? dash.pattern.map((v) => v * 2).join(' ') : undefined} strokeLinecap={dash.cap || 'butt'} />
@@ -426,7 +426,7 @@ export default function ShapeFormatBar({
                           aria-label={`${label} arrow: ${a.label}`}
                           aria-pressed={((first.line?.[end]?.type) || 'none') === a.id}
                           onClick={() => onStyle({ line: { [end]: a.id === 'none' ? { type: 'none' } : { type: a.id, w: 'med', len: 'med' } } })}
-                          className={`px-1 h-8 rounded-lg ${((first.line?.[end]?.type) || 'none') === a.id ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                          className={`px-1 h-8 rounded-lg ${((first.line?.[end]?.type) || 'none') === a.id ? 'bg-pg-tray text-pg-ink font-semibold' : 'hover:bg-pg-tray'}`}
                         >
                           {a.id === 'none' ? <span className="inline-block w-10 text-center">None</span> : <ArrowIcon type={a.id} atStart={end === 'head'} />}
                         </button>
@@ -442,34 +442,34 @@ export default function ShapeFormatBar({
 
           {menu === 'text' && (
             <div className="flex flex-col gap-2 min-w-[260px]">
-              <button type="button" onClick={() => { setMenu(null); onEditText(); }} className="h-9 px-3 rounded-lg bg-indigo-500 text-white font-semibold">
+              <button type="button" onClick={() => { setMenu(null); onEditText(); }} className="h-9 px-3 rounded-lg bg-pg-accent-fill text-white font-semibold hover:bg-pg-accent-fill/90">
                 Edit Text
               </button>
               <div className="flex items-center gap-1">
-                <button type="button" aria-label="Decrease Font Size" onClick={() => onStyle({ text: { size: ptToPx(Math.max(4, (FONT_SIZES_PT.filter((s) => s < textSizePt).pop() || textSizePt - 1))) } })} className="w-9 h-9 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <button type="button" aria-label="Decrease Font Size" onClick={() => onStyle({ text: { size: ptToPx(Math.max(4, (FONT_SIZES_PT.filter((s) => s < textSizePt).pop() || textSizePt - 1))) } })} className="w-9 h-9 flex items-center justify-center rounded-lg border border-pg-line">
                   <LuMinus className="w-4 h-4" />
                 </button>
                 <select
                   aria-label="Font size"
                   value={FONT_SIZES_PT.includes(textSizePt) ? textSizePt : ''}
                   onChange={(e) => onStyle({ text: { size: ptToPx(Number(e.target.value)) } })}
-                  className="h-9 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 tabular-nums"
+                  className="h-9 px-2 rounded-lg bg-pg-tray border border-pg-line tabular-nums"
                 >
                   {!FONT_SIZES_PT.includes(textSizePt) && <option value="">{textSizePt}</option>}
                   {FONT_SIZES_PT.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
                 </select>
-                <button type="button" aria-label="Increase Font Size" onClick={() => onStyle({ text: { size: ptToPx(FONT_SIZES_PT.find((s) => s > textSizePt) || textSizePt + 1) } })} className="w-9 h-9 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <button type="button" aria-label="Increase Font Size" onClick={() => onStyle({ text: { size: ptToPx(FONT_SIZES_PT.find((s) => s > textSizePt) || textSizePt + 1) } })} className="w-9 h-9 flex items-center justify-center rounded-lg border border-pg-line">
                   <LuPlus className="w-4 h-4" />
                 </button>
-                <span className="text-zinc-500">pt</span>
+                <span className="text-pg-text2">pt</span>
               </div>
               <div className="flex items-center gap-1">
                 {[['bold', LuBold, 'Bold'], ['italic', LuItalic, 'Italic'], ['underline', LuUnderline, 'Underline']].map(([k, Icon, name]) => (
-                  <button key={k} type="button" aria-label={name} aria-pressed={Boolean(text[k])} onClick={() => onStyle({ text: { [k]: !text[k] } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${text[k] ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                  <button key={k} type="button" aria-label={name} aria-pressed={Boolean(text[k])} onClick={() => onStyle({ text: { [k]: !text[k] } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${text[k] ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line'}`}>
                     <Icon className="w-4 h-4" />
                   </button>
                 ))}
-                <button type="button" aria-label="Text color" aria-expanded={textColorOpen} onClick={() => setTextColorOpen(!textColorOpen)} className="h-9 px-2 flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <button type="button" aria-label="Text color" aria-expanded={textColorOpen} onClick={() => setTextColorOpen(!textColorOpen)} className="h-9 px-2 flex items-center gap-1.5 rounded-lg border border-pg-line">
                   <span className="font-bold">A</span>
                   <span className="w-5 h-1.5 rounded-sm border border-black/10" style={{ backgroundColor: text.color && text.color !== 'auto' ? text.color : '#18181B' }} />
                 </button>
@@ -477,18 +477,18 @@ export default function ShapeFormatBar({
               {textColorOpen && <ColorPicker current={text.color === 'auto' ? null : text.color} coarse={coarse} onPick={(hex) => onStyle({ text: { color: hex } })} />}
               <div className="flex items-center gap-1">
                 {[['left', LuAlignLeft, 'Align Left'], ['center', LuAlignCenter, 'Center'], ['right', LuAlignRight, 'Align Right']].map(([v, Icon, name]) => (
-                  <button key={v} type="button" aria-label={name} aria-pressed={(text.align || 'center') === v} onClick={() => onStyle({ text: { align: v } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${(text.align || 'center') === v ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                  <button key={v} type="button" aria-label={name} aria-pressed={(text.align || 'center') === v} onClick={() => onStyle({ text: { align: v } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${(text.align || 'center') === v ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line'}`}>
                     <Icon className="w-4 h-4" />
                   </button>
                 ))}
                 <span className="w-2" />
                 {[['top', LuAlignVerticalJustifyStart, 'Top'], ['middle', LuAlignVerticalJustifyCenter, 'Middle'], ['bottom', LuAlignVerticalJustifyEnd, 'Bottom']].map(([v, Icon, name]) => (
-                  <button key={v} type="button" aria-label={`Align ${name}`} aria-pressed={(text.valign || 'middle') === v} onClick={() => onStyle({ text: { valign: v } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${(text.valign || 'middle') === v ? 'bg-indigo-500 text-white border-indigo-600' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                  <button key={v} type="button" aria-label={`Align ${name}`} aria-pressed={(text.valign || 'middle') === v} onClick={() => onStyle({ text: { valign: v } })} className={`w-9 h-9 flex items-center justify-center rounded-lg border ${(text.valign || 'middle') === v ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line'}`}>
                     <Icon className="w-4 h-4" />
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={() => { setMenu(null); onOpenPane('text'); }} className="px-2 h-8 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              <button type="button" onClick={() => { setMenu(null); onOpenPane('text'); }} className="px-2 h-8 rounded-lg text-left hover:bg-pg-tray">
                 Font, autofit and margins...
               </button>
             </div>

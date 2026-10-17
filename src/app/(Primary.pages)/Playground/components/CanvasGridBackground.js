@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { gridColours, isDarkPage } from './ui/tokens';
 
 export default function CanvasGridBackground({
   gridStyle = 'dots',
@@ -27,9 +28,8 @@ export default function CanvasGridBackground({
 
     if (gridStyle === 'none') return;
 
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const strokeColor = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
-    const dotColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
+    // Quieter than thin ink (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 6.5)
+    const { dot: dotColor, line: strokeColor } = gridColours(isDarkPage());
 
     // Dynamic grid spacing scaled by zoom
     const baseSpacing = 32;

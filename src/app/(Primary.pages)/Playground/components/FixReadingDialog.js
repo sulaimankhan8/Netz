@@ -52,19 +52,19 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
 
   const choice = (active) =>
     `px-4 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl text-xs font-semibold border transition-colors ${
-      active ? 'bg-blue-500 text-white border-blue-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+      active ? 'bg-pg-ink text-pg-on-ink border-pg-ink' : 'border-pg-line text-pg-ink hover:bg-pg-tray'
     }`;
 
   const footer = (
     <>
-      <button type="button" onClick={onClose} className="px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button type="button" onClick={onClose} className="px-4 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl text-xs font-semibold text-pg-text2 hover:bg-pg-tray">
         Cancel
       </button>
       <button
         type="button"
         onClick={apply}
         disabled={busy || !value.trim()}
-        className="px-5 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+        className="px-5 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl text-xs font-semibold bg-pg-accent-fill hover:bg-pg-accent-fill/90 text-white disabled:opacity-50"
       >
         {UI.turnIntoText}
       </button>
@@ -73,20 +73,20 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
 
   return (
     <Dialog title={UI.fix} isMobile={isMobile} onClose={onClose} footer={footer} width="w-[520px]" fullHeight={false}>
-      <p className="text-zinc-500 dark:text-zinc-400">{UI.fixHint}.</p>
+      <p className="text-pg-text2">{UI.fixHint}.</p>
 
-      <div className="min-h-[64px] px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-x-auto text-base text-zinc-900 dark:text-zinc-100" aria-live="polite">
+      <div className="min-h-[64px] px-4 py-3 rounded-xl bg-pg-paper border border-pg-line flex items-center justify-center overflow-x-auto text-base text-pg-ink" aria-live="polite">
         {!value.trim() ? (
-          <span className="text-zinc-400 text-xs">Nothing yet</span>
+          <span className="text-pg-text2 text-xs">Nothing yet</span>
         ) : type === 'MATH' ? (
-          <InlineMath math={value} renderError={() => <span className="font-mono text-sm text-rose-500">{value}</span>} />
+          <InlineMath math={value} renderError={() => <span className="font-mono text-sm text-pg-danger">{value}</span>} />
         ) : (
           <span>{value}</span>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={UI.thisIs}>
-        <span className="font-semibold text-zinc-600 dark:text-zinc-300 mr-1">{UI.thisIs}:</span>
+        <span className="font-semibold text-pg-text2 mr-1">{UI.thisIs}:</span>
         <button type="button" role="radio" aria-checked={type === 'TEXT'} onClick={() => setType('TEXT')} className={choice(type === 'TEXT')}>
           Text
         </button>
@@ -97,7 +97,7 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
 
       {alternatives.length > 0 && (
         <div>
-          <div className="font-semibold text-zinc-600 dark:text-zinc-300 mb-1.5">Other readings</div>
+          <div className="font-semibold text-pg-text2 mb-1.5">Other readings</div>
           <div className="flex flex-wrap gap-2">
             {alternatives.map((alt, idx) => (
               <button
@@ -107,7 +107,7 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
                   setValue(alt.value);
                   if (alt.type === 'MATH' || alt.type === 'TEXT') setType(alt.type);
                 }}
-                className="px-3 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl border border-zinc-200 dark:border-zinc-700 font-mono text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-3 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl border border-pg-line font-mono text-sm text-pg-ink hover:bg-pg-tray"
               >
                 {alt.value}
               </button>
@@ -117,7 +117,7 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="font-semibold text-zinc-600 dark:text-zinc-300">{type === 'MATH' ? 'Type it (as LaTeX, for example \\frac{1}{2})' : 'Type it'}</span>
+        <span className="font-semibold text-pg-text2">{type === 'MATH' ? 'Type it (as LaTeX, for example \\frac{1}{2})' : 'Type it'}</span>
         <input
           type="text"
           value={value}
@@ -128,7 +128,7 @@ export default function FixReadingDialog({ cluster, isMobile, onClose, onApply }
               apply();
             }
           }}
-          className={`w-full px-3 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${type === 'MATH' ? 'font-mono' : ''}`}
+          className={`w-full px-3 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] rounded-xl bg-pg-surface border border-pg-text2/30 text-sm text-pg-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-pg-accent ${type === 'MATH' ? 'font-mono' : ''}`}
         />
       </label>
     </Dialog>

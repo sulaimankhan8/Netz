@@ -11,6 +11,8 @@ const SUITES = [
   'insert-shapes', 'insert-shapes-format', 'insert-shapes-arrange', 'insert-symbols', 'insert-equations', 'insert-screenshot',
   // UX fixes (PLAYGROUND_UX_FIX_PLAN.md)
   'ux-fixes',
+  // Visual redesign (PLAYGROUND_VISUAL_REDESIGN_PLAN.md)
+  'visual',
 ];
 const only = process.argv.slice(2);
 let failedSuites = 0;

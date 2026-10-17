@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import CanvasGridBackground from './CanvasGridBackground';
 import WhiteboardCanvas from './WhiteboardCanvas';
 import PlaygroundDock from './PlaygroundDock';
-import LiveMathPreviewOverlay from './LiveMathPreviewOverlay';
+import LiveMathPreviewOverlay, { readingParts } from './LiveMathPreviewOverlay';
+import ContextBar, { CTX_BUTTON, CtxDivider } from './ui/ContextBar';
 import BlockLinkRenderer from './BlockLinkRenderer';
 import InkToBlockConverterModal from './InkToBlockConverterModal';
 import SmartBlockWrapper from './blocks/SmartBlockWrapper';
@@ -47,8 +48,8 @@ import {
 } from '../utils/smartBlockStore';
 import { createHistoryStack } from '../utils/historyStack';
 import { bboxOfStrokes } from '../utils/strokeTransform';
-import { FiCopy, FiTrash2 } from 'react-icons/fi';
-import { LuShapes } from 'react-icons/lu';
+import { FiCopy, FiPause, FiTrash2 } from 'react-icons/fi';
+import { LuShapes, LuLineChart } from 'react-icons/lu';
 import { prepareImage, fitImageBox } from '../utils/imageSizing';
 import { zoomAtPoint, fitViewToBox } from '../utils/viewportMath';
 import ShapeLayer from './shapes/ShapeLayer';
@@ -73,6 +74,44 @@ import { captureTextTarget, insertIntoField, spliceText } from '../utils/symbols
 import { latexForSymbol } from '../utils/symbols/symbols';
 import { UI, blockLabel } from '../utils/uiText';
 import { getPageBounds, shapeRects } from '../utils/pageSvg';
+import { PG_FONT } from '../utils/fonts';
+import { DEFAULT_INK, DEFAULT_PEN_TYPE, DEFAULT_PEN_WIDTHS, penTypeOf, readPenSettings, writePenSettings } from '../utils/penTypes';
+import DocBar from './DocBar';
+import { PreferencesDialog } from './PageMenu';
+import useSidebarRight from './ui/useSidebarRight';
+
+// A function whose identity never changes but always runs the latest version: memoized blocks
+// skip re-rendering only while what they are given stays the same
+function useStableCallback(fn) {
+  const ref = useRef(fn);
+  ref.current = fn;
+  return useCallback((...args) => ref.current(...args), []);
+}
+
+// How far below the top of the screen the top bars end, plus a gap: the status area starts here
+const TOP_CHROME = 78;
+
+/** "Recording 0:12 · Stop": shown in the status area while a voice memo records, on every screen. */
+function RecordingPill({ since, onStop }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, []);
+  const seconds = Math.max(0, Math.floor((now - since) / 1000));
+  const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return (
+    <div role="status" className="pointer-events-auto flex items-center gap-2 h-11 pl-3.5 pr-1.5 rounded-[14px] bg-pg-surface border border-pg-line shadow-pg-bar text-pg-label font-medium text-pg-ink">
+      <span className="w-2.5 h-2.5 rounded-full bg-pg-danger animate-pulse" aria-hidden="true" />
+      <span className="tabular-nums">
+        {UI.recording} {clock}
+      </span>
+      <button type="button" onClick={onStop} aria-label={UI.stopRecording} title="Stop recording" className="h-9 min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-3 rounded-[10px] bg-pg-tray text-pg-danger font-semibold hover:bg-pg-line">
+        Stop
+      </button>
+    </div>
+  );
+}
 
 // Pause after the last change before the session is written
 const SAVE_DELAY_MS = 350;
@@ -100,6 +139,8 @@ export default function PlaygroundCanvasContainer() {
 
   // Viewport Dimensions
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+  // Where the app's left sidebar ends: the top bars and the status area keep clear of it
+  const sidebarRight = useSidebarRight();
 
   // Viewport Transform Matrix State
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -109,9 +150,28 @@ export default function PlaygroundCanvasContainer() {
   const [activeTool, setActiveTool] = useState('pen');
   // The gallery shape armed for drawing with the Shapes tool (null: freehand shapes snap)
   const [armedShape, setArmedShape] = useState(null);
-  const [strokeColor, setStrokeColor] = useState('#3B82F6');
-  const [strokeWidth, setStrokeWidth] = useState(3);
-  const [strokeOpacity, setStrokeOpacity] = useState(1); // set by the pen presets (pencil, marker)
+  // Graphite is the default ink (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, decision R1)
+  const [strokeColor, setStrokeColor] = useState(DEFAULT_INK);
+  // The pen type is a real setting: each type keeps its own width (the width slider changes the
+  // current type's) and sets the opacity. Colour, type and widths are remembered on this device.
+  const [penType, setPenType] = useState(DEFAULT_PEN_TYPE);
+  const [penWidths, setPenWidths] = useState(DEFAULT_PEN_WIDTHS);
+  const strokeWidth = penWidths[penType] ?? penTypeOf(penType).width;
+  const strokeOpacity = penTypeOf(penType).opacity;
+  const setStrokeWidth = (width) => setPenWidths((prev) => ({ ...prev, [penType]: width }));
+  const penLoadedRef = useRef(false);
+  useEffect(() => {
+    const saved = readPenSettings();
+    if (saved) {
+      if (saved.colour) setStrokeColor(saved.colour);
+      setPenType(saved.type);
+      setPenWidths(saved.widths);
+    }
+    penLoadedRef.current = true;
+  }, []);
+  useEffect(() => {
+    if (penLoadedRef.current) writePenSettings({ colour: strokeColor, type: penType, widths: penWidths });
+  }, [strokeColor, penType, penWidths]);
   // The highlighter has its own colour and width (painted 4x wider and see-through)
   const [highlighterColor, setHighlighterColor] = useState('#FACC15');
   const [highlighterWidth, setHighlighterWidth] = useState(4);
@@ -206,8 +266,13 @@ export default function PlaygroundCanvasContainer() {
   // The block just added from the dock: it opens ready for typing
   const [autoEditBlockId, setAutoEditBlockId] = useState(null);
 
-  // Ink currently selected with the lasso (drives the floating selection toolbar)
+  // Ink currently selected with the lasso (drives its context bar), and whether the ⋯ menu of
+  // its reading is open (closed again for each new selection)
   const [inkSelection, setInkSelection] = useState(null);
+  const [selectionMenuOpen, setSelectionMenuOpen] = useState(false);
+  useEffect(() => {
+    setSelectionMenuOpen(false);
+  }, [inkSelection]);
 
   // Modal States
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
@@ -229,6 +294,8 @@ export default function PlaygroundCanvasContainer() {
   const currentPageIndexRef = useRef(currentPageIndex);
   const blockStateRef = useRef(blockState);
   const latestStrokesRef = useRef([]);
+  // How many strokes the open page has (the empty-page hint shows while there are none)
+  const [inkCount, setInkCount] = useState(0);
 
   // Shapes on the active page (Insert > Shapes). The ref is always current, also between renders.
   const [shapes, setShapes] = useState([]);
@@ -290,6 +357,7 @@ export default function PlaygroundCanvasContainer() {
   // Starts a fresh history from this state (another page was opened, or the session was restored)
   const resetHistory = useCallback((strokes, blocks, links, pageShapes = []) => {
     latestStrokesRef.current = strokes;
+    setInkCount((strokes || []).length);
     historyRef.current.reset({ strokes, blocks, links, shapes: pageShapes });
     syncHistoryFlags();
   }, [syncHistoryFlags]);
@@ -545,6 +613,7 @@ export default function PlaygroundCanvasContainer() {
   const applyHistorySnapshot = useCallback((snapshot) => {
     if (!snapshot) return;
     latestStrokesRef.current = snapshot.strokes;
+    setInkCount((snapshot.strokes || []).length);
     if (whiteboardCanvasRef.current) {
       whiteboardCanvasRef.current.loadStrokes(snapshot.strokes);
     }
@@ -685,6 +754,7 @@ export default function PlaygroundCanvasContainer() {
   // Stroke Updates Listener (Auto-saves ink strokes & updates active page state)
   const handleStrokesUpdated = useCallback((allStrokes, options = {}) => {
     latestStrokesRef.current = allStrokes;
+    setInkCount(allStrokes.length);
     // A "transient" update is one of several inside a single gesture (an eraser drag):
     // it is saved like any other change, but only the gesture's final update becomes an undo step
     if (!holdStrokeCommitRef.current && !options.transient) commitHistory();
@@ -1172,8 +1242,19 @@ export default function PlaygroundCanvasContainer() {
     }
   };
 
-  // Focus music (the lo-fi player): closed until opened from a menu
+  // Focus music (the lo-fi player): closed until opened from a menu. While it plays, a pause
+  // button sits in the top-right bar (laptops, tablets) or the status area (phones).
   const [musicOpen, setMusicOpen] = useState(false);
+  const musicRef = useRef(null);
+  const [music, setMusic] = useState({ playing: false, title: '' });
+  const handleMusicPlaying = useCallback((playing, title) => setMusic({ playing, title }), []);
+
+  // Preferences (opened from the page menu) and whether the dock has folded Move page into it
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [moveFolded, setMoveFolded] = useState(false);
+
+  // When a voice memo started recording (the status area shows the time)
+  const [recordingSince, setRecordingSince] = useState(null);
 
   // Deleting a block is one tap; the notice offers Undo (blocks are on the undo history)
   const handleDeleteBlock = (blockId) => {
@@ -1230,6 +1311,7 @@ export default function PlaygroundCanvasContainer() {
       try {
         const audioResult = await stopAudioRecording();
         setIsRecordingAudio(false);
+        setRecordingSince(null);
 
         if (audioResult && audioResult.dataUrl) {
           const spawnX = Math.round((-panOffset.x + dimensions.width / 2 - 160) / zoomLevel);
@@ -1246,7 +1328,7 @@ export default function PlaygroundCanvasContainer() {
             },
             linkedBlockIds: [],
             position: { x: spawnX, y: spawnY },
-            size: { width: 360, height: 180 },
+            size: { width: 360, height: 104 },
             status: 'active',
             isMinimal: false,
           };
@@ -1256,11 +1338,13 @@ export default function PlaygroundCanvasContainer() {
       } catch (err) {
         console.error('Failed to stop audio recording:', err);
         setIsRecordingAudio(false);
+        setRecordingSince(null);
       }
     } else {
       try {
         await startAudioRecording();
         setIsRecordingAudio(true);
+        setRecordingSince(Date.now());
       } catch (err) {
         showNotice(err.message || 'Microphone access is required for audio recording.', 5000);
         setIsRecordingAudio(false);
@@ -1335,6 +1419,7 @@ export default function PlaygroundCanvasContainer() {
       historyRef.current.reset(snapshot);
     }
     latestStrokesRef.current = snapshot.strokes;
+    setInkCount((snapshot.strokes || []).length);
     syncHistoryFlags();
     return snapshot;
   }, [syncHistoryFlags]);
@@ -1581,6 +1666,8 @@ export default function PlaygroundCanvasContainer() {
 
   // Handle Contextual CAS AI Actions
   // exampleLatex: an example picked in the menu goes into the equation first, then the action runs on it
+  const plotGraphStable = useStableCallback(handlePlotGraph);
+
   const handleSelectAiAction = (block, actionKey, exampleLatex) => {
     if (exampleLatex) {
       dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { blockId: block.blockId, content: { latex: exampleLatex } } });
@@ -1885,7 +1972,7 @@ export default function PlaygroundCanvasContainer() {
     const { zoom, pan } = viewportRef.current;
     const top = box.minY * zoom + pan.y;
     const bottom = box.maxY * zoom + pan.y;
-    const areaTop = 72;
+    const areaTop = TOP_CHROME;
     const areaBottom = window.innerHeight * SHEET_TOP_SHARE - 8;
     if (top >= areaTop && bottom <= areaBottom) return;
     const height = bottom - top;
@@ -1915,7 +2002,7 @@ export default function PlaygroundCanvasContainer() {
       const r = block.getBoundingClientRect();
       const limit = top - 12;
       if (r.bottom <= limit) return;
-      const shift = Math.min(r.bottom - limit, Math.max(0, r.top - 72));
+      const shift = Math.min(r.bottom - limit, Math.max(0, r.top - TOP_CHROME));
       if (shift <= 0) return;
       const { zoom, pan } = viewportRef.current;
       const next = { zoom, pan: { x: pan.x, y: pan.y - shift } };
@@ -2199,7 +2286,7 @@ export default function PlaygroundCanvasContainer() {
     const strokes = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : latestStrokesRef.current;
     const blockRects = blockStateRef.current.blocks.map((b) => ({ x: b.position.x, y: b.position.y, width: b.size.width, height: b.size.height }));
     const box = getPageBounds(strokes, [...blockRects, ...shapeRects(latestShapesRef.current)]);
-    const next = fitViewToBox(box, dimensions.width, dimensions.height, { top: 72, bottom: 88 }, { margin: 24, maxZoom: 2 });
+    const next = fitViewToBox(box, dimensions.width, dimensions.height, { top: TOP_CHROME, bottom: 92 }, { margin: 24, maxZoom: 2 });
     viewportRef.current = next;
     setZoomLevel(next.zoom);
     setPanOffset(next.pan);
@@ -2292,6 +2379,43 @@ export default function PlaygroundCanvasContainer() {
     isMiddlePanRef.current = false;
   };
 
+  // What a reading's buttons do, in the pills beside ink and in the lasso's context bar
+  const readingHandlers = {
+    onConvertCluster: handleConvertClusterToBlock,
+    onPlotClusterGraph: (cluster) => handleConvertClusterToBlock(cluster),
+    onOpenFix: (cluster) => setSoftEditorCluster(cluster),
+    onReadAsMath: handleReadClusterAsMath,
+    onReadAsText: handleReadClusterAsText,
+  };
+
+  // The page menu (⋯): in the top-right bar on laptops and tablets, a sheet from the top bar on
+  // phones, where it also holds Zoom, Redo and Send to Notes
+  const isPhone = dimensions.width < 640;
+  const pageMenu = {
+    notesMode,
+    setNotesMode,
+    gridStyle,
+    setGridStyle,
+    showMove: isPhone || moveFolded,
+    activeTool,
+    setActiveTool,
+    onOpenSyncModal: () => setIsSyncModalOpen(true),
+    onExportCanvas: handleExportCanvas,
+    onOpenMusic: () => setMusicOpen(true),
+    onOpenPreferences: () => setShowPreferences(true),
+    onDuplicatePage: () => handleDuplicatePage(currentPageIndex),
+    onClearPage: handleClearPage,
+    onDeletePage: () => handleDeletePage(currentPageIndex),
+    canDelete: pages.length > 1,
+    onRedo: handleRedo,
+    canRedo: historyFlags.canRedo,
+    zoomLevel,
+    onZoomIn: handleZoomIn,
+    onZoomOut: handleZoomOut,
+    onResetZoom: handleResetZoom,
+    onFitToContent: handleFitToContent,
+  };
+
   return (
     <div
       ref={containerRef}
@@ -2299,7 +2423,9 @@ export default function PlaygroundCanvasContainer() {
       onPointerMove={handleMouseMove}
       onPointerUp={handleMouseUp}
       onPointerCancel={handleMouseUp}
-      className="relative w-full h-[100dvh] overflow-hidden bg-zinc-50 dark:bg-zinc-950 select-none overscroll-none touch-none touch-canvas-surface"
+      data-playground
+      data-zoom-level={`${Math.round(zoomLevel * 100)}%`}
+      className={`${PG_FONT} relative w-full h-[100dvh] overflow-hidden bg-pg-paper text-pg-ink select-none overscroll-none touch-none touch-canvas-surface`}
       style={{
         WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent',
@@ -2314,6 +2440,15 @@ export default function PlaygroundCanvasContainer() {
         width={dimensions.width}
         height={dimensions.height}
       />
+
+      {/* A new, empty page says what the Playground does; it never takes a press, goes with the
+          first stroke and comes back only if the page is emptied again */}
+      {inkCount === 0 && shapes.length === 0 && blockState.blocks.length === 0 && !isDrawing && (
+        <div data-empty-hint className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-6 text-center pointer-events-none select-none">
+          <span className="text-pg-title font-semibold text-pg-text2">{UI.emptyTitle}</span>
+          {readMode !== 'off' && <span className="text-pg-body text-pg-text2">{UI.emptyHint}</span>}
+        </div>
+      )}
 
       {/* Shapes, under the ink so the pen writes on them */}
       <ShapeLayer shapes={shapes} zoomLevel={zoomLevel} panOffset={panOffset} width={dimensions.width} height={dimensions.height} editingId={editingShapeId} />
@@ -2375,12 +2510,17 @@ export default function PlaygroundCanvasContainer() {
           onUpdateSize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
           onDeleteBlock={handleDeleteBlock}
           onSelectAiAction={handleSelectAiAction}
+          actions={
+            block.type === 'equation'
+              ? [{ key: 'plot', label: 'Plot', title: 'Plot this equation on a graph', icon: <LuLineChart className="w-4 h-4 pointer-events-none" aria-hidden="true" />, onClick: () => plotGraphStable(block, block.content?.latex || '') }]
+              : undefined
+          }
         >
           {block.type === 'equation' && (
             <EquationBlock
               block={block}
               onUpdateContent={handleUpdateBlockContent}
-              onPlotGraph={handlePlotGraph}
+              onPlotGraph={plotGraphStable}
             />
           )}
 
@@ -2422,7 +2562,6 @@ export default function PlaygroundCanvasContainer() {
             <AudioMemoBlock
               block={block}
               onUpdateContent={handleUpdateBlockContent}
-              onDeleteBlock={handleDeleteBlock}
             />
           )}
 
@@ -2435,23 +2574,58 @@ export default function PlaygroundCanvasContainer() {
         </SmartBlockWrapper>
       ))}
 
-      {/* Top Floating Page Manager (Multi-Page Notebook) */}
-      <div className="fixed top-3 sm:top-4 left-3 sm:left-16 md:left-[96px] z-40 transition-all max-w-[calc(100vw-24px)]">
+      {/* The top bars. Laptops and tablets: the page bar top-left (16 px from the app sidebar) and
+          the document bar top-right. Phones: one bar across the top, 12 px from each edge. */}
+      <div
+        className="fixed z-40"
+        style={
+          isPhone
+            ? { top: 'calc(env(safe-area-inset-top, 0px) + 12px)', left: 12, right: 12 }
+            : { top: 'calc(env(safe-area-inset-top, 0px) + 16px)', left: sidebarRight + 16 }
+        }
+      >
         <PageManager
           pages={pages}
           currentPageIndex={currentPageIndex}
           onSelectPage={handleSelectPage}
           onAddPage={handleAddPage}
-          onClearPage={handleClearPage}
-          onDeletePage={handleDeletePage}
-          onDuplicatePage={handleDuplicatePage}
           onOpenPages={() => setPageSheetOpen(true)}
-          onRetrySave={handleManualSave}
           saveStatus={saveStatus}
-          isJustSaved={isSavedToastVisible}
-          isMobile={dimensions.width < 640}
+          isMobile={isPhone}
+          pageMenu={isPhone ? pageMenu : null}
         />
       </div>
+      {!isPhone && (
+        <div className="fixed z-40 right-4" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+          <DocBar
+            compact={dimensions.width - sidebarRight < 960}
+            saveStatus={saveStatus}
+            isJustSaved={isSavedToastVisible}
+            onRetrySave={handleManualSave}
+            zoomLevel={zoomLevel}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onResetZoom={handleResetZoom}
+            onFitToContent={handleFitToContent}
+            onOpenSyncModal={() => setIsSyncModalOpen(true)}
+            music={music}
+            onPauseMusic={() => musicRef.current?.pause()}
+            pageMenu={pageMenu}
+          />
+        </div>
+      )}
+
+      {showPreferences && (
+        <PreferencesDialog
+          isMobile={isPhone}
+          onClose={() => setShowPreferences(false)}
+          fingerDraws={fingerDraws}
+          setFingerDraws={handleSetFingerDraws}
+          readMode={readMode}
+          setReadMode={setReadMode}
+          notesMode={notesMode}
+        />
+      )}
 
       {/* All pages: open, rename, reorder, duplicate, delete */}
       {pageSheetOpen && (
@@ -2473,47 +2647,68 @@ export default function PlaygroundCanvasContainer() {
       {/* Insert > Screenshot: the editor, the countdown, the photo picker */}
       {screenshot.elements}
 
-      {/* Status area, under the top bar: model status, short notices (with Undo), the zoom while pinching */}
+      {/* Status area, under the top bars and centred in the space right of the app sidebar: model
+          status, recording, music (phones), a failed save (phones), short notices (with Undo), the
+          zoom while pinching */}
       <div
         data-status-area
-        className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-max max-w-[calc(100vw-24px)]"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 76px)' }}
+        className="fixed z-50 flex justify-center pointer-events-none"
+        style={{ top: `calc(env(safe-area-inset-top, 0px) + ${TOP_CHROME}px)`, left: sidebarRight + 12, right: 12 }}
       >
-        <AIModelLoadingStatusPill
-          onDecline={() => {
-            setReadMode('off');
-            showNotice('Reading handwriting is off. Turn it on in Preferences.', 5000);
-          }}
-        />
-        {pinchZoom !== null && (
-          <div role="status" className="px-3 py-1.5 rounded-xl bg-zinc-900/85 text-white text-xs font-mono font-semibold shadow-lg">
-            {Math.round(pinchZoom * 100)}%
-          </div>
-        )}
-        {notice && (
-          <div
-            role="status"
-            onPointerEnter={notice.action ? holdNotice : undefined}
-            onPointerLeave={notice.action ? releaseNotice : undefined}
-            className={`flex items-center gap-2 ${notice.action ? 'pl-4 pr-1.5 py-1.5 pointer-events-auto' : 'px-4 py-2'} rounded-xl bg-zinc-900/90 dark:bg-zinc-100/95 text-white dark:text-zinc-900 text-xs font-medium shadow-xl`}
-          >
-            <span>{notice.message}</span>
-            {notice.action && (
-              <button
-                type="button"
-                onClick={() => {
-                  const run = notice.action.onClick;
-                  setNotice(null);
-                  holdNotice();
-                  run();
-                }}
-                className="min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-3 rounded-lg font-bold text-sky-300 dark:text-sky-700 hover:bg-white/10 dark:hover:bg-black/5"
-              >
-                {notice.action.label}
+        <div className="flex flex-col items-center gap-2 w-max max-w-full">
+          <AIModelLoadingStatusPill
+            onDecline={() => {
+              setReadMode('off');
+              showNotice('Reading handwriting is off. Turn it on in Preferences.', 5000);
+            }}
+          />
+          {isRecordingAudio && recordingSince && <RecordingPill since={recordingSince} onStop={handleToggleRecordAudio} />}
+          {isPhone && music.playing && (
+            <div role="status" className="pointer-events-auto flex items-center gap-2 h-11 pl-3.5 pr-1.5 rounded-[14px] bg-pg-surface border border-pg-line shadow-pg-bar text-pg-label font-medium text-pg-ink">
+              <span className="max-w-[180px] truncate">{music.title}</span>
+              <button type="button" onClick={() => musicRef.current?.pause()} aria-label={`Pause ${music.title}`} title={`Pause ${music.title}`} className="w-11 h-11 -my-1 flex items-center justify-center rounded-[10px] text-pg-ink hover:bg-pg-tray">
+                <FiPause className="w-4 h-4" aria-hidden="true" />
               </button>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+          {isPhone && saveStatus === 'failed' && (
+            <div role="alert" className="pointer-events-auto flex items-center gap-2 h-12 pl-4 pr-1.5 rounded-[14px] bg-pg-danger-tint text-pg-danger text-pg-label font-semibold shadow-pg-bar">
+              {UI.saveFailed}
+              <button type="button" onClick={handleManualSave} className="h-11 px-3.5 rounded-[10px] bg-pg-danger text-white font-semibold">
+                {UI.retry}
+              </button>
+            </div>
+          )}
+          {pinchZoom !== null && (
+            <div role="status" className="px-3.5 py-2 rounded-[14px] bg-pg-ink text-pg-on-ink text-pg-label font-semibold tabular-nums shadow-pg-bar">
+              {Math.round(pinchZoom * 100)}%
+            </div>
+          )}
+          {notice && (
+            <div
+              role="status"
+              onPointerEnter={notice.action ? holdNotice : undefined}
+              onPointerLeave={notice.action ? releaseNotice : undefined}
+              className={`flex items-center gap-2 ${notice.action ? 'min-h-[48px] pl-4 pr-1.5 py-1 pointer-events-auto' : 'min-h-[40px] px-4 py-2'} rounded-[14px] bg-pg-ink text-pg-on-ink text-[14px] font-medium shadow-pg-menu`}
+            >
+              <span>{notice.message}</span>
+              {notice.action && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const run = notice.action.onClick;
+                    setNotice(null);
+                    holdNotice();
+                    run();
+                  }}
+                  className="min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] px-3 rounded-[10px] font-semibold text-pg-notice-action hover:bg-pg-on-ink/10"
+                >
+                  {notice.action.label}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Live Universal Text & KaTeX Preview Pill Overlay */}
@@ -2531,58 +2726,73 @@ export default function PlaygroundCanvasContainer() {
         onOpenFix={(cluster) => setSoftEditorCluster(cluster)}
         onReadAsMath={handleReadClusterAsMath}
         onReadAsText={handleReadClusterAsText}
+        hideSelection={Boolean(inkSelection)}
       />
 
-      {/* Lasso selection toolbar: drag the selection to move it, its corner handle to resize it */}
+      {/* Lassoed ink: one context bar above it. The reading leads (while handwriting is read),
+          then Convert to Shape, Duplicate, Colour and Delete. Drag the selection to move it,
+          its corner handle to resize it. */}
       {inkSelection && !isDrawing && (() => {
-        const rawScreenX = inkSelection.bbox.minX * zoomLevel + panOffset.x - 8;
-        const clampedToolbarX = Math.max(12, Math.min(dimensions.width - 160, rawScreenX));
-        const rawScreenY = inkSelection.bbox.maxY * zoomLevel + panOffset.y + 20;
-        const clampedToolbarY = (rawScreenY + 60 > dimensions.height - 80)
-          ? Math.max(70, inkSelection.bbox.minY * zoomLevel + panOffset.y - 56)
-          : Math.max(70, Math.min(dimensions.height - 90, rawScreenY));
+        const pad = 8; // the selection box's padding on screen (WhiteboardCanvas SELECTION_PADDING)
+        const box = {
+          minX: inkSelection.bbox.minX * zoomLevel + panOffset.x - pad,
+          minY: inkSelection.bbox.minY * zoomLevel + panOffset.y - pad,
+          maxX: inkSelection.bbox.maxX * zoomLevel + panOffset.x + pad,
+          maxY: inkSelection.bbox.maxY * zoomLevel + panOffset.y + pad,
+        };
+        const selectionCluster = clusters.find((c) => c.clusterId && c.clusterId.startsWith('selection_'));
+        const reading = selectionCluster
+          ? readingParts(selectionCluster, {
+              menuOpen: selectionMenuOpen,
+              toggleMenu: () => setSelectionMenuOpen((open) => !open),
+              closeMenu: () => setSelectionMenuOpen(false),
+              handlers: readingHandlers,
+            })
+          : null;
+        const convertible = (whiteboardCanvasRef.current?.getStrokes?.() || []).some((st) => inkSelection.strokeIds.includes(st.id) && isConvertibleStroke(st));
         return (
-          <div
-            style={{
-              transform: `translate(${clampedToolbarX}px, ${clampedToolbarY}px)`,
-            }}
-            className="absolute top-0 left-0 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl select-none"
+          <ContextBar
+            box={box}
+            viewport={dimensions}
+            label="Selection"
+            top={TOP_CHROME}
+            below={reading && reading.menu ? <div className="pt-1 pl-1 border-t border-pg-line">{reading.menu}</div> : null}
           >
-            {(whiteboardCanvasRef.current?.getStrokes?.() || []).some((st) => inkSelection.strokeIds.includes(st.id) && isConvertibleStroke(st)) && (
+            {reading && (
+              <>
+                <div data-reading-pill className="pl-2 min-w-0 flex items-center">
+                  {reading.row}
+                </div>
+                <CtxDivider />
+              </>
+            )}
+            {convertible && (
               <button
+                type="button"
                 onClick={handleConvertInkToShapes}
                 title="Convert to Shape: turn the snapped ink into shapes you can resize, colour and type in"
                 aria-label="Convert to Shape"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                className={CTX_BUTTON}
               >
-                <LuShapes className="w-5 h-5" />
+                <LuShapes className="w-[18px] h-[18px]" />
               </button>
             )}
-            <button
-              onClick={() => whiteboardCanvasRef.current?.duplicateSelection()}
-              title="Duplicate selection"
-              aria-label="Duplicate selection"
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <FiCopy className="w-5 h-5" />
+            <button type="button" onClick={() => whiteboardCanvasRef.current?.duplicateSelection()} title="Duplicate selection" aria-label="Duplicate selection" className={CTX_BUTTON}>
+              <FiCopy className="w-[18px] h-[18px]" />
             </button>
             <button
+              type="button"
               onClick={() => whiteboardCanvasRef.current?.recolorSelection(strokeColor)}
               title="Apply the current pen colour to the selection"
               aria-label="Apply the current pen colour to the selection"
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className={CTX_BUTTON}
             >
-              <span className="block w-5 h-5 rounded-full border border-black/10 dark:border-white/20" style={{ backgroundColor: strokeColor }} />
+              <span className="block w-[18px] h-[18px] rounded-full border border-black/10 dark:border-white/20" style={{ backgroundColor: strokeColor }} />
             </button>
-            <button
-              onClick={() => whiteboardCanvasRef.current?.deleteSelection()}
-              title="Delete selection (Delete key)"
-              aria-label="Delete selection"
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 hover:text-rose-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <FiTrash2 className="w-5 h-5" />
+            <button type="button" onClick={() => whiteboardCanvasRef.current?.deleteSelection()} title="Delete selection (Delete key)" aria-label="Delete selection" className={`${CTX_BUTTON} hover:!text-pg-danger`}>
+              <FiTrash2 className="w-[18px] h-[18px]" />
             </button>
-          </div>
+          </ContextBar>
         );
       })()}
 
@@ -2719,7 +2929,7 @@ export default function PlaygroundCanvasContainer() {
         <div
           role="status"
           style={{ left: shapeEditor.gestureInfo.x + 18, top: shapeEditor.gestureInfo.y + 18 }}
-          className="fixed z-50 px-2 py-1 rounded-md bg-zinc-900/85 text-white text-[11px] font-semibold tabular-nums pointer-events-none"
+          className="fixed z-50 px-2 py-1 rounded-lg bg-pg-ink text-pg-on-ink text-pg-cap font-semibold tabular-nums shadow-pg-bar pointer-events-none"
         >
           {shapeEditor.gestureInfo.kind === 'rotate'
             ? `${Math.round(shapeEditor.gestureInfo.rot)}°`
@@ -2763,19 +2973,14 @@ export default function PlaygroundCanvasContainer() {
         strokeWidth={strokeWidth}
         setStrokeWidth={setStrokeWidth}
         strokeOpacity={strokeOpacity}
+        penType={penType}
+        setPenType={setPenType}
+        penWidths={penWidths}
         highlighterColor={highlighterColor}
         setHighlighterColor={setHighlighterColor}
         highlighterWidth={highlighterWidth}
         setHighlighterWidth={setHighlighterWidth}
-        setStrokeOpacity={setStrokeOpacity}
-        gridStyle={gridStyle}
-        setGridStyle={setGridStyle}
-        zoomLevel={zoomLevel}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetZoom={handleResetZoom}
-        fingerDraws={fingerDraws}
-        setFingerDraws={handleSetFingerDraws}
+        onMoveFolded={setMoveFolded}
         eraserMode={eraserMode}
         setEraserMode={setEraserMode}
         eraserSize={eraserSize}
@@ -2787,14 +2992,6 @@ export default function PlaygroundCanvasContainer() {
         onAddBlock={handleAddBlock}
         onInsertEquation={handleInsertEquation}
         screenshot={screenshot}
-        onOpenSyncModal={() => setIsSyncModalOpen(true)}
-        onExportCanvas={handleExportCanvas}
-        readMode={readMode}
-        setReadMode={setReadMode}
-        notesMode={notesMode}
-        setNotesMode={setNotesMode}
-        onFitToContent={handleFitToContent}
-        onOpenMusic={() => setMusicOpen(true)}
         isRecording={isRecordingAudio}
         onToggleRecordAudio={handleToggleRecordAudio}
         onInsertImage={handleInsertImage}
@@ -2806,8 +3003,9 @@ export default function PlaygroundCanvasContainer() {
         onSymbolsClosed={handleSymbolsClosed}
       />
 
-      {/* Focus music: opened from More / Page; while it plays, a pause button sits by the top bar */}
-      <BackgroundMusicPlayer open={musicOpen} onClose={() => setMusicOpen(false)} isMobile={dimensions.width < 640} />
+      {/* Focus music: opened from the page menu; while it plays, a pause button sits in the
+          top-right bar (laptops, tablets) or the status area (phones) */}
+      <BackgroundMusicPlayer ref={musicRef} open={musicOpen} onClose={() => setMusicOpen(false)} isMobile={isPhone} onPlayingChange={handleMusicPlaying} />
 
       {/* Leaving after a failed save: the only time leaving asks anything */}
       <UnsavedChangesModal

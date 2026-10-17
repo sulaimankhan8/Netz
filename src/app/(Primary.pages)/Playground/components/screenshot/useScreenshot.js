@@ -186,7 +186,7 @@ export default function useScreenshot({ renderView, onInsert, showNotice, coarse
         <div className="fixed inset-x-0 top-6 z-[90] flex justify-center pointer-events-none" role="status" aria-live="polite" data-screenshot-countdown>
           <div className="px-4 py-2.5 rounded-2xl bg-black/80 text-white text-sm font-semibold shadow-2xl text-center">
             Screenshot in {countdown}
-            <div className="text-[11px] font-normal text-white/75">Switch to the window you want to capture</div>
+            <div className="text-pg-cap font-normal text-white/75">Switch to the window you want to capture</div>
           </div>
         </div>
       )}

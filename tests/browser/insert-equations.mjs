@@ -128,7 +128,8 @@ const closeEditors = (page) => page.evaluate(() => [...document.querySelectorAll
       return { katex: Boolean(b.querySelector('.katex')), error: Boolean(b.querySelector('.katex-error')), text: b.innerText.slice(0, 60) };
     });
     check('a chemistry equation is drawn (mhchem: 2H₂ + O₂ → 2H₂O)', chem.katex && !chem.error, JSON.stringify(chem));
-    await page.evaluate(() => [...document.querySelectorAll('[data-block-id]')].pop().querySelector('button[title="Edit Equation"]').click());
+    // Edit is in the block's bar (the formula at rest has nothing on top of it)
+    await page.evaluate(() => [...document.querySelectorAll('[data-block-id]')].pop().querySelector('button[title="Edit Block"]').click());
     await sleep(500);
     const chemEdit = await page.evaluate(() => {
       const b = [...document.querySelectorAll('[data-block-id]')].pop();
