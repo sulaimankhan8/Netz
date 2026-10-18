@@ -9,8 +9,8 @@ const INK = ['x', '^2', ' ', '−', ' ', '4', 'x', ' ', '+', ' ', '3', ' ', '=',
 /**
  * The hero demo (board artboard 3): a loop of about 9 seconds that keeps playing by itself.
  * The equation is written glyph by glyph behind a pen tip, NETZ reads it (a short sweep), the
- * typed maths rises in, Find roots is tapped, and the answer appears with a small graph marking
- * the two roots. It holds, fades out and starts again. CSS does all of it (landing.css,
+ * typed maths rises in, Find roots is tapped and the answer appears, then Plot is tapped and a
+ * small graph draws itself with the two roots marked. It holds, fades out and starts again. CSS does all of it (landing.css,
  * "Hero demo"); the loop pauses while the card is off screen, and "reduce motion" shows the
  * finished scene without moving.
  */
@@ -76,7 +76,10 @@ export default function HeroDemo() {
               Find roots
               <span className="ld-demo-tap" />
             </span>
-            <span className="ld-eqbtn">Plot</span>
+            <span className="ld-eqbtn d-plotbtn">
+              Plot
+              <span className="ld-demo-tap d-plottap" />
+            </span>
             <span className="ld-eqbtn">d/dx</span>
           </div>
 

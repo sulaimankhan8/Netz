@@ -484,6 +484,10 @@ html.dark .ld-root .ld-sec-head .ld-on-bg {
   --cycle: 9s;
 }
 
+.ld-demo * {
+  animation-fill-mode: both !important;
+}
+
 .ld-ink-wrap {
   position: relative;
   align-self: flex-start;
@@ -499,13 +503,11 @@ html.dark .ld-root .ld-sec-head .ld-on-bg {
   width: 0.28em;
 }
 
-/* Each glyph is wiped in left to right; the clip box is far taller than the glyph so the
-   handwriting (and the raised 2) is never cut */
+/* The writing: one wipe across the whole line, with the pen tip riding its edge. Both use the
+   same keyframe stops and no delay, so they stay together and nothing flashes on page load. */
 .ld-glyph {
   display: inline-block;
   padding: 0 0.04em;
-  animation: ld-glyph var(--cycle) linear infinite;
-  animation-delay: calc(0.3s + var(--g) * 0.13s);
 }
 
 .ld-glyph.is-sup {
@@ -514,12 +516,16 @@ html.dark .ld-root .ld-sec-head .ld-on-bg {
   margin: -0.05em 0.02em 0 -0.02em;
 }
 
-@keyframes ld-glyph {
-  0% { clip-path: inset(-200% 100% -200% -20%); opacity: 1; }
-  2.5% { clip-path: inset(-200% -20% -200% -20%); }
-  78% { opacity: 1; }
-  82% { clip-path: inset(-200% -20% -200% -20%); opacity: 0; }
-  82.1%, 100% { clip-path: inset(-200% 100% -200% -20%); opacity: 0; }
+.ld-ink {
+  animation: ld-write var(--cycle) linear infinite both;
+}
+
+@keyframes ld-write {
+  0%, 4% { clip-path: inset(-60% 100% -60% -10%); opacity: 1; }
+  22% { clip-path: inset(-60% -10% -60% -10%); opacity: 1; }
+  79% { clip-path: inset(-60% -10% -60% -10%); opacity: 1; }
+  83% { clip-path: inset(-60% -10% -60% -10%); opacity: 0; }
+  83.1%, 100% { clip-path: inset(-60% 100% -60% -10%); opacity: 0; }
 }
 
 /* The pen tip moving along with the writing */
@@ -528,18 +534,16 @@ html.dark .ld-root .ld-sec-head .ld-on-bg {
   top: 50%;
   left: 0;
   color: var(--ld-ink);
-  opacity: 0;
   translate: -20% -95%;
   pointer-events: none;
-  animation: ld-pen var(--cycle) linear infinite;
-  animation-delay: 0.3s;
+  animation: ld-pen var(--cycle) linear infinite both;
 }
 
 @keyframes ld-pen {
   0% { left: 0; opacity: 0; }
-  1.5% { opacity: 1; }
-  19% { left: 100%; opacity: 1; }
-  21%, 100% { left: 100%; opacity: 0; }
+  4% { left: 0; opacity: 1; }
+  22% { left: 100%; opacity: 1; }
+  25%, 100% { left: 100%; opacity: 0; }
 }
 
 /* NETZ reading the ink: a soft band passing over it */
@@ -570,7 +574,37 @@ html.dark .ld-root .ld-demo-scan {
 .ld-demo .d-typed { animation: ld-typed var(--cycle) var(--ld-ease) infinite; }
 .ld-demo .d-bar { animation: ld-bar var(--cycle) var(--ld-ease) infinite; }
 .ld-demo .d-answer { animation: ld-answer var(--cycle) var(--ld-ease) infinite; }
-.ld-demo .d-plot { animation: ld-answer var(--cycle) var(--ld-ease) infinite; animation-delay: 0.15s; }
+.ld-demo .d-plot { animation: ld-graph var(--cycle) var(--ld-ease) infinite; }
+
+@keyframes ld-graph {
+  0%, 58% { opacity: 0; transform: translateY(6px); }
+  61%, 79% { opacity: 1; transform: none; }
+  83%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Plot: the second tap, after the roots are shown */
+.ld-eqbtn.d-plotbtn {
+  position: relative;
+  animation: ld-plotbtn var(--cycle) infinite;
+}
+
+@keyframes ld-plotbtn {
+  0%, 55% { background-color: transparent; color: var(--ld-text2); transform: none; }
+  56.5% { transform: scale(0.93); }
+  58% { transform: none; background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
+  79% { background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
+  83%, 100% { background-color: transparent; color: var(--ld-text2); }
+}
+
+.ld-demo-tap.d-plottap {
+  animation-name: ld-tap-plot;
+}
+
+@keyframes ld-tap-plot {
+  0%, 54% { opacity: 0; transform: scale(0.4); }
+  55.5% { opacity: 0.35; transform: scale(1); }
+  59%, 100% { opacity: 0; transform: scale(1.8); }
+}
 
 @keyframes ld-typed {
   0%, 30% { opacity: 0; transform: translateY(10px); }
@@ -600,8 +634,8 @@ html.dark .ld-root .ld-demo-scan {
   0%, 43% { background-color: transparent; color: var(--ld-text2); transform: none; }
   44.5% { transform: scale(0.93); }
   46% { transform: none; background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
-  79% { background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
-  83%, 100% { background-color: transparent; color: var(--ld-text2); }
+  55% { background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
+  57%, 100% { background-color: transparent; color: var(--ld-text2); }
 }
 
 .ld-demo-tap {
@@ -632,6 +666,8 @@ html.dark .ld-root .ld-demo-scan {
 }
 
 .ld-demo-plot {
+  position: relative;
+  top: -10px;
   width: 140px;
   height: 70px;
   flex-shrink: 0;
@@ -655,8 +691,8 @@ html.dark .ld-root .ld-demo-scan {
 }
 
 @keyframes ld-plot-draw {
-  0%, 51% { stroke-dashoffset: 1; }
-  61%, 100% { stroke-dashoffset: 0; }
+  0%, 59% { stroke-dashoffset: 1; }
+  68%, 100% { stroke-dashoffset: 0; }
 }
 
 .ld-demo-plot-root {
@@ -673,9 +709,9 @@ html.dark .ld-root .ld-demo-scan {
 }
 
 @keyframes ld-root-pop {
-  0%, 60% { transform: scale(0); }
-  63% { transform: scale(1.35); }
-  65%, 100% { transform: scale(1); }
+  0%, 67% { transform: scale(0); }
+  70% { transform: scale(1.35); }
+  72%, 100% { transform: scale(1); }
 }
 
 .ld-demo-plot-label {
@@ -696,7 +732,7 @@ html.dark .ld-root .ld-demo-scan {
     animation: none !important;
   }
 
-  .ld-eqbtn.d-roots {
+  .ld-eqbtn.d-plotbtn {
     background: var(--ld-accent-tint);
     color: var(--ld-accent-on-tint);
   }

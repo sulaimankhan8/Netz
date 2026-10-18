@@ -70,8 +70,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-       <head><Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
+    <html lang="en" suppressHydrationWarning>
+       <head>
+        {/* Dark is the default theme; only a saved "light" choice turns it off. Runs before the first paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(localStorage.getItem('theme')!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}",
+          }}
+        />
+<Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
 <Script id="netz"> {`
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}

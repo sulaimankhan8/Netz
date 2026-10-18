@@ -101,7 +101,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem('netz_theme') || localStorage.getItem('theme') || 'light';
+    const saved = localStorage.getItem('netz_theme') || localStorage.getItem('theme') || 'dark';
     setThemeState(saved);
     applyThemeToDOM(saved);
 

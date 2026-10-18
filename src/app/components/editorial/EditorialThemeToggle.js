@@ -15,7 +15,7 @@ export default function EditorialThemeToggle({ className = '' }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem('theme') || 'light';
+    const saved = localStorage.getItem('theme') || 'dark';
     setTheme(saved);
     document.documentElement.classList.toggle('dark', saved === 'dark');
   }, []);

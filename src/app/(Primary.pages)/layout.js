@@ -70,8 +70,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
        <head>
+        {/* Dark is the default theme; only a saved "light" choice turns it off. Runs before the first paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(localStorage.getItem('theme')!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}",
+          }}
+        />
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
         <meta name="google-adsense-account" content="ca-pub-3746721364737268"></meta>
         </head>
