@@ -33,6 +33,10 @@
   --ld-export: #B42318;
   --ld-steps: #6D28D9;
   --ld-table: #15803D;
+  --ld-graph-tint: #FFF1E6;
+  --ld-export-tint: #FDECEA;
+  --ld-steps-tint: #F1ECFE;
+  --ld-table-tint: #E8F5EC;
   --ld-shadow: 0 2px 4px rgb(29 29 31 / 0.05), 0 24px 56px rgb(29 29 31 / 0.12);
   --ld-shadow-soft: 0 1px 2px rgb(29 29 31 / 0.06), 0 8px 24px rgb(29 29 31 / 0.08);
   --ld-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -71,6 +75,10 @@ html.dark .ld-root {
   --ld-export: #F97066;
   --ld-steps: #C4B5FD;
   --ld-table: #86EFAC;
+  --ld-graph-tint: #3A2414;
+  --ld-export-tint: #3A1D1B;
+  --ld-steps-tint: #2A2245;
+  --ld-table-tint: #143322;
   --ld-shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 56px rgb(0 0 0 / 0.5);
   --ld-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
 }
@@ -850,10 +858,10 @@ html.dark .ld-root .ld-units.ld-on-bg {
 }
 
 .ld-stage {
-  flex: 1 1 560px;
+  flex: 1 1 580px;
   min-width: 0;
   position: relative;
-  height: 560px;
+  height: 620px;
 }
 
 .ld-fc {
@@ -861,80 +869,29 @@ html.dark .ld-root .ld-units.ld-on-bg {
   z-index: var(--z, 1);
   background: var(--ld-surface);
   border: 1px solid var(--ld-line);
-  border-radius: 18px;
-  box-shadow: var(--ld-shadow);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgb(29 29 31 / 0.06), 0 12px 28px rgb(29 29 31 / 0.10), 0 32px 64px rgb(29 29 31 / 0.08);
   overflow: hidden;
   transform: rotate(var(--r));
+  animation: ld-bob var(--bob) ease-in-out var(--bob-delay) infinite alternate;
 }
 
-.ld-fc-graph { --r: -3deg; --fx: 140px; --fy: 120px; left: 0; top: 10px; width: 290px; --lc: var(--ld-graph); }
-.ld-fc-export { --r: 2.5deg; --fx: -120px; --fy: 110px; left: calc(50% + 10px); top: 40px; width: 260px; --lc: var(--ld-export); }
-.ld-fc-steps { --r: 1.5deg; --fx: 60px; --fy: -110px; left: 110px; top: 268px; width: 300px; --lc: var(--ld-steps); }
-.ld-fc-table { --r: -2deg; --fx: -140px; --fy: -100px; left: calc(50% + 70px); top: 290px; width: 220px; --lc: var(--ld-table); }
-
-.ld-fc-head {
-  width: 100%;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  background: var(--ld-tray);
-  border: 0;
-  font: inherit;
-  color: var(--lc);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  cursor: pointer;
+html.dark .ld-root .ld-fc {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 28px rgb(0 0 0 / 0.4), 0 32px 64px rgb(0 0 0 / 0.35);
 }
 
-.ld-fc-body {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  line-height: 21px;
+/* Each card: its colour, its place in the pile, where it starts before spreading, its drift */
+.ld-fc-graph { --tone: var(--ld-graph); --tint: var(--ld-graph-tint); --r: -3deg; --fx: 150px; --fy: 130px; --bob: 7s; --bob-delay: -1s; left: 0; top: 24px; width: 300px; }
+.ld-fc-export { --tone: var(--ld-export); --tint: var(--ld-export-tint); --r: 2.5deg; --fx: -130px; --fy: 130px; --bob: 8s; --bob-delay: -3s; left: calc(50% + 16px); top: 0; width: 272px; }
+.ld-fc-steps { --tone: var(--ld-steps); --tint: var(--ld-steps-tint); --r: 1.5deg; --fx: 70px; --fy: -120px; --bob: 7.5s; --bob-delay: -5s; left: 36px; top: 334px; width: 300px; }
+.ld-fc-table { --tone: var(--ld-table); --tint: var(--ld-table-tint); --r: -2deg; --fx: -150px; --fy: -110px; --bob: 6.5s; --bob-delay: -2s; left: calc(50% + 70px); top: 346px; width: 252px; }
+
+@keyframes ld-bob {
+  from { translate: 0 0; }
+  to { translate: 0 -10px; }
 }
 
-.ld-fc-chip {
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 8px;
-  background: var(--ld-tray);
-  font-size: 13px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-}
-
-.ld-fc-chip.is-on {
-  background: var(--ld-ink);
-  color: var(--ld-surface);
-}
-
-.ld-fc-file {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--ld-line);
-}
-
-.ld-fc-table table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.ld-fc-table td,
-.ld-fc-table th {
-  padding: 4px 0;
-}
-
-/* The pile spreads out as the section scrolls into view (no JavaScript) */
+/* The pile spreads out as the section scrolls into view (no JavaScript); the drift keeps going */
 @keyframes ld-fan {
   from { transform: translate(var(--fx), var(--fy)) rotate(0deg) scale(0.94); opacity: 0.4; }
   to { transform: rotate(var(--r)); opacity: 1; }
@@ -942,19 +899,432 @@ html.dark .ld-root .ld-units.ld-on-bg {
 
 @supports (animation-timeline: view()) {
   .ld-fc {
-    animation: ld-fan linear both;
-    animation-timeline: view();
-    animation-range: entry 5% cover 40%;
+    animation:
+      ld-fan linear both,
+      ld-bob var(--bob) ease-in-out var(--bob-delay) infinite alternate;
+    animation-timeline: view(), auto;
+    animation-range: entry 5% cover 40%, normal;
   }
 }
 
+.ld-fc-head {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ld-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ld-fc-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--tint);
+  color: var(--tone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ld-fc-label {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ld-fc-meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ld-text2);
+}
+
+.ld-fc-graph .ld-fc-meta {
+  color: var(--tone);
+}
+
+.ld-fc-graph .ld-fc-meta::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--tone);
+  animation: ld-live 1.6s ease-in-out infinite;
+}
+
+@keyframes ld-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.ld-fc-body {
+  padding: 6px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.ld-fc-eq {
+  font-size: 17px;
+}
+
+.ld-fc-eq sup {
+  font-size: 11px;
+}
+
+.ld-fc-note {
+  font-size: 13px;
+  color: var(--ld-text2);
+}
+
+/* Graph: the curve draws once, then a point keeps tracing it and the roots pulse */
+.ld-fc-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: var(--ld-paper);
+}
+
+.ld-fc-grid path {
+  fill: none;
+  stroke: var(--ld-line);
+  stroke-width: 1;
+}
+
+.ld-fc-axis {
+  fill: none;
+  stroke: var(--ld-text2);
+  stroke-opacity: 0.45;
+  stroke-width: 1.5;
+}
+
+.ld-fc-curve {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  animation: ld-draw 1.6s var(--ld-ease) 0.3s both;
+}
+
+@keyframes ld-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+.ld-fc-root {
+  fill: var(--ld-surface);
+  stroke: var(--tone);
+  stroke-width: 2.5;
+}
+
+.ld-fc-ring {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: ld-ring 3s ease-out infinite;
+}
+
+.ld-fc-ring-2 {
+  animation-delay: 1.5s;
+}
+
+@keyframes ld-ring {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  70%, 100% { transform: scale(1.8); opacity: 0; }
+}
+
+.ld-fc-tracer {
+  fill: var(--tone);
+  stroke: var(--ld-surface);
+  stroke-width: 2.5;
+}
+
+/* Export: PNG, PDF and Markdown take turns; each file fills its bar, then says Saved (6 s loop) */
+.ld-fc-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.ld-fc-chip {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--ld-tray);
+  color: var(--ld-ink);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  animation: ld-chip 6s infinite;
+}
+
+@keyframes ld-chip {
+  0%, 30% { background: var(--ld-ink); color: var(--ld-surface); }
+  33.33%, 100% { background: var(--ld-tray); color: var(--ld-ink); }
+}
+
+.ld-fc-files {
+  position: relative;
+  height: 66px;
+}
+
+.ld-fc-file {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--ld-line);
+  background: var(--ld-surface);
+  opacity: 0;
+  animation: ld-file 6s infinite;
+}
+
+@keyframes ld-file {
+  0% { opacity: 0; transform: translateY(6px); }
+  4%, 30% { opacity: 1; transform: none; }
+  33.33%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.ld-fc-thumb {
+  width: 36px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--tint);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ld-fc-thumb span {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--tone);
+  opacity: 0.55;
+}
+
+.ld-fc-thumb span:nth-child(2) { width: 70%; }
+.ld-fc-thumb span:nth-child(3) { width: 45%; }
+
+.ld-fc-file-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.ld-fc-file-name {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ld-fc-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ld-tray);
+  overflow: hidden;
+}
+
+.ld-fc-progress span {
+  display: block;
+  height: 100%;
+  background: var(--tone);
+  transform-origin: left;
+  animation: ld-progress 6s infinite;
+}
+
+@keyframes ld-progress {
+  0% { transform: scaleX(0); }
+  18%, 100% { transform: scaleX(1); }
+}
+
+.ld-fc-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ld-ok);
+  animation: ld-saved 6s infinite;
+}
+
+@keyframes ld-saved {
+  0%, 18% { opacity: 0; }
+  22%, 100% { opacity: 1; }
+}
+
+/* One timeline, three turns: 0–2 s, 2–4 s, 4–6 s */
+.ld-fc-cycle-1, .ld-fc-cycle-1 .ld-fc-progress span, .ld-fc-cycle-1 .ld-fc-saved { animation-delay: 0s; }
+.ld-fc-cycle-2, .ld-fc-cycle-2 .ld-fc-progress span, .ld-fc-cycle-2 .ld-fc-saved { animation-delay: -4s; }
+.ld-fc-cycle-3, .ld-fc-cycle-3 .ld-fc-progress span, .ld-fc-cycle-3 .ld-fc-saved { animation-delay: -2s; }
+
+/* Steps: the working writes itself line by line, the newest line lit, then starts over (8 s) */
+.ld-fc-steplist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ld-fc-steplist li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 8px;
+  margin: 0 -8px;
+  border-radius: 8px;
+  opacity: 0;
+}
+
+.ld-fc-steplist li .ld-mono {
+  font-size: 12px;
+  color: var(--ld-text2);
+}
+
+.ld-fc-steplist li.is-answer {
+  font-weight: 700;
+  color: var(--tone);
+}
+
+.ld-fc-step-1 { animation: ld-step-1 8s infinite; }
+.ld-fc-step-2 { animation: ld-step-2 8s infinite; }
+.ld-fc-step-3 { animation: ld-step-3 8s infinite; }
+.ld-fc-step-4 { animation: ld-step-4 8s infinite; }
+
+@keyframes ld-step-1 {
+  0% { opacity: 0; transform: translateX(-6px); background-color: transparent; }
+  4% { opacity: 1; transform: none; background-color: var(--tint); }
+  18% { background-color: var(--tint); }
+  21% { background-color: transparent; }
+  88% { opacity: 1; }
+  94%, 100% { opacity: 0; background-color: transparent; }
+}
+
+@keyframes ld-step-2 {
+  0%, 18% { opacity: 0; transform: translateX(-6px); background-color: transparent; }
+  22% { opacity: 1; transform: none; background-color: var(--tint); }
+  36% { background-color: var(--tint); }
+  39% { background-color: transparent; }
+  88% { opacity: 1; }
+  94%, 100% { opacity: 0; background-color: transparent; }
+}
+
+@keyframes ld-step-3 {
+  0%, 36% { opacity: 0; transform: translateX(-6px); background-color: transparent; }
+  40% { opacity: 1; transform: none; background-color: var(--tint); }
+  54% { background-color: var(--tint); }
+  57% { background-color: transparent; }
+  88% { opacity: 1; }
+  94%, 100% { opacity: 0; background-color: transparent; }
+}
+
+@keyframes ld-step-4 {
+  0%, 54% { opacity: 0; transform: translateX(-6px); background-color: transparent; }
+  58% { opacity: 1; transform: none; background-color: var(--tint); }
+  88% { opacity: 1; background-color: var(--tint); }
+  94%, 100% { opacity: 0; background-color: transparent; }
+}
+
+/* Table: a highlight walks through x = 0, 1, 2, 3 while a point steps along the line (4 s) */
+.ld-fc-grid-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  font-size: 14px;
+}
+
+.ld-fc-grid-table th {
+  width: 26px;
+  padding: 5px 0;
+  text-align: left;
+  font-weight: 500;
+  color: var(--ld-text2);
+}
+
+.ld-fc-grid-table td {
+  padding: 5px 0;
+  text-align: center;
+  animation: ld-col 4s infinite;
+}
+
+@keyframes ld-col {
+  0%, 20% { background-color: var(--tint); color: var(--tone); font-weight: 700; }
+  25%, 100% { background-color: transparent; color: var(--ld-ink); font-weight: 400; }
+}
+
+.ld-fc-grid-table .ld-fc-col-1 { animation-delay: 0s; }
+.ld-fc-grid-table .ld-fc-col-2 { animation-delay: -3s; }
+.ld-fc-grid-table .ld-fc-col-3 { animation-delay: -2s; }
+.ld-fc-grid-table .ld-fc-col-4 { animation-delay: -1s; }
+
+.ld-fc-spark {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ld-fc-spark-line {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-opacity: 0.55;
+}
+
+.ld-fc-spark-dot {
+  fill: var(--ld-surface);
+  stroke: var(--tone);
+  stroke-width: 2;
+}
+
+.ld-fc-spark-tracer {
+  fill: var(--tone);
+}
+
+/* Off screen: everything waits */
+.ld-stage.is-paused .ld-fc,
+.ld-stage.is-paused .ld-fc * {
+  animation-play-state: paused;
+}
+
+/* Phones: a swipe row; the cards still drift and loop */
 @media (max-width: 700px) {
   .ld-stage {
     height: auto;
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding: 8px 2px 16px;
+    margin: 0 calc(-1 * clamp(16px, 5vw, 64px));
+    padding: 16px clamp(16px, 5vw, 64px) 32px;
+    scroll-padding: 0 clamp(16px, 5vw, 64px);
     scroll-snap-type: x mandatory;
   }
 
@@ -966,10 +1336,34 @@ html.dark .ld-root .ld-units.ld-on-bg {
     position: relative;
     left: auto;
     top: auto;
-    flex: 0 0 260px;
-    width: 260px;
+    flex: 0 0 280px;
+    width: 280px;
     scroll-snap-align: start;
-    animation: none;
+    box-shadow: 0 1px 2px rgb(29 29 31 / 0.06), 0 8px 18px rgb(29 29 31 / 0.10);
+    animation: ld-bob var(--bob) ease-in-out var(--bob-delay) infinite alternate;
+    animation-timeline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ld-fc,
+  .ld-fc * {
+    animation: none !important;
+  }
+
+  .ld-fc-steplist li,
+  .ld-fc-saved,
+  .ld-fc-file.ld-fc-cycle-1 {
+    opacity: 1;
+  }
+
+  .ld-fc-ring {
+    opacity: 0;
+  }
+
+  .ld-fc-chip.ld-fc-cycle-1 {
+    background: var(--ld-ink);
+    color: var(--ld-surface);
   }
 }
 
@@ -1119,8 +1513,14 @@ html.dark .ld-root .ld-units.ld-on-bg {
 
 .ld-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .ld-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .ld-fact {
@@ -1130,13 +1530,67 @@ html.dark .ld-root .ld-units.ld-on-bg {
   padding: 24px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  transition: transform 160ms var(--ld-ease), box-shadow 160ms var(--ld-ease);
+}
+
+.ld-facts .ld-fact:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ld-shadow);
+}
+
+.ld-fact-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.ld-fact-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--t);
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ld-fact-devices {
+  display: flex;
+  align-items: flex-end;
   gap: 8px;
+  color: var(--ld-text2);
 }
 
 .ld-fact h3 {
   margin: 0;
-  font-size: 19px;
+  font-size: 20px;
+  line-height: 28px;
   font-weight: 700;
+}
+
+.ld-fact-tags {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ld-fact-tags li {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--t);
+  color: var(--c);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
 }
 
 .ld-fact p {
@@ -1265,7 +1719,6 @@ html.dark .ld-root .ld-units.ld-on-bg {
   .ld-demo .d-bar,
   .ld-demo .d-press,
   .ld-demo .d-answer,
-  .ld-fc,
   .ld-table tbody {
     animation: none;
   }

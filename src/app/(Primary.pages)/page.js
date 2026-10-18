@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import './landing.css';
 import { LD_FONT } from '../components/landing/fonts';
-import { IconArrow, IconCalc } from '../components/landing/icons';
+import { IconArrow, IconCalc, IconGift, IconHand, IconLaptop, IconPhone, IconTablet, IconWifiOff } from '../components/landing/icons';
 import AdSlot from '../components/landing/AdSlot';
 import FloatingCards from '../components/landing/FloatingCards';
 import HeroDemo from '../components/landing/HeroDemo';
@@ -106,18 +106,49 @@ export default function Home() {
 
         <AdSlot />
 
-        <section className="ld-section ld-facts" data-reveal="">
-          <div className="ld-fact">
-            <h3>Any screen, touch first</h3>
-            <p>Made for phones and tablets as much as laptops. Draw with a finger, a pen or a mouse; two fingers move and zoom the page.</p>
+        <section className="ld-section" data-reveal="">
+          <div className="ld-sec-head">
+            <div className="ld-sec-head-text ld-on-bg">
+              <h2 className="ld-h2">Made for the way you study</h2>
+              <p className="ld-sec-lead">At your desk, on the bus or in the library, with or without Wi‑Fi.</p>
+            </div>
           </div>
-          <div className="ld-fact">
-            <h3>Works offline</h3>
-            <p>Install NETZ as an app. Handwriting is read on your own device, so it keeps working on a train or in an exam hall.</p>
-          </div>
-          <div className="ld-fact">
-            <h3>Free, no account</h3>
-            <p>Open it and start. Your pages and notes are saved in this browser.</p>
+          <div className="ld-facts">
+            <article className="ld-fact ld-c-pg">
+              <div className="ld-fact-top">
+                <span className="ld-fact-icon" aria-hidden="true"><IconHand size={24} /></span>
+                <span className="ld-fact-devices" aria-hidden="true"><IconPhone size={20} /><IconTablet size={20} /><IconLaptop size={22} /></span>
+              </div>
+              <h3>Any screen, touch first</h3>
+              <p>Made for phones and tablets as much as laptops. Draw with a finger, a pen or a mouse; two fingers move and zoom the page.</p>
+              <ul className="ld-fact-tags">
+                <li>Finger</li>
+                <li>Pen</li>
+                <li>Mouse</li>
+              </ul>
+            </article>
+            <article className="ld-fact ld-c-al">
+              <div className="ld-fact-top">
+                <span className="ld-fact-icon" aria-hidden="true"><IconWifiOff size={24} /></span>
+              </div>
+              <h3>Works offline</h3>
+              <p>Install NETZ as an app. Handwriting is read on your own device, so it keeps working on a train or in an exam hall.</p>
+              <ul className="ld-fact-tags">
+                <li>No Wi‑Fi needed</li>
+                <li>Installs like an app</li>
+              </ul>
+            </article>
+            <article className="ld-fact ld-c-nt">
+              <div className="ld-fact-top">
+                <span className="ld-fact-icon" aria-hidden="true"><IconGift size={24} /></span>
+              </div>
+              <h3>Free, no account</h3>
+              <p>Open it and start. Your pages and notes are saved in this browser, so nothing waits on a sign-up.</p>
+              <ul className="ld-fact-tags">
+                <li>No sign-up</li>
+                <li>Saved on this device</li>
+              </ul>
+            </article>
           </div>
         </section>
 

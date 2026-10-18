@@ -67,3 +67,10 @@ Differences from the board:
 - **The tours themselves are not built here.** The cards link to `?tour=<id>`; only Gauss–Seidel has a tour today. They were proposed as a separate session ("Build NETZ onboarding tours for the landing cards").
 
 Checks: `tests/browser/landing.mjs` against `next start -p 3213` on the production build: 27/27 (page height, links, metadata, deferred third-party scripts, no Poppins/Lottie/KaTeX, method chips, floating cards, install hint, hero replay, dark mode, done states, scroll spread, reduce motion, phone layout and 44 px targets, Privacy page, no page errors). Screenshots in `tests/browser/shots/landing-*.png`. Not measured: Lighthouse on a real phone.
+
+### Round 2 (2026-10-18, owner feedback)
+
+- **Floating cards redesigned** (`components/landing/FloatingCards.js`, `landing.css` "Floating cards"): cleaner cards (coloured icon chip, no grey header bar, softer layered shadow, no slab) and an ongoing loop in each, as the owner asked: Graph draws its curve, then a point keeps tracing it and the roots pulse ("live"); Export cycles PNG → PDF → Markdown with a filling bar and "Saved" (6 s); Steps writes its four lines one by one with the newest lit (8 s); Table walks a highlight through x = 0…3 while a point steps along the line (4 s). All cards drift gently (CSS `translate`, separate from the scroll-spread `transform`). Loops pause while the section is off screen (IntersectionObserver; SVG `pauseAnimations`) and stay still under "reduce motion". This replaces the board's "nothing loops" rule for this section, at the owner's request.
+- **Facts section redesigned** ("Made for the way you study"): three cards with a coloured icon, a device row on the first, and short tags.
+- Onboarding tours: built (`components/tour/`, pages wired), production build passes; `tests/browser/tours.mjs` written but **not yet run** (the owner stopped that run).
+- Checks after round 2: `tests/browser/landing.mjs` 27/27; frames checked in light, dark and phone; 33 animations run on screen, 1 off screen; none under reduce motion.

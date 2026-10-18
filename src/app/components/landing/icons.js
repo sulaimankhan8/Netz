@@ -44,6 +44,9 @@ export const IconSearch = (p) => <Svg {...p}><circle cx="11" cy="11" r="7" /><pa
 export const IconSteps = (p) => <Svg {...p}><circle cx="6" cy="6" r="2" /><circle cx="18" cy="12" r="2" /><circle cx="6" cy="18" r="2" /><path d="M8 7l8 4M8 17l8-4" /></Svg>;
 export const IconSun = (p) => <Svg {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5" /></Svg>;
 export const IconMoon = (p) => <Svg {...p}><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></Svg>;
+export const IconTablet = (p) => <Svg {...p}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M11 18h2" /></Svg>;
+export const IconLaptop = (p) => <Svg {...p}><rect x="4" y="5" width="16" height="11" rx="1.5" /><path d="M2 19h20" /></Svg>;
+export const IconGift = (p) => <Svg {...p}><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></Svg>;
 export const IconPhone = (p) => <Svg {...p}><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></Svg>;
 export const IconWifiOff = (p) => <Svg {...p}><path d="M2 8.8a15 15 0 0 1 20 0" /><path d="M8.5 16a5 5 0 0 1 7 0" /><path d="M3 3l18 18" /></Svg>;
 export const IconUser = (p) => <Svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></Svg>;
