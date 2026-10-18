@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { LuArrowDown, LuArrowUp, LuGripVertical, LuLightbulb, LuPlus, LuSigma, LuTrash2 } from 'react-icons/lu';
 import EmbeddedMathWidget from './EmbeddedMathWidget';
 import KaTeXRenderer from './KaTeXRenderer';
 import SlashCommandMenu from './SlashCommandMenu';
 import QuizBlock from './QuizBlock';
 import InkSketchBlock from './InkSketchBlock';
-import { 
-  FaPlus,
-  FaArrowUp,
-  FaArrowDown,
-  FaTrash,
-  FaLightbulb
-} from 'react-icons/fa';
+import { AutoTextarea, BTN_SECONDARY, FIELD, FIELD_INPUT, ICON_BTN, Menu } from './ui';
+import { blockTypeOf, newQuizConfig } from '../utils/blockTypes';
 
+const CARD_TYPES = ['widget', 'quiz', 'ink'];
+
+/**
+ * One block of a note (NOTES_VISUAL_REDESIGN_PLAN.md, section 4). Its tools (Add block below,
+ * Move up, Move down, Delete block) sit behind a grip: in the left margin on laptops (shown on
+ * hover and while the block has focus), and on the block you are in on touch screens.
+ */
 export default function NoteBlockItem({
   block,
   index,
@@ -22,11 +25,30 @@ export default function NoteBlockItem({
   onDelete,
   onMove,
   onOpenPicker,
-  onInsertBlockAfter
+  onInsertBlockAfter,
+  isPhone,
+  coarse,
+  isNew,
+  isActive,
+  onActivate
 }) {
-  const [isHovered, setIsHovered] = useState(false);
   const [slashQuery, setSlashQuery] = useState('');
   const [isSlashOpen, setIsSlashOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // A formula shows its LaTeX field only while it is being edited (Q5)
+  const [editingMath, setEditingMath] = useState(Boolean(isNew && block.type === 'math'));
+  const gripRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // A block just added is ready to type into
+  useEffect(() => {
+    if (isNew) inputRef.current?.focus({ preventScroll: false });
+  }, [isNew, editingMath]);
+
+  // Leaving the block closes its formula editor
+  useEffect(() => {
+    if (!isActive && editingMath) setEditingMath(false);
+  }, [isActive, editingMath]);
 
   const handleContentChange = (val) => {
     // Only trigger slash menu if slash is at line start or preceded by a whitespace
@@ -42,6 +64,7 @@ export default function NoteBlockItem({
   };
 
   const handleKeyDown = (e) => {
+    if (isSlashOpen && (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp')) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onInsertBlockAfter(index);
@@ -68,151 +91,134 @@ export default function NoteBlockItem({
     // Remove only the triggering slash command pattern
     let cleanContent = block.content ? block.content.replace(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/, '').trim() : '';
 
-    if (item.type === 'open-picker') {
+    if (item.action === 'picker') {
       onOpenPicker(block.id);
       return;
     }
 
-    if (item.type === 'widget') {
-      onUpdate({
-        ...block,
-        type: 'widget',
-        content: item.title,
-        widgetConfig: item.widgetConfig
-      });
-    } else if (item.type === 'quiz') {
-      onUpdate({
-        ...block,
-        type: 'quiz',
-        content: 'Interactive Quiz Block',
-        quizConfig: {
-          question: 'What is the order of convergence for the Newton-Raphson method?',
-          mode: 'mcq',
-          options: [
-            'Linear (Order 1)',
-            'Quadratic (Order 2)',
-            'Superlinear (Order 1.618)',
-            'Cubic (Order 3)'
-          ],
-          correctOptionIndex: 1,
-          correctNumericValue: 2.7065,
-          tolerance: 0.001,
-          explanation: 'The Newton-Raphson method exhibits quadratic convergence (order 2) near a simple root.'
-        }
-      });
+    if (item.type === 'quiz') {
+      onUpdate({ ...block, type: 'quiz', content: 'Interactive Quiz Block', quizConfig: newQuizConfig() });
     } else if (item.type === 'ink') {
       let initialInk = '';
       if (typeof window !== 'undefined') {
         initialInk = localStorage.getItem('netz_pending_ink_clip') || '';
       }
-      onUpdate({
-        ...block,
-        type: 'ink',
-        content: initialInk,
-        caption: 'Figure: Handwritten calculation sketch'
-      });
+      onUpdate({ ...block, type: 'ink', content: initialInk, caption: 'Figure: Handwritten calculation sketch' });
     } else {
-      // Set empty string for heading1, heading2, heading3, callout, and paragraph so placeholders show
+      // Empty for headings, callout and text so their placeholders show
       let defaultContent = cleanContent;
-      if (['heading1', 'heading2', 'heading3', 'callout', 'paragraph'].includes(item.type)) {
-        defaultContent = cleanContent;
-      } else if (item.type === 'math') {
+      if (item.type === 'math') {
         defaultContent = cleanContent || 'e^{i\\pi} + 1 = 0';
+        setEditingMath(true);
       }
-
-      onUpdate({
-        ...block,
-        type: item.type,
-        content: defaultContent
-      });
+      onUpdate({ ...block, type: item.type, content: defaultContent });
     }
   };
 
+  const menuItems = [
+    { id: 'add', label: 'Add block below', icon: <LuPlus className="w-[18px] h-[18px]" />, onSelect: () => onInsertBlockAfter(index) },
+    { id: 'up', label: 'Move up', disabled: index === 0, icon: <LuArrowUp className="w-[18px] h-[18px]" />, onSelect: () => onMove(index, index - 1) },
+    { id: 'down', label: 'Move down', disabled: index === totalBlocks - 1, icon: <LuArrowDown className="w-[18px] h-[18px]" />, onSelect: () => onMove(index, index + 1) },
+    'divider',
+    { id: 'delete', label: 'Delete block', danger: true, icon: <LuTrash2 className="w-[18px] h-[18px]" />, onSelect: () => onDelete(block.id, { notify: true }) }
+  ];
+
+  const typeInfo = blockTypeOf(block.type);
+  const isCard = CARD_TYPES.includes(block.type);
+  const showTouchGrip = coarse && (isActive || menuOpen);
+
+  const gripButton = (extra = '') => (
+    <button
+      ref={gripRef}
+      type="button"
+      onClick={() => setMenuOpen((v) => !v)}
+      aria-label={`${typeInfo.name} block options`}
+      aria-haspopup="menu"
+      aria-expanded={menuOpen}
+      title="Block options"
+      className={`${ICON_BTN} ${extra} ${menuOpen ? '!bg-nt-tray !text-nt-ink' : ''}`}
+    >
+      <LuGripVertical className="w-[18px] h-[18px]" aria-hidden="true" />
+    </button>
+  );
+
+  // Card blocks carry the grip in their own header on phones, so it never covers their tools
+  const cardMenuButton = isPhone && isCard ? gripButton() : null;
+
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative my-2 font-sans text-neutral-900 dark:text-slate-100 transition-colors w-full rounded-lg"
+      data-block-id={block.id}
+      onPointerDownCapture={() => onActivate(block.id)}
+      onFocusCapture={() => onActivate(block.id)}
+      className="group/block relative w-full"
     >
-      {/* Clean Hover Controls (Positioned responsively on mobile and desktop) */}
-      <div
-        className={`absolute sm:-left-24 sm:top-1 -top-7 left-0 flex items-center space-x-1 transition-opacity duration-150 z-30 shrink-0 bg-white/95 dark:bg-[#202020]/95 backdrop-blur-sm border border-neutral-200 dark:border-[#333333] rounded-lg px-1.5 py-0.5 shadow-md ${
-          isHovered ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <button
-          onClick={handlePlusClick}
-          className="p-1 rounded text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-[#2e2e2e] transition-colors"
-          title="Add block / open '/' commands"
+      {/* Laptops and tablets: grip and + in the left margin */}
+      {!isPhone && (!coarse || showTouchGrip) && (
+        <div
+          className={`absolute -left-12 top-0.5 flex flex-col gap-0.5 transition-opacity ${
+            coarse || menuOpen
+              ? 'opacity-100'
+              : 'opacity-0 pointer-events-none group-hover/block:opacity-100 group-hover/block:pointer-events-auto group-focus-within/block:opacity-100 group-focus-within/block:pointer-events-auto'
+          }`}
         >
-          <FaPlus className="w-2.5 h-2.5" />
-        </button>
+          {gripButton(coarse ? '' : '!w-8 !h-8')}
+          <button type="button" onClick={handlePlusClick} aria-label="Add block below" title="Add block below" className={`${ICON_BTN} ${coarse ? '' : '!w-8 !h-8'}`}>
+            <LuPlus className="w-[18px] h-[18px]" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
-        <button
-          onClick={() => onMove(index, index - 1)}
-          disabled={index === 0}
-          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white disabled:opacity-20 dark:hover:bg-[#2e2e2e] rounded transition-colors"
-          title="Move Up"
-        >
-          <FaArrowUp className="w-2.5 h-2.5" />
-        </button>
+      {/* Phones: the grip floats at the top right of the text block you are in */}
+      {isPhone && !isCard && showTouchGrip && (
+        <div className="absolute -top-4 -right-1 z-10">{gripButton('!rounded-full !bg-nt-surface !text-nt-ink shadow-nt-bar')}</div>
+      )}
 
-        <button
-          onClick={() => onMove(index, index + 1)}
-          disabled={index === totalBlocks - 1}
-          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white disabled:opacity-20 dark:hover:bg-[#2e2e2e] rounded transition-colors"
-          title="Move Down"
-        >
-          <FaArrowDown className="w-2.5 h-2.5" />
-        </button>
+      {menuOpen && (
+        <Menu title={`${typeInfo.name} block`} items={menuItems} isPhone={isPhone} anchorRef={gripRef} align="start" onClose={() => setMenuOpen(false)} />
+      )}
 
-        <button
-          onClick={() => onDelete(block.id)}
-          className="p-1 text-neutral-500 hover:text-red-500 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-[#2e2e2e] rounded transition-colors"
-          title="Delete Block"
-        >
-          <FaTrash className="w-2.5 h-2.5" />
-        </button>
-      </div>
-
-      {/* Main Block Content Renderer */}
       <div className="relative w-full">
         {block.type === 'heading1' && (
-          <input
-            type="text"
+          <AutoTextarea
+            ref={inputRef}
             value={block.content}
-            onChange={(e) => handleContentChange(e.target.value)}
+            aria-label="Heading 1"
+            onChange={(e) => handleContentChange(e.target.value.replace(/\n/g, ' '))}
             onKeyDown={handleKeyDown}
-            className="w-full text-2xl sm:text-3xl font-bold bg-transparent text-neutral-900 dark:text-white focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
-            placeholder="Heading 1..."
+            className={`font-bold text-nt-ink placeholder:text-nt-muted pt-4 pb-1 ${isPhone ? 'text-2xl leading-8' : 'text-[28px] leading-9'}`}
+            placeholder="Heading 1"
           />
         )}
 
         {block.type === 'heading2' && (
-          <input
-            type="text"
+          <AutoTextarea
+            ref={inputRef}
             value={block.content}
-            onChange={(e) => handleContentChange(e.target.value)}
+            aria-label="Heading 2"
+            onChange={(e) => handleContentChange(e.target.value.replace(/\n/g, ' '))}
             onKeyDown={handleKeyDown}
-            className="w-full text-lg sm:text-xl font-semibold bg-transparent text-neutral-800 dark:text-slate-200 focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
-            placeholder="Heading 2..."
+            className={`font-semibold text-nt-ink placeholder:text-nt-muted pt-3 pb-0.5 ${isPhone ? 'text-xl leading-7' : 'text-[22px] leading-[30px]'}`}
+            placeholder="Heading 2"
           />
         )}
 
         {block.type === 'heading3' && (
-          <input
-            type="text"
+          <AutoTextarea
+            ref={inputRef}
             value={block.content}
-            onChange={(e) => handleContentChange(e.target.value)}
+            aria-label="Heading 3"
+            onChange={(e) => handleContentChange(e.target.value.replace(/\n/g, ' '))}
             onKeyDown={handleKeyDown}
-            className="w-full text-base font-semibold bg-transparent text-indigo-600 dark:text-indigo-300 focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-500/50 py-1"
-            placeholder="Heading 3..."
+            className="text-lg leading-[26px] font-semibold text-nt-ink placeholder:text-nt-muted pt-2"
+            placeholder="Heading 3"
           />
         )}
 
         {block.type === 'paragraph' && (
-          <textarea
+          <AutoTextarea
+            ref={inputRef}
             value={block.content}
+            aria-label="Text"
             onChange={(e) => handleContentChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Backspace' && (!block.content || block.content === '')) {
@@ -222,42 +228,87 @@ export default function NoteBlockItem({
                 }
               }
             }}
-            rows={Math.max(1, (block.content.match(/\n/g) || []).length + 1)}
-            className="w-full bg-transparent text-sm text-neutral-800 dark:text-slate-300 focus:outline-none resize-none leading-relaxed placeholder-neutral-400 dark:placeholder-slate-600 focus:placeholder-neutral-500 dark:focus:placeholder-slate-500"
-            placeholder="Type your notes or press '/' for commands..."
+            className="text-base leading-[26px] text-nt-ink placeholder:text-nt-muted py-1 max-w-[680px]"
+            placeholder="Type, or press / for blocks"
           />
         )}
 
-        {block.type === 'math' && (
-          <div className="space-y-2 p-3.5 rounded-xl bg-neutral-100/90 dark:bg-[#202020] border border-neutral-200 dark:border-[#333333] w-full transition-colors">
-            <div className="flex items-center justify-between text-[11px] text-purple-600 dark:text-purple-400 font-mono font-semibold">
-              <span>LaTeX Math Code</span>
-              <span className="text-[10px] text-neutral-500 dark:text-slate-500">Live KaTeX Render</span>
+        {block.type === 'math' &&
+          (editingMath ? (
+            <div className="rounded-2xl border border-nt-math bg-nt-surface ring-[3px] ring-nt-math-tint my-1">
+              <div className="flex items-center gap-2.5 pl-3.5 pr-2 py-2">
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${typeInfo.tile}`} aria-hidden="true">
+                  <LuSigma className="w-4 h-4" />
+                </span>
+                <span className="flex-1 text-[13px] font-semibold text-nt-math">Formula</span>
+                <button type="button" onClick={() => setEditingMath(false)} className={`${BTN_SECONDARY} !h-9`}>
+                  Done
+                </button>
+              </div>
+              <div className="px-3.5 pb-3.5 flex flex-col gap-3">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-[13px] font-semibold text-nt-text2">LaTeX</span>
+                  <span className={FIELD}>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={block.content}
+                      onChange={(e) => handleContentChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.stopPropagation();
+                          setEditingMath(false);
+                          return;
+                        }
+                        handleKeyDown(e);
+                      }}
+                      className={`${FIELD_INPUT} font-nt-mono`}
+                      placeholder="e.g. Z = \frac{\bar{X} - \mu}{\sigma/\sqrt{n}}"
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                    />
+                  </span>
+                </label>
+                <div className="rounded-xl bg-nt-math-tint min-h-[88px] px-4 py-3 flex items-center justify-center overflow-x-auto">
+                  <KaTeXRenderer math={block.content || 'e^{i\\pi} + 1 = 0'} blockMode={true} />
+                </div>
+              </div>
             </div>
-            <input
-              type="text"
-              value={block.content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-white dark:bg-[#181818] border border-neutral-300 dark:border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs font-mono text-purple-700 dark:text-purple-300 focus:outline-none focus:border-purple-500 transition-colors"
-              placeholder="e.g. Z = \frac{\bar{X} - \mu}{\sigma/\sqrt{n}}"
-            />
-            <div className="p-3 rounded-lg bg-white/80 dark:bg-[#141414] border border-neutral-200 dark:border-[#262626] flex items-center justify-center transition-colors">
-              <KaTeXRenderer math={block.content || 'e^{i\\pi} + 1 = 0'} blockMode={true} />
+          ) : (
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Formula. Press Enter to edit"
+              title="Edit formula"
+              onClick={() => setEditingMath(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setEditingMath(true);
+                }
+              }}
+              className="my-1 rounded-2xl bg-nt-math-tint min-h-[104px] px-4 py-4 flex items-center justify-center overflow-x-auto cursor-text outline-none focus-visible:ring-2 focus-visible:ring-nt-accent"
+            >
+              {block.content ? (
+                <KaTeXRenderer math={block.content} blockMode={true} />
+              ) : (
+                <span className="text-sm text-nt-text2">Empty formula. Tap to write LaTeX.</span>
+              )}
             </div>
-          </div>
-        )}
+          ))}
 
         {block.type === 'callout' && (
-          <div className="flex items-start space-x-3 p-4 rounded-xl bg-amber-50/90 dark:bg-[#25231c] border border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs w-full transition-colors">
-            <FaLightbulb className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
-            <input
-              type="text"
+          <div className="my-1 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-nt-callout-tint">
+            <LuLightbulb className="w-[18px] h-[18px] text-nt-callout shrink-0 mt-[3px]" aria-hidden="true" />
+            <AutoTextarea
+              ref={inputRef}
               value={block.content}
-              onChange={(e) => handleContentChange(e.target.value)}
+              aria-label="Callout"
+              onChange={(e) => handleContentChange(e.target.value.replace(/\n/g, ' '))}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-amber-950 dark:text-amber-100 focus:outline-none placeholder-amber-600/50 dark:placeholder-amber-500/50 font-medium"
-              placeholder="Callout note or key rule..."
+              className="text-[15px] leading-6 text-nt-ink placeholder:text-nt-callout/70"
+              placeholder="A rule, a tip, a warning"
             />
           </div>
         )}
@@ -267,30 +318,16 @@ export default function NoteBlockItem({
             config={block.widgetConfig}
             onChange={(newConfig) => onUpdate({ ...block, widgetConfig: newConfig })}
             onOpenPicker={() => onOpenPicker(block.id)}
+            menuButton={cardMenuButton}
           />
         )}
 
-        {block.type === 'quiz' && (
-          <QuizBlock
-            block={block}
-            onUpdate={onUpdate}
-          />
-        )}
+        {block.type === 'quiz' && <QuizBlock block={block} onUpdate={onUpdate} menuButton={cardMenuButton} />}
 
-        {block.type === 'ink' && (
-          <InkSketchBlock
-            block={block}
-            onUpdate={onUpdate}
-          />
-        )}
+        {block.type === 'ink' && <InkSketchBlock block={block} onUpdate={onUpdate} menuButton={cardMenuButton} />}
 
         {/* Slash Command Floating Menu Popover */}
-        <SlashCommandMenu
-          isOpen={isSlashOpen}
-          query={slashQuery}
-          onSelect={handleSelectSlashItem}
-          onClose={() => setIsSlashOpen(false)}
-        />
+        <SlashCommandMenu isOpen={isSlashOpen} query={slashQuery} onSelect={handleSelectSlashItem} onClose={() => setIsSlashOpen(false)} />
       </div>
     </div>
   );

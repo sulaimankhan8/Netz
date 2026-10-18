@@ -1,90 +1,23 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  FaParagraph, 
-  FaHeading, 
-  FaSquareRootAlt, 
-  FaLightbulb, 
-  FaCalculator, 
-  FaCheck
-} from 'react-icons/fa';
+import { BLOCK_TYPES } from '../utils/blockTypes';
 
+/**
+ * The / menu: the same nine blocks, names, icons and colours as the Add block grid
+ * (utils/blockTypes.js). Arrow keys move, Enter adds, Escape closes.
+ */
 export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef(null);
 
-  const mainItems = [
-    {
-      id: 'paragraph',
-      title: 'Text / Paragraph',
-      subtitle: 'Plain text notes and documentation',
-      icon: <FaParagraph className="w-4 h-4 text-slate-400" />,
-      type: 'paragraph'
-    },
-    {
-      id: 'heading1',
-      title: 'Heading 1',
-      subtitle: '# Large section title',
-      icon: <FaHeading className="w-4 h-4 text-blue-400" />,
-      type: 'heading1'
-    },
-    {
-      id: 'heading2',
-      title: 'Heading 2',
-      subtitle: '## Medium section title',
-      icon: <FaHeading className="w-3.5 h-3.5 text-cyan-400" />,
-      type: 'heading2'
-    },
-    {
-      id: 'heading3',
-      title: 'Heading 3',
-      subtitle: '### Small section title',
-      icon: <FaHeading className="w-3 h-3 text-indigo-400" />,
-      type: 'heading3'
-    },
-    {
-      id: 'math',
-      title: 'LaTeX Math Formula',
-      subtitle: '$$ Render KaTeX mathematical equations',
-      icon: <FaSquareRootAlt className="w-4 h-4 text-purple-400" />,
-      type: 'math'
-    },
-    {
-      id: 'callout',
-      title: 'Callout Box',
-      subtitle: '💡 Key takeaway or important rule card',
-      icon: <FaLightbulb className="w-4 h-4 text-amber-400" />,
-      type: 'callout'
-    },
-    {
-      id: 'widget-picker',
-      title: 'Math Calculator Widget',
-      subtitle: '🧮 Embed solvers (Bisection, Newton, Euler, Z-Test...)',
-      icon: <FaCalculator className="w-4 h-4 text-indigo-400" />,
-      type: 'open-picker'
-    },
-    {
-      id: 'quiz',
-      title: 'Interactive Quiz Block',
-      subtitle: 'Self-assessment check (MCQ or numeric with tolerance)',
-      icon: <FaLightbulb className="w-4 h-4 text-emerald-400" />,
-      type: 'quiz'
-    },
-    {
-      id: 'ink',
-      title: 'Handwritten Ink / Sketch',
-      subtitle: 'Vector strokes or diagram from Whiteboard',
-      icon: <FaSquareRootAlt className="w-4 h-4 text-pink-400" />,
-      type: 'ink'
-    }
-  ];
-
-  const filteredItems = mainItems.filter(
+  const q = query.toLowerCase();
+  const filteredItems = BLOCK_TYPES.filter(
     (item) =>
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.subtitle.toLowerCase().includes(query.toLowerCase()) ||
-      item.id.toLowerCase().includes(query.toLowerCase())
+      item.name.toLowerCase().includes(q) ||
+      item.hint.toLowerCase().includes(q) ||
+      item.id.toLowerCase().includes(q) ||
+      item.keywords.includes(q)
   );
 
   useEffect(() => {
@@ -117,57 +50,56 @@ export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, filteredItems, selectedIndex, onSelect, onClose]);
 
+  // Keep the highlighted row in view
+  useEffect(() => {
+    menuRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex]);
+
   if (!isOpen) return null;
 
   return (
     <div
       ref={menuRef}
-      className="absolute left-0 top-full mt-1 z-[100] w-72 max-h-64 bg-white dark:bg-[#202020] border border-neutral-200 dark:border-[#333333] rounded-xl shadow-2xl overflow-hidden flex flex-col font-sans text-neutral-900 dark:text-slate-100 animate-fadeIn"
+      role="listbox"
+      aria-label="Blocks"
+      className="absolute left-0 top-full mt-1 z-[100] w-[min(340px,calc(100vw-40px))] max-h-80 flex flex-col bg-nt-surface border border-nt-line rounded-2xl shadow-nt-menu overflow-hidden text-nt-ink"
     >
-      {/* Header */}
-      <div className="px-3 py-2 border-b border-neutral-200 dark:border-[#2e2e2e] bg-neutral-50 dark:bg-[#181818] flex items-center justify-between text-[11px] text-neutral-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-        <span>Slash Commands</span>
-        <span className="text-[10px] text-neutral-400 dark:text-slate-500 font-mono">esc to close</span>
-      </div>
+      <div className="px-3.5 pt-2.5 pb-1 text-xs font-semibold text-nt-text2">Blocks</div>
 
-      {/* Item List */}
-      <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 custom-notion-scrollbar">
+      <div className="flex-1 overflow-y-auto px-1.5 pb-1.5 custom-notion-scrollbar">
         {filteredItems.length === 0 ? (
-          <div className="p-4 text-center text-xs text-neutral-500 dark:text-slate-500">
-            No block matching "/{query}"
-          </div>
+          <div className="p-4 text-center text-sm text-nt-text2">No block matches &quot;/{query}&quot;</div>
         ) : (
           filteredItems.map((item, idx) => {
             const isSelected = idx === selectedIndex;
             return (
-              <div
+              <button
                 key={item.id}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                data-selected={isSelected}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onSelect(item)}
                 onMouseEnter={() => setSelectedIndex(idx)}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  isSelected 
-                    ? 'bg-indigo-50 dark:bg-[#2e2e2e] text-indigo-700 dark:text-white font-medium' 
-                    : 'hover:bg-neutral-100 dark:hover:bg-[#282828] text-neutral-700 dark:text-slate-300'
-                }`}
+                className={`w-full flex items-center gap-3 px-2.5 min-h-[48px] rounded-xl text-left transition-colors ${isSelected ? 'bg-nt-tray' : ''}`}
               >
-                <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-[#181818] border border-neutral-200 dark:border-[#333333] shrink-0">
-                  {item.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-semibold truncate">{item.title}</h4>
-                  <p className="text-[10px] text-neutral-500 dark:text-slate-400 truncate">{item.subtitle}</p>
-                </div>
-                {isSelected && <FaCheck className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />}
-              </div>
+                <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.tile}`} aria-hidden="true">
+                  <item.Icon className="w-4 h-4" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[15px] font-medium truncate">{item.name}</span>
+                  <span className="block text-xs text-nt-text2 truncate">{item.hint}</span>
+                </span>
+              </button>
             );
           })
         )}
       </div>
 
-      {/* Footer hint */}
-      <div className="px-3 py-1 border-t border-neutral-200 dark:border-[#2e2e2e] bg-neutral-50 dark:bg-[#181818] text-[10px] text-neutral-500 dark:text-slate-500 flex items-center justify-between">
-        <span>↑↓ Navigate</span>
-        <span>↵ Select</span>
+      <div className="hidden [@media(pointer:fine)]:flex px-3.5 py-2 border-t border-nt-line text-xs text-nt-text2 justify-between">
+        <span>↑ ↓ to move · Enter to add</span>
+        <span>Esc to close</span>
       </div>
     </div>
   );

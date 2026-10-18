@@ -36,13 +36,27 @@ module.exports = {
           voice: 'rgb(var(--pg-voice) / <alpha-value>)',
           'voice-tint': 'rgb(var(--pg-voice-tint) / <alpha-value>)',
         },
+        // Notes design tokens: values live in src/app/(Primary.pages)/Notes/notes.css
+        nt: Object.fromEntries(
+          [
+            'paper', 'surface', 'tray', 'line', 'ink', 'on-ink', 'text2', 'muted',
+            'accent', 'accent-fill', 'accent-tint', 'accent-on-tint',
+            'danger', 'danger-tint', 'ok', 'ok-tint', 'notice-action',
+            'math', 'math-tint', 'callout', 'callout-tint', 'solver', 'solver-tint',
+            'quiz', 'quiz-tint', 'sketch', 'sketch-tint',
+          ].map((name) => [name, `rgb(var(--nt-${name}) / <alpha-value>)`])
+        ),
       },
       boxShadow: {
         'pg-bar': 'var(--pg-shadow-bar)',
         'pg-menu': 'var(--pg-shadow-menu)',
+        'nt-bar': 'var(--nt-shadow-bar)',
+        'nt-menu': 'var(--nt-shadow-menu)',
       },
       fontFamily: {
         pg: ['var(--pg-font-sans)', 'Segoe UI', 'system-ui', 'sans-serif'],
+        nt: ['var(--nt-font-sans)', 'Segoe UI', 'system-ui', 'sans-serif'],
+        'nt-mono': ['var(--nt-font-mono)', 'ui-monospace', 'Consolas', 'monospace'],
       },
       fontSize: {
         'pg-cap': ['12px', '16px'],

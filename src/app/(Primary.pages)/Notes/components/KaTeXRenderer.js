@@ -27,12 +27,12 @@ export default function KaTeXRenderer({ math, blockMode = false }) {
   }, [math, blockMode]);
 
   if (error) {
-    return <span className="text-red-400 font-mono text-xs">LaTeX Error: {error}</span>;
+    return <span className="text-nt-danger font-nt-mono text-xs">LaTeX Error: {error}</span>;
   }
 
   return (
     <span
-      className="katex-rendered-output text-neutral-900 dark:text-slate-100"
+      className="katex-rendered-output text-nt-ink"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

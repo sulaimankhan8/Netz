@@ -2,21 +2,10 @@
 
 import { useState } from 'react';
 import KaTeXRenderer from './KaTeXRenderer';
-import { 
-  FaQuestionCircle, 
-  FaCheck, 
-  FaTimes, 
-  FaEdit, 
-  FaEye, 
-  FaChevronDown, 
-  FaChevronUp, 
-  FaRedo,
-  FaLightbulb,
-  FaPlus,
-  FaTrash
-} from 'react-icons/fa';
+import { LuCheck, LuChevronDown, LuEye, LuHelpCircle, LuPencil, LuPlus, LuRotateCcw, LuTrash2, LuX } from 'react-icons/lu';
+import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, FIELD, FIELD_INPUT, ICON_BTN, LABEL, Segmented } from './ui';
 
-export default function QuizBlock({ block, onUpdate }) {
+export default function QuizBlock({ block, onUpdate, menuButton = null }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -97,310 +86,244 @@ export default function QuizBlock({ block, onUpdate }) {
     setShowExplanation(false);
   };
 
+  // How an answer card looks: right and wrong carry a tick or cross and words, not colour alone
+  const optionCard = (idx) => {
+    const isSelected = selectedOption === idx;
+    const isThisCorrect = idx === config.correctOptionIndex;
+    if (hasSubmitted && isThisCorrect) {
+      return { card: 'border-nt-ok ring-1 ring-inset ring-nt-ok bg-nt-ok-tint', badge: 'bg-nt-ok text-nt-surface', note: isSelected ? 'Your answer · correct' : 'Correct answer', noteClass: 'text-nt-ok', mark: 'right' };
+    }
+    if (hasSubmitted && isSelected) {
+      return { card: 'border-nt-danger ring-1 ring-inset ring-nt-danger bg-nt-danger-tint', badge: 'bg-nt-danger text-nt-surface', note: 'Your answer', noteClass: 'text-nt-danger', mark: 'wrong' };
+    }
+    if (isSelected) {
+      return { card: 'border-nt-accent ring-1 ring-inset ring-nt-accent bg-nt-accent-tint', badge: 'bg-nt-accent-fill text-white', note: null };
+    }
+    return { card: 'border-nt-line bg-nt-surface hover:bg-nt-tray/60', badge: 'bg-nt-tray text-nt-text2', note: null };
+  };
+
+  const textareaClass = 'w-full rounded-xl border border-nt-line bg-nt-surface px-3 py-2.5 text-sm text-nt-ink outline-none focus:border-nt-accent focus:ring-2 focus:ring-nt-accent/20';
+
   return (
-    <div className="my-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden text-neutral-900 dark:text-slate-100 font-sans transition-all hover:border-indigo-400 dark:hover:border-indigo-500/40">
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-neutral-50 dark:bg-slate-950/80 border-b border-neutral-200 dark:border-slate-800/80 gap-2">
-        <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-            <FaQuestionCircle className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
-              <span>Interactive Knowledge Check</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-mono">
-                {config.mode === 'mcq' ? 'Multiple Choice' : 'Numeric Calculation'}
-              </span>
-            </h4>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {hasSubmitted && (
-            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center space-x-1 ${
-              isCorrect 
-                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800' 
-                : 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800'
-            }`}>
-              {isCorrect ? <FaCheck className="w-2.5 h-2.5" /> : <FaTimes className="w-2.5 h-2.5" />}
-              <span>{isCorrect ? 'Correct!' : 'Incorrect'}</span>
-            </span>
-          )}
-
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center space-x-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-            title={isEditing ? 'Save and preview test' : 'Edit question & answers'}
-          >
-            {isEditing ? <FaEye className="w-3 h-3" /> : <FaEdit className="w-3 h-3" />}
-            <span className="text-[11px]">{isEditing ? 'Preview Mode' : 'Edit Quiz'}</span>
-          </button>
-        </div>
+    <div className={`my-2 rounded-2xl border bg-nt-surface text-nt-ink ${isEditing ? 'border-nt-quiz ring-[3px] ring-nt-quiz-tint' : 'border-nt-line'}`}>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 pl-3.5 pr-1.5 py-1.5 min-h-[56px]">
+        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-nt-quiz-tint text-nt-quiz" aria-hidden="true">
+          <LuHelpCircle className="w-4 h-4" />
+        </span>
+        <span className="text-[13px] font-semibold text-nt-quiz shrink-0">Quiz</span>
+        <span className="flex-1 min-w-0 text-[13px] text-nt-text2 truncate">{config.mode === 'mcq' ? 'Multiple choice' : 'Number answer'}</span>
+        <button
+          type="button"
+          onClick={() => setIsEditing(!isEditing)}
+          className={`${isEditing ? BTN_SECONDARY : BTN_QUIET} !h-9 !px-3`}
+          title={isEditing ? 'See it as a student does' : 'Edit the question and answers'}
+        >
+          {isEditing ? <LuEye className="w-4 h-4" aria-hidden="true" /> : <LuPencil className="w-4 h-4" aria-hidden="true" />}
+          {isEditing ? 'Preview' : 'Edit'}
+        </button>
+        {menuButton}
       </div>
 
-      {/* Main Content Area */}
-      <div className="p-4 sm:p-5 space-y-4">
-        {/* AUTHOR / EDIT MODE */}
+      <div className="px-4 pb-4 flex flex-col gap-4">
         {isEditing ? (
-          <div className="space-y-4 bg-neutral-50 dark:bg-slate-950/50 p-4 rounded-xl border border-neutral-200 dark:border-slate-800">
-            {/* Mode Switcher */}
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="font-semibold text-neutral-600 dark:text-slate-400 text-[11px] uppercase">Quiz Type:</span>
-              <button
-                type="button"
-                onClick={() => handleConfigChange({ mode: 'mcq' })}
-                className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                  config.mode === 'mcq'
-                    ? 'bg-indigo-600 text-white shadow'
-                    : 'bg-neutral-200 dark:bg-slate-800 text-neutral-700 dark:text-slate-300'
-                }`}
-              >
-                Multiple Choice (MCQ)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleConfigChange({ mode: 'numeric' })}
-                className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                  config.mode === 'numeric'
-                    ? 'bg-indigo-600 text-white shadow'
-                    : 'bg-neutral-200 dark:bg-slate-800 text-neutral-700 dark:text-slate-300'
-                }`}
-              >
-                Numeric Calculation
-              </button>
-            </div>
+          /* AUTHOR / EDIT MODE */
+          <>
+            <Segmented
+              label="Quiz type"
+              value={config.mode}
+              onChange={(mode) => handleConfigChange({ mode })}
+              options={[
+                { value: 'mcq', label: 'Multiple choice' },
+                { value: 'numeric', label: 'Number' }
+              ]}
+            />
 
-            {/* Question Input */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-slate-300 mb-1">
-                Question Text (LaTeX formula codes supported):
-              </label>
+            <label className="flex flex-col gap-1.5">
+              <span className={LABEL}>Question (LaTeX allowed)</span>
               <textarea
                 value={config.question}
                 onChange={(e) => handleConfigChange({ question: e.target.value })}
                 rows={2}
-                className="w-full bg-white dark:bg-slate-900 border border-neutral-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-indigo-500 font-sans"
-                placeholder="e.g. Find root of x^3 - 4x - 9 = 0 using Bisection Method..."
+                className={textareaClass}
+                placeholder="e.g. Find the root of x^3 - 4x - 9 = 0 with the bisection method"
               />
-            </div>
+            </label>
 
-            {/* MCQ Options Authoring */}
             {config.mode === 'mcq' && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-neutral-700 dark:text-slate-300">
-                    Answer Options (Select the radio of correct choice):
-                  </label>
-                  <button
-                    onClick={handleAddOption}
-                    className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center space-x-1"
-                  >
-                    <FaPlus className="w-2.5 h-2.5" />
-                    <span>Add Option</span>
-                  </button>
-                </div>
-                {(config.options || []).map((opt, idx) => (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="correctOption"
-                      checked={config.correctOptionIndex === idx}
-                      onChange={() => handleConfigChange({ correctOptionIndex: idx })}
-                      className="text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 cursor-pointer"
-                    />
-                    <span className="text-xs font-mono font-bold text-neutral-500 dark:text-slate-400 w-5">
-                      {String.fromCharCode(65 + idx)}.
-                    </span>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                      className="flex-1 bg-white dark:bg-slate-900 border border-neutral-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                    />
-                    {(config.options || []).length > 2 && (
-                      <button
-                        onClick={() => handleRemoveOption(idx)}
-                        className="text-neutral-400 hover:text-red-500 p-1"
-                        title="Delete option"
-                      >
-                        <FaTrash className="w-3 h-3" />
-                      </button>
-                    )}
+              <fieldset className="flex flex-col gap-2">
+                <legend className={`${LABEL} mb-1.5`}>Answers · choose the correct one</legend>
+                {(config.options || []).map((opt, idx) => {
+                  const letter = String.fromCharCode(65 + idx);
+                  return (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`correct-${block.id}`}
+                        checked={config.correctOptionIndex === idx}
+                        onChange={() => handleConfigChange({ correctOptionIndex: idx })}
+                        aria-label={`Answer ${letter} is correct`}
+                        className="w-5 h-5 shrink-0 cursor-pointer accent-[rgb(79_70_229)]"
+                      />
+                      <span className="w-5 text-sm font-semibold text-nt-text2" aria-hidden="true">
+                        {letter}
+                      </span>
+                      <span className={`${FIELD} flex-1 ${config.correctOptionIndex === idx ? '!border-nt-ok' : ''}`}>
+                        <input type="text" value={opt} aria-label={`Answer ${letter}`} onChange={(e) => handleOptionChange(idx, e.target.value)} className={FIELD_INPUT} />
+                      </span>
+                      {(config.options || []).length > 2 && (
+                        <button type="button" onClick={() => handleRemoveOption(idx)} className={ICON_BTN} aria-label={`Remove answer ${letter}`} title="Remove answer">
+                          <LuTrash2 className="w-[18px] h-[18px]" aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {(config.options || []).length < 6 && (
+                  <div>
+                    <button type="button" onClick={handleAddOption} className={`${BTN_QUIET} !text-nt-accent !px-2`}>
+                      <LuPlus className="w-4 h-4" aria-hidden="true" />
+                      Add answer
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </fieldset>
             )}
 
-            {/* Numeric Answer Authoring */}
             {config.mode === 'numeric' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-slate-300 mb-1">
-                    Correct Target Value:
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={config.correctNumericValue}
-                    onChange={(e) => handleConfigChange({ correctNumericValue: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-white dark:bg-slate-900 border border-neutral-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-slate-300 mb-1">
-                    Acceptable Tolerance (±):
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={config.tolerance}
-                    onChange={(e) => handleConfigChange({ tolerance: parseFloat(e.target.value) || 0.001 })}
-                    className="w-full bg-white dark:bg-slate-900 border border-neutral-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
+                <label className="flex flex-col gap-1.5">
+                  <span className={LABEL}>Correct answer</span>
+                  <span className={FIELD}>
+                    <input
+                      type="number"
+                      step="any"
+                      value={config.correctNumericValue}
+                      onChange={(e) => handleConfigChange({ correctNumericValue: parseFloat(e.target.value) || 0 })}
+                      className={`${FIELD_INPUT} font-nt-mono`}
+                    />
+                  </span>
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={LABEL}>Allowed difference (±)</span>
+                  <span className={FIELD}>
+                    <input
+                      type="number"
+                      step="any"
+                      value={config.tolerance}
+                      onChange={(e) => handleConfigChange({ tolerance: parseFloat(e.target.value) || 0.001 })}
+                      className={`${FIELD_INPUT} font-nt-mono`}
+                    />
+                  </span>
+                </label>
               </div>
             )}
 
-            {/* Explanation Input */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-slate-300 mb-1">
-                Step-by-Step Derivation / Solution (LaTeX math supported):
-              </label>
+            <label className="flex flex-col gap-1.5">
+              <span className={LABEL}>Worked solution (LaTeX allowed)</span>
               <textarea
                 value={config.explanation}
                 onChange={(e) => handleConfigChange({ explanation: e.target.value })}
                 rows={2}
-                className="w-full bg-white dark:bg-slate-900 border border-neutral-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-indigo-500 font-sans"
-                placeholder="Explain how the answer is derived..."
+                className={textareaClass}
+                placeholder="Explain how the answer is found"
               />
-            </div>
-          </div>
+            </label>
+          </>
         ) : (
           /* STUDENT / TEST MODE */
-          <div className="space-y-4">
-            {/* Question Display */}
-            <div className="text-sm font-medium text-neutral-900 dark:text-slate-100 leading-relaxed">
-              <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-1.5">Q:</span>
-              <span>{config.question}</span>
-            </div>
+          <>
+            <p className="m-0 text-base leading-[25px] font-semibold">{config.question}</p>
 
-            {/* MCQ Options Interactive Selection */}
             {config.mode === 'mcq' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="group" aria-label="Answers">
                 {(config.options || []).map((opt, idx) => {
-                  const isSelected = selectedOption === idx;
-                  const isThisCorrect = idx === config.correctOptionIndex;
-
-                  let borderClass = 'border-neutral-200 dark:border-slate-800 bg-neutral-50/70 dark:bg-slate-950/60 hover:bg-neutral-100 dark:hover:bg-slate-800/50';
-                  if (isSelected) {
-                    borderClass = 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 shadow-sm';
-                  }
-
-                  if (hasSubmitted) {
-                    if (isThisCorrect) {
-                      borderClass = 'border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 ring-1 ring-emerald-500';
-                    } else if (isSelected && !isThisCorrect) {
-                      borderClass = 'border-red-500 bg-red-50/90 dark:bg-red-950/50 text-red-900 dark:text-red-200 ring-1 ring-red-500';
-                    }
-                  }
-
+                  const look = optionCard(idx);
                   return (
-                    <div
+                    <button
                       key={idx}
-                      onClick={() => !hasSubmitted && setSelectedOption(idx)}
-                      className={`p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${borderClass}`}
+                      type="button"
+                      data-print="keep"
+                      aria-pressed={selectedOption === idx}
+                      disabled={hasSubmitted}
+                      onClick={() => setSelectedOption(idx)}
+                      className={`flex items-center gap-3 min-h-[56px] px-3.5 py-2.5 rounded-xl border text-left text-[15px] leading-[21px] text-nt-ink transition-colors disabled:cursor-default ${look.card}`}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0 ${
-                        isSelected 
-                          ? 'bg-indigo-600 text-white' 
-                          : 'bg-neutral-200 dark:bg-slate-800 text-neutral-600 dark:text-slate-400'
-                      }`}>
-                        {String.fromCharCode(65 + idx)}
-                      </div>
-                      <span className="text-xs leading-normal">{opt}</span>
-                    </div>
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold ${look.badge}`} aria-hidden="true">
+                        {look.mark === 'right' ? <LuCheck className="w-4 h-4" /> : look.mark === 'wrong' ? <LuX className="w-4 h-4" /> : String.fromCharCode(65 + idx)}
+                      </span>
+                      <span className="flex flex-col gap-0.5">
+                        <span>{opt}</span>
+                        {look.note && <span className={`text-[13px] font-semibold ${look.noteClass}`}>{look.note}</span>}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
             )}
 
-            {/* Numeric Input Field */}
             {config.mode === 'numeric' && (
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder="Enter your calculated answer..."
-                      value={numericInput}
-                      disabled={hasSubmitted}
-                      onChange={(e) => setNumericInput(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-xs font-mono text-neutral-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <span className="text-[11px] text-neutral-500 dark:text-slate-400 font-mono self-center">
-                    Tolerance: ±{config.tolerance}
-                  </span>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <span className={`${FIELD} flex-1 ${hasSubmitted ? (isCorrect ? '!border-nt-ok' : '!border-nt-danger') : ''}`}>
+                  <input
+                    type="number"
+                    step="any"
+                    aria-label="Your answer"
+                    placeholder="Your answer"
+                    value={numericInput}
+                    disabled={hasSubmitted}
+                    onChange={(e) => setNumericInput(e.target.value)}
+                    className={`${FIELD_INPUT} font-nt-mono`}
+                  />
+                </span>
+                <span className="text-[13px] text-nt-text2 tabular-nums">Allowed difference ±{config.tolerance}</span>
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center space-x-2">
-                {!hasSubmitted ? (
-                  <button
-                    onClick={config.mode === 'mcq' ? handleSubmitMcq : handleSubmitNumeric}
-                    disabled={config.mode === 'mcq' ? selectedOption === null : !numericInput}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
-                  >
-                    <FaCheck className="w-3 h-3" />
-                    <span>Check Answer</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleReset}
-                    className="flex items-center space-x-1.5 bg-neutral-200 hover:bg-neutral-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-neutral-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all"
-                  >
-                    <FaRedo className="w-3 h-3" />
-                    <span>Try Again</span>
-                  </button>
-                )}
-              </div>
+            {hasSubmitted && (
+              <p className={`m-0 flex items-center gap-2 text-[15px] font-semibold ${isCorrect ? 'text-nt-ok' : 'text-nt-danger'}`} role="status">
+                {isCorrect ? <LuCheck className="w-[18px] h-[18px]" aria-hidden="true" /> : <LuX className="w-[18px] h-[18px]" aria-hidden="true" />}
+                {isCorrect ? 'Correct' : 'Not quite'}
+              </p>
+            )}
 
-              {/* Reveal Solution Button */}
-              {config.explanation && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {!hasSubmitted ? (
                 <button
-                  onClick={() => setShowExplanation(!showExplanation)}
-                  className="flex items-center space-x-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                  type="button"
+                  onClick={config.mode === 'mcq' ? handleSubmitMcq : handleSubmitNumeric}
+                  disabled={config.mode === 'mcq' ? selectedOption === null : !numericInput}
+                  className={BTN_MAIN}
                 >
-                  <FaLightbulb className="w-3 h-3 text-amber-500" />
-                  <span>{showExplanation ? 'Hide Solution' : 'View Step-by-Step Solution'}</span>
-                  {showExplanation ? <FaChevronUp className="w-2.5 h-2.5" /> : <FaChevronDown className="w-2.5 h-2.5" />}
+                  Check answer
+                </button>
+              ) : (
+                <button type="button" onClick={handleReset} className={BTN_SECONDARY}>
+                  <LuRotateCcw className="w-4 h-4" aria-hidden="true" />
+                  Try again
+                </button>
+              )}
+
+              {config.explanation && (
+                <button type="button" onClick={() => setShowExplanation(!showExplanation)} aria-expanded={showExplanation} className={`${BTN_QUIET} !text-nt-accent !px-2`}>
+                  {showExplanation ? 'Hide solution' : 'Show solution'}
+                  <LuChevronDown className={`w-4 h-4 transition-transform ${showExplanation ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </button>
               )}
             </div>
 
-            {/* Collapsible Step-by-Step KaTeX Explanation */}
             {showExplanation && config.explanation && (
-              <div className="mt-3 p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/50 space-y-2 animate-fadeIn">
-                <div className="flex items-center space-x-1.5 text-indigo-700 dark:text-indigo-300 font-semibold text-xs">
-                  <FaLightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Step-by-Step Derivation & Explanation:</span>
-                </div>
-                <div className="text-xs text-neutral-800 dark:text-slate-200 leading-relaxed font-sans">
-                  {config.explanation}
-                </div>
+              <div className="px-4 py-3.5 rounded-xl bg-nt-paper flex flex-col gap-2">
+                <p className="m-0 text-[15px] leading-6">{config.explanation}</p>
                 {/* Live KaTeX render if explanation has math syntax */}
                 {config.explanation.includes('\\') && (
-                  <div className="p-3 bg-white/80 dark:bg-slate-900/80 rounded-lg border border-indigo-100 dark:border-indigo-900/40 mt-2">
+                  <div className="px-3 py-2 rounded-lg bg-nt-surface overflow-x-auto">
                     <KaTeXRenderer math={config.explanation} blockMode={true} />
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

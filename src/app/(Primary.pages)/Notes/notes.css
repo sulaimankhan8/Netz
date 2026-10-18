@@ -1,0 +1,88 @@
+/*
+ * Notes design tokens (NOTES_VISUAL_REDESIGN_PLAN.md, section 1).
+ *
+ * The same values as the Playground's --pg- tokens (Playground/playground.css), so Notes and the
+ * Playground look like one app, plus `ok` and one colour per block type. Kept under their own
+ * --nt- prefix so the finished Playground is never touched by a Notes change.
+ *
+ * They sit on :root because dialogs and sheets may render outside the Notes root. Each colour is
+ * stored as RGB channels so Tailwind opacity modifiers work (bg-nt-ink/50).
+ */
+
+:root,
+.nt-force-light {
+  --nt-paper: 246 246 243;
+  --nt-surface: 255 255 255;
+  --nt-tray: 239 239 235;
+  --nt-line: 228 228 223;
+  --nt-ink: 29 29 31;
+  --nt-on-ink: 255 255 255;
+  --nt-text2: 85 85 90;
+  --nt-muted: 173 173 178;
+  --nt-accent: 79 70 229;
+  --nt-accent-fill: 79 70 229;
+  --nt-accent-tint: 238 240 255;
+  --nt-accent-on-tint: 55 48 163;
+  --nt-danger: 180 35 24;
+  --nt-danger-tint: 253 236 234;
+  --nt-ok: 4 120 87;
+  --nt-ok-tint: 230 244 238;
+  --nt-notice-action: 199 203 255;
+
+  /* One colour per block type: icon tile, label, soft background */
+  --nt-math: 15 118 110;
+  --nt-math-tint: 231 245 242;
+  --nt-callout: 180 83 9;
+  --nt-callout-tint: 253 243 225;
+  --nt-solver: 37 99 235;
+  --nt-solver-tint: 234 240 254;
+  --nt-quiz: 109 40 217;
+  --nt-quiz-tint: 241 235 253;
+  --nt-sketch: 190 24 93;
+  --nt-sketch-tint: 252 232 241;
+
+  --nt-shadow-bar: 0 1px 2px rgb(29 29 31 / 0.06), 0 8px 24px rgb(29 29 31 / 0.08);
+  --nt-shadow-menu: 0 2px 4px rgb(29 29 31 / 0.05), 0 16px 40px rgb(29 29 31 / 0.14);
+}
+
+html.dark:root {
+  --nt-paper: 20 20 21;
+  --nt-surface: 30 30 32;
+  --nt-tray: 42 42 45;
+  --nt-line: 52 52 58;
+  --nt-ink: 244 244 242;
+  --nt-on-ink: 29 29 31;
+  --nt-text2: 180 180 186;
+  --nt-muted: 107 107 114;
+  --nt-accent: 165 180 252;
+  --nt-accent-fill: 79 70 229;
+  --nt-accent-tint: 43 45 82;
+  --nt-accent-on-tint: 199 203 255;
+  --nt-danger: 249 112 102;
+  --nt-danger-tint: 58 29 27;
+  --nt-ok: 110 231 183;
+  --nt-ok-tint: 18 50 39;
+  --nt-notice-action: 67 56 202;
+
+  --nt-math: 94 234 212;
+  --nt-math-tint: 18 48 44;
+  --nt-callout: 251 191 36;
+  --nt-callout-tint: 51 39 15;
+  --nt-solver: 147 197 253;
+  --nt-solver-tint: 23 34 56;
+  --nt-quiz: 196 181 253;
+  --nt-quiz-tint: 42 33 66;
+  --nt-sketch: 249 168 212;
+  --nt-sketch-tint: 53 24 38;
+
+  --nt-shadow-bar: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  --nt-shadow-menu: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 40px rgb(0 0 0 / 0.5);
+}
+
+/* A row that scrolls sideways without a visible scrollbar */
+.nt-noscroll {
+  scrollbar-width: none;
+}
+.nt-noscroll::-webkit-scrollbar {
+  display: none;
+}

@@ -4,6 +4,7 @@
 import Image from 'next/image';
 import { useState ,useEffect} from 'react';
 import { useRouter } from 'next/navigation'; // Import for App Router
+import { LuMenu, LuX } from 'react-icons/lu';
 
 const NavBar = () => {
     const [isClosed, setIsClosed] = useState(true); // Sidebar toggle state
@@ -28,7 +29,7 @@ const NavBar = () => {
     }, [router]);
 
     return (
-        <nav className="bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">
+        <nav data-app-nav className="relative z-30 shrink-0 bg-black dark:bg-neutral-800 text-white p-4 pr-12 pl-7">
             <div className="flex justify-between items-center">
                 {/* Logo with navigation to home */}
                 <div className="text-xl font-bold cursor-pointer w-12" onClick={() => handleNavigation('/')}>
@@ -37,13 +38,19 @@ const NavBar = () => {
 
                 {/* Dropdown and sidebar toggle button */}
                 <div className="relative ml-auto">
+                    {/* The menu button draws its own icon: the old .menuToggle2 styles live in
+                        sidebar.css, which nothing loads any more, so the button had no size */}
                     <button
-                        className=""
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        type="button"
+                        aria-label={dropdownOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={dropdownOpen}
+                        className="-mr-8 w-11 h-11 flex items-center justify-center rounded-md bg-[rgb(246,197,0)] text-black"
+                        onClick={() => {
+                            setDropdownOpen(!dropdownOpen);
+                            toggleSidebar();
+                        }}
                     >
-                        <div className={`menuToggle2 ${isClosed ? '' : 'active'}`} onClick={toggleSidebar}>
-                            <div className="toggle-bar"></div>
-                        </div>
+                        {dropdownOpen ? <LuX className="w-6 h-6" aria-hidden="true" /> : <LuMenu className="w-6 h-6" aria-hidden="true" />}
                     </button>
 
                     {/* Dropdown menu */}

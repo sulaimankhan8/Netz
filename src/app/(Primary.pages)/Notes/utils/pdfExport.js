@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { NT_FONT } from './fonts';
 
 /**
  * Exports a NETZ note to a high-resolution, un-watermarked Academic PDF Report.
@@ -32,27 +33,53 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area')
     clone.style.left = '-99999px';
     clone.style.zIndex = '-9999';
     clone.classList.remove('dark');
+    // Light Notes colours even when the app is in dark mode (dark text on the white page), the
+    // Notes fonts (the copy sits outside the Notes root)
+    clone.classList.add('nt-force-light', ...NT_FONT.split(' '));
 
-    // Remove interactive edit buttons and hover toolbars from clone
-    const buttons = clone.querySelectorAll('button, input[type="radio"], input[type="text"], textarea');
-    buttons.forEach((b) => {
-      if (b.tagName === 'BUTTON') {
-        b.style.display = 'none';
-      }
+    // Remove interactive edit buttons and hover toolbars from clone (quiz answers stay)
+    clone.querySelectorAll('button').forEach((b) => {
+      if (b.dataset.print !== 'keep') b.style.display = 'none';
+    });
+
+    // html2canvas draws a text box as one line and clips its text, so print each one as plain
+    // text with the same look. A copy loses typed values, so they come from the original.
+    const originalFields = targetElement.querySelectorAll('input, textarea');
+    clone.querySelectorAll('input, textarea').forEach((field, i) => {
+      if (['radio', 'checkbox', 'file', 'hidden'].includes(field.type)) return;
+      const text = document.createElement('div');
+      text.className = field.className;
+      text.textContent = originalFields[i]?.value ?? field.value ?? '';
+      text.style.whiteSpace = field.tagName === 'TEXTAREA' ? 'pre-wrap' : 'pre';
+      text.style.overflowWrap = 'anywhere';
+      text.style.height = 'auto';
+      field.replaceWith(text);
     });
 
     document.body.appendChild(clone);
 
-    // Render with html2canvas at scale 2 for retina crispness
-    const canvas = await html2canvas(clone, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#FFFFFF',
-      windowWidth: 794
-    });
+    // html2canvas finds text baselines with an <img> in this page. Tailwind makes images
+    // display:block, which draws all text a few pixels low (clipping the bottom of lines and
+    // putting KaTeX fraction lines through the numerator), so images are inline-block for the
+    // moment of the capture only.
+    const baselineFix = document.createElement('style');
+    baselineFix.textContent = 'img { display: inline-block !important; }';
+    document.head.appendChild(baselineFix);
 
-    document.body.removeChild(clone);
+    // Render with html2canvas at scale 2 for retina crispness
+    let canvas;
+    try {
+      canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#FFFFFF',
+        windowWidth: 794
+      });
+    } finally {
+      baselineFix.remove();
+      document.body.removeChild(clone);
+    }
 
     // Initialize jsPDF A4 document (210mm x 297mm)
     const pdf = new jsPDF('p', 'mm', 'a4');

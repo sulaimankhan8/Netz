@@ -2,9 +2,48 @@
 
 import { useState, useEffect } from 'react';
 import { ALGORITHMS_CATALOG } from '../utils/algorithmRegistry';
-import { FaCalculator, FaPlay, FaCheckCircle, FaExchangeAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { LuAlertTriangle, LuArrowLeftRight, LuCalculator, LuCheckCircle, LuExternalLink } from 'react-icons/lu';
+import { BTN_MAIN, FIELD, FIELD_INPUT, ICON_BTN, LABEL } from './ui';
 
-export default function EmbeddedMathWidget({ config, onChange, onOpenPicker }) {
+// Sentence-case labels for the solvers' inputs (the rest are spelled out from their names)
+const PARAM_LABELS = {
+  expression: 'Expression f(x)',
+  x0: 'First guess x₀',
+  x1: 'Second guess x₁',
+  y0: 'Starting value y₀',
+  a: 'Start a',
+  b: 'End b',
+  h: 'Step size h',
+  n: 'Steps n',
+  tolerance: 'Tolerance',
+  maxIter: 'Most iterations',
+  targetX: 'Find y at x',
+  xValues: 'x values (comma-separated)',
+  yValues: 'y values (comma-separated)',
+  row1: 'Row 1: a₁₁, a₁₂, a₁₃, b₁',
+  row2: 'Row 2: a₂₁, a₂₂, a₂₃, b₂',
+  row3: 'Row 3: a₃₁, a₃₂, a₃₃, b₃',
+  sample1: 'Sample 1 (comma-separated)',
+  sample2: 'Sample 2 (comma-separated)',
+  observed: 'Observed frequencies Oᵢ',
+  expected: 'Expected frequencies Eᵢ',
+  sampleMean: 'Sample mean x̄',
+  popMean: 'Population mean μ',
+  sampleSize: 'Sample size n',
+  sampleStd: 'Sample standard deviation s',
+  popStd: 'Population standard deviation σ',
+  alpha: 'Significance level α',
+  points: 'Points'
+};
+
+function paramLabel(key) {
+  if (PARAM_LABELS[key]) return PARAM_LABELS[key];
+  const words = key.replace(/([A-Z])/g, ' $1').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+
+export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, menuButton = null }) {
   const initialAlg = ALGORITHMS_CATALOG.find((a) => a.id === config?.algorithmId) || ALGORITHMS_CATALOG[0];
 
   const [currentAlg, setCurrentAlg] = useState(initialAlg);
@@ -46,147 +85,103 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker }) {
     }
   };
 
+  const wideKeys = ['expression', 'observed', 'expected', 'xValues', 'yValues', 'row1', 'row2', 'row3', 'sample1', 'sample2'];
+
   return (
-    <div className="my-4 p-4 md:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-indigo-500/30 shadow-lg text-slate-900 dark:text-slate-100 font-sans transition-all hover:border-indigo-400 dark:hover:border-indigo-500/50">
-      {/* Widget Header */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4 gap-2">
-        <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-          <FaCalculator className="w-4 h-4 text-indigo-600 dark:text-indigo-500 shrink-0" />
-          <span>{currentAlg.name}</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 font-mono">
-            {currentAlg.unit.split(':')[0]}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {currentAlg.route && (
-            <a
-              href={currentAlg.route}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 transition-colors font-medium"
-              title="Open full dedicated page"
-            >
-              <span>Dedicated Page</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-          )}
-          <button
-            onClick={onOpenPicker}
-            className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 transition-colors font-medium"
-          >
-            <FaExchangeAlt className="w-3 h-3" />
-            <span>Change Algorithm</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Dynamic Input Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        {Object.keys(currentAlg.defaultParams).map((key) => {
-          const isWide = [
-            'expression',
-            'observed',
-            'expected',
-            'xValues',
-            'yValues',
-            'row1',
-            'row2',
-            'row3',
-            'sample1',
-            'sample2'
-          ].includes(key);
-
-          const getLabel = (k) => {
-            if (k === 'row1') return 'Matrix Row 1: [a11, a12, a13, b1]';
-            if (k === 'row2') return 'Matrix Row 2: [a21, a22, a23, b2]';
-            if (k === 'row3') return 'Matrix Row 3: [a31, a32, a33, b3]';
-            if (k === 'xValues') return 'X Values (comma-separated)';
-            if (k === 'yValues') return 'Y Values (comma-separated)';
-            if (k === 'sample1') return 'Sample 1 Data (comma-separated)';
-            if (k === 'sample2') return 'Sample 2 Data (comma-separated)';
-            if (k === 'observed') return 'Observed Frequencies O_i';
-            if (k === 'expected') return 'Expected Frequencies E_i';
-            return k.replace(/([A-Z])/g, ' $1');
-          };
-
-          return (
-            <div
-              key={key}
-              className={isWide ? 'sm:col-span-2 lg:col-span-3' : ''}
-            >
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 capitalize">
-                {getLabel(key)}
-              </label>
-              <input
-                type={typeof currentAlg.defaultParams[key] === 'number' ? 'number' : 'text'}
-                step="any"
-                value={params[key] !== undefined ? params[key] : currentAlg.defaultParams[key]}
-                onChange={(e) => handleParamChange(key, e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Solve Button & Result Summary */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          onClick={handleSolve}
-          disabled={isSolving}
-          className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
-        >
-          <FaPlay className="w-3 h-3" />
-          <span>{isSolving ? 'Solving...' : 'Calculate In Note'}</span>
+    <div className="my-2 rounded-2xl border border-nt-line bg-nt-surface text-nt-ink">
+      {/* Header: type, algorithm, tools */}
+      <div className="flex items-center gap-2.5 pl-3.5 pr-1.5 py-1.5 min-h-[56px]">
+        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-nt-solver-tint text-nt-solver" aria-hidden="true">
+          <LuCalculator className="w-4 h-4" />
+        </span>
+        <span className="text-[13px] font-semibold text-nt-solver shrink-0">Solver</span>
+        <span className="flex-1 min-w-0 text-[15px] font-semibold truncate" title={currentAlg.name}>
+          {currentAlg.name}
+          <span className="font-normal text-nt-text2"> · {currentAlg.unit.split(':')[0]}</span>
+        </span>
+        {currentAlg.route && (
+          <a href={currentAlg.route} target="_blank" rel="noopener noreferrer" className={ICON_BTN} aria-label={`Open the ${currentAlg.name} page`} title="Open the full page">
+            <LuExternalLink className="w-[18px] h-[18px]" aria-hidden="true" />
+          </a>
+        )}
+        <button type="button" onClick={onOpenPicker} className={ICON_BTN} aria-label="Change algorithm" title="Change algorithm">
+          <LuArrowLeftRight className="w-[18px] h-[18px]" aria-hidden="true" />
         </button>
+        {menuButton}
+      </div>
 
-        {solverOutput?.result && (
-          <div className="flex items-center space-x-2 text-emerald-800 dark:text-emerald-400 font-mono text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/60 px-3.5 py-2 rounded-xl">
-            <FaCheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>{solverOutput.result}</span>
+      <div className="px-4 pb-4 flex flex-col gap-4">
+        {/* Inputs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Object.keys(currentAlg.defaultParams).map((key) => (
+            <label key={key} className={`flex flex-col gap-1.5 ${wideKeys.includes(key) ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+              <span className={LABEL}>{paramLabel(key)}</span>
+              <span className={FIELD}>
+                <input
+                  type={typeof currentAlg.defaultParams[key] === 'number' ? 'number' : 'text'}
+                  step="any"
+                  value={params[key] !== undefined ? params[key] : currentAlg.defaultParams[key]}
+                  onChange={(e) => handleParamChange(key, e.target.value)}
+                  className={`${FIELD_INPUT} font-nt-mono`}
+                  spellCheck={false}
+                />
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {/* Calculate and the answer */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={handleSolve} disabled={isSolving} className={BTN_MAIN}>
+            {isSolving ? 'Calculating…' : 'Calculate'}
+          </button>
+          {solverOutput?.result && (
+            <div className="flex-1 min-w-[200px] flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-nt-ok-tint text-nt-ok" role="status">
+              <LuCheckCircle className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
+              <span className="text-[15px] font-semibold font-nt-mono">{solverOutput.result}</span>
+              {solverOutput.steps?.length > 0 && <span className="ml-auto text-[13px] tabular-nums">{solverOutput.steps.length} steps</span>}
+            </div>
+          )}
+        </div>
+
+        {errorMsg && (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-nt-danger-tint text-nt-danger text-sm" role="alert">
+            <LuAlertTriangle className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Step by step */}
+        {solverOutput?.steps && solverOutput.steps.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className={LABEL}>Step by step</span>
+            <div className="overflow-x-auto rounded-xl border border-nt-line">
+              <table className="w-full text-[13px] text-left tabular-nums">
+                <thead>
+                  <tr className="bg-nt-paper text-nt-text2">
+                    {solverOutput.headers.map((h, i) => (
+                      <th key={i} className="py-2 px-3 font-semibold whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="font-nt-mono">
+                  {solverOutput.steps.map((row, rIdx) => (
+                    <tr key={rIdx} className="border-t border-nt-line">
+                      {Object.values(row).map((val, cIdx) => (
+                        <td key={cIdx} className={`py-2 px-3 whitespace-nowrap ${cIdx === 0 ? 'text-nt-text2' : ''}`}>
+                          {val}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Error Message */}
-      {errorMsg && (
-        <div className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs flex items-center space-x-2">
-          <FaExclamationTriangle className="w-4 h-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Iteration / Step Table */}
-      {solverOutput?.steps && solverOutput.steps.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-          <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 font-medium">Step-by-Step Table Output:</p>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60">
-            <table className="w-full text-xs font-mono text-left text-slate-800 dark:text-slate-300">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-400">
-                  {solverOutput.headers.map((h, i) => (
-                    <th key={i} className="py-2 px-3 font-semibold">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {solverOutput.steps.map((row, rIdx) => (
-                  <tr key={rIdx} className="border-b border-slate-200/60 dark:border-slate-800/40 hover:bg-slate-100/50 dark:hover:bg-slate-800/30">
-                    {Object.values(row).map((val, cIdx) => (
-                      <td key={cIdx} className={`py-1.5 px-3 ${cIdx === 0 ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : ''}`}>
-                        {val}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

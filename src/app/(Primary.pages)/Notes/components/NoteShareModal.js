@@ -1,21 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  FaTimes, 
-  FaShareAlt, 
-  FaKey, 
-  FaCopy, 
-  FaCheck, 
-  FaGlobe, 
-  FaLock, 
-  FaFileImport,
-  FaSearch,
-  FaDownload,
-  FaUserGraduate,
-  FaBookOpen,
-  FaLayerGroup
-} from 'react-icons/fa';
+import { LuCheck, LuCopy, LuGlobe, LuLock, LuSearch } from 'react-icons/lu';
+import { BTN_MAIN, BTN_SECONDARY, BTN_TINT, chipClass, FIELD, FIELD_INPUT, LABEL, Modal, Segmented, Switch } from './ui';
 
 export const CURATED_COMMUNITY_NOTES = [
   {
@@ -157,7 +144,8 @@ export default function NoteShareModal({
   onClose,
   onUpdateNote,
   onImportKey,
-  onCloneNote
+  onCloneNote,
+  isPhone
 }) {
   const [activeTab, setActiveTab] = useState('share'); // 'share' | 'community'
   const [copiedKey, setCopiedKey] = useState(false);
@@ -196,10 +184,10 @@ export default function NoteShareModal({
     if (!importInputKey.trim()) return;
     const result = onImportKey(importInputKey.trim());
     if (result) {
-      setImportStatus({ success: true, message: `Successfully imported "${result.title}"!` });
+      setImportStatus({ success: true, message: `Imported "${result.title}".` });
       setImportInputKey('');
     } else {
-      setImportStatus({ success: false, message: 'Invalid or missing Access Key.' });
+      setImportStatus({ success: false, message: 'No note has this key.' });
     }
   };
 
@@ -216,247 +204,141 @@ export default function NoteShareModal({
     return matchesSearch && matchesUnit;
   });
 
+  const units = ['All', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5'];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-neutral-900 dark:text-slate-100 font-sans max-h-[85vh] flex flex-col">
-        {/* Modal Header with Tabs */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-slate-800 bg-neutral-50/80 dark:bg-slate-950/50 shrink-0">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setActiveTab('share')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                activeTab === 'share'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-neutral-200 dark:bg-slate-800 text-neutral-700 dark:text-slate-300 hover:bg-neutral-300 dark:hover:bg-slate-700'
-              }`}
-            >
-              <FaShareAlt className="w-3 h-3" />
-              <span>Share Active Note</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('community')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                activeTab === 'community'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-neutral-200 dark:bg-slate-800 text-neutral-700 dark:text-slate-300 hover:bg-neutral-300 dark:hover:bg-slate-700'
-              }`}
-            >
-              <FaGlobe className="w-3 h-3" />
-              <span>Community Notes Feed</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-400 font-mono">
-                {CURATED_COMMUNITY_NOTES.length}
+    <Modal title="Share" onClose={onClose} isPhone={isPhone}>
+      <div className={`flex flex-col gap-5 ${isPhone ? 'px-5 pt-3 pb-8' : 'px-6 pt-3 pb-6'}`}>
+        <Segmented
+          label="Share"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[
+            { value: 'share', label: 'This note' },
+            { value: 'community', label: `Community · ${CURATED_COMMUNITY_NOTES.length}` }
+          ]}
+        />
+
+        {/* TAB 1: SHARE THIS NOTE */}
+        {activeTab === 'share' && (
+          <>
+            <div className={`flex items-center gap-3.5 pl-4 pr-2 py-3 rounded-2xl ${note.isPublic ? 'bg-nt-ok-tint' : 'bg-nt-tray'}`}>
+              <span className={`w-10 h-10 rounded-xl bg-nt-surface flex items-center justify-center shrink-0 ${note.isPublic ? 'text-nt-ok' : 'text-nt-text2'}`} aria-hidden="true">
+                {note.isPublic ? <LuGlobe className="w-5 h-5" /> : <LuLock className="w-5 h-5" />}
               </span>
-            </button>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
-          >
-            <FaTimes className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Modal Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 custom-notion-scrollbar">
-          {/* TAB 1: SHARE ACTIVE NOTE */}
-          {activeTab === 'share' && (
-            <div className="space-y-6">
-              {/* Public / Private Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-50 dark:bg-slate-950/80 border border-neutral-200 dark:border-slate-800">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2.5 rounded-lg ${note.isPublic ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-neutral-200 text-neutral-600 dark:bg-slate-800 dark:text-slate-400'}`}>
-                    {note.isPublic ? <FaGlobe className="w-5 h-5" /> : <FaLock className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-neutral-900 dark:text-white">
-                      {note.isPublic ? 'Public Note (Shared)' : 'Private Note (Only You)'}
-                    </p>
-                    <p className="text-xs text-neutral-500 dark:text-slate-400">
-                      {note.isPublic
-                        ? 'Anyone with your 8-digit key can view or import this note.'
-                        : 'Visible only on this local browser session.'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleTogglePublic}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    note.isPublic
-                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
-                      : 'bg-neutral-200 hover:bg-neutral-300 text-neutral-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  {note.isPublic ? 'Public' : 'Make Public'}
-                </button>
+              <div className="flex-1 min-w-0">
+                <p className="m-0 text-[15px] font-semibold">{note.isPublic ? 'Public' : 'Private'}</p>
+                <p className="m-0 text-[13px] leading-[19px] text-nt-text2">
+                  {note.isPublic ? 'Anyone with the key can view or import this note.' : 'Only you can see it, in this browser.'}
+                </p>
               </div>
+              <Switch checked={!!note.isPublic} onChange={handleTogglePublic} label="Public" />
+            </div>
 
-              {/* Access Key & Direct Share Link */}
-              {note.isPublic && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-600 dark:text-slate-400 mb-1.5 flex items-center space-x-1">
-                      <FaKey className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                      <span>Unique Access Key</span>
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-neutral-100 dark:bg-slate-950 border border-indigo-200 dark:border-indigo-900/50 rounded-xl px-4 py-2 text-base font-mono font-bold text-indigo-700 dark:text-indigo-300 tracking-wider">
-                        {note.accessKey}
-                      </div>
-                      <button
-                        onClick={handleCopyKey}
-                        className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
-                      >
-                        {copiedKey ? <FaCheck className="w-3.5 h-3.5" /> : <FaCopy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey ? 'Copied!' : 'Copy Key'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-600 dark:text-slate-400 mb-1.5">Direct Web Link</label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={shareUrl}
-                        className="flex-1 bg-neutral-100 dark:bg-slate-950 border border-neutral-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-neutral-800 dark:text-slate-300 focus:outline-none"
-                      />
-                      <button
-                        onClick={handleCopyLink}
-                        className="flex items-center space-x-1.5 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all cursor-pointer"
-                      >
-                        {copiedLink ? <FaCheck className="w-3 h-3" /> : <FaCopy className="w-3 h-3" />}
-                        <span>{copiedLink ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
+            {note.isPublic && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <span className={LABEL}>Access key</span>
+                  <div className="flex gap-2">
+                    <div className={`${FIELD} flex-1 !h-11 font-nt-mono text-lg font-medium tracking-[0.06em]`}>{note.accessKey}</div>
+                    <button type="button" onClick={handleCopyKey} className={`${BTN_MAIN} !h-11`}>
+                      {copiedKey ? <LuCheck className="w-4 h-4" aria-hidden="true" /> : <LuCopy className="w-4 h-4" aria-hidden="true" />}
+                      {copiedKey ? 'Copied' : 'Copy key'}
+                    </button>
                   </div>
                 </div>
-              )}
+                <div className="flex flex-col gap-2">
+                  <span className={LABEL}>Link</span>
+                  <div className="flex gap-2">
+                    <label className={`${FIELD} flex-1 min-w-0 !h-11`}>
+                      <input type="text" readOnly value={shareUrl} aria-label="Link to this note" className={`${FIELD_INPUT} font-nt-mono text-[13px] text-nt-text2`} />
+                    </label>
+                    <button type="button" onClick={handleCopyLink} className={`${BTN_SECONDARY} !h-11`}>
+                      {copiedLink ? <LuCheck className="w-4 h-4" aria-hidden="true" /> : null}
+                      {copiedLink ? 'Copied' : 'Copy link'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
-              {/* Import Note by Key */}
-              <div className="pt-4 border-t border-neutral-200 dark:border-slate-800">
-                <h4 className="text-xs font-semibold text-neutral-700 dark:text-slate-300 mb-2 flex items-center space-x-1.5">
-                  <FaFileImport className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                  <span>Import Shared Note by Access Key</span>
-                </h4>
-                <form onSubmit={handleImportSubmit} className="flex items-center space-x-2">
+            <div className="h-px bg-nt-line" />
+
+            <form onSubmit={handleImportSubmit} className="flex flex-col gap-2">
+              <label htmlFor="nt-import-key" className={LABEL}>
+                Import a note with its key
+              </label>
+              <div className="flex gap-2">
+                <span className={`${FIELD} flex-1 !h-11 ${importStatus && !importStatus.success ? '!border-nt-danger' : ''}`}>
                   <input
+                    id="nt-import-key"
                     type="text"
-                    placeholder="e.g. NETZ-ROOTS1 or NETZ-8X42"
+                    placeholder="NETZ-ROOTS1"
                     value={importInputKey}
                     onChange={(e) => setImportInputKey(e.target.value)}
-                    className="flex-1 bg-neutral-50 dark:bg-slate-950 border border-neutral-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                    className={`${FIELD_INPUT} font-nt-mono uppercase placeholder:normal-case`}
+                    autoCapitalize="characters"
+                    spellCheck={false}
                   />
-                  <button
-                    type="submit"
-                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    Import
-                  </button>
-                </form>
+                </span>
+                <button type="submit" className={`${BTN_SECONDARY} !h-11`}>
+                  Import
+                </button>
+              </div>
+              {importStatus && (
+                <p className={`m-0 text-[13px] font-medium ${importStatus.success ? 'text-nt-ok' : 'text-nt-danger'}`} role="status">
+                  {importStatus.message}
+                </p>
+              )}
+            </form>
+          </>
+        )}
 
-                {importStatus && (
-                  <p
-                    className={`mt-2 text-xs font-medium ${
-                      importStatus.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                    }`}
-                  >
-                    {importStatus.message}
+        {/* TAB 2: COMMUNITY NOTES */}
+        {activeTab === 'community' && (
+          <>
+            <label className={`${FIELD} !h-11`}>
+              <LuSearch className="w-[18px] h-[18px] text-nt-text2 shrink-0" aria-hidden="true" />
+              <input
+                type="text"
+                aria-label="Search community notes"
+                placeholder="Search community notes"
+                value={communitySearch}
+                onChange={(e) => setCommunitySearch(e.target.value)}
+                className={FIELD_INPUT}
+              />
+            </label>
+
+            <div className="flex gap-1.5 overflow-x-auto nt-noscroll -mt-1" role="group" aria-label="Unit">
+              {units.map((u) => (
+                <button key={u} type="button" aria-pressed={communityUnit === u} onClick={() => setCommunityUnit(u)} className={chipClass(communityUnit === u)}>
+                  {u}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {filteredCommunityNotes.length === 0 && <p className="m-0 py-6 text-center text-sm text-nt-text2">No community notes match.</p>}
+              {filteredCommunityNotes.map((comm) => (
+                <article key={comm.id} className="rounded-2xl border border-nt-line px-4 py-3.5 flex flex-col gap-1.5">
+                  <p className="m-0 text-xs font-semibold text-nt-text2">
+                    {comm.unit} · <span className="font-nt-mono">{comm.accessKey}</span> · {comm.author}
                   </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: COMMUNITY NOTES FEED */}
-          {activeTab === 'community' && (
-            <div className="space-y-4">
-              {/* Search & Unit Filters */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="relative flex-1 w-full">
-                  <FaSearch className="absolute left-3 top-2.5 w-3.5 h-3.5 text-neutral-400 dark:text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Search community notes, formulas, authors..."
-                    value={communitySearch}
-                    onChange={(e) => setCommunitySearch(e.target.value)}
-                    className="w-full bg-neutral-50 dark:bg-slate-950 border border-neutral-300 dark:border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-1 text-xs overflow-x-auto w-full sm:w-auto">
-                  {['All', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5'].map((u) => (
-                    <button
-                      key={u}
-                      onClick={() => setCommunityUnit(u)}
-                      className={`px-2.5 py-1 rounded-lg font-medium shrink-0 transition-all ${
-                        communityUnit === u
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-slate-800 dark:text-slate-400'
-                      }`}
-                    >
-                      {u}
+                  <h3 className="m-0 text-base leading-[22px] font-semibold">{comm.title}</h3>
+                  <p className="m-0 text-sm leading-5 text-nt-text2">{comm.subtitle}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="flex-1 min-w-0 truncate text-[13px] text-nt-text2">{comm.tags.map((t) => `# ${t}`).join('  ')}</span>
+                    <button type="button" onClick={() => onCloneNote && onCloneNote(comm)} className={BTN_TINT}>
+                      <LuCopy className="w-4 h-4" aria-hidden="true" />
+                      Clone
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Community Cards Grid */}
-              <div className="space-y-3 pt-2">
-                {filteredCommunityNotes.map((comm) => (
-                  <div
-                    key={comm.id}
-                    className="p-4 rounded-xl bg-neutral-50 dark:bg-slate-950/70 border border-neutral-200 dark:border-slate-800/80 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div className="flex items-center space-x-2">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-                            {comm.unit}
-                          </span>
-                          <span className="text-[11px] text-neutral-500 dark:text-slate-400 flex items-center space-x-1">
-                            <FaUserGraduate className="w-3 h-3 text-neutral-400" />
-                            <span>{comm.author}</span>
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-mono text-neutral-400 dark:text-slate-500">
-                          {comm.accessKey}
-                        </span>
-                      </div>
-
-                      <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
-                        {comm.title}
-                      </h4>
-                      <p className="text-xs text-neutral-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        {comm.subtitle}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-slate-800/60 text-xs">
-                      <div className="flex items-center space-x-1.5">
-                        {comm.tags.map((tag) => (
-                          <span key={tag} className="text-[10px] text-neutral-500 dark:text-slate-400 bg-neutral-200 dark:bg-slate-800 px-2 py-0.5 rounded">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={() => onCloneNote && onCloneNote(comm)}
-                        className="flex items-center space-x-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-3 py-1.5 rounded-lg text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
-                      >
-                        <FaDownload className="w-2.5 h-2.5" />
-                        <span>Clone to My Workspace</span>
-                      </button>
-                    </div>
                   </div>
-                ))}
-              </div>
+                </article>
+              ))}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

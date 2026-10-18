@@ -1,18 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import NoteSidebar from './components/NoteSidebar';
 import NoteEditor from './components/NoteEditor';
 import NoteShareModal from './components/NoteShareModal';
 import AlgorithmPickerModal from './components/AlgorithmPickerModal';
-import { 
-  getNotes, 
-  createNewNote, 
-  saveSingleNote, 
-  deleteNote, 
+import { Notice, useIsPhone } from './components/ui';
+import { NT_FONT } from './utils/fonts';
+import {
+  getNotes,
+  createNewNote,
+  saveSingleNote,
+  deleteNote,
+  restoreNote,
   togglePinNote,
-  importNoteByKey 
+  importNoteByKey,
+  didLastSaveSucceed
 } from './utils/noteStorage';
+
+const NOTICE_MS = 6000;
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([]);
@@ -20,8 +26,15 @@ export default function NotesPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [targetBlockId, setTargetBlockId] = useState(null);
+  // Laptops and tablets: the list beside the note can be hidden
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Phones show one screen at a time: the list, or the open note
+  const [phoneView, setPhoneView] = useState('list');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const noticeTimer = useRef(null);
+  const isPhone = useIsPhone();
 
   useEffect(() => {
     const loadedNotes = getNotes();
@@ -41,6 +54,7 @@ export default function NotesPage() {
       const openParam = urlParams.get('open');
       if (openParam && loadedNotes.some((n) => n.id === openParam)) {
         setActiveNoteId(openParam);
+        setPhoneView('note');
       }
       const keyParam = urlParams.get('key');
       if (keyParam) {
@@ -49,6 +63,7 @@ export default function NotesPage() {
           const freshList = getNotes();
           setNotes(freshList);
           setActiveNoteId(imported.id);
+          setPhoneView('note');
         }
       }
     }
@@ -56,31 +71,68 @@ export default function NotesPage() {
     setIsLoaded(true);
   }, []);
 
-  const handleSelectNote = (id) => {
+  useEffect(() => () => clearTimeout(noticeTimer.current), []);
+
+  /** Shows a notice at the bottom (one at a time), gone after a few seconds. */
+  const showNotice = useCallback((next) => {
+    clearTimeout(noticeTimer.current);
+    setNotice(next);
+    if (next) noticeTimer.current = setTimeout(() => setNotice(null), NOTICE_MS);
+  }, []);
+
+  const openNote = (id) => {
     setActiveNoteId(id);
+    setPhoneView('note');
   };
 
   const handleCreateNote = () => {
     const newNote = createNewNote();
+    setSaveFailed(!didLastSaveSucceed());
     const updated = getNotes();
     setNotes(updated);
-    setActiveNoteId(newNote.id);
+    openNote(newNote.id);
   };
 
   const handleUpdateNote = (updatedNote) => {
     const saved = saveSingleNote(updatedNote);
-    setNotes((prevNotes) =>
-      prevNotes.map((n) => (n.id === saved.id ? saved : n))
-    );
+    setSaveFailed(!didLastSaveSucceed());
+    setNotes((prevNotes) => prevNotes.map((n) => (n.id === saved.id ? saved : n)));
   };
 
   const handleDeleteNote = (id) => {
+    const index = notes.findIndex((n) => n.id === id);
+    const removed = notes[index];
+    const wasActive = activeNoteId === id;
     const remaining = deleteNote(id);
+    setSaveFailed(!didLastSaveSucceed());
     setNotes(remaining);
 
-    if (activeNoteId === id) {
+    if (wasActive) {
       setActiveNoteId(remaining.length > 0 ? remaining[0].id : null);
+      setPhoneView('list');
     }
+
+    if (removed) {
+      showNotice({
+        message: 'Note deleted',
+        actionLabel: 'Undo',
+        onAction: () => {
+          const restored = restoreNote(removed, index);
+          setNotes(restored);
+          if (wasActive) setActiveNoteId(removed.id);
+          showNotice(null);
+        }
+      });
+    }
+  };
+
+  /** Undo after Delete block: puts the block back into its note, where it was. */
+  const handleRestoreBlock = (noteId, block, index) => {
+    const target = getNotes().find((n) => n.id === noteId);
+    if (!target) return;
+    const blocks = target.blocks.filter((b) => b.id !== block.id);
+    blocks.splice(Math.max(0, Math.min(index, blocks.length)), 0, block);
+    handleUpdateNote({ ...target, blocks });
   };
 
   const handleTogglePinNote = (id) => {
@@ -153,9 +205,10 @@ export default function NotesPage() {
       isPublic: false
     };
     const saved = saveSingleNote(cloned);
+    setSaveFailed(!didLastSaveSucceed());
     const updated = getNotes();
     setNotes(updated);
-    setActiveNoteId(saved.id);
+    openNote(saved.id);
     setIsShareModalOpen(false);
   };
 
@@ -163,38 +216,60 @@ export default function NotesPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-white dark:bg-[#191919] text-neutral-800 dark:text-neutral-200 font-sans pl-0 md:pl-[78px]">
-        <div className="animate-pulse flex items-center space-x-2 text-sm font-semibold">
-          <div className="w-4 h-4 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-ping"></div>
-          <span>Loading NETZ Notes Workspace...</span>
+      <div className={`${NT_FONT} flex h-[calc(100dvh-var(--app-nav-h,0px))] w-full bg-nt-paper pl-0 md:pl-[78px]`} aria-busy="true" aria-label="Loading notes">
+        <div className="hidden md:flex flex-col gap-3 w-[300px] p-5 bg-nt-surface border-r border-nt-line">
+          <div className="h-6 w-24 rounded-lg bg-nt-tray" />
+          <div className="h-10 rounded-xl bg-nt-tray" />
+          <div className="h-10 rounded-xl bg-nt-tray" />
+          <div className="h-16 rounded-xl bg-nt-tray mt-3" />
+          <div className="h-16 rounded-xl bg-nt-tray" />
+        </div>
+        <div className="flex-1 p-10 flex justify-center">
+          <div className="w-full max-w-[800px] flex flex-col gap-4">
+            <div className="h-10 w-2/3 rounded-xl bg-nt-tray" />
+            <div className="h-5 w-1/2 rounded-lg bg-nt-tray" />
+            <div className="h-28 rounded-2xl bg-nt-tray mt-6" />
+          </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="relative flex flex-col md:flex-row h-screen max-h-screen w-full bg-white dark:bg-[#191919] text-neutral-900 dark:text-neutral-100 overflow-hidden font-sans pl-0 md:pl-[78px] transition-colors duration-200">
-      <NoteSidebar
-        notes={notes}
-        activeNoteId={activeNoteId}
-        onSelectNote={handleSelectNote}
-        onCreateNote={handleCreateNote}
-        onDeleteNote={handleDeleteNote}
-        onTogglePinNote={handleTogglePinNote}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+  const showList = isPhone ? phoneView === 'list' : isSidebarOpen;
+  const showEditor = isPhone ? phoneView === 'note' : true;
 
-      <NoteEditor
-        note={activeNote}
-        onUpdateNote={handleUpdateNote}
-        onOpenShareModal={() => setIsShareModalOpen(true)}
-        onOpenPickerForBlock={handleOpenPickerForBlock}
-        onAddWidgetBlock={handleAddWidgetBlock}
-        isSidebarOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+  return (
+    <div className={`${NT_FONT} relative flex h-[calc(100dvh-var(--app-nav-h,0px))] w-full bg-nt-paper text-nt-ink overflow-hidden pl-0 md:pl-[78px]`}>
+      {showList && (
+        <NoteSidebar
+          notes={notes}
+          activeNoteId={activeNoteId}
+          onSelectNote={openNote}
+          onCreateNote={handleCreateNote}
+          onDeleteNote={handleDeleteNote}
+          onTogglePinNote={handleTogglePinNote}
+          onHide={() => setIsSidebarOpen(false)}
+          isPhone={isPhone}
+        />
+      )}
+
+      {showEditor && (
+        <NoteEditor
+          note={activeNote}
+          onUpdateNote={handleUpdateNote}
+          onOpenShareModal={() => setIsShareModalOpen(true)}
+          onOpenPickerForBlock={handleOpenPickerForBlock}
+          onAddWidgetBlock={handleAddWidgetBlock}
+          onCreateNote={handleCreateNote}
+          isSidebarOpen={isSidebarOpen}
+          onShowSidebar={() => setIsSidebarOpen(true)}
+          onBack={() => setPhoneView('list')}
+          isPhone={isPhone}
+          saveFailed={saveFailed}
+          onNotify={showNotice}
+          onRestoreBlock={handleRestoreBlock}
+        />
+      )}
 
       <NoteShareModal
         note={activeNote}
@@ -203,13 +278,25 @@ export default function NotesPage() {
         onUpdateNote={handleUpdateNote}
         onImportKey={handleImportByKey}
         onCloneNote={handleCloneCommunityNote}
+        isPhone={isPhone}
       />
 
       <AlgorithmPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAlgorithm={handleSelectAlgorithm}
+        isPhone={isPhone}
       />
+
+      {notice && (
+        <Notice
+          message={notice.message}
+          actionLabel={notice.actionLabel}
+          onAction={notice.onAction}
+          onDismiss={() => showNotice(null)}
+          raised={isPhone && phoneView === 'note'}
+        />
+      )}
     </div>
   );
 }

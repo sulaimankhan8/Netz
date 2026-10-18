@@ -1,27 +1,132 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  LuAlertTriangle,
+  LuCheck,
+  LuChevronDown,
+  LuChevronLeft,
+  LuDownload,
+  LuFileDown,
+  LuFileText,
+  LuGlobe,
+  LuLock,
+  LuMoreHorizontal,
+  LuPanelLeft,
+  LuPlus,
+  LuShare2,
+  LuX
+} from 'react-icons/lu';
 import NoteBlockItem from './NoteBlockItem';
 import { exportNoteAsMarkdown } from '../utils/noteStorage';
 import { exportNoteToPdf } from '../utils/pdfExport';
-import { 
-  FaShareAlt, 
-  FaDownload, 
-  FaFilePdf,
-  FaQuestionCircle,
-  FaPen,
-  FaHeading, 
-  FaParagraph, 
-  FaSquareRootAlt, 
-  FaLightbulb, 
-  FaCalculator,
-  FaGlobe,
-  FaLock,
-  FaTag,
-  FaClock,
-  FaFileAlt,
-  FaCheckCircle
-} from 'react-icons/fa';
+import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
+import { BTN_MAIN, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
+
+/** A text box that grows with its text and never wraps to a new line on Enter (title, subtitle). */
+function GrowingLine({ value, onChange, className, placeholder, label }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      value={value}
+      aria-label={label}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value.replace(/\n/g, ' '))}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.preventDefault();
+      }}
+      className={`block w-full resize-none overflow-hidden bg-transparent outline-none placeholder:text-nt-muted ${className}`}
+    />
+  );
+}
+
+/**
+ * The note's tags as chips (Q6). Enter or a comma adds what was typed, × removes a tag, and
+ * Backspace in the empty box removes the last one. Saves the same `tags` list as before.
+ */
+function TagEditor({ tags, onChange }) {
+  const [draft, setDraft] = useState('');
+  const [adding, setAdding] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (adding) inputRef.current?.focus();
+  }, [adding]);
+
+  const commit = (text) => {
+    const parts = text
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0 && !tags.includes(t));
+    if (parts.length > 0) onChange([...tags, ...parts]);
+    setDraft('');
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tags">
+      {tags.map((tag) => (
+        <span key={tag} className="inline-flex items-center h-8 pl-3 pr-1 rounded-full bg-nt-tray text-[13px] font-medium text-nt-text2">
+          # {tag}
+          <button
+            type="button"
+            onClick={() => onChange(tags.filter((t) => t !== tag))}
+            aria-label={`Remove tag ${tag}`}
+            className={`ml-0.5 w-6 h-6 ${TOUCH} flex items-center justify-center rounded-full hover:bg-nt-line hover:text-nt-ink`}
+          >
+            <LuX className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        </span>
+      ))}
+      {adding ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={draft}
+          aria-label="New tag"
+          placeholder="Tag name"
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v.includes(',')) commit(v);
+            else setDraft(v);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit(draft);
+            } else if (e.key === 'Escape') {
+              setDraft('');
+              setAdding(false);
+            } else if (e.key === 'Backspace' && !draft && tags.length > 0) {
+              onChange(tags.slice(0, -1));
+            }
+          }}
+          onBlur={() => {
+            commit(draft);
+            setAdding(false);
+          }}
+          className="h-8 w-32 px-3 rounded-full border border-nt-accent bg-nt-surface text-[13px] text-nt-ink outline-none"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className={`inline-flex items-center gap-1 h-8 ${TOUCH} px-3 rounded-full border border-dashed border-nt-line text-[13px] font-medium text-nt-text2 hover:text-nt-ink hover:border-nt-text2`}
+        >
+          <LuPlus className="w-3.5 h-3.5" aria-hidden="true" />
+          Add tag
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function NoteEditor({
   note,
@@ -29,21 +134,28 @@ export default function NoteEditor({
   onOpenShareModal,
   onOpenPickerForBlock,
   onAddWidgetBlock,
+  onCreateNote,
   isSidebarOpen,
-  onToggleSidebar
+  onShowSidebar,
+  onBack,
+  isPhone,
+  saveFailed,
+  onNotify,
+  onRestoreBlock
 }) {
-  const [title, setTitle] = useState(note?.title || '');
-  const [subtitle, setSubtitle] = useState(note?.subtitle || '');
-  const [tagsInput, setTagsInput] = useState(note?.tags ? note.tags.join(', ') : '');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-
+  const [exportOpen, setExportOpen] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
+  // The block just added: it opens ready to type (a formula opens its LaTeX field)
+  const [justAddedId, setJustAddedId] = useState(null);
+  // The block you are in: on touch screens its grip shows
+  const [activeBlockId, setActiveBlockId] = useState(null);
   useEffect(() => {
-    if (note) {
-      setTitle(note.title || '');
-      setSubtitle(note.subtitle || '');
-      setTagsInput(note.tags ? note.tags.join(', ') : '');
-    }
-  }, [note]);
+    setJustAddedId(null);
+    setActiveBlockId(null);
+  }, [note?.id]);
+  const exportRef = useRef(null);
+  const coarse = useCoarsePointer();
 
   // Calculate word count & estimated reading time
   const wordCount = useMemo(() => {
@@ -58,45 +170,56 @@ export default function NoteEditor({
 
   if (!note) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-[#191919] text-neutral-500 dark:text-neutral-400 font-sans transition-colors duration-200">
-        <div className="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-[#242424] border border-neutral-200 dark:border-[#333333] flex items-center justify-center mb-6 text-neutral-800 dark:text-white shadow-sm">
-          <FaSquareRootAlt className="w-10 h-10" />
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-nt-paper">
+        <LuFileText className="w-10 h-10 text-nt-text2 mb-4" aria-hidden="true" />
+        <h2 className="text-xl font-bold">No note open</h2>
+        <p className="text-[15px] text-nt-text2 mt-2 max-w-sm">Pick a note from the list, or start a new one for formulas, solvers and quizzes.</p>
+        <div className="mt-5 flex gap-2">
+          {isPhone && (
+            <button type="button" onClick={onBack} className={BTN_SECONDARY}>
+              All notes
+            </button>
+          )}
+          {!isPhone && !isSidebarOpen && (
+            <button type="button" onClick={onShowSidebar} className={BTN_SECONDARY}>
+              Show notes
+            </button>
+          )}
+          <button type="button" onClick={onCreateNote} className={BTN_MAIN}>
+            <LuPlus className="w-4 h-4" aria-hidden="true" />
+            New note
+          </button>
         </div>
-        <h2 className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">No Active Note Selected</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 max-w-md leading-relaxed">
-          Select a note from the sidebar or click <span className="text-neutral-900 dark:text-white font-bold">"Create New Note"</span> to start writing interactive math formulas and algorithm solvers.
-        </p>
       </div>
     );
   }
 
-  const handleTitleChange = (val) => {
-    setTitle(val);
-    onUpdateNote({ ...note, title: val });
-  };
-
-  const handleSubtitleChange = (val) => {
-    setSubtitle(val);
-    onUpdateNote({ ...note, subtitle: val });
-  };
-
-  const handleTagsChange = (val) => {
-    setTagsInput(val);
-    const parsedTags = val
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-    onUpdateNote({ ...note, tags: parsedTags });
-  };
+  const handleTitleChange = (val) => onUpdateNote({ ...note, title: val });
+  const handleSubtitleChange = (val) => onUpdateNote({ ...note, subtitle: val });
+  const handleTagsChange = (tags) => onUpdateNote({ ...note, tags });
 
   const handleUpdateBlock = (updatedBlock) => {
     const newBlocks = note.blocks.map((b) => (b.id === updatedBlock.id ? updatedBlock : b));
     onUpdateNote({ ...note, blocks: newBlocks });
   };
 
-  const handleDeleteBlock = (blockId) => {
+  // notify: deleted from the block menu, so offer Undo (Backspace in an empty block does not)
+  const handleDeleteBlock = (blockId, { notify = false } = {}) => {
+    const index = note.blocks.findIndex((b) => b.id === blockId);
+    const removed = note.blocks[index];
     const newBlocks = note.blocks.filter((b) => b.id !== blockId);
     onUpdateNote({ ...note, blocks: newBlocks });
+    if (notify && removed) {
+      const noteId = note.id;
+      onNotify({
+        message: 'Block deleted',
+        actionLabel: 'Undo',
+        onAction: () => {
+          onRestoreBlock(noteId, removed, index);
+          onNotify(null);
+        }
+      });
+    }
   };
 
   const handleMoveBlock = (fromIndex, toIndex) => {
@@ -115,61 +238,26 @@ export default function NoteEditor({
     };
     const newBlocks = [...note.blocks];
     newBlocks.splice(index + 1, 0, newBlock);
+    setJustAddedId(newBlock.id);
     onUpdateNote({ ...note, blocks: newBlocks });
   };
 
   const handleAddBlock = (type) => {
+    setAddSheetOpen(false);
     if (type === 'widget') {
       onAddWidgetBlock();
       return;
     }
 
+    let newBlock;
     if (type === 'quiz') {
-      const newBlock = {
-        id: 'b-' + Date.now(),
-        type: 'quiz',
-        content: 'Interactive Quiz Block',
-        quizConfig: {
-          question: 'What is the order of convergence for Newton-Raphson method?',
-          mode: 'mcq',
-          options: [
-            'Linear (Order 1)',
-            'Quadratic (Order 2)',
-            'Superlinear (Order 1.618)',
-            'Cubic (Order 3)'
-          ],
-          correctOptionIndex: 1,
-          correctNumericValue: 2.7065,
-          tolerance: 0.001,
-          explanation: 'Newton-Raphson exhibits quadratic convergence (order 2) near simple roots.'
-        }
-      };
-      onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
-      return;
+      newBlock = { id: 'b-' + Date.now(), type: 'quiz', content: 'Interactive Quiz Block', quizConfig: newQuizConfig() };
+    } else if (type === 'ink') {
+      newBlock = { id: 'b-' + Date.now(), type: 'ink', content: '', caption: 'Figure: Handwritten calculation sketch' };
+    } else {
+      newBlock = { id: 'b-' + Date.now(), type, content: type === 'math' ? 'e^{i\\pi} + 1 = 0' : '' };
     }
-
-    if (type === 'ink') {
-      const newBlock = {
-        id: 'b-' + Date.now(),
-        type: 'ink',
-        content: '',
-        caption: 'Figure: Handwritten calculation sketch'
-      };
-      onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
-      return;
-    }
-
-    let content = '';
-    if (type === 'math') {
-      content = 'e^{i\\pi} + 1 = 0';
-    }
-
-    const newBlock = {
-      id: 'b-' + Date.now(),
-      type,
-      content
-    };
-
+    setJustAddedId(newBlock.id);
     onUpdateNote({ ...note, blocks: [...note.blocks, newBlock] });
   };
 
@@ -185,206 +273,224 @@ export default function NoteEditor({
     }
   };
 
+  const exportItems = [
+    { id: 'pdf', label: isExportingPdf ? 'Exporting PDF…' : 'Export PDF', disabled: isExportingPdf, icon: <LuFileDown className="w-[18px] h-[18px]" />, onSelect: handleExportPdf },
+    { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteAsMarkdown(note) }
+  ];
+
+  const status = saveFailed ? (
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-nt-danger" role="status">
+      <LuAlertTriangle className="w-4 h-4" aria-hidden="true" />
+      Couldn&apos;t save
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-nt-text2" role="status">
+      <LuCheck className="w-4 h-4" aria-hidden="true" />
+      Saved
+    </span>
+  );
+
+  const privacyChip = (
+    <span
+      className={`inline-flex items-center gap-1.5 h-[30px] px-3 rounded-full text-[13px] font-semibold shrink-0 ${
+        note.isPublic ? 'bg-nt-ok-tint text-nt-ok' : 'bg-nt-tray text-nt-text2'
+      }`}
+    >
+      {note.isPublic ? <LuGlobe className="w-[15px] h-[15px]" aria-hidden="true" /> : <LuLock className="w-[15px] h-[15px]" aria-hidden="true" />}
+      {note.isPublic ? 'Public' : 'Private'}
+    </span>
+  );
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#191919] text-neutral-900 dark:text-neutral-100 font-sans overflow-hidden min-w-0 transition-colors duration-200">
-      {/* Top Header */}
-      <div className="h-14 px-4 md:px-6 border-b border-neutral-200 dark:border-[#2d2d2d] bg-white dark:bg-[#191919] flex items-center justify-between shrink-0 gap-3 z-10">
-        <div className="flex items-center space-x-3 text-xs text-neutral-600 dark:text-neutral-300 min-w-0">
-          <span className="flex items-center space-x-1.5 bg-neutral-100 dark:bg-[#242424] px-3 py-1 rounded-lg border border-neutral-200 dark:border-[#333333] text-xs font-semibold">
-            {note.isPublic ? (
-              <>
-                <FaGlobe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Public</span>
-              </>
-            ) : (
-              <>
-                <FaLock className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-400" />
-                <span className="text-neutral-700 dark:text-neutral-300 font-bold">Private</span>
-              </>
-            )}
-          </span>
-
-          <span className="hidden lg:flex items-center space-x-1 font-mono text-neutral-500 dark:text-neutral-400 text-xs bg-neutral-100 dark:bg-[#242424] px-2.5 py-1 rounded-lg border border-neutral-200 dark:border-[#333333]">
-            <span>Key:</span>
-            <span className="text-neutral-900 dark:text-white font-bold">{note.accessKey}</span>
-          </span>
-
-          <span className="hidden sm:flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-            <FaCheckCircle className="w-3.5 h-3.5" />
-            <span>Saved</span>
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-2 shrink-0">
-          <button
-            onClick={onOpenShareModal}
-            className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-[#292929] dark:hover:bg-[#333333] text-neutral-900 dark:text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-neutral-300 dark:border-[#383838] transition-all shadow-sm active:scale-95"
-          >
-            <FaShareAlt className="w-3 h-3 text-neutral-500 dark:text-neutral-300" />
-            <span className="hidden sm:inline">Share & Access</span>
-            <span className="sm:hidden">Share</span>
+    <main className="flex-1 flex flex-col h-full min-w-0 bg-nt-paper text-nt-ink">
+      {/* Top bar */}
+      {isPhone ? (
+        <div className="h-14 shrink-0 flex items-center gap-1 pl-1 pr-1.5 bg-nt-surface border-b border-nt-line">
+          <button type="button" onClick={onBack} className={`inline-flex items-center gap-0.5 h-11 pl-1 pr-3 rounded-xl text-base font-medium text-nt-accent hover:bg-nt-tray`}>
+            <LuChevronLeft className="w-6 h-6" aria-hidden="true" />
+            Notes
           </button>
-
-          <button
-            onClick={handleExportPdf}
-            disabled={isExportingPdf}
-            className="flex items-center space-x-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
-            title="Download un-watermarked high-resolution academic PDF report"
-          >
-            <FaFilePdf className="w-3 h-3" />
-            <span className="hidden sm:inline">{isExportingPdf ? 'Exporting...' : 'Export PDF'}</span>
-            <span className="sm:hidden">{isExportingPdf ? '...' : 'PDF'}</span>
+          <span className="flex-1" />
+          {status}
+          <button type="button" onClick={onOpenShareModal} aria-label="Share" title="Share" className={ICON_BTN}>
+            <LuShare2 className="w-5 h-5" aria-hidden="true" />
           </button>
-
           <button
-            onClick={() => exportNoteAsMarkdown(note)}
-            className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-[#292929] dark:hover:bg-[#333333] text-neutral-900 dark:text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-neutral-300 dark:border-[#383838] transition-all shadow-sm active:scale-95"
+            ref={exportRef}
+            type="button"
+            onClick={() => setExportOpen((v) => !v)}
+            aria-label="More: export"
+            aria-haspopup="menu"
+            aria-expanded={exportOpen}
+            className={ICON_BTN}
           >
-            <FaDownload className="w-3 h-3 text-neutral-500 dark:text-neutral-300" />
-            <span className="hidden sm:inline">Export (.md)</span>
+            <LuMoreHorizontal className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="h-14 shrink-0 flex items-center gap-3 pl-4 pr-4 md:pl-6">
+          {!isSidebarOpen && (
+            <button type="button" onClick={onShowSidebar} aria-label="Show the notes list" title="Show the notes list" className={`${ICON_BTN} -ml-2`}>
+              <LuPanelLeft className="w-[18px] h-[18px]" aria-hidden="true" />
+            </button>
+          )}
+          {privacyChip}
+          <span className="hidden lg:inline font-nt-mono text-[13px] text-nt-text2" title="Access key">
+            {note.accessKey}
+          </span>
+          {status}
+          <span className="flex-1" />
+          <button type="button" onClick={onOpenShareModal} className={BTN_SECONDARY}>
+            <LuShare2 className="w-[18px] h-[18px]" aria-hidden="true" />
+            Share
+          </button>
+          <button
+            ref={exportRef}
+            type="button"
+            onClick={() => setExportOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={exportOpen}
+            className={`${BTN_SECONDARY} ${exportOpen ? '!bg-nt-line' : ''}`}
+          >
+            <LuDownload className="w-[18px] h-[18px]" aria-hidden="true" />
+            {isExportingPdf ? 'Exporting…' : 'Export'}
+            <LuChevronDown className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+      {exportOpen && <Menu title="Export" items={exportItems} isPhone={isPhone} anchorRef={exportRef} onClose={() => setExportOpen(false)} />}
 
-      {/* Editor Main Scroll Area */}
+      {/* The note */}
       <div className="flex-1 overflow-y-auto custom-notion-scrollbar">
-        <div id="note-printable-area" className="max-w-4xl w-full mx-auto px-4 sm:px-8 md:pl-16 md:pr-12 py-8 space-y-6">
-          {/* Title, Subtitle, Tags Header */}
-          <div className="space-y-4 border-b border-neutral-200 dark:border-[#2d2d2d] pb-6 w-full">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 dark:text-white bg-transparent focus:outline-none placeholder-neutral-300 dark:placeholder-neutral-600 tracking-tight"
-              placeholder="Untitled Note..."
-            />
-
-            <input
-              type="text"
-              value={subtitle}
-              onChange={(e) => handleSubtitleChange(e.target.value)}
-              className="w-full text-sm font-semibold text-neutral-600 dark:text-neutral-300 bg-transparent focus:outline-none placeholder-neutral-300 dark:placeholder-neutral-600"
-              placeholder="Add brief description or topic subtitle..."
-            />
-
-            {/* Tags & Reading Statistics Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <div className="flex items-center space-x-2 text-xs min-w-0 flex-1">
-                <FaTag className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                <input
-                  type="text"
-                  value={tagsInput}
-                  onChange={(e) => handleTagsChange(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 dark:bg-[#202020] dark:border-[#2e2e2e] dark:text-neutral-200 dark:placeholder-neutral-600 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-neutral-400 dark:focus:border-[#444444] font-mono transition-all font-medium"
-                  placeholder="e.g. Calculus, Newton Raphson, Unit 1"
-                />
-              </div>
-
-              <div className="flex items-center space-x-3 text-xs text-neutral-600 dark:text-neutral-300 font-mono bg-neutral-100 dark:bg-[#202020] px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-[#2e2e2e] font-semibold shrink-0">
-                <span className="flex items-center space-x-1">
-                  <FaFileAlt className="w-3 h-3 text-neutral-400" />
-                  <span>{wordCount} words</span>
-                </span>
-                <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                <span className="flex items-center space-x-1">
-                  <FaClock className="w-3 h-3 text-neutral-400" />
-                  <span>{readingTimeMinutes} min read</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Blocks Canvas */}
-          <div className="space-y-2 min-h-[300px] w-full">
-            {note.blocks.map((block, idx) => (
-              <NoteBlockItem
-                key={block.id}
-                block={block}
-                index={idx}
-                totalBlocks={note.blocks.length}
-                onUpdate={handleUpdateBlock}
-                onDelete={handleDeleteBlock}
-                onMove={handleMoveBlock}
-                onOpenPicker={onOpenPickerForBlock}
-                onInsertBlockAfter={handleInsertBlockAfter}
+        <div className={isPhone ? 'bg-nt-surface min-h-full' : 'px-4 md:px-8 pt-2 pb-16'}>
+          <article
+            className={
+              isPhone
+                ? 'px-5 pt-5 pb-32'
+                : 'mx-auto w-full max-w-[800px] bg-nt-surface border border-nt-line rounded-2xl px-8 md:px-14 lg:px-16 pt-12 pb-10'
+            }
+          >
+            <div id="note-printable-area" className="flex flex-col gap-3">
+              {isPhone && (
+                <div className="flex items-center gap-2 mb-1">
+                  {privacyChip}
+                  <span className="text-xs text-nt-text2 tabular-nums">
+                    {wordCount} words · {readingTimeMinutes} min read
+                  </span>
+                </div>
+              )}
+              <GrowingLine
+                label="Title"
+                value={note.title || ''}
+                onChange={handleTitleChange}
+                placeholder="Untitled note"
+                className={`font-bold tracking-[-0.015em] text-nt-ink ${isPhone ? 'text-[28px] leading-[34px]' : 'text-[36px] leading-[44px]'}`}
               />
-            ))}
-          </div>
+              <GrowingLine
+                label="Subtitle"
+                value={note.subtitle || ''}
+                onChange={handleSubtitleChange}
+                placeholder="Add a short description"
+                className={`text-nt-text2 ${isPhone ? 'text-base leading-6' : 'text-[17px] leading-[26px]'}`}
+              />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 pb-5 border-b border-nt-line">
+                <div className="flex-1 min-w-0">
+                  <TagEditor tags={note.tags || []} onChange={handleTagsChange} />
+                </div>
+                {!isPhone && (
+                  <span className="text-xs text-nt-text2 tabular-nums shrink-0">
+                    {wordCount} words · {readingTimeMinutes} min read
+                  </span>
+                )}
+              </div>
 
-          {/* Add Block Toolbar Footer */}
-          <div className="pt-6 border-t border-neutral-200 dark:border-[#2d2d2d]">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3 font-extrabold uppercase tracking-wider flex items-center space-x-1.5">
-              <span>+ Add Content Block</span>
-              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono font-normal">(or type '/' inside any text block)</span>
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-              <button
-                onClick={() => handleAddBlock('heading1')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaHeading className="w-3.5 h-3.5 text-blue-500" />
-                <span>H1 Heading</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('heading2')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaHeading className="w-3 h-3 text-cyan-500" />
-                <span>H2 Subheading</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('paragraph')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaParagraph className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Paragraph</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('math')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaSquareRootAlt className="w-3.5 h-3.5 text-purple-500" />
-                <span>LaTeX Math</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('callout')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaLightbulb className="w-3.5 h-3.5 text-amber-500" />
-                <span>Callout</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('quiz')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaQuestionCircle className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Quiz Block</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('ink')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 dark:bg-[#222222] dark:hover:bg-[#2a2a2a] dark:border-[#333333] dark:text-neutral-200 text-xs font-bold transition-all"
-              >
-                <FaPen className="w-3.5 h-3.5 text-pink-500" />
-                <span>Ink Sketch</span>
-              </button>
-
-              <button
-                onClick={() => handleAddBlock('widget')}
-                className="flex items-center space-x-2 p-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-900 dark:bg-[#292929] dark:hover:bg-[#333333] dark:border-[#404040] dark:text-white text-xs font-extrabold transition-all"
-              >
-                <FaCalculator className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-                <span>+ Math Widget</span>
-              </button>
+              {/* Blocks */}
+              <div className="flex flex-col gap-1 pt-4 min-h-[200px]">
+                {note.blocks.map((block, idx) => (
+                  <NoteBlockItem
+                    key={block.id}
+                    block={block}
+                    index={idx}
+                    totalBlocks={note.blocks.length}
+                    onUpdate={handleUpdateBlock}
+                    onDelete={handleDeleteBlock}
+                    onMove={handleMoveBlock}
+                    onOpenPicker={onOpenPickerForBlock}
+                    onInsertBlockAfter={handleInsertBlockAfter}
+                    isPhone={isPhone}
+                    coarse={coarse}
+                    isNew={block.id === justAddedId}
+                    isActive={block.id === activeBlockId}
+                    onActivate={setActiveBlockId}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Add a block (laptops and tablets; phones use the Add block button) */}
+            {!isPhone && (
+              <section aria-label="Add block" className="mt-8 pt-6 border-t border-nt-line">
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <h2 className="text-[13px] font-semibold text-nt-text2">Add block</h2>
+                  <span className="text-xs text-nt-text2">or type / in a text block</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {BLOCK_TYPES.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleAddBlock(t.type)}
+                      className={`flex items-center gap-2.5 h-11 px-2.5 rounded-xl border border-nt-line bg-nt-surface text-left text-sm font-medium text-nt-ink hover:bg-nt-tray transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nt-accent`}
+                    >
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${t.tile}`} aria-hidden="true">
+                        <t.Icon className="w-4 h-4" />
+                      </span>
+                      <span className="truncate">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </article>
         </div>
       </div>
-    </div>
+
+      {/* Phones: one button for every kind of block */}
+      {isPhone && (
+        <>
+          <div aria-hidden="true" className="pointer-events-none fixed left-0 right-0 bottom-0 h-24 bg-gradient-to-t from-nt-surface to-transparent" />
+          <button
+            type="button"
+            onClick={() => setAddSheetOpen(true)}
+            className="fixed left-1/2 -translate-x-1/2 bottom-6 z-20 inline-flex items-center gap-2 h-[52px] pl-[18px] pr-[22px] rounded-full bg-nt-ink text-nt-on-ink text-base font-semibold shadow-nt-bar"
+          >
+            <LuPlus className="w-5 h-5" aria-hidden="true" />
+            Add block
+          </button>
+        </>
+      )}
+      {addSheetOpen && (
+        <Modal title="Add block" isPhone={isPhone} onClose={() => setAddSheetOpen(false)}>
+          <div className="px-5 pt-3 pb-6">
+            <div className="grid grid-cols-3 gap-2.5">
+              {BLOCK_TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleAddBlock(t.type)}
+                  className={`flex flex-col items-center justify-center gap-2 h-[92px] rounded-2xl text-sm font-semibold text-nt-ink ${t.tint === 'bg-nt-tray' ? 'bg-nt-paper' : t.tint}`}
+                >
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center bg-nt-surface ${t.tile.split(' ').find((c) => c.startsWith('text-'))}`} aria-hidden="true">
+                    <t.Icon className="w-5 h-5" />
+                  </span>
+                  {t.name}
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-[13px] text-nt-text2 text-center">With a keyboard, type / in any text block for the same list.</p>
+          </div>
+        </Modal>
+      )}
+    </main>
   );
 }

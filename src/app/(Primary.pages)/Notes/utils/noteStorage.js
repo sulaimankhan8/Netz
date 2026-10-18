@@ -68,15 +68,25 @@ export function getNotes() {
   }
 }
 
+// Whether the last write reached the browser's storage (the editor shows "Couldn't save" if not)
+let lastSaveOk = true;
+
+export function didLastSaveSucceed() {
+  return lastSaveOk;
+}
+
 export function saveNotes(notes) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return true;
   try {
     const stringified = JSON.stringify(notes);
     localStorage.setItem(STORAGE_KEY, stringified);
     localStorage.setItem("netz_notes", stringified); // Keep Playground synced
+    lastSaveOk = true;
   } catch (err) {
     console.error("Failed to save notes to localStorage:", err);
+    lastSaveOk = false;
   }
+  return lastSaveOk;
 }
 
 export function createNewNote() {
@@ -140,6 +150,15 @@ export function deleteNote(id) {
   const filtered = existing.filter((n) => n.id !== id);
   saveNotes(filtered);
   return filtered;
+}
+
+/** Puts a deleted note back where it was (Undo after Delete note). */
+export function restoreNote(note, index) {
+  const existing = getNotes().filter((n) => n.id !== note.id);
+  const at = Math.max(0, Math.min(index, existing.length));
+  const updated = [...existing.slice(0, at), note, ...existing.slice(at)];
+  saveNotes(updated);
+  return updated;
 }
 
 export function togglePinNote(id) {

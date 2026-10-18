@@ -1,20 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { 
-  FaPen, 
-  FaEraser, 
-  FaTrash, 
-  FaUpload, 
-  FaDownload, 
-  FaEdit, 
-  FaCheck, 
-  FaSyncAlt,
-  FaFileImage,
-  FaPalette
-} from 'react-icons/fa';
+import { LuDownload, LuEraser, LuImage, LuImport, LuPenLine, LuTrash2, LuUpload } from 'react-icons/lu';
+import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, TOUCH } from './ui';
 
-export default function InkSketchBlock({ block, onUpdate }) {
+export default function InkSketchBlock({ block, onUpdate, menuButton = null }) {
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -172,9 +162,9 @@ export default function InkSketchBlock({ block, onUpdate }) {
         caption: block.caption || 'Figure: Whiteboard canvas selection'
       });
       setIsEditing(false);
-      setWhiteboardMsg('Successfully imported drawing from Whiteboard!');
+      setWhiteboardMsg('Brought in the drawing from the Playground.');
     } else {
-      setWhiteboardMsg('No active sketch selection found in Whiteboard. Draw something in Whiteboard or draw on the pad below.');
+      setWhiteboardMsg('No drawing waiting in the Playground. Draw there and send it, or draw on the pad here.');
       setTimeout(() => setWhiteboardMsg(null), 4000);
     }
   };
@@ -187,233 +177,176 @@ export default function InkSketchBlock({ block, onUpdate }) {
     link.click();
   };
 
-  return (
-    <div className="my-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden text-neutral-900 dark:text-slate-100 font-sans transition-all hover:border-indigo-400 dark:hover:border-indigo-500/40">
-      {/* Top Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-50 dark:bg-slate-950/80 border-b border-neutral-200 dark:border-slate-800/80">
-        <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded-lg bg-pink-50 dark:bg-pink-950/60 border border-pink-200 dark:border-pink-800/60 flex items-center justify-center text-pink-600 dark:text-pink-400">
-            <FaPen className="w-3 h-3" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
-              <span>Handwritten Ink & Vector Sketch</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300 font-mono">
-                {isEditing ? 'Drawing Mode' : 'Rendered Figure'}
-              </span>
-            </h4>
-          </div>
-        </div>
+  const hasFigure = block?.content && (block.content.startsWith('data:image') || block.content.startsWith('<svg') || block.content.startsWith('http'));
 
-        <div className="flex items-center space-x-2">
-          {!isEditing && block?.content ? (
-            <>
-              <button
-                onClick={handleDownloadImage}
-                className="flex items-center space-x-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-                title="Download sketch PNG"
-              >
-                <FaDownload className="w-2.5 h-2.5" />
-                <span className="text-[11px] hidden sm:inline">Export</span>
-              </button>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-1 text-xs px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 transition-colors font-semibold"
-                title="Edit drawing"
-              >
-                <FaEdit className="w-3 h-3" />
-                <span className="text-[11px]">Edit Sketch</span>
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(false)}
-              className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800"
-            >
-              Cancel
+  return (
+    <div className={`my-2 rounded-2xl border bg-nt-surface text-nt-ink ${isEditing ? 'border-nt-sketch ring-[3px] ring-nt-sketch-tint' : 'border-nt-line'}`}>
+      {/* Header: type and tools */}
+      <div className="flex items-center gap-2.5 pl-3.5 pr-1.5 py-1.5 min-h-[56px]">
+        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-nt-sketch-tint text-nt-sketch" aria-hidden="true">
+          <LuPenLine className="w-4 h-4" />
+        </span>
+        <span className="text-[13px] font-semibold text-nt-sketch shrink-0">Sketch</span>
+        <span className="flex-1" />
+        {!isEditing && block?.content ? (
+          <>
+            <button type="button" onClick={handleDownloadImage} className={ICON_BTN} aria-label="Download as PNG" title="Download as PNG">
+              <LuDownload className="w-[18px] h-[18px]" aria-hidden="true" />
             </button>
-          )}
-        </div>
+            <button type="button" onClick={() => setIsEditing(true)} className={`${BTN_SECONDARY} !h-9 !px-3`}>
+              Edit
+            </button>
+          </>
+        ) : isEditing ? null : (
+          <button type="button" onClick={() => setIsEditing(true)} className={`${BTN_SECONDARY} !h-9 !px-3`}>
+            Draw
+          </button>
+        )}
+        {menuButton}
       </div>
 
-      {/* Main Body */}
-      <div className="p-4 sm:p-5 space-y-3">
-        {/* INTERACTIVE DRAWING CANVAS / UPLOAD MODE */}
+      <div className="px-4 pb-4 flex flex-col gap-3">
         {isEditing ? (
-          <div className="space-y-3">
-            {/* Drawing Tools Palette */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-neutral-100 dark:bg-slate-950 rounded-xl border border-neutral-200 dark:border-slate-800 text-xs">
-              {/* Tool Selector (Pen vs Eraser) */}
-              <div className="flex items-center space-x-1">
+          <>
+            {/* Tools */}
+            <div className="flex flex-wrap items-center gap-1.5" role="toolbar" aria-label="Drawing tools">
+              <div className="flex p-1 gap-0.5 rounded-xl bg-nt-tray">
                 <button
                   type="button"
                   onClick={() => setIsEraser(false)}
-                  className={`p-1.5 rounded-lg flex items-center space-x-1 font-semibold transition-all ${
-                    !isEraser
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
-                  title="Pen tool"
+                  aria-pressed={!isEraser}
+                  aria-label="Pen"
+                  title="Pen"
+                  className={`${ICON_BTN} !w-9 !h-9 ${!isEraser ? '!bg-nt-ink !text-nt-on-ink' : ''}`}
                 >
-                  <FaPen className="w-3 h-3" />
-                  <span className="text-[11px]">Pen</span>
+                  <LuPenLine className="w-[18px] h-[18px]" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEraser(true)}
-                  className={`p-1.5 rounded-lg flex items-center space-x-1 font-semibold transition-all ${
-                    isEraser
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
-                  title="Eraser tool"
+                  aria-pressed={isEraser}
+                  aria-label="Eraser"
+                  title="Eraser"
+                  className={`${ICON_BTN} !w-9 !h-9 ${isEraser ? '!bg-nt-ink !text-nt-on-ink' : ''}`}
                 >
-                  <FaEraser className="w-3 h-3" />
-                  <span className="text-[11px]">Eraser</span>
+                  <LuEraser className="w-[18px] h-[18px]" aria-hidden="true" />
                 </button>
               </div>
 
-              {/* Color Presets */}
               {!isEraser && (
-                <div className="flex items-center space-x-1.5">
+                <>
+                  <span aria-hidden="true" className="w-px h-6 bg-nt-line mx-1" />
                   {colors.map((c) => (
                     <button
                       key={c.value}
                       type="button"
                       onClick={() => setColor(c.value)}
-                      className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                        color === c.value ? 'scale-125 border-white ring-2 ring-indigo-500' : 'border-transparent hover:scale-110'
-                      }`}
-                      style={{ backgroundColor: c.value }}
+                      aria-label={c.name}
+                      aria-pressed={color === c.value}
                       title={c.name}
-                    />
+                      className={`w-9 h-9 ${TOUCH} shrink-0 flex items-center justify-center rounded-full`}
+                    >
+                      <span
+                        className="w-7 h-7 rounded-full border border-black/10 dark:border-white/20"
+                        style={{
+                          backgroundColor: c.value,
+                          boxShadow: color === c.value ? '0 0 0 2px rgb(var(--nt-surface)), 0 0 0 4px rgb(var(--nt-ink))' : undefined
+                        }}
+                      />
+                    </button>
                   ))}
-                </div>
+                </>
               )}
 
-              {/* Stroke Width Selector */}
-              <div className="flex items-center space-x-1.5 text-neutral-600 dark:text-slate-400">
-                <span className="text-[11px] font-mono">Size:</span>
-                {[2, 4, 8].map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setStrokeWidth(size)}
-                    className={`w-6 h-6 rounded flex items-center justify-center font-mono text-[11px] transition-all ${
-                      strokeWidth === size
-                        ? 'bg-indigo-600 text-white font-bold'
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
+              <span aria-hidden="true" className="w-px h-6 bg-nt-line mx-1" />
+              {[2, 4, 8].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setStrokeWidth(size)}
+                  aria-pressed={strokeWidth === size}
+                  aria-label={size === 2 ? 'Thin' : size === 4 ? 'Medium' : 'Thick'}
+                  title={size === 2 ? 'Thin' : size === 4 ? 'Medium' : 'Thick'}
+                  className={`${ICON_BTN} !w-9 !h-9 ${strokeWidth === size ? '!bg-nt-tray !text-nt-ink' : ''}`}
+                >
+                  <span aria-hidden="true" className="rounded-full bg-current" style={{ width: size + 4, height: size + 4 }} />
+                </button>
+              ))}
 
-              {/* Clear Canvas */}
-              <button
-                type="button"
-                onClick={handleClearCanvas}
-                className="flex items-center space-x-1 text-slate-500 hover:text-red-500 p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-slate-800 transition-colors"
-                title="Clear canvas"
-              >
-                <FaTrash className="w-3 h-3" />
-                <span className="text-[11px]">Clear</span>
+              <span className="flex-1" />
+              <button type="button" onClick={handleClearCanvas} className={`${ICON_BTN} !text-nt-danger hover:!bg-nt-danger-tint`} aria-label="Clear the drawing" title="Clear the drawing">
+                <LuTrash2 className="w-[18px] h-[18px]" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Interactive Drawing Pad */}
-            <div className="relative w-full h-64 sm:h-72 bg-white dark:bg-slate-950 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-900/60 overflow-hidden shadow-inner cursor-crosshair touch-none">
+            {/* Drawing pad */}
+            <div className="relative w-full h-64 sm:h-72 rounded-xl bg-white border-[1.5px] border-dashed border-nt-line overflow-hidden cursor-crosshair touch-none">
               <canvas
                 ref={canvasRef}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
+                aria-label="Drawing pad"
                 className="w-full h-full block"
               />
-              <div className="absolute top-2 right-2 pointer-events-none text-[10px] font-mono text-neutral-400 dark:text-slate-600 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded backdrop-blur-sm">
-                Stylus / Mouse Draw Pad
-              </div>
+              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none text-xs text-[#55555A] whitespace-nowrap">
+                Draw here with a finger, pen or mouse
+              </span>
             </div>
 
-            {/* Action Bar (Save / Upload / Whiteboard Import) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={handleSaveDrawing}
-                  className="flex items-center space-x-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
-                >
-                  <FaCheck className="w-3 h-3" />
-                  <span>Save Sketch to Note</span>
-                </button>
-
-                {/* Upload Image Input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.svg"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-neutral-300 dark:border-slate-700 transition-all cursor-pointer"
-                >
-                  <FaUpload className="w-3 h-3 text-indigo-500" />
-                  <span>Upload Image / SVG</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleImportFromWhiteboard}
-                className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-neutral-300 dark:border-slate-700 transition-all cursor-pointer"
-                title="Pulls latest drawing clip from Playground Whiteboard"
-              >
-                <FaSyncAlt className="w-3 h-3 text-pink-500" />
-                <span>Import from Whiteboard</span>
+            {/* Save, bring a picture in, cancel */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={handleSaveDrawing} className={BTN_MAIN}>
+                Save sketch
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*,.svg" onChange={handleFileUpload} className="hidden" />
+              <button type="button" onClick={() => fileInputRef.current?.click()} className={BTN_SECONDARY}>
+                <LuUpload className="w-4 h-4" aria-hidden="true" />
+                Upload image
+              </button>
+              <button type="button" onClick={handleImportFromWhiteboard} className={BTN_SECONDARY} title="Bring in the latest drawing from the Playground">
+                <LuImport className="w-4 h-4" aria-hidden="true" />
+                From Playground
+              </button>
+              <span className="flex-1" />
+              <button type="button" onClick={() => setIsEditing(false)} className={BTN_QUIET}>
+                Cancel
               </button>
             </div>
 
             {whiteboardMsg && (
-              <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium animate-fadeIn">
+              <p className="m-0 text-sm text-nt-text2" role="status">
                 {whiteboardMsg}
               </p>
             )}
-          </div>
+          </>
         ) : (
-          /* RENDERED ACADEMIC FIGURE DISPLAY */
-          <div className="space-y-3">
-            <div className="flex items-center justify-center p-4 bg-white dark:bg-slate-950 rounded-xl border border-neutral-200 dark:border-slate-800 min-h-[160px] overflow-hidden">
-              {block?.content && (block.content.startsWith('data:image') || block.content.startsWith('<svg') || block.content.startsWith('http')) ? (
+          /* The finished figure */
+          <>
+            <div className="flex items-center justify-center p-4 rounded-xl bg-white min-h-[160px] overflow-hidden">
+              {hasFigure ? (
                 block.content.startsWith('<svg') ? (
                   <div dangerouslySetInnerHTML={{ __html: block.content }} className="w-full max-w-lg" />
                 ) : (
-                  <img
-                    src={block.content}
-                    alt={block.caption || 'Handwritten mathematical sketch'}
-                    className="max-h-80 object-contain rounded"
-                  />
+                  <img src={block.content} alt={block.caption || 'Handwritten mathematical sketch'} className="max-h-80 object-contain rounded" />
                 )
               ) : (
-                <div className="text-center py-8 text-xs text-neutral-400 dark:text-slate-500 space-y-2">
-                  <FaFileImage className="w-8 h-8 mx-auto text-neutral-300 dark:text-slate-700" />
-                  <p>Empty sketch block. Click "Edit Sketch" to draw on canvas or upload an image.</p>
+                <div className="text-center py-6 text-sm text-[#55555A] flex flex-col items-center gap-2">
+                  <LuImage className="w-8 h-8" aria-hidden="true" />
+                  <p className="m-0">No drawing yet. Choose Draw, or upload an image.</p>
                 </div>
               )}
             </div>
 
-            {/* Editable Caption */}
             <input
               type="text"
               value={block?.caption || ''}
+              aria-label="Caption"
               onChange={(e) => onUpdate({ ...block, caption: e.target.value })}
-              placeholder="Figure caption (e.g. Figure 1: Chord intersection & slope)..."
-              className="w-full bg-transparent text-xs text-neutral-600 dark:text-slate-400 italic text-center focus:outline-none placeholder-neutral-400 dark:placeholder-slate-600 border-b border-transparent focus:border-indigo-400/50 py-0.5 font-serif"
+              placeholder="Caption, e.g. Figure 1: tangent meets the x axis"
+              className="w-full bg-transparent text-sm text-nt-text2 italic text-center outline-none placeholder:text-nt-muted border-b border-transparent focus:border-nt-line py-1"
             />
-          </div>
+          </>
         )}
       </div>
     </div>
