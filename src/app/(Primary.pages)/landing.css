@@ -489,17 +489,37 @@ html.dark .ld-root .ld-sec-head .ld-on-bg {
   align-self: flex-start;
 }
 
+.ld-ink {
+  display: flex;
+  align-items: baseline;
+}
+
+.ld-ink-gap {
+  display: inline-block;
+  width: 0.28em;
+}
+
+/* Each glyph is wiped in left to right; the clip box is far taller than the glyph so the
+   handwriting (and the raised 2) is never cut */
 .ld-glyph {
   display: inline-block;
+  padding: 0 0.04em;
   animation: ld-glyph var(--cycle) linear infinite;
   animation-delay: calc(0.3s + var(--g) * 0.13s);
 }
 
+.ld-glyph.is-sup {
+  font-size: 0.6em;
+  align-self: flex-start;
+  margin: -0.05em 0.02em 0 -0.02em;
+}
+
 @keyframes ld-glyph {
-  0% { clip-path: inset(-25% 100% -25% 0); opacity: 1; }
-  2.5% { clip-path: inset(-25% 0 -25% 0); }
+  0% { clip-path: inset(-200% 100% -200% -20%); opacity: 1; }
+  2.5% { clip-path: inset(-200% -20% -200% -20%); }
   78% { opacity: 1; }
-  82%, 100% { clip-path: inset(-25% 0 -25% 0); opacity: 0; }
+  82% { clip-path: inset(-200% -20% -200% -20%); opacity: 0; }
+  82.1%, 100% { clip-path: inset(-200% 100% -200% -20%); opacity: 0; }
 }
 
 /* The pen tip moving along with the writing */

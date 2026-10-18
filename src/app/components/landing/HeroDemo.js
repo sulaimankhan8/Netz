@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconEraser, IconPen } from './icons';
 
-const INK = 'x² − 4x + 3 = 0';
+// The handwritten equation, one glyph at a time; '^' marks the raised 2
+const INK = ['x', '^2', ' ', '−', ' ', '4', 'x', ' ', '+', ' ', '3', ' ', '=', ' ', '0'];
 
 /**
  * The hero demo (board artboard 3): a loop of about 9 seconds that keeps playing by itself.
@@ -26,12 +27,13 @@ export default function HeroDemo() {
   }, []);
 
   let glyph = 0;
-  const ink = [...INK].map((ch, i) => {
-    if (ch === ' ') return <span key={i}> </span>;
+  const ink = INK.map((ch, i) => {
+    if (ch === ' ') return <span key={i} className="ld-ink-gap" />;
     glyph += 1;
+    const sup = ch.startsWith('^');
     return (
-      <span key={i} className="ld-glyph" style={{ '--g': glyph }}>
-        {ch}
+      <span key={i} className={`ld-glyph${sup ? ' is-sup' : ''}`} style={{ '--g': glyph }}>
+        {sup ? ch.slice(1) : ch}
       </span>
     );
   });

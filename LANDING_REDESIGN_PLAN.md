@@ -74,3 +74,12 @@ Checks: `tests/browser/landing.mjs` against `next start -p 3213` on the producti
 - **Facts section redesigned** ("Made for the way you study"): three cards with a coloured icon, a device row on the first, and short tags.
 - Onboarding tours: built (`components/tour/`, pages wired), production build passes; `tests/browser/tours.mjs` written but **not yet run** (the owner stopped that run).
 - Checks after round 2: `tests/browser/landing.mjs` 27/27; frames checked in light, dark and phone; 33 animations run on screen, 1 off screen; none under reduce motion.
+
+### Round 3 (2026-10-18, owner feedback)
+
+- **Real logo everywhere** (`public/icons/icon.svg`): landing header, install card, Privacy page. The drawn stand-in icon was removed.
+- **"Every step, shown" is a step guide again**, like the old landing page: six steps through the real Gauss–Seidel page (idea, formula, procedure and example, calculator, iteration table, graph), each a fresh screenshot (light and dark, `public/landing/guide-*.webp`, 19–57 KB) with numbered pins. Screenshots and pin positions come from `tests/browser/capture-guide.mjs` (rerun it when the method page changes). The guide moves on every 7 s while on screen, stops once a step is picked, pauses on hover; one pin label shows at a time and the active step lists them all. On phones the steps are a row of chips and the pins are listed under the picture. The old method table (`MethodTable.js`) was removed.
+- **Hero demo loops by itself** (no Replay button): a 9 s cycle — glyph-by-glyph writing with a pen tip, a reading sweep, typed maths, a tap on Find roots, the answer with a small graph of the two roots, a hold, then it fades and starts again. Paused off screen; still under reduce motion.
+- Page header also hides on short landscape screens, where the app's phone nav bar shows the logo.
+- Found on the Gauss–Seidel page, not fixed (outside this work): the calculator shows "x &rarr; y &rarr; z" literally, and the convergence chart's axis labels are nearly invisible in dark mode.
+- Checks for rounds 2–3 not run yet (owner's preference: test at the end). `landing.mjs` is updated for the guide and the looping demo; `tours.mjs` is written.
