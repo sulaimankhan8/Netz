@@ -85,12 +85,34 @@ try {
   check('no Poppins, Lottie or KaTeX requested', !requests.some((r) => /Poppins|lottie|\/videos\/.*\.json|katex/i.test(r.url)), requests.filter((r) => /Poppins|lottie|katex/i.test(r.url)).map((r) => r.url).join(' '));
   check('original background loads (WebP)', requests.some((r) => r.url.includes('bg1.webp')), '');
 
-  // Method chips swap the table
-  await page.evaluate(() => [...document.querySelectorAll('.ld-chip')].find((b) => b.textContent === 'Secant').click());
-  await sleep(200);
-  const firstRow = await page.$eval('.ld-table tbody tr td:nth-child(2)', (e) => e.textContent);
-  const pressed = await page.evaluate(() => [...document.querySelectorAll('.ld-chip')].map((b) => b.getAttribute('aria-pressed')).join(','));
-  check('Secant chip shows the Secant table', firstRow === '2.058824' && pressed === 'false,true,false', `${firstRow} ${pressed}`);
+  // Step guide: plays by itself while on screen, then follows the step you pick
+  await page.evaluate(() => document.querySelector('.ld-guide').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await sleep(300);
+  const guideStart = await page.evaluate(() => [...document.querySelectorAll('.ld-guide-step')].findIndex((b) => b.getAttribute('aria-current') === 'step'));
+  await page.mouse.move(5, 5);
+  await sleep(7600);
+  const guideAuto = await page.evaluate(() => [...document.querySelectorAll('.ld-guide-step')].findIndex((b) => b.getAttribute('aria-current') === 'step'));
+  check('step guide moves on by itself while on screen', guideAuto === (guideStart + 1) % 6, `${guideStart} → ${guideAuto}`);
+  await page.evaluate(() => document.querySelectorAll('.ld-guide-step')[3].click());
+  await sleep(800);
+  const guide = await page.evaluate(() => {
+    const img = document.querySelector('.ld-shot-light');
+    return {
+      current: [...document.querySelectorAll('.ld-guide-step')].findIndex((b) => b.getAttribute('aria-current') === 'step'),
+      src: img?.getAttribute('src'),
+      loaded: Boolean(img?.complete && img.naturalWidth),
+      pins: document.querySelectorAll('.ld-shot .ld-pin').length,
+      inside: [...document.querySelectorAll('.ld-shot .ld-pin-dot')].every((d) => {
+        const r = d.getBoundingClientRect();
+        const s = document.querySelector('.ld-shot').getBoundingClientRect();
+        return r.left >= s.left - 16 && r.right <= s.right + 16 && r.top >= s.top - 16 && r.bottom <= s.bottom + 16;
+      }),
+    };
+  });
+  check('picking step 4 shows the calculator screenshot with its 4 pins', guide.current === 3 && /guide-calculator-light/.test(guide.src) && guide.loaded && guide.pins === 4 && guide.inside, JSON.stringify(guide));
+  await sleep(7600);
+  const stays = await page.evaluate(() => [...document.querySelectorAll('.ld-guide-step')].findIndex((b) => b.getAttribute('aria-current') === 'step'));
+  check('after you pick a step it stays there', stays === 3, stays);
 
   // Floating cards: tapping a header brings that card forward
   await page.evaluate(() => document.querySelector('.ld-fc-export .ld-fc-head').click());
@@ -108,14 +130,12 @@ try {
   const hintGone = await page.$('.ld-header .ld-install-hint');
   check('Escape closes the install hint', !hintGone, '');
 
-  // Replay restarts the hero animation
-  const before = await page.$eval('.ld-demo .d-answer', (e) => getComputedStyle(e).opacity);
-  await page.evaluate(() => document.querySelector('.ld-replay').click());
-  await sleep(150);
-  const during = await page.$eval('.ld-demo .d-answer', (e) => getComputedStyle(e).opacity);
-  await sleep(3400);
-  const after = await page.$eval('.ld-demo .d-answer', (e) => getComputedStyle(e).opacity);
-  check('hero demo ends on the answer and Replay plays it again', before === '1' && Number(during) < 0.5 && after === '1', `${before} → ${during} → ${after}`);
+  // The hero demo loops by itself: no Replay button, and every part repeats forever
+  const loop = await page.evaluate(() => ({
+    replay: Boolean(document.querySelector('.ld-replay')),
+    infinite: document.querySelector('.ld-demo').getAnimations({ subtree: true }).filter((a) => a.effect?.getTiming().iterations === Infinity).length,
+  }));
+  check('hero demo loops on its own (no Replay button)', !loop.replay && loop.infinite >= 15, JSON.stringify(loop));
 
   await fullShot(page, 'laptop-light');
 
@@ -143,7 +163,7 @@ try {
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await open(page);
   const reduced = await page.evaluate(() => ({
-    ink: getComputedStyle(document.querySelector('.ld-demo .d-ink')).animationName,
+    ink: getComputedStyle(document.querySelector('.ld-demo .ld-glyph')).animationName,
     answer: getComputedStyle(document.querySelector('.ld-demo .d-answer')).opacity,
     hidden: [...document.querySelectorAll('[data-reveal]')].filter((e) => getComputedStyle(e).opacity !== '1').length,
   }));

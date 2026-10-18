@@ -26,13 +26,6 @@ export const IconReplay = (p) => <Svg {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><
 export const IconCheck = (p) => <Svg strokeWidth={2.4} {...p}><path d="m5 12 5 5 9-10" /></Svg>;
 export const IconPen = (p) => <Svg {...p}><path d="M4 20l4-1 11-11-3-3L5 16z" /></Svg>;
 export const IconEraser = (p) => <Svg {...p}><path d="M7 21h10" /><path d="M5 15 15 5l4 4-10 10H5z" /></Svg>;
-export const IconCalc = (p) => (
-  <Svg {...p}>
-    <rect x="5" y="3" width="14" height="18" rx="2" />
-    <path d="M8 7h8" />
-    <path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h.01M16 18h.01" />
-  </Svg>
-);
 export const IconShapes = (p) => <Svg {...p}><rect x="3" y="3" width="8" height="8" rx="1.5" /><circle cx="17" cy="17" r="4" /><path d="m14 4 6 6" /></Svg>;
 export const IconSquare = (p) => <Svg {...p}><rect x="4" y="4" width="16" height="16" rx="2" /></Svg>;
 export const IconCircle = (p) => <Svg {...p}><circle cx="12" cy="12" r="8" /></Svg>;

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import '../landing.css';
 import { LD_FONT } from '../../components/landing/fonts';
@@ -17,8 +18,9 @@ export default function PrivacyPage() {
       <div className="ld-wrap" style={{ maxWidth: 760, paddingTop: 64, paddingBottom: 96 }}>
         <article className="ld-fact" style={{ padding: 'clamp(24px, 5vw, 48px)', gap: 28 }}>
           <header style={sectionStyle}>
-            <Link href="/" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ld-accent)', textDecoration: 'none' }}>
-              ← NETZ
+            <Link href="/" className="ld-brand" aria-label="NETZ home" style={{ alignSelf: 'flex-start' }}>
+              <Image src="/icons/icon.svg" alt="" width={40} height={40} className="ld-brand-logo" />
+              <span>NETZ</span>
             </Link>
             <h1 className="ld-h2">Privacy</h1>
             <p style={textStyle}>Last updated 18 October 2026.</p>

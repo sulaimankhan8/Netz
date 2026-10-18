@@ -1,0 +1,178 @@
+{
+  "idea": {
+    "pins": [
+      {
+        "id": "title",
+        "x": 50,
+        "y": 42.25
+      },
+      {
+        "id": "idea",
+        "x": 47.17,
+        "y": 79.58
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-idea-light.webp",
+      "width": 1400,
+      "height": 469,
+      "kb": 41
+    },
+    "dark": {
+      "src": "/landing/guide-idea-dark.webp",
+      "width": 1400,
+      "height": 469,
+      "kb": 41
+    }
+  },
+  "formula": {
+    "pins": [
+      {
+        "id": "system",
+        "x": 50,
+        "y": 43.26
+      },
+      {
+        "id": "condition",
+        "x": 85.92,
+        "y": 15.02
+      },
+      {
+        "id": "rules",
+        "x": 50,
+        "y": 76.62
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-formula-light.webp",
+      "width": 1400,
+      "height": 659,
+      "kb": 54
+    },
+    "dark": {
+      "src": "/landing/guide-formula-dark.webp",
+      "width": 1400,
+      "height": 659,
+      "kb": 57
+    }
+  },
+  "procedure": {
+    "pins": [
+      {
+        "id": "heading",
+        "x": 30.38,
+        "y": 6.07
+      },
+      {
+        "id": "example",
+        "x": 50,
+        "y": 36.44
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-procedure-light.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 32
+    },
+    "dark": {
+      "src": "/landing/guide-procedure-dark.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 32
+    }
+  },
+  "calculator": {
+    "pins": [
+      {
+        "id": "demo",
+        "x": 77.6,
+        "y": -5.07
+      },
+      {
+        "id": "inputs",
+        "x": 18.69,
+        "y": 18.77
+      },
+      {
+        "id": "solve",
+        "x": 80.03,
+        "y": 72.37
+      },
+      {
+        "id": "answer",
+        "x": 28.33,
+        "y": 105.07
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-calculator-light.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 21
+    },
+    "dark": {
+      "src": "/landing/guide-calculator-dark.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 19
+    }
+  },
+  "table": {
+    "pins": [
+      {
+        "id": "tabs",
+        "x": 19.86,
+        "y": 5.09
+      },
+      {
+        "id": "rows",
+        "x": 50,
+        "y": 30.68
+      },
+      {
+        "id": "last",
+        "x": 50,
+        "y": 94.91
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-table-light.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 33
+    },
+    "dark": {
+      "src": "/landing/guide-table-dark.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 33
+    }
+  },
+  "graph": {
+    "pins": [
+      {
+        "id": "plot",
+        "x": 50,
+        "y": 62.89
+      },
+      {
+        "id": "export",
+        "x": 83.83,
+        "y": 21.62
+      }
+    ],
+    "light": {
+      "src": "/landing/guide-graph-light.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 36
+    },
+    "dark": {
+      "src": "/landing/guide-graph-dark.webp",
+      "width": 1400,
+      "height": 925,
+      "kb": 29
+    }
+  }
+}

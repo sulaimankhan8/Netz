@@ -1,11 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useInstall } from './install';
 import { readDoneTours } from '../tour/tours';
 import {
-  IconArrowUpRight, IconCalc, IconCheck, IconCircle, IconCrop, IconDownload, IconHand, IconMoon,
+  IconArrowUpRight, IconCheck, IconCircle, IconCrop, IconDownload, IconHand, IconMoon,
   IconNote, IconQuiz, IconSearch, IconShapes, IconSquare, IconSteps, IconSun, IconUser, IconWifiOff,
 } from './icons';
 
@@ -128,7 +129,7 @@ const TOURS = [
 const DOWNLOAD_ART = (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
     <div style={{ width: 64, height: 100, borderRadius: 14, border: '2px solid var(--ld-ink)', background: 'var(--ld-surface)', padding: '10px 8px', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, alignContent: 'start' }}>
-      <span style={{ height: 20, borderRadius: 6, background: '#1D1D1F', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconCalc size={12} /></span>
+      <Image src="/icons/icon.svg" alt="" width={20} height={20} style={{ display: 'block', margin: '0 auto' }} />
       <span style={{ height: 20, borderRadius: 6, background: 'var(--ld-line)' }} />
       <span style={{ height: 20, borderRadius: 6, background: 'var(--ld-line)' }} />
       <span style={{ height: 20, borderRadius: 6, background: 'var(--ld-line)' }} />

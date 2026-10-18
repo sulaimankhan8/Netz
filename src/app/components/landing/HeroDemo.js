@@ -1,46 +1,44 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { IconCheck, IconEraser, IconPen, IconReplay } from './icons';
+import { IconCheck, IconEraser, IconPen } from './icons';
+
+const INK = 'x² − 4x + 3 = 0';
 
 /**
- * The one animation on the landing page (board artboard 3): an equation is written by hand, typed,
- * and solved with Find roots. Plays once and rests on the answer. If the card starts off screen it
- * waits and plays the first time it scrolls into view; Replay plays it again. CSS does the motion
- * (landing.css, ld-write / ld-rise / ld-press) and "reduce motion" shows the final frame.
+ * The hero demo (board artboard 3): a loop of about 9 seconds that keeps playing by itself.
+ * The equation is written glyph by glyph behind a pen tip, NETZ reads it (a short sweep), the
+ * typed maths rises in, Find roots is tapped, and the answer appears with a small graph marking
+ * the two roots. It holds, fades out and starts again. CSS does all of it (landing.css,
+ * "Hero demo"); the loop pauses while the card is off screen, and "reduce motion" shows the
+ * finished scene without moving.
  */
 export default function HeroDemo() {
-  const [run, setRun] = useState(0);
   const [waiting, setWaiting] = useState(false);
   const cardRef = useRef(null);
 
   useEffect(() => {
     const card = cardRef.current;
     if (!card || typeof IntersectionObserver === 'undefined') return undefined;
-    let seen = false;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!seen) {
-          seen = true;
-          if (!entry.isIntersecting) setWaiting(true);
-          return;
-        }
-        if (entry.isIntersecting) {
-          setWaiting(false);
-          setRun((value) => value + 1);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.35 }
-    );
+    const observer = new IntersectionObserver(([entry]) => setWaiting(!entry.isIntersecting), { threshold: 0.2 });
     observer.observe(card);
     return () => observer.disconnect();
   }, []);
 
+  let glyph = 0;
+  const ink = [...INK].map((ch, i) => {
+    if (ch === ' ') return <span key={i}> </span>;
+    glyph += 1;
+    return (
+      <span key={i} className="ld-glyph" style={{ '--g': glyph }}>
+        {ch}
+      </span>
+    );
+  });
+
   return (
     <div className="ld-demo-col">
       <div
-        key={run}
         ref={cardRef}
         className={`ld-demo${waiting ? ' is-waiting' : ''}`}
         role="img"
@@ -56,29 +54,46 @@ export default function HeroDemo() {
             <span className="ld-demo-tool"><IconEraser size={16} /></span>
           </div>
         </div>
+
         <div className="ld-demo-body ld-grid-paper" aria-hidden="true">
-          <div className="ld-ink d-ink">x² − 4x + 3 = 0</div>
+          <div className="ld-ink-wrap">
+            <div className="ld-ink">{ink}</div>
+            <span className="ld-demo-pen"><IconPen size={22} /></span>
+            <span className="ld-demo-scan" />
+          </div>
+
           <div className="ld-typed d-typed">
             <span className="ld-tag ld-tag-teal">Typed</span>
             <span className="ld-math">
               x<sup style={{ fontSize: 14 }}>2</sup> − 4x + 3 = 0
             </span>
           </div>
+
           <div className="ld-eqbar d-bar">
-            <span className="ld-eqbtn is-on d-press">Find roots</span>
+            <span className="ld-eqbtn d-roots">
+              Find roots
+              <span className="ld-demo-tap" />
+            </span>
             <span className="ld-eqbtn">Plot</span>
             <span className="ld-eqbtn">d/dx</span>
           </div>
-          <div className="ld-answer d-answer">
-            <IconCheck />
-            <span className="ld-mono">x = 1 &nbsp; or &nbsp; x = 3</span>
+
+          <div className="ld-demo-result">
+            <div className="ld-answer d-answer">
+              <IconCheck />
+              <span className="ld-mono">x = 1 &nbsp; or &nbsp; x = 3</span>
+            </div>
+            <svg className="ld-demo-plot d-plot" viewBox="0 0 140 70">
+              <path d="M4 48.5 H136" className="ld-demo-plot-axis" />
+              <path d="M10 8 Q70 116 130 8" className="ld-demo-plot-curve" pathLength="1" />
+              <circle cx="40" cy="48.5" r="4.5" className="ld-demo-plot-root" />
+              <circle cx="100" cy="48.5" r="4.5" className="ld-demo-plot-root ld-demo-plot-root-2" />
+              <text x="40" y="64" className="ld-demo-plot-label">1</text>
+              <text x="100" y="64" className="ld-demo-plot-label">3</text>
+            </svg>
           </div>
         </div>
       </div>
-      <button type="button" className="ld-replay" onClick={() => setRun((value) => value + 1)}>
-        <IconReplay size={16} />
-        Replay
-      </button>
     </div>
   );
 }

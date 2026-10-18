@@ -134,8 +134,7 @@ html.dark .ld-root .ld-on-bg {
   margin: -14px -16px;
 }
 
-html.dark .ld-root .ld-sec-head .ld-on-bg,
-html.dark .ld-root .ld-units.ld-on-bg {
+html.dark .ld-root .ld-sec-head .ld-on-bg {
   margin: 0;
 }
 
@@ -241,19 +240,15 @@ html.dark .ld-root .ld-units.ld-on-bg {
   letter-spacing: 0.04em;
 }
 
-.ld-brand-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #1D1D1F;
-  border: 1px solid var(--ld-line);
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* The site logo (public/icons/icon.svg), the same one the phone nav bar uses */
+.ld-brand-logo {
+  display: block;
+  width: 40px;
+  height: 40px;
 }
 
-@media (max-width: 768px) {
+/* The app shell shows its phone nav bar (with the logo) at these sizes, so the page header steps aside */
+@media (max-width: 768px), (max-height: 500px) {
   .ld-header {
     display: none;
   }
@@ -480,51 +475,211 @@ html.dark .ld-root .ld-units.ld-on-bg {
   font-weight: 500;
 }
 
-.ld-replay {
-  align-self: flex-end;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 44px;
-  padding: 0 12px;
+/*
+ * The demo loops every 9 s: writing 0.4–2 s, reading 2–2.7 s, typed 2.7 s, equation bar 3.2 s,
+ * tap on Find roots 3.9 s, answer and graph 4.3–5.5 s, hold, fade out from 7 s, start again.
+ * Every part runs on the same 9 s cycle, so the loop never drifts.
+ */
+.ld-demo {
+  --cycle: 9s;
+}
+
+.ld-ink-wrap {
+  position: relative;
+  align-self: flex-start;
+}
+
+.ld-glyph {
+  display: inline-block;
+  animation: ld-glyph var(--cycle) linear infinite;
+  animation-delay: calc(0.3s + var(--g) * 0.13s);
+}
+
+@keyframes ld-glyph {
+  0% { clip-path: inset(-25% 100% -25% 0); opacity: 1; }
+  2.5% { clip-path: inset(-25% 0 -25% 0); }
+  78% { opacity: 1; }
+  82%, 100% { clip-path: inset(-25% 0 -25% 0); opacity: 0; }
+}
+
+/* The pen tip moving along with the writing */
+.ld-demo-pen {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  color: var(--ld-ink);
+  opacity: 0;
+  translate: -20% -95%;
+  pointer-events: none;
+  animation: ld-pen var(--cycle) linear infinite;
+  animation-delay: 0.3s;
+}
+
+@keyframes ld-pen {
+  0% { left: 0; opacity: 0; }
+  1.5% { opacity: 1; }
+  19% { left: 100%; opacity: 1; }
+  21%, 100% { left: 100%; opacity: 0; }
+}
+
+/* NETZ reading the ink: a soft band passing over it */
+.ld-demo-scan {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: 0;
+  width: 24%;
   border-radius: 10px;
-  background: var(--ld-surface);
-  border: 1px solid var(--ld-line);
-  color: var(--ld-text2);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  background: linear-gradient(90deg, transparent, rgb(15 118 110 / 0.22), transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: ld-scan var(--cycle) ease-in-out infinite;
 }
 
-/* The demo plays once: write, then typed maths, the equation bar, a press, the answer */
-@keyframes ld-write {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
+html.dark .ld-root .ld-demo-scan {
+  background: linear-gradient(90deg, transparent, rgb(94 234 212 / 0.22), transparent);
 }
 
-@keyframes ld-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
+@keyframes ld-scan {
+  0%, 22% { opacity: 0; transform: translateX(-20%); }
+  24% { opacity: 1; }
+  30% { opacity: 1; transform: translateX(400%); }
+  31%, 100% { opacity: 0; transform: translateX(400%); }
 }
 
-@keyframes ld-press {
-  0%, 100% { transform: none; }
-  50% { transform: scale(0.96); }
+.ld-demo .d-typed { animation: ld-typed var(--cycle) var(--ld-ease) infinite; }
+.ld-demo .d-bar { animation: ld-bar var(--cycle) var(--ld-ease) infinite; }
+.ld-demo .d-answer { animation: ld-answer var(--cycle) var(--ld-ease) infinite; }
+.ld-demo .d-plot { animation: ld-answer var(--cycle) var(--ld-ease) infinite; animation-delay: 0.15s; }
+
+@keyframes ld-typed {
+  0%, 30% { opacity: 0; transform: translateY(10px); }
+  34%, 79% { opacity: 1; transform: none; }
+  83%, 100% { opacity: 0; transform: translateY(-6px); }
 }
 
-.ld-demo .d-ink { animation: ld-write 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.3s both; }
-.ld-demo .d-typed { animation: ld-rise 0.32s var(--ld-ease) 2s both; }
-.ld-demo .d-bar { animation: ld-rise 0.32s var(--ld-ease) 2.3s both; }
-.ld-demo .d-press { animation: ld-press 0.16s linear 2.75s both; }
-.ld-demo .d-answer { animation: ld-rise 0.32s var(--ld-ease) 2.9s both; }
+@keyframes ld-bar {
+  0%, 35% { opacity: 0; transform: translateY(10px); }
+  39%, 79% { opacity: 1; transform: none; }
+  83%, 100% { opacity: 0; transform: translateY(-6px); }
+}
 
-.ld-demo.is-waiting .d-ink,
-.ld-demo.is-waiting .d-typed,
-.ld-demo.is-waiting .d-bar,
-.ld-demo.is-waiting .d-press,
-.ld-demo.is-waiting .d-answer {
-  animation-play-state: paused;
+@keyframes ld-answer {
+  0%, 47% { opacity: 0; transform: translateY(10px) scale(0.98); }
+  51%, 79% { opacity: 1; transform: none; }
+  83%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Find roots: a tap, a press, then it stays lit while the answer shows */
+.ld-eqbtn.d-roots {
+  position: relative;
+  animation: ld-roots var(--cycle) infinite;
+}
+
+@keyframes ld-roots {
+  0%, 43% { background-color: transparent; color: var(--ld-text2); transform: none; }
+  44.5% { transform: scale(0.93); }
+  46% { transform: none; background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
+  79% { background-color: var(--ld-accent-tint); color: var(--ld-accent-on-tint); }
+  83%, 100% { background-color: transparent; color: var(--ld-text2); }
+}
+
+.ld-demo-tap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 999px;
+  background: var(--ld-accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: ld-tap var(--cycle) ease-out infinite;
+}
+
+@keyframes ld-tap {
+  0%, 42% { opacity: 0; transform: scale(0.4); }
+  43.5% { opacity: 0.35; transform: scale(1); }
+  47%, 100% { opacity: 0; transform: scale(1.8); }
+}
+
+.ld-demo-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.ld-demo-plot {
+  width: 140px;
+  height: 70px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.ld-demo-plot-axis {
+  fill: none;
+  stroke: var(--ld-text2);
+  stroke-opacity: 0.4;
+  stroke-width: 1.5;
+}
+
+.ld-demo-plot-curve {
+  fill: none;
+  stroke: var(--ld-teal);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  animation: ld-plot-draw var(--cycle) var(--ld-ease) infinite;
+}
+
+@keyframes ld-plot-draw {
+  0%, 51% { stroke-dashoffset: 1; }
+  61%, 100% { stroke-dashoffset: 0; }
+}
+
+.ld-demo-plot-root {
+  fill: var(--ld-surface);
+  stroke: var(--ld-ok);
+  stroke-width: 2.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ld-root-pop var(--cycle) var(--ld-ease) infinite;
+}
+
+.ld-demo-plot-root-2 {
+  animation-delay: 0.15s;
+}
+
+@keyframes ld-root-pop {
+  0%, 60% { transform: scale(0); }
+  63% { transform: scale(1.35); }
+  65%, 100% { transform: scale(1); }
+}
+
+.ld-demo-plot-label {
+  fill: var(--ld-text2);
+  font-size: 11px;
+  text-anchor: middle;
+  font-family: var(--ld-font-mono), ui-monospace, monospace;
+}
+
+/* Off screen, the loop waits */
+.ld-demo.is-waiting * {
+  animation-play-state: paused !important;
+}
+
+/* Reduce motion: the finished scene, still */
+@media (prefers-reduced-motion: reduce) {
+  .ld-demo * {
+    animation: none !important;
+  }
+
+  .ld-eqbtn.d-roots {
+    background: var(--ld-accent-tint);
+    color: var(--ld-accent-on-tint);
+  }
 }
 
 /* ---------- Section headings ---------- */
@@ -1367,120 +1522,470 @@ html.dark .ld-root .ld-fc {
   }
 }
 
-/* ---------- Every step, shown ---------- */
+/* ---------- Every step, shown: the step guide ---------- */
 
-.ld-methods {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: clamp(32px, 5vw, 64px);
+.ld-guide {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: start;
 }
 
-.ld-methods-text {
-  flex: 1 1 380px;
-  min-width: 0;
+.ld-guide-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.ld-chips {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
-.ld-chip {
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--ld-surface);
+.ld-guide-step {
+  position: relative;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 16px;
+  border-radius: 16px;
   border: 1px solid var(--ld-line);
+  background: var(--ld-surface);
   color: var(--ld-ink);
   font: inherit;
-  font-size: 15px;
-  font-weight: 600;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow: hidden;
   cursor: pointer;
+  transition: border-color 160ms var(--ld-ease), box-shadow 160ms var(--ld-ease);
 }
 
-.ld-chip[aria-pressed='true'] {
-  background: var(--ld-teal);
+.ld-guide-step:hover {
   border-color: var(--ld-teal);
+}
+
+.ld-guide-step[aria-current='step'] {
+  border-color: var(--ld-teal);
+  box-shadow: 0 0 0 1px var(--ld-teal), var(--ld-shadow-soft);
+}
+
+.ld-guide-num {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--ld-tray);
+  color: var(--ld-text2);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ld-guide-step[aria-current='step'] .ld-guide-num {
+  background: var(--ld-teal);
   color: var(--ld-surface);
 }
 
-.ld-units {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+.ld-guide-step-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 3px;
+}
+
+.ld-guide-step-title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.ld-guide-step-body {
+  display: none;
   font-size: 14px;
+  line-height: 21px;
   color: var(--ld-text2);
 }
 
-.ld-table-card {
-  flex: 1 1 460px;
+.ld-guide-step[aria-current='step'] .ld-guide-step-body {
+  display: block;
+}
+
+/* The active step's timer while the guide plays by itself */
+.ld-guide-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--ld-teal);
+  transform-origin: left;
+  animation: ld-guide-bar 7s linear both;
+}
+
+.ld-guide.is-held .ld-guide-bar {
+  animation-play-state: paused;
+}
+
+@keyframes ld-guide-bar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.ld-guide-main {
   min-width: 0;
-  background: var(--ld-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* A plain browser frame around the screenshot */
+.ld-browser {
+  margin: 0;
+  border-radius: 18px;
   border: 1px solid var(--ld-line);
-  border-radius: 20px;
+  background: var(--ld-surface);
+  box-shadow: var(--ld-shadow);
   overflow: hidden;
 }
 
-.ld-table-head {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--ld-line);
+.ld-browser-bar {
+  height: 40px;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ld-line);
+  background: var(--ld-tray);
+}
+
+.ld-browser-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.ld-browser-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ld-line);
+}
+
+.ld-browser-url {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--ld-surface);
+  color: var(--ld-text2);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ld-browser-view {
+  aspect-ratio: 16 / 10;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: var(--ld-paper);
+}
+
+/* The screenshot keeps its own shape inside the frame; the pins sit on it in percentages */
+.ld-shot {
+  position: relative;
+  aspect-ratio: var(--ar);
+  width: min(100cqw - 24px, (100cqh - 24px) * var(--ar));
+  animation: ld-shot-in 260ms var(--ld-ease) both;
+}
+
+.ld-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.ld-shot-dark { display: none !important; }
+html.dark .ld-root .ld-shot-light { display: none !important; }
+html.dark .ld-root .ld-shot-dark { display: block !important; }
+
+@keyframes ld-shot-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ld-pin {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translate(-14px, -50%);
+  animation: ld-pin-in 320ms var(--ld-ease) both;
+  animation-delay: calc(200ms + var(--i) * 140ms);
+  pointer-events: none;
+}
+
+.ld-pin.is-left {
+  flex-direction: row-reverse;
+  transform: translate(calc(-100% + 14px), -50%);
+}
+
+.ld-pin-dot {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--ld-teal);
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.dark .ld-root .ld-pin-dot {
+  color: #141415;
+  border-color: #141415;
+}
+
+.ld-pin .ld-pin-dot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 2px solid var(--ld-teal);
+  opacity: 0;
+  animation: ld-pin-pulse 2.4s ease-out infinite;
+  animation-delay: calc(var(--i) * 300ms);
+}
+
+@keyframes ld-pin-pulse {
+  0% { transform: scale(0.7); opacity: 0.7; }
+  70%, 100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes ld-pin-in {
+  from { opacity: 0; scale: 0.7; }
+  to { opacity: 1; scale: 1; }
+}
+
+.ld-pin-label {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--ld-ink);
+  color: var(--ld-surface);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.2);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 200ms var(--ld-ease), transform 200ms var(--ld-ease);
+}
+
+.ld-pin.is-left .ld-pin-label {
+  transform: translateX(6px);
+}
+
+/* One label shows at a time; it moves from pin to pin */
+.ld-pin.is-spot {
+  z-index: 2;
+}
+
+.ld-pin.is-spot .ld-pin-label {
+  opacity: 1;
+  transform: none;
+}
+
+.ld-pin.is-spot .ld-pin-dot {
+  scale: 1.12;
+}
+
+/* The pins listed in the active step, lit in turn with the picture */
+.ld-guide-step-pins {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.ld-guide-step-pin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: -6px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ld-text2);
+  transition: background-color 200ms var(--ld-ease), color 200ms var(--ld-ease);
+}
+
+.ld-guide-step-pin.is-spot {
+  background: var(--ld-teal-tint);
+  color: var(--ld-ink);
+}
+
+.ld-guide-step-pin .ld-pin-dot,
+.ld-guide-legend .ld-pin-dot {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  border-width: 0;
+  box-shadow: none;
+}
+
+.ld-guide-legend li.is-spot {
+  color: var(--ld-teal);
+}
+
+.ld-guide-caption {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--ld-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ld-guide-caption-title {
   font-size: 16px;
   font-weight: 700;
 }
 
-.ld-table-scroll {
-  overflow-x: auto;
+.ld-guide-caption-text {
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--ld-text2);
 }
 
-.ld-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
+/* The pin list: shown under the picture on narrow screens, where labels would crowd it */
+.ld-guide-legend {
+  display: none;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.ld-table th {
-  padding: 12px 20px;
-  text-align: left;
+.ld-guide-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ld-guide-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ld-guide-count {
   font-size: 13px;
-  font-weight: 600;
   color: var(--ld-text2);
+  min-width: 44px;
+  text-align: center;
 }
 
-.ld-table td {
-  padding: 12px 20px;
-  border-top: 1px solid var(--ld-line);
-  font-variant-numeric: tabular-nums;
+.ld-guide-open {
+  margin-left: auto;
 }
 
-.ld-table td:first-child {
-  color: var(--ld-text2);
+/* The caption repeats the active step, so it is only needed when the list is a row of numbers */
+@media (min-width: 901px) {
+  .ld-guide-caption {
+    display: none;
+  }
 }
 
-.ld-table tbody {
-  animation: ld-fade 120ms linear;
+@media (max-width: 900px) {
+  .ld-guide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ld-guide-steps {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .ld-guide-steps li {
+    flex: 0 0 auto;
+  }
+
+  .ld-guide-step {
+    width: auto;
+    min-height: 44px;
+    padding: 8px 14px 8px 8px;
+    align-items: center;
+  }
+
+  .ld-guide-step-text {
+    padding-top: 0;
+  }
+
+  .ld-guide-step-title {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .ld-guide-step[aria-current='step'] .ld-guide-step-body {
+    display: none;
+  }
+
+  .ld-pin-label,
+  .ld-guide-step-pins {
+    display: none;
+  }
+
+  .ld-guide-legend {
+    display: flex;
+  }
+
+  .ld-browser-view {
+    aspect-ratio: 4 / 3;
+    padding: 8px;
+  }
+
+  .ld-shot {
+    width: min(100cqw - 16px, (100cqh - 16px) * var(--ar));
+  }
+
+  .ld-pin-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .ld-guide-open {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
-@keyframes ld-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.ld-result {
-  padding: 14px 20px;
-  background: var(--ld-teal-tint);
-  color: var(--ld-teal);
-  font-size: 15px;
-  font-weight: 600;
+@media (prefers-reduced-motion: reduce) {
+  .ld-shot,
+  .ld-pin,
+  .ld-pin .ld-pin-dot::after,
+  .ld-guide-bar {
+    animation: none;
+  }
 }
 
 /* ---------- Ad, facts, closing band, footer ---------- */
@@ -1714,15 +2219,6 @@ html.dark .ld-root .ld-fc {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ld-demo .d-ink,
-  .ld-demo .d-typed,
-  .ld-demo .d-bar,
-  .ld-demo .d-press,
-  .ld-demo .d-answer,
-  .ld-table tbody {
-    animation: none;
-  }
-
   .ld-reveal-ready [data-reveal]:not(.is-in) {
     opacity: 1;
     transform: none;

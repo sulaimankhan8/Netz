@@ -1,12 +1,13 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import './landing.css';
 import { LD_FONT } from '../components/landing/fonts';
-import { IconArrow, IconCalc, IconGift, IconHand, IconLaptop, IconPhone, IconTablet, IconWifiOff } from '../components/landing/icons';
+import { IconArrow, IconGift, IconHand, IconLaptop, IconPhone, IconTablet, IconWifiOff } from '../components/landing/icons';
 import AdSlot from '../components/landing/AdSlot';
 import FloatingCards from '../components/landing/FloatingCards';
 import HeroDemo from '../components/landing/HeroDemo';
 import InstallButton from '../components/landing/install';
-import MethodTable from '../components/landing/MethodTable';
+import MethodGuide from '../components/landing/MethodGuide';
 import RevealObserver from '../components/landing/RevealObserver';
 import TourCards from '../components/landing/TourCards';
 
@@ -45,7 +46,7 @@ export default function Home() {
       <div className="ld-wrap">
         <header className="ld-header">
           <Link href="/" className="ld-brand" aria-label="NETZ home">
-            <span className="ld-brand-mark"><IconCalc size={20} /></span>
+            <Image src="/icons/icon.svg" alt="" width={40} height={40} className="ld-brand-logo" priority />
             <span>NETZ</span>
           </Link>
           <InstallButton />
@@ -94,15 +95,18 @@ export default function Home() {
           </div>
         </section>
 
-        <MethodTable>
-          <div className="ld-on-bg" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <h2 className="ld-h2">Every step, shown</h2>
-            <p className="ld-sec-lead">
-              Pick a method and see each iteration, not just the answer. Three root-finding methods on the same
-              equation, f(x) = x³ − 2x − 5.
-            </p>
+        <section id="methods" className="ld-section">
+          <div className="ld-sec-head" data-reveal="">
+            <div className="ld-sec-head-text ld-on-bg">
+              <h2 className="ld-h2">Every step, shown</h2>
+              <p className="ld-sec-lead">
+                A method page takes you from the idea to the answer. Here is Gauss–Seidel, one step at a time; all 34
+                methods work the same way.
+              </p>
+            </div>
           </div>
-        </MethodTable>
+          <MethodGuide />
+        </section>
 
         <AdSlot />
 
