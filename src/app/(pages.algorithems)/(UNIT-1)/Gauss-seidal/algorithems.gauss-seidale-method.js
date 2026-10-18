@@ -67,10 +67,20 @@ const GaussSeidel = () => {
       setCheckError('');
     }
 
+    // The tolerance field (named `error`) holds a string; an empty or zero value would never converge
+    const tol = parseFloat(error);
+    if (!(tol > 0)) {
+      setCheckError('Tolerance must be a positive number, for example 0.0001.');
+      return;
+    }
+
     setVariableSequence(sequence); // Update the variable sequence state
 
     // Call GaussSeidels function
-    const { iterations, iterationsteps, iterationsteps2, iterationsteps3 } = GaussSeidels(validatedEquations, error);
+    const { iterations, iterationsteps, iterationsteps2, iterationsteps3, converged } = GaussSeidels(validatedEquations, tol);
+    if (!converged) {
+      setCheckError('No convergence after 1000 iterations. The values below are the last ones computed.');
+    }
 
     // Update state with the results
     setResults(iterations);
@@ -245,7 +255,7 @@ const GaussSeidel = () => {
         {variableSequence.length > 0 && (
           <div className="p-4 border-2 border-black/30 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 rounded-xl font-mono text-xs text-black dark:text-white">
             <strong className="uppercase text-neutral-500 block mb-1">Diagonally Dominant Variable Order:</strong>
-            {variableSequence.join(' &rarr; ')}
+            {variableSequence.join(' → ')}
           </div>
         )}
 
@@ -539,6 +549,7 @@ function GaussSeidels(equations, error) {
   let iterationsteps2 = [];
   let iterationsteps3 = [];
   let iterationCount = 1;
+  let converged = true;
 
   // Initialize with iteration 0
   iterations.push({ iteration: 0, x: xPrev, y: yPrev, z: zPrev });
@@ -607,12 +618,12 @@ function GaussSeidels(equations, error) {
 
     // Prevent infinite loops
     if (iterationCount > 1000) {
-      alert("Maximum iterations reached without convergence.");
+      converged = false;
       break;
     }
   }
 
-  return { iterations, iterationsteps, iterationsteps2, iterationsteps3, };
+  return { iterations, iterationsteps, iterationsteps2, iterationsteps3, converged };
 }
 
 export default GaussSeidel;

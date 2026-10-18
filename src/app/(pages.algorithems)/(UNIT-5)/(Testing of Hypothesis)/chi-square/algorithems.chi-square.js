@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
+import { chiSquareCritical } from '@/app/utils/criticalValues';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const ChiSquareSolver = () => {
@@ -58,7 +60,8 @@ const ChiSquareSolver = () => {
 
     setGridLog(log);
     setStepsData(table);
-    setResult({ n, df: n - 1, chiSquareSum });
+    const critical = chiSquareCritical(n - 1);
+    setResult({ n, df: n - 1, chiSquareSum, critical, reject: chiSquareSum > critical });
   };
 
   const handleCalculate = (e) => {
@@ -195,6 +198,9 @@ const ChiSquareSolver = () => {
               <span className="text-base md:text-lg font-mono font-black">
                 <InlineMath math={`\\chi^2 = ${result.chiSquareSum.toFixed(4)}`} /> (d.f. = {result.df})
               </span>
+              <span className="text-sm font-mono font-bold block">
+                {result.reject ? 'Reject' : 'Accept'} H₀ at 5% (table value {result.critical})
+              </span>
             </div>
 
             <EditorialExportButton
@@ -210,6 +216,8 @@ const ChiSquareSolver = () => {
 
       {stepsData.length > 0 && (
         <div id="chisquare-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
@@ -318,6 +326,12 @@ const ChiSquareSolver = () => {
                   <span className="font-bold text-neutral-500 uppercase block">Chi-Square Test Statistic:</span>
                   <BlockMath math={`\\chi^2_{\\text{calc}} = \\sum_{i=1}^{k} \\frac{(O_i - E_i)^2}{E_i} = ${result.chiSquareSum.toFixed(4)}`} />
                   <BlockMath math={`d.f. = k - 1 = ${result.n} - 1 = ${result.df}`} />
+                </div>
+                <div className="space-y-1">
+                  <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level):</span>
+                  <BlockMath math={`H_0: \\text{the observed frequencies agree with the expected ones}`} />
+                  <BlockMath math={`\\chi^2_{0.05}(${result.df}) = ${result.critical} \\quad \\text{(table value)}`} />
+                  <BlockMath math={`\\chi^2_{\\text{calc}} = ${result.chiSquareSum.toFixed(4)} ${result.reject ? '>' : '<'} ${result.critical} \\;\\Rightarrow\\; \\text{${result.reject ? 'reject' : 'accept'} } H_0`} />
                 </div>
               </div>
             </div>

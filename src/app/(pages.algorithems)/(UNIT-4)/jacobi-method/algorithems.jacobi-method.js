@@ -38,6 +38,7 @@ const JacobiMethod = () => {
   const [tolerance, setTolerance] = useState(0.0001);
   const [iterations, setIterations] = useState([]);
   const [solution, setSolution] = useState(null);
+  const [converged, setConverged] = useState(true);
   const [warning, setWarning] = useState('');
   const [error, setError] = useState('');
 
@@ -98,6 +99,7 @@ const JacobiMethod = () => {
     if (!res.converged) setWarning((prev) => prev + ' ⚠️ Max iterations reached without full convergence.');
     setIterations(res.iterations);
     setSolution(res.solution);
+    setConverged(res.converged);
   };
 
   const handleDemo = () => {
@@ -110,7 +112,7 @@ const JacobiMethod = () => {
     setError(''); setWarning(''); setSolution(null); setIterations([]);
     setTimeout(() => {
       const res = jacobiSolve(demo, 0.0001, 50);
-      if (!res.error) { setIterations(res.iterations); setSolution(res.solution); }
+      if (!res.error) { setIterations(res.iterations); setSolution(res.solution); setConverged(res.converged); }
     }, 50);
   };
 
@@ -177,7 +179,7 @@ const JacobiMethod = () => {
         {solution && (
           <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl space-y-2">
             <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-              Converged in {iterations.length} iterations
+              {converged ? `Converged in ${iterations.length} iterations` : `Not converged: stopped after ${iterations.length} iterations`}
             </span>
             <div className="flex flex-wrap gap-4">
               {solution.map((xi, i) => (

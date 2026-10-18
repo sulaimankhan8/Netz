@@ -552,35 +552,38 @@ function gaussianFowardInterpolation(points, x ,mid) {
     let stepCalculated = [`P(${x}) = ${yi[midpoint]}`];
 
     let vSteps = [];
-    vSteps.push(`h = x - x_0 = ${h}`);
-    vSteps.push(`p = \\frac{(x - x₀)}{ h}`);
+    vSteps.push(`h = x_1 - x_0 = ${h}`);
+    vSteps.push(`p = \\frac{x - x_0}{h}`);
     vSteps.push(`p = \\frac{(${x} - ${mid})}{ ${h}}`);
-    vSteps.push(`p = ${(x - mid) / h}`);
+    vSteps.push(`p = ${+p.toFixed(6)}`);
 
 
     for (let i = 1; i < n; i++) {
 
-        if (typeof diffTable[midpoint][i] === 'undefined') {
+        // Δⁱy is needed at row midpoint - floor(i / 2); stop once the table has no such difference
+        const k = midpoint - Math.floor(i / 2);
+        if (k < 0 || k >= n - i) {
+            vSteps.push(`\\Delta^{${i}} y_{${k - midpoint}} \\text{ is outside the table} \\Rightarrow \\text{stop after } ${i - 1} \\text{ differences}`);
             break;
         }
 
         uProduct = p; 
         for (let ij = 2; ij <= i; ij++) {
             if (ij % 2 === 0) {
-                uProduct *= p - Math.floor(ij / 2); console.log("ll",uProduct);
+                uProduct *= p - Math.floor(ij / 2);
             } else {
-                uProduct *= p + Math.floor(ij / 2); console.log("ll",uProduct);
+                uProduct *= p + Math.floor(ij / 2);
             }
 
         }
-        console.log("ll",uProduct);
+       
         
         factorial *= i; 
-        console.log("Factorial for step", i, ":", factorial);
+       
         let term = (uProduct * diffTable[midpoint][i]) / factorial;
-        console.log("Term for step", i, ":", term);
+       
         interpolatedValue += term;
-        console.log("Term for step", i, ":", interpolatedValue);
+       
         stepCalculated.push(`(${term.toFixed(4)})`);
         stepFormulas.push(`${tr[i]}`);
 
@@ -594,12 +597,12 @@ function gaussianFowardInterpolation(points, x ,mid) {
           stepMidr.push(` (${p} + ${Math.floor((ij)/2)})`);}
         }
 
-        let stepMidString = stepMid.join(" * ");    
-        let stepMidStringr = stepMidr.join(" * ").trim().slice(1); 
+        let stepMidString = stepMid.join(" \\times ");    
+        let stepMidStringr = stepMidr.slice(1).join(" \\times "); 
         if(stepMidStringr)   
-        stepMidStringr +="*";
+        stepMidStringr += " \\times ";
         stepSubstituted.push(
-            `\\frac{(${stepMidStringr}${p} ${stepMidString}) * ${diffTable[midpoint][i].toFixed(4)}}{${factorial}}`
+            `\\frac{(${stepMidStringr}${+p.toFixed(6)}${stepMidString}) \\times ${diffTable[midpoint][i].toFixed(4)}}{${factorial}}`
         );
         
     }
@@ -620,11 +623,9 @@ function gaussianFowardInterpolation(points, x ,mid) {
     const xi = points.map((p) => p.x);
   
     if (x < xi[0]) {
-      console.warn('x is less than the minimum value of xi. Using the first point as the midpoint.');
       return xi[0];
     }
     if (x > xi[xi.length - 1]) {
-      console.warn('x is greater than the maximum value of xi. Using the last point as the midpoint.');
       return xi[xi.length - 1];
     }
   
@@ -635,7 +636,7 @@ function gaussianFowardInterpolation(points, x ,mid) {
         break;
       }
     }
-    console.log("Midpoint index:", xi[p]);
+   
     return xi[p];
   }
   const factorial = (n) => {

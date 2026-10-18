@@ -537,13 +537,16 @@ function gaussianBackwardInterpolation(points, x, mid) {
   let stepCalculated = [`P(${x}) = ${yi[midpoint]}`];
 
   let vSteps = [];
-  vSteps.push(`h = x - x_0 = ${h}`);
-  vSteps.push(`p = \\frac{(x - x₀)}{ h}`);
+  vSteps.push(`h = x_1 - x_0 = ${h}`);
+  vSteps.push(`p = \\frac{x - x_0}{h}`);
   vSteps.push(`p = \\frac{(${x} - ${mid})}{ ${h}}`);
-  vSteps.push(`p = ${(x - mid) / h}`);
+  vSteps.push(`p = ${+p.toFixed(6)}`);
 
   for (let i = 1; i < n; i++) {
-    if (typeof diffTable[midpoint][i] === 'undefined') {
+    // Δⁱy is needed at row midpoint - floor((i + 1) / 2); stop once the table has no such difference
+    const k = midpoint - Math.floor((i + 1) / 2);
+    if (k < 0 || k >= n - i) {
+      vSteps.push(`\\Delta^{${i}} y_{${k - midpoint}} \\text{ is outside the table} \\Rightarrow \\text{stop after } ${i - 1} \\text{ differences}`);
       break;
     }
 
@@ -573,12 +576,12 @@ function gaussianBackwardInterpolation(points, x, mid) {
       }
     }
 
-    let stepMidString = stepMid.join(" * ");    
-    let stepMidStringr = stepMidr.join(" * ").trim().slice(1); 
+    let stepMidString = stepMid.join(" \\times ");    
+    let stepMidStringr = stepMidr.slice(1).join(" \\times "); 
     if (stepMidStringr)   
-      stepMidStringr += "*";
+      stepMidStringr += " \\times ";
     stepSubstituted.push(
-      `\\frac{(${stepMidStringr}${p} ${stepMidString}) * ${diffTable[midpoint][i].toFixed(4)}}{${factorial}}`
+      `\\frac{(${stepMidStringr}${+p.toFixed(6)}${stepMidString}) \\times ${diffTable[midpoint][i].toFixed(4)}}{${factorial}}`
     );
   }
 

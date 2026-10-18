@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const ZTestSolver = () => {
@@ -33,8 +34,8 @@ const ZTestSolver = () => {
     }
 
     const log = [];
-    log.push(`Sample Mean \\bar{x} = ${xBar}, Population Mean \\mu_0 = ${mu}`);
-    log.push(`Standard Deviation \\sigma = ${sigma}, Sample Size n = ${n} (Large Sample n >= 30)`);
+    log.push(`Sample Mean x̄ = ${xBar}, Population Mean μ₀ = ${mu}`);
+    log.push(`Standard Deviation σ = ${sigma}, Sample Size n = ${n} (large sample: n ≥ 30)`);
 
     const se = sigma / Math.sqrt(n);
     const zCalc = (xBar - mu) / se;
@@ -224,6 +225,8 @@ const ZTestSolver = () => {
 
       {result && (
         <div id="ztest-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button

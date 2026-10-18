@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const LeastSquaresSolver = () => {
@@ -255,6 +256,8 @@ const LeastSquaresSolver = () => {
 
       {stepsData.length > 0 && (
         <div id="least-squares-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button

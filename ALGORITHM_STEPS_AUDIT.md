@@ -33,7 +33,38 @@ Finding 5 (Gauss forward page edge case) is not fixed yet.
 
 The Notes registry mirrors these: bisection stop rule and ε = 0.05 default, Jacobi default system, Newton forward zero-column stop.
 
-Still open: group 3 (LU working, hypothesis-test decisions, rendering `gridLog`), group 4 display bugs and finding 5.
+**Group 3 (missing steps)** was fixed on 2026-10-18. Backups are in `backup-2026-10-18-round3/`.
+- **LU decomposition** shows 15 working lines for the demo:
+  - every uᵢⱼ and lᵢⱼ with its numbers;
+  - Ly = b line by line;
+  - Ux = y from the last row up.
+  - Answer (2, 2, −2).
+- **χ², F and t tests** now show H₀, the 5% table value and Accept/Reject:
+  - χ² 2.0 < 7.815 → accept;
+  - F 1.0571 < 5.192 → accept;
+  - |t| 1.271 < 2.365 → accept.
+  - Table values come from a new `src/app/utils/criticalValues.js`. It computes them from the distributions and matched 17 printed-table values exactly.
+  - The Notes registry uses the same helper: χ² and F now give a verdict; t works for any df.
+- **Setup steps** now render as a "Step 0" card: a new `src/app/components/SetupSteps.js` on the 17 pages that build a setup log (h, step count, sums, df …).
+  - Bisection and False position show their sign-change search (f(0), f(1), f(2), f(3) → [2, 3]).
+  - Log lines that held raw LaTeX (`\mu_0`, `\bar{x}`, `\sigma`) now use plain symbols. The parabola sums are rounded.
+
+**Group 4 (display bugs) and finding 5** were fixed on 2026-10-18. Backups are in `backup-2026-10-18-round4/`.
+- **Gauss–Seidel**:
+  - the variable order shows "x → y → z";
+  - the chart follows the site theme, with light labels and grid in dark mode (first dark render checked by reading the chart's pixels);
+  - the tolerance field is checked;
+  - `alert()` is replaced by an on-page "no convergence" message.
+- **Interpolation**:
+  - Newton forward/backward: balanced brackets and ×.
+  - h is labelled x₁ − x₀ with its value; v and p are rounded.
+  - Gauss forward's 9 console calls are gone.
+  - Divided difference prints rounded products and f[x₀, x₁].
+- **Gauss forward/backward edge case (finding 5)**: the term loop now stops when the next central difference is outside the table, and says so. The value was already right, because the old extra terms were zeros (x = 4.75 → 16.633625). What changes is that the page now shows where it stopped.
+- **Fitting pages**: both use the textbook form, y = a + bx and y = a + bx + cx², with signs folded in ("− 2.0000x", never "+ -"). The normal equations are written in that form and rounded.
+- **Jacobi**: the banner says "Not converged: stopped after N iterations" when the limit is hit.
+
+All findings in this report are now fixed. One thing outside this audit is still there: the hydration mismatch in the root layout's `<head>` (theme script vs AdSense), which comes from the layout work.
 
 **Question asked:** some methods show about 14 steps for a problem that should take about 7. Are the algorithms efficient, are the answers right, and do the step-by-step views help a student see how the problem is solved?
 

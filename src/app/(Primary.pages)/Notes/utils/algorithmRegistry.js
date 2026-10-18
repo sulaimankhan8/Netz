@@ -1,4 +1,5 @@
 import { evaluateMath, parseUserFunction, getSymbolicDerivative, sanitizeMathString, simplifyExpression } from '../../../utils/evaluateMath.js';
+import { tCritical, chiSquareCritical, fCritical } from '../../../utils/criticalValues.js';
 
 export function parseNum(val, fallback) {
   if (val === undefined || val === null || val === '') return fallback;
@@ -37,18 +38,6 @@ function notConverged(converged, count) {
 function odeStepCount(x0, targetX, h) {
   if (!(h > 0) || !(targetX > x0)) return 0;
   return Math.min(1000, Math.round((targetX - x0) / h));
-}
-
-// Two-tailed 5% critical values of Student's t for df = 1..30.
-const T_CRIT_5 = [
-  12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
-  2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086,
-  2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042
-];
-
-function tCritical5(df) {
-  if (df >= 1 && df <= 30) return T_CRIT_5[Math.round(df) - 1];
-  return 1.96;
 }
 
 // Two-tailed critical values of the standard normal distribution.
@@ -1615,7 +1604,7 @@ export const ALGORITHMS_CATALOG = [
 
       const se = s / Math.sqrt(n);
       const tStat = (xbar - mu) / se;
-      const tCrit = tCritical5(df);
+      const tCrit = tCritical(df);
       const isRejected = Math.abs(tStat) > tCrit;
 
       return {
@@ -1654,7 +1643,7 @@ export const ALGORITHMS_CATALOG = [
 
       const df = steps.length - 1;
       return {
-        result: `χ² Calculated = ${chiSum.toFixed(4)} (df = ${df})`,
+        result: `χ² Calculated = ${chiSum.toFixed(4)} (df = ${df}) | Table value (5%) = ${chiSquareCritical(df)} | Verdict: ${chiSum > chiSquareCritical(df) ? 'Reject H0' : 'Accept H0'}`,
         steps,
         headers: ['Group', 'Observed (O)', 'Expected (E)', '(O-E)²', '(O-E)²/E']
       };
@@ -1699,7 +1688,7 @@ export const ALGORITHMS_CATALOG = [
       ];
 
       return {
-        result: `F-Calculated = ${fStat.toFixed(4)} with degrees of freedom (${df1}, ${df2})`,
+        result: `F-Calculated = ${fStat.toFixed(4)} with degrees of freedom (${df1}, ${df2}) | Table value (5%) = ${fCritical(df1, df2)} | Verdict: ${fStat > fCritical(df1, df2) ? 'Reject H0' : 'Accept H0'}`,
         steps,
         headers: ['Statistical Measure', 'Sample 1', 'Sample 2']
       };

@@ -5,7 +5,11 @@ import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+
+// "+ 1.3300x" or "- 1.3300x", so equations never print "+ -"
+const signedTerm = (value, variable) => `${value < 0 ? '-' : '+'} ${Math.abs(value).toFixed(4)}${variable}`;
 
 const StraightLineSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -63,7 +67,7 @@ const StraightLineSolver = () => {
 
     log.push(`Sum X = ${sumX.toFixed(4)}, Sum Y = ${sumY.toFixed(4)}`);
     log.push(`Sum X^2 = ${sumX2.toFixed(4)}, Sum XY = ${sumXY.toFixed(4)}`);
-    log.push(`Slope a = ${a.toFixed(4)}, Intercept b = ${b.toFixed(4)}`);
+    log.push(`Intercept a = ${b.toFixed(4)}, Slope b = ${a.toFixed(4)} (line y = a + bx)`);
 
     setGridLog(log);
     setStepsData(table);
@@ -202,7 +206,7 @@ const StraightLineSolver = () => {
                 Fitted Line Equation Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y = {result.a.toFixed(4)}x + {result.b.toFixed(4)}
+                y = {result.b.toFixed(4)} {signedTerm(result.a, 'x')}
               </span>
             </div>
 
@@ -219,6 +223,8 @@ const StraightLineSolver = () => {
 
       {stepsData.length > 0 && (
         <div id="linear-fit-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
@@ -333,11 +339,12 @@ const StraightLineSolver = () => {
               <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
                 <div className="space-y-1">
                   <span className="font-bold text-neutral-500 uppercase block">Normal Equations:</span>
-                  <BlockMath math={`\\sum y = a \\sum x + n b \\implies ${result.sumY.toFixed(4)} = ${result.sumX.toFixed(4)} a + ${result.n} b`} />
-                  <BlockMath math={`\\sum xy = a \\sum x^2 + b \\sum x \\implies ${result.sumXY.toFixed(4)} = ${result.sumX2.toFixed(4)} a + ${result.sumX.toFixed(4)} b`} />
-                  <BlockMath math={`a = \\frac{n \\sum xy - \\sum x \\sum y}{n \\sum x^2 - (\\sum x)^2} = \\frac{${result.n}(${result.sumXY.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumY.toFixed(4)})}{${result.denom.toFixed(4)}} = ${result.a.toFixed(4)}`} />
-                  <BlockMath math={`b = \\frac{\\sum y \\sum x^2 - \\sum x \\sum xy}{\\Delta} = \\frac{(${result.sumY.toFixed(4)})(${result.sumX2.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumXY.toFixed(4)})}{${result.denom.toFixed(4)}} = ${result.b.toFixed(4)}`} />
-                  <BlockMath math={`y = ${result.a.toFixed(4)} x + ${result.b.toFixed(4)}`} />
+                  {/* Textbook form y = a + bx: a is the intercept (result.b), b the slope (result.a) */}
+                  <BlockMath math={`\\sum y = n a + b \\sum x \\implies ${result.sumY.toFixed(4)} = ${result.n} a + ${result.sumX.toFixed(4)} b`} />
+                  <BlockMath math={`\\sum xy = a \\sum x + b \\sum x^2 \\implies ${result.sumXY.toFixed(4)} = ${result.sumX.toFixed(4)} a + ${result.sumX2.toFixed(4)} b`} />
+                  <BlockMath math={`b = \\frac{n \\sum xy - \\sum x \\sum y}{n \\sum x^2 - (\\sum x)^2} = \\frac{${result.n}(${result.sumXY.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumY.toFixed(4)})}{${result.denom.toFixed(4)}} = ${result.a.toFixed(4)}`} />
+                  <BlockMath math={`a = \\frac{\\sum y \\sum x^2 - \\sum x \\sum xy}{n \\sum x^2 - (\\sum x)^2} = \\frac{(${result.sumY.toFixed(4)})(${result.sumX2.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumXY.toFixed(4)})}{${result.denom.toFixed(4)}} = ${result.b.toFixed(4)}`} />
+                  <BlockMath math={`y = ${result.b.toFixed(4)} ${signedTerm(result.a, 'x')}`} />
                 </div>
               </div>
             </div>

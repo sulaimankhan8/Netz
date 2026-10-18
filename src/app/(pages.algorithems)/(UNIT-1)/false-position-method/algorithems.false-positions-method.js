@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { parseUserFunction } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const FalsePositionMethod = () => {
@@ -344,6 +345,7 @@ const FalsePositionMethod = () => {
 
       {falsePositionIterations.length > 0 && (
         <div id="false-position-results-container" className="space-y-6">
+          <SetupSteps lines={intervalSteps} title="Step 0: Find an interval where f(x) changes sign" />
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button

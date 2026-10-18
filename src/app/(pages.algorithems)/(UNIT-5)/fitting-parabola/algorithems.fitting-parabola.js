@@ -5,7 +5,16 @@ import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+
+// "+ 2.0000x" or "- 2.0000x", so equations never print "+ -"
+const signedTerm = (value, variable = '') => `${value < 0 ? '-' : '+'} ${Math.abs(value).toFixed(4)}${variable}`;
+
+// "10 a - 2.5 b + 5 c": coefficients rounded to 4 d.p., signs folded in
+const combo = (terms) => terms
+  .map(([value, name], i) => (i === 0 ? `${+value.toFixed(4)} ${name}` : `${value < 0 ? '-' : '+'} ${+Math.abs(value).toFixed(4)} ${name}`))
+  .join(' ');
 
 const FittingParabolaSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -108,10 +117,10 @@ const FittingParabolaSolver = () => {
 
     const [a, b, c] = sol;
 
-    log.push(`Sum X = ${sumX}, Sum Y = ${sumY}`);
-    log.push(`Sum X^2 = ${sumX2}, Sum X^3 = ${sumX3}, Sum X^4 = ${sumX4}`);
-    log.push(`Sum XY = ${sumXY}, Sum X^2Y = ${sumX2Y}`);
-    log.push(`Coefficients: a = ${a.toFixed(4)}, b = ${b.toFixed(4)}, c = ${c.toFixed(4)}`);
+    log.push(`Σx = ${sumX.toFixed(4)}, Σy = ${sumY.toFixed(4)}`);
+    log.push(`Σx² = ${sumX2.toFixed(4)}, Σx³ = ${sumX3.toFixed(4)}, Σx⁴ = ${sumX4.toFixed(4)}`);
+    log.push(`Σxy = ${sumXY.toFixed(4)}, Σx²y = ${sumX2Y.toFixed(4)}`);
+    log.push(`Coefficients (y = a + bx + cx²): a = ${c.toFixed(4)}, b = ${b.toFixed(4)}, c = ${a.toFixed(4)}`);
 
     setGridLog(log);
     setStepsData(table);
@@ -256,7 +265,7 @@ const FittingParabolaSolver = () => {
                 Fitted Parabola Equation Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y = {result.a.toFixed(4)}x^2 + {result.b.toFixed(4)}x + {result.c.toFixed(4)}
+                y = {result.c.toFixed(4)} {signedTerm(result.b, 'x')} {signedTerm(result.a, 'x²')}
               </span>
             </div>
 
@@ -273,6 +282,8 @@ const FittingParabolaSolver = () => {
 
       {stepsData.length > 0 && (
         <div id="parabola-fit-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
@@ -396,11 +407,11 @@ const FittingParabolaSolver = () => {
               <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
                 <div className="space-y-1">
                   <span className="font-bold text-neutral-500 uppercase block">Normal Equations:</span>
-                  <BlockMath math={`a \\sum x^4 + b \\sum x^3 + c \\sum x^2 = \\sum x^2 y \\implies ${result.sumX4} a + ${result.sumX3} b + ${result.sumX2} c = ${result.sumX2Y}`} />
-                  <BlockMath math={`a \\sum x^3 + b \\sum x^2 + c \\sum x = \\sum xy \\implies ${result.sumX3} a + ${result.sumX2} b + ${result.sumX} c = ${result.sumXY}`} />
-                  <BlockMath math={`a \\sum x^2 + b \\sum x + n c = \\sum y \\implies ${result.sumX2} a + ${result.sumX} b + ${result.n} c = ${result.sumY}`} />
-                  <BlockMath math={`a = ${result.a.toFixed(4)}, \\quad b = ${result.b.toFixed(4)}, \\quad c = ${result.c.toFixed(4)}`} />
-                  <BlockMath math={`y = ${result.a.toFixed(4)} x^2 + ${result.b.toFixed(4)} x + ${result.c.toFixed(4)}`} />
+                  <BlockMath math={`\\sum y = n a + b \\sum x + c \\sum x^2 \\implies ${+result.sumY.toFixed(4)} = ${combo([[result.n, 'a'], [result.sumX, 'b'], [result.sumX2, 'c']])}`} />
+                  <BlockMath math={`\\sum xy = a \\sum x + b \\sum x^2 + c \\sum x^3 \\implies ${+result.sumXY.toFixed(4)} = ${combo([[result.sumX, 'a'], [result.sumX2, 'b'], [result.sumX3, 'c']])}`} />
+                  <BlockMath math={`\\sum x^2 y = a \\sum x^2 + b \\sum x^3 + c \\sum x^4 \\implies ${+result.sumX2Y.toFixed(4)} = ${combo([[result.sumX2, 'a'], [result.sumX3, 'b'], [result.sumX4, 'c']])}`} />
+                  <BlockMath math={`a = ${result.c.toFixed(4)}, \\quad b = ${result.b.toFixed(4)}, \\quad c = ${result.a.toFixed(4)}`} />
+                  <BlockMath math={`y = ${result.c.toFixed(4)} ${signedTerm(result.b, ' x')} ${signedTerm(result.a, ' x^2')}`} />
                 </div>
               </div>
             </div>

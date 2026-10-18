@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const Plot = ({ iterations, darkTheme }) => {
+const Plot = ({ iterations, darkTheme: propDarkTheme }) => {
+  // Follow the site theme (the html "dark" class) unless a theme is passed in
+  const [darkTheme, setDarkTheme] = useState(false);
+  useEffect(() => {
+    if (typeof propDarkTheme === 'boolean') {
+      setDarkTheme(propDarkTheme);
+      return;
+    }
+    const checkDark = () => setDarkTheme(document.documentElement.classList.contains('dark'));
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, [propDarkTheme]);
+  const gridColor = darkTheme ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)';
+
   const data = {
     labels: iterations.map(({ iteration }) => iteration),
     datasets: [
@@ -63,6 +78,9 @@ const Plot = ({ iterations, darkTheme }) => {
             size: 15, // Set font size for the title
           },
         },
+        grid: {
+          color: gridColor,
+        },
         ticks: {
           color: darkTheme ? '#f3f4f6' : 'black',
           font: {
@@ -78,6 +96,9 @@ const Plot = ({ iterations, darkTheme }) => {
           font: {
             size: 15, // Set font size for the title
           },
+        },
+        grid: {
+          color: gridColor,
         },
         ticks: {
           color: darkTheme ? '#f3f4f6' : 'black',

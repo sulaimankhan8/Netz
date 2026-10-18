@@ -507,10 +507,10 @@ function newtonBackwardInterpolation(points, x) {
 
   // Adding step for calculating 'v'
   let vSteps = [];
-  vSteps.push(`h = x₂ - x₁ = ${h}`);
+  vSteps.push(`h = x_1 - x_0 = ${h}`);
   vSteps.push(`v =\\frac{(x - x_n)}{ h}`);
   vSteps.push(`v =\\frac{(${x} - ${xi[n - 1]})}{ ${h}}`);
-  vSteps.push(`v = ${(x - xi[n - 1]) / h}`);
+  vSteps.push(`v = ${+u.toFixed(6)}`);
 
   // Building the polynomial step by step
   for (let i = 1; i < n; i++) {
@@ -527,12 +527,12 @@ function newtonBackwardInterpolation(points, x) {
     // Substituted steps
     let stepMid = [` `];
     for (let ij = 2; ij <= i; ij++) {
-      stepMid.push(` (${u} + ${ij-1})`);
+      stepMid.push(` (${+u.toFixed(6)} + ${ij-1})`);
     }
-    let stepMidString = stepMid.join(" * ");
+    let stepMidString = stepMid.join(" \\times ");
 
     stepSubstituted.push(
-      `\\frac{(${u} ${stepMidString}) * ${diffTable[n - 1][i].toFixed(4)})}{ ${i}!}`
+      `\\frac{(${+u.toFixed(6)})${stepMidString} \\times ${diffTable[n - 1][i].toFixed(4)}}{${i}!}`
     );
 
     // Calculated steps

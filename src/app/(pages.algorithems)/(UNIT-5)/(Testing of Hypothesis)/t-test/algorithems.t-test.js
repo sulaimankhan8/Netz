@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
+import { tCritical } from '@/app/utils/criticalValues';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const TTestSolver = () => {
@@ -30,7 +32,7 @@ const TTestSolver = () => {
 
     const n = data.length;
     const log = [];
-    log.push(`Sample Size n = ${n}, Hypothesized Mean \\mu_0 = ${mu}`);
+    log.push(`Sample Size n = ${n}, Hypothesized Mean μ₀ = ${mu}`);
     log.push(`Degrees of Freedom d.f. = n - 1 = ${n - 1}`);
 
     const mean = data.reduce((sum, v) => sum + v, 0) / n;
@@ -50,6 +52,8 @@ const TTestSolver = () => {
       df,
       mu,
       tCalc,
+      critical: tCritical(df),
+      reject: Math.abs(tCalc) > tCritical(df),
     });
   };
 
@@ -175,6 +179,9 @@ const TTestSolver = () => {
               <span className="text-base md:text-lg font-mono font-black">
                 t = {result.tCalc.toFixed(4)} (d.f. = {result.df})
               </span>
+              <span className="text-sm font-mono font-bold block">
+                {result.reject ? 'Reject' : 'Accept'} H₀ at 5% (table value ±{result.critical})
+              </span>
             </div>
 
             <EditorialExportButton
@@ -190,6 +197,8 @@ const TTestSolver = () => {
 
       {result && (
         <div id="ttest-results-container" className="space-y-6">
+          <SetupSteps lines={gridLog} />
+
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
@@ -293,6 +302,12 @@ const TTestSolver = () => {
                   <span className="font-bold text-neutral-500 uppercase block">Formula Evaluation:</span>
                   <BlockMath math={`t = \\frac{\\bar{x} - \\mu_0}{s / \\sqrt{n}}`} />
                   <BlockMath math={`t = \\frac{${result.mean.toFixed(4)} - ${result.mu}}{${result.s.toFixed(4)} / \\sqrt{${result.n}}} = \\frac{${(result.mean - result.mu).toFixed(4)}}{${(result.s / Math.sqrt(result.n)).toFixed(4)}} = ${result.tCalc.toFixed(4)}`} />
+                </div>
+                <div className="space-y-1">
+                  <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level, two-tailed):</span>
+                  <BlockMath math={`H_0: \\mu = ${result.mu}, \\quad H_1: \\mu \\neq ${result.mu}`} />
+                  <BlockMath math={`t_{0.05}(${result.df}) = ${result.critical} \\quad \\text{(table value)}`} />
+                  <BlockMath math={`|t_{\\text{calc}}| = ${Math.abs(result.tCalc).toFixed(4)} ${result.reject ? '>' : '<'} ${result.critical} \\;\\Rightarrow\\; \\text{${result.reject ? 'reject' : 'accept'} } H_0`} />
                 </div>
               </div>
             </div>

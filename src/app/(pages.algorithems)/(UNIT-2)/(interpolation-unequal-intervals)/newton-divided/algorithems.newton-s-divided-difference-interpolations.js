@@ -485,12 +485,12 @@ function calculateNewtonPolynomial(points, diffTable, x, stepFormulas, stepSubst
      
     }
     step += `(x - x_${i-1})`;
-    step2 += `x_${i}`;
+    step2 += `, x_${i}`;
     step3 += `(${x} - ${points[i-1].x})`;
     result += (product * diffTable[0][i]);
     stepFormulas.push(` ${step} f [${step2}]`);
-    stepSubstituted.push(`(${step3}*${diffTable[0][i].toFixed(4)}  )`);
-    stepCalculated.push(` ${diffTable[0][i].toFixed(4) * product}`);
+    stepSubstituted.push(`${step3} \\times ${diffTable[0][i].toFixed(4)}`);
+    stepCalculated.push(` ${(diffTable[0][i] * product).toFixed(4)}`);
   }
 
   return result;

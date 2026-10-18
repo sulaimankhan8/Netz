@@ -47,7 +47,9 @@ const LUDecomposition = () => {
           pairs.push([L[i][j], U[j][k]]);
         }
         U[i][k] = A[i][k] - sum;
-        work.lu.push(`u_{${i + 1}${k + 1}} = a_{${i + 1}${k + 1}}${pairs.length ? ' - ' + pairs.map((_, j) => `l_{${i + 1}${j + 1}}u_{${j + 1}${k + 1}}`).join(' - ') : ''} = ${fmt(A[i][k])}${products(pairs)} = ${fmt(U[i][k])}`);
+        work.lu.push(pairs.length
+          ? `u_{${i + 1}${k + 1}} = a_{${i + 1}${k + 1}} - ${pairs.map((_, j) => `l_{${i + 1}${j + 1}}u_{${j + 1}${k + 1}}`).join(' - ')} = ${fmt(A[i][k])}${products(pairs)} = ${fmt(U[i][k])}`
+          : `u_{${i + 1}${k + 1}} = a_{${i + 1}${k + 1}} = ${fmt(U[i][k])}`);
       }
       if (Math.abs(U[i][i]) < 1e-12) return { error: `Zero pivot at position [${i + 1}][${i + 1}]. Matrix may be singular.` };
 
@@ -74,7 +76,9 @@ const LUDecomposition = () => {
         pairs.push([L[i][j], y[j]]);
       }
       y[i] = (b[i] - sum) / L[i][i]; // L[i][i] === 1 for Doolittle
-      work.forward.push(`y_{${i + 1}} = ${fmt(b[i])}${products(pairs)} = ${fmt(y[i])}`);
+      work.forward.push(pairs.length
+        ? `y_{${i + 1}} = ${fmt(b[i])}${products(pairs)} = ${fmt(y[i])}`
+        : `y_{${i + 1}} = b_{${i + 1}} = ${fmt(y[i])}`);
     }
 
     // Back substitution: Ux = y

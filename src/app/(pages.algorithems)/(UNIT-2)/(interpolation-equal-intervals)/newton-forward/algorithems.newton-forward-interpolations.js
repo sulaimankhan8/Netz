@@ -355,7 +355,7 @@ export default function NewtonForwardInterpolations({ theme }) {
           <div className="mt-2 p-4 border border-gray-300 rounded-lg">
 
             <pre className="overflow-x-auto">
-              <BlockMath math={vSteps.join(",")} />
+              <BlockMath math={vSteps.join(",\\quad ")} />
             </pre>
 
           </div>
@@ -489,10 +489,10 @@ function  newtonForwardInterpolation(points, x) {
 
   // Adding steps for calculating 'v'
   let vSteps = [];
-  vSteps.push(`h = x₂ - x₁`);
-  vSteps.push(`v = \\frac{(x - x₀)}{ h}`);
+  vSteps.push(`h = x_1 - x_0 = ${h}`);
+  vSteps.push(`v = \\frac{x - x_0}{h}`);
   vSteps.push(`v = \\frac{(${x} - ${xi[0]})}{ ${h}}`);
-  vSteps.push(`v = ${(x - xi[0]) / h}`);
+  vSteps.push(`v = ${+v.toFixed(6)}`);
 
   // Building the polynomial step by step
   for (let i = 1; i < n; i++) {
@@ -516,12 +516,12 @@ function  newtonForwardInterpolation(points, x) {
     let stepMid = [``];
     for (let ij = 2; ij <= i; ij++) {
       
-      stepMid.push(` (${v} - ${ij-1})`);
+      stepMid.push(` (${+v.toFixed(6)} - ${ij-1})`);
     }
-    let stepMidString = stepMid.join(" * ");
+    let stepMidString = stepMid.join(" \\times ");
 
     stepSubstituted.push(
-      `\\frac{(${v} ${stepMidString}) * ${diffTable[0][i].toFixed(4)})}{ ${i}!}`
+      `\\frac{(${+v.toFixed(6)})${stepMidString} \\times ${diffTable[0][i].toFixed(4)}}{${i}!}`
     );
     stepCalculated.push(`(${term.toFixed(4)})`);
   }

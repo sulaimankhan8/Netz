@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { parseUserFunction } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton, EditorialStepViewer } from '@/app/components/editorial';
+import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const BisectionMethod = () => {
@@ -223,9 +224,11 @@ const BisectionMethod = () => {
     let detectedInterval = null;
 
     if (fa !== null) {
+      steps.push(`f(${a}) = ${fa.toFixed(6)}`);
       for (let x = 1; x <= 100; x += 1) {
         const fx = evaluateFunction(x);
         if (fx === null) continue;
+        steps.push(`f(${x}) = ${fx.toFixed(6)}`);
         if (fa * fx < 0) {
           detectedInterval = [a, x];
           steps.push(`Sign change detected between x = ${a} and x = ${x}`);
@@ -388,6 +391,7 @@ const BisectionMethod = () => {
       {/* Output & Visualizer Sections */}
       {bisectionIterations.length > 0 && (
         <div id="bisection-results-container" className="space-y-6">
+          <SetupSteps lines={intervalSteps} title="Step 0: Find an interval where f(x) changes sign" />
           
           {/* Sub-navigation Tabs */}
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
