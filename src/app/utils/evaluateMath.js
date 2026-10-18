@@ -102,4 +102,24 @@ export function getSymbolicDerivative(expr, variable = 'x') {
   return derivedNode.toString();
 }
 
+/**
+ * Simplifies an expression string (e.g. "1 + 1 * (x + y)" -> "x + y + 1").
+ *
+ * @param {string} expr - Mathematical expression
+ * @returns {string} Simplified expression string
+ */
+export function simplifyExpression(expr) {
+  return math.simplify(sanitizeMathString(expr)).toString();
+}
+
+/**
+ * Converts an expression string to LaTeX for KaTeX display.
+ *
+ * @param {string} expr - Mathematical expression
+ * @returns {string} LaTeX string
+ */
+export function expressionToTex(expr) {
+  return math.parse(sanitizeMathString(expr)).toTex({ parenthesis: 'auto', implicit: 'hide' });
+}
+
 export default evaluateMath;

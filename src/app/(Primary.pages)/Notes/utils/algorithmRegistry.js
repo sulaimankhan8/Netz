@@ -1,4 +1,4 @@
-import { evaluateMath, parseUserFunction, getSymbolicDerivative, sanitizeMathString } from '../../../utils/evaluateMath.js';
+import { evaluateMath, parseUserFunction, getSymbolicDerivative, sanitizeMathString, simplifyExpression } from '../../../utils/evaluateMath.js';
 
 export function parseNum(val, fallback) {
   if (val === undefined || val === null || val === '') return fallback;
@@ -24,6 +24,79 @@ export function parseMatrixRows(row1, row2, row3, defaultRows) {
     parseRow(row2, defaultRows[1]),
     parseRow(row3, defaultRows[2])
   ];
+}
+
+// Safety cap for iterative methods; each loop stops on its tolerance well before this.
+const MAX_ITER = 100;
+
+function notConverged(converged, count) {
+  return converged ? '' : ` (not converged after ${count} iterations)`;
+}
+
+// Number of fixed-size steps from x0 to targetX (rounded, so 0.1 steps to 0.3 give 3).
+function odeStepCount(x0, targetX, h) {
+  if (!(h > 0) || !(targetX > x0)) return 0;
+  return Math.min(1000, Math.round((targetX - x0) / h));
+}
+
+// Two-tailed 5% critical values of Student's t for df = 1..30.
+const T_CRIT_5 = [
+  12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
+  2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086,
+  2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042
+];
+
+function tCritical5(df) {
+  if (df >= 1 && df <= 30) return T_CRIT_5[Math.round(df) - 1];
+  return 1.96;
+}
+
+// Two-tailed critical values of the standard normal distribution.
+const Z_CRIT = { 0.1: 1.645, 0.05: 1.96, 0.02: 2.326, 0.01: 2.576 };
+
+// Swaps a row with a non-zero pivot into place (only when the pivot is 0).
+function swapZeroPivot(mat, col) {
+  if (Math.abs(mat[col][col]) > 1e-12) return false;
+  for (let r = col + 1; r < mat.length; r++) {
+    if (Math.abs(mat[r][col]) > 1e-12) {
+      [mat[col], mat[r]] = [mat[r], mat[col]];
+      return true;
+    }
+  }
+  throw new Error('Singular system: no unique solution.');
+}
+
+// Gauss forward/backward central-difference terms, using every difference the table has.
+// Forward:  u, (u-1), (u+1), (u-2), ... with Δⁱy at index origin - floor(i/2)
+// Backward: u, (u+1), (u-1), (u+2), ... with Δⁱy at index origin - floor((i+1)/2)
+function gaussCentralTerms(diff, yArr, originIdx, u, backward) {
+  const sup = (i) => (i === 1 ? '' : String(i).split('').map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join(''));
+  let result = yArr[originIdx];
+  const steps = [{ order: 'y_0', formula: 'y0', val: result.toFixed(4), term: result.toFixed(4) }];
+  const factors = ['u'];
+  let product = u;
+  let factorial = 1;
+
+  for (let i = 1; i < diff.length; i++) {
+    if (i >= 2) {
+      const shift = backward ? (i % 2 === 0 ? i / 2 : -Math.floor(i / 2)) : (i % 2 === 0 ? -i / 2 : Math.floor(i / 2));
+      product *= u + shift;
+      factors.push(`(u${shift > 0 ? '+' : '-'}${Math.abs(shift)})`);
+    }
+    factorial *= i;
+    const k = originIdx - (backward ? Math.floor((i + 1) / 2) : Math.floor(i / 2));
+    if (k < 0 || k >= diff[i].length) break; // the table has no such central difference
+    const term = (product * diff[i][k]) / factorial;
+    result += term;
+    const label = `Δ${sup(i)}y_${k - originIdx}`;
+    steps.push({
+      order: label,
+      formula: `[${factors.join('')}/${i}!] * ${label}`,
+      val: diff[i][k].toFixed(4),
+      term: term.toFixed(4)
+    });
+  }
+  return { result, steps };
 }
 
 function det3x3(m) {
@@ -72,16 +145,17 @@ export const ALGORITHMS_CATALOG = [
     unit: 'Unit 1: Roots of Equations',
     route: '/bisection-method',
     description: 'Finds real root in interval [a, b] where f(a) and f(b) have opposite signs by repeated bisection.',
-    defaultParams: { expression: 'x^3 - 4*x - 9', a: 2, b: 3, tolerance: 0.0001 },
+    defaultParams: { expression: 'x^3 - 4*x - 9', a: 2, b: 3, tolerance: 0.05 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || 'x^3 - 4*x - 9');
       let a = parseNum(params.a, 2);
       let b = parseNum(params.b, 3);
-      const tol = parseNum(params.tolerance, 0.0001);
+      const tol = parseNum(params.tolerance, 0.05);
       const steps = [];
       let c = a;
+      let converged = false;
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < MAX_ITER; i++) {
         c = (a + b) / 2;
         const fa = evaluateMath(expr, { x: a });
         const fc = evaluateMath(expr, { x: c });
@@ -92,11 +166,14 @@ export const ALGORITHMS_CATALOG = [
           c: c.toFixed(6),
           fc: fc.toFixed(6)
         });
-        if (Math.abs(fc) < tol || Math.abs(b - a) < tol) break;
+        if (fc === 0 || (b - a) / 2 < tol) {
+          converged = true;
+          break;
+        }
         if (fa * fc < 0) b = c;
         else a = c;
       }
-      return { result: `Root x ≈ ${c.toFixed(6)}`, steps, headers: ['Iter', 'a', 'b', 'Midpoint c', 'f(c)'] };
+      return { result: `Root x ≈ ${c.toFixed(6)}${notConverged(converged, steps.length)}`, steps, headers: ['Iter', 'a', 'b', 'Midpoint c', 'f(c)'] };
     }
   },
   {
@@ -112,8 +189,9 @@ export const ALGORITHMS_CATALOG = [
       let xCurr = parseNum(params.x1, 3);
       const tol = parseNum(params.tolerance, 0.0001);
       const steps = [];
+      let converged = false;
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < MAX_ITER; i++) {
         const fPrev = evaluateMath(expr, { x: xPrev });
         const fCurr = evaluateMath(expr, { x: xCurr });
         const denom = fCurr - fPrev;
@@ -131,12 +209,13 @@ export const ALGORITHMS_CATALOG = [
 
         if (Math.abs(xNext - xCurr) < tol || Math.abs(fCurr) < tol) {
           xCurr = xNext;
+          converged = true;
           break;
         }
         xPrev = xCurr;
         xCurr = xNext;
       }
-      return { result: `Root x ≈ ${xCurr.toFixed(6)}`, steps, headers: ['Iter', 'x_(n-1)', 'x_n', 'f(x_(n-1))', 'f(x_n)', 'x_(n+1)'] };
+      return { result: `Root x ≈ ${xCurr.toFixed(6)}${notConverged(converged, steps.length)}`, steps, headers: ['Iter', 'x_(n-1)', 'x_n', 'f(x_(n-1))', 'f(x_n)', 'x_(n+1)'] };
     }
   },
   {
@@ -152,8 +231,9 @@ export const ALGORITHMS_CATALOG = [
       let currentX = parseNum(params.x0, 2.5);
       const tol = parseNum(params.tolerance, 0.0001);
       const steps = [];
+      let converged = false;
 
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < MAX_ITER; i++) {
         const fx = evaluateMath(expr, { x: currentX });
         const dfx = evaluateMath(derivExpr, { x: currentX });
         if (Math.abs(dfx) < 1e-12) break;
@@ -167,11 +247,12 @@ export const ALGORITHMS_CATALOG = [
         });
         if (Math.abs(nextX - currentX) < tol) {
           currentX = nextX;
+          converged = true;
           break;
         }
         currentX = nextX;
       }
-      return { result: `Root x ≈ ${currentX.toFixed(6)}`, steps, headers: ['Iter', 'x_n', 'f(x_n)', "f'(x_n)", 'x_(n+1)'] };
+      return { result: `Root x ≈ ${currentX.toFixed(6)}${notConverged(converged, steps.length)}`, steps, headers: ['Iter', 'x_n', 'f(x_n)', "f'(x_n)", 'x_(n+1)'] };
     }
   },
   {
@@ -185,10 +266,13 @@ export const ALGORITHMS_CATALOG = [
       const expr = sanitizeMathString(params.expression || 'x^3 - 4*x - 9');
       let a = parseNum(params.a, 2);
       let b = parseNum(params.b, 3);
+      const tol = parseNum(params.tolerance, 0.0001);
       let c = a;
+      let prevC = null;
+      let converged = false;
       const steps = [];
 
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < MAX_ITER; i++) {
         const fa = evaluateMath(expr, { x: a });
         const fb = evaluateMath(expr, { x: b });
         c = (a * fb - b * fa) / (fb - fa);
@@ -200,11 +284,15 @@ export const ALGORITHMS_CATALOG = [
           c: c.toFixed(6),
           fc: fc.toFixed(6)
         });
-        if (Math.abs(fc) < 0.0001) break;
+        if (Math.abs(fc) < tol || (prevC !== null && Math.abs(c - prevC) < tol)) {
+          converged = true;
+          break;
+        }
+        prevC = c;
         if (fa * fc < 0) b = c;
         else a = c;
       }
-      return { result: `Root x ≈ ${c.toFixed(6)}`, steps, headers: ['Iter', 'a', 'b', 'c', 'f(c)'] };
+      return { result: `Root x ≈ ${c.toFixed(6)}${notConverged(converged, steps.length)}`, steps, headers: ['Iter', 'a', 'b', 'c', 'f(c)'] };
     }
   },
   {
@@ -213,23 +301,31 @@ export const ALGORITHMS_CATALOG = [
     unit: 'Unit 1: Roots of Equations',
     route: '/iteration-method',
     description: 'Solves x = g(x) iteratively starting from initial guess x0.',
-    defaultParams: { expression: '(4*x + 9)^(1/3)', x0: 2.5, maxIter: 6 },
+    defaultParams: { expression: '(4*x + 9)^(1/3)', x0: 2.5, tolerance: 0.0001, maxIter: 50 },
     solve: (params) => {
       const expr = sanitizeMathString(params.expression || '(4*x + 9)^(1/3)');
       let currentX = parseNum(params.x0, 2.5);
+      const tol = parseNum(params.tolerance, 0.0001);
+      const maxIter = Math.min(MAX_ITER, parseInt(params.maxIter) || 50);
+      let converged = false;
       const steps = [];
 
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < maxIter; i++) {
         const nextX = evaluateMath(expr, { x: currentX });
+        const diff = Math.abs(nextX - currentX);
         steps.push({
           iter: i + 1,
           x: currentX.toFixed(6),
           gx: nextX.toFixed(6),
-          diff: Math.abs(nextX - currentX).toFixed(6)
+          diff: diff.toFixed(6)
         });
         currentX = nextX;
+        if (diff < tol) {
+          converged = true;
+          break;
+        }
       }
-      return { result: `Fixed Point x ≈ ${currentX.toFixed(6)}`, steps, headers: ['Iter', 'x_n', 'g(x_n)', '|x_(n+1) - x_n|'] };
+      return { result: `Fixed Point x ≈ ${currentX.toFixed(6)}${notConverged(converged, steps.length)}`, steps, headers: ['Iter', 'x_n', 'g(x_n)', '|x_(n+1) - x_n|'] };
     }
   },
 
@@ -266,6 +362,8 @@ export const ALGORITHMS_CATALOG = [
       const steps = [{ order: 'y0', val: yArr[0].toFixed(4), term: yArr[0].toFixed(4) }];
 
       for (let i = 1; i < n; i++) {
+        // A column of zero differences means the data is a polynomial of degree i - 1: stop here
+        if (diff[i].every((d) => Math.abs(d) < 1e-12)) break;
         uTerm *= (u - (i - 1));
         fact *= i;
         const addVal = (uTerm * diff[i][0]) / fact;
@@ -368,27 +466,8 @@ export const ALGORITHMS_CATALOG = [
         diff.push(row);
       }
 
-      // Terms: y0 + u*Δy0 + u(u-1)/2 * Δ^2y_{-1} + (u+1)u(u-1)/6 * Δ^3y_{-1}
-      let result = yArr[originIdx];
-      const steps = [{ order: 'y_0', formula: 'y0', val: result.toFixed(4), term: result.toFixed(4) }];
-
-      if (diff[1] && diff[1][originIdx] !== undefined) {
-        const t1 = u * diff[1][originIdx];
-        result += t1;
-        steps.push({ order: 'Δy_0', formula: 'u * Δy_0', val: diff[1][originIdx].toFixed(4), term: t1.toFixed(4) });
-      }
-
-      if (originIdx - 1 >= 0 && diff[2] && diff[2][originIdx - 1] !== undefined) {
-        const t2 = (u * (u - 1) / 2) * diff[2][originIdx - 1];
-        result += t2;
-        steps.push({ order: 'Δ²y_{-1}', formula: '[u(u-1)/2!] * Δ²y_{-1}', val: diff[2][originIdx - 1].toFixed(4), term: t2.toFixed(4) });
-      }
-
-      if (originIdx - 1 >= 0 && diff[3] && diff[3][originIdx - 1] !== undefined) {
-        const t3 = ((u + 1) * u * (u - 1) / 6) * diff[3][originIdx - 1];
-        result += t3;
-        steps.push({ order: 'Δ³y_{-1}', formula: '[(u+1)u(u-1)/3!] * Δ³y_{-1}', val: diff[3][originIdx - 1].toFixed(4), term: t3.toFixed(4) });
-      }
+      // Terms: y0 + u*Δy0 + u(u-1)/2! * Δ²y_{-1} + (u+1)u(u-1)/3! * Δ³y_{-1} + ...
+      const { result, steps } = gaussCentralTerms(diff, yArr, originIdx, u, false);
 
       return {
         result: `Gauss Forward f(${targetX}) ≈ ${result.toFixed(4)} (u = ${u.toFixed(4)} at x0 = ${xArr[originIdx]})`,
@@ -431,27 +510,8 @@ export const ALGORITHMS_CATALOG = [
         diff.push(row);
       }
 
-      // Terms: y0 + u*Δy_{-1} + (u+1)u/2 * Δ^2y_{-1} + (u+1)u(u-1)/6 * Δ^3y_{-2}
-      let result = yArr[originIdx];
-      const steps = [{ order: 'y_0', formula: 'y0', val: result.toFixed(4), term: result.toFixed(4) }];
-
-      if (originIdx - 1 >= 0 && diff[1] && diff[1][originIdx - 1] !== undefined) {
-        const t1 = u * diff[1][originIdx - 1];
-        result += t1;
-        steps.push({ order: 'Δy_{-1}', formula: 'u * Δy_{-1}', val: diff[1][originIdx - 1].toFixed(4), term: t1.toFixed(4) });
-      }
-
-      if (originIdx - 1 >= 0 && diff[2] && diff[2][originIdx - 1] !== undefined) {
-        const t2 = ((u + 1) * u / 2) * diff[2][originIdx - 1];
-        result += t2;
-        steps.push({ order: 'Δ²y_{-1}', formula: '[(u+1)u/2!] * Δ²y_{-1}', val: diff[2][originIdx - 1].toFixed(4), term: t2.toFixed(4) });
-      }
-
-      if (originIdx - 2 >= 0 && diff[3] && diff[3][originIdx - 2] !== undefined) {
-        const t3 = ((u + 1) * u * (u - 1) / 6) * diff[3][originIdx - 2];
-        result += t3;
-        steps.push({ order: 'Δ³y_{-2}', formula: '[(u+1)u(u-1)/3!] * Δ³y_{-2}', val: diff[3][originIdx - 2].toFixed(4), term: t3.toFixed(4) });
-      }
+      // Terms: y0 + u*Δy_{-1} + (u+1)u/2! * Δ²y_{-1} + (u+1)u(u-1)/3! * Δ³y_{-2} + ...
+      const { result, steps } = gaussCentralTerms(diff, yArr, originIdx, u, true);
 
       return {
         result: `Gauss Backward f(${targetX}) ≈ ${result.toFixed(4)} (u = ${u.toFixed(4)} at x0 = ${xArr[originIdx]})`,
@@ -855,7 +915,7 @@ export const ALGORITHMS_CATALOG = [
     unit: 'Unit 4: Linear Systems',
     route: '/Gauss-seidal',
     description: 'Iterative technique for solving diagonally dominant linear systems Ax = b using updated values immediately.',
-    defaultParams: { row1: '10, -2, -1, 3', row2: '-2, 10, -1, 15', row3: '-1, -1, 10, 27', maxIter: 6 },
+    defaultParams: { row1: '10, -2, -1, 3', row2: '-2, 10, -1, 15', row3: '-1, -1, 10, 27', tolerance: 0.0001, maxIter: 50 },
     solve: (params) => {
       const defaultRows = [
         [10, -2, -1, 3],
@@ -863,7 +923,9 @@ export const ALGORITHMS_CATALOG = [
         [-1, -1, 10, 27]
       ];
       const rows = parseMatrixRows(params.row1, params.row2, params.row3, defaultRows);
-      const maxIter = parseInt(params.maxIter) || 6;
+      const maxIter = Math.min(MAX_ITER, parseInt(params.maxIter) || 50);
+      const tol = parseNum(params.tolerance, 0.0001);
+      let converged = false;
 
       let x = 0;
       let y = 0;
@@ -887,10 +949,14 @@ export const ALGORITHMS_CATALOG = [
         x = nextX;
         y = nextY;
         z = nextZ;
+        if (delta < tol) {
+          converged = true;
+          break;
+        }
       }
 
       return {
-        result: `Solution: x ≈ ${x.toFixed(4)}, y ≈ ${y.toFixed(4)}, z ≈ ${z.toFixed(4)}`,
+        result: `Solution: x ≈ ${x.toFixed(4)}, y ≈ ${y.toFixed(4)}, z ≈ ${z.toFixed(4)}${notConverged(converged, steps.length)}`,
         steps,
         headers: ['Iter k', 'x^(k)', 'y^(k)', 'z^(k)', 'Max |Δ|']
       };
@@ -902,15 +968,17 @@ export const ALGORITHMS_CATALOG = [
     unit: 'Unit 4: Linear Systems',
     route: '/jacobi-method',
     description: 'Iterative solver for diagonally dominant linear systems Ax = b updating variables simultaneously from previous vector.',
-    defaultParams: { row1: '10, 1, 1, 12', row2: '2, 10, 1, 13', row3: '2, 2, 10, 14', maxIter: 6 },
+    defaultParams: { row1: '20, 1, -2, 17', row2: '3, 20, -1, -18', row3: '2, -3, 20, 25', tolerance: 0.0001, maxIter: 50 },
     solve: (params) => {
       const defaultRows = [
-        [10, 1, 1, 12],
-        [2, 10, 1, 13],
-        [2, 2, 10, 14]
+        [20, 1, -2, 17],
+        [3, 20, -1, -18],
+        [2, -3, 20, 25]
       ];
       const rows = parseMatrixRows(params.row1, params.row2, params.row3, defaultRows);
-      const maxIter = parseInt(params.maxIter) || 6;
+      const maxIter = Math.min(MAX_ITER, parseInt(params.maxIter) || 50);
+      const tol = parseNum(params.tolerance, 0.0001);
+      let converged = false;
 
       let x = 0;
       let y = 0;
@@ -934,10 +1002,14 @@ export const ALGORITHMS_CATALOG = [
         x = nextX;
         y = nextY;
         z = nextZ;
+        if (delta < tol) {
+          converged = true;
+          break;
+        }
       }
 
       return {
-        result: `Jacobi Solution: x ≈ ${x.toFixed(4)}, y ≈ ${y.toFixed(4)}, z ≈ ${z.toFixed(4)}`,
+        result: `Jacobi Solution: x ≈ ${x.toFixed(4)}, y ≈ ${y.toFixed(4)}, z ≈ ${z.toFixed(4)}${notConverged(converged, steps.length)}`,
         steps,
         headers: ['Iter k', 'x^(k)', 'y^(k)', 'z^(k)', 'Max |Δ|']
       };
@@ -962,7 +1034,10 @@ export const ALGORITHMS_CATALOG = [
       const formatRow = (r) => `[${r.slice(0, 3).map((v) => v.toFixed(2)).join(', ')} | ${r[3].toFixed(2)}]`;
       steps.push({ stage: 'Initial Matrix [A|b]', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
 
-      // Forward elimination
+      // Forward elimination (rows are swapped only when a pivot is 0)
+      if (swapZeroPivot(mat, 0)) {
+        steps.push({ stage: 'Swap rows (zero pivot in column 1)', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
+      }
       // Row 1 -> Row 2
       const m21 = mat[1][0] / mat[0][0];
       for (let j = 0; j < 4; j++) mat[1][j] -= m21 * mat[0][j];
@@ -971,10 +1046,14 @@ export const ALGORITHMS_CATALOG = [
       for (let j = 0; j < 4; j++) mat[2][j] -= m31 * mat[0][j];
       steps.push({ stage: 'Eliminate x from R2, R3', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
 
+      if (swapZeroPivot(mat, 1)) {
+        steps.push({ stage: 'Swap rows (zero pivot in column 2)', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
+      }
       // Row 2 -> Row 3
       const m32 = mat[2][1] / mat[1][1];
       for (let j = 1; j < 4; j++) mat[2][j] -= m32 * mat[1][j];
       steps.push({ stage: 'Upper Triangular Matrix', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
+      if (Math.abs(mat[2][2]) < 1e-12) throw new Error('Singular system: no unique solution.');
 
       // Back substitution
       const z = mat[2][3] / mat[2][2];
@@ -1010,8 +1089,10 @@ export const ALGORITHMS_CATALOG = [
       steps.push({ op: 'Initial Matrix', r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
 
       for (let i = 0; i < 3; i++) {
+        if (swapZeroPivot(mat, i)) {
+          steps.push({ op: `Swap rows (zero pivot in column ${i + 1})`, r1: formatRow(mat[0]), r2: formatRow(mat[1]), r3: formatRow(mat[2]) });
+        }
         const pivot = mat[i][i];
-        if (Math.abs(pivot) < 1e-12) continue;
         for (let j = 0; j < 4; j++) mat[i][j] /= pivot;
 
         for (let k = 0; k < 3; k++) {
@@ -1068,6 +1149,9 @@ export const ALGORITHMS_CATALOG = [
           let sum = 0;
           for (let j = 0; j < i; j++) sum += L[i][j] * U[j][k];
           U[i][k] = A[i][k] - sum;
+        }
+        if (Math.abs(U[i][i]) < 1e-12) {
+          throw new Error(`Zero pivot u${i + 1}${i + 1} = 0: Doolittle LU needs the rows reordered (or the matrix is singular).`);
         }
         for (let k = i + 1; k < 3; k++) {
           let sum = 0;
@@ -1137,13 +1221,22 @@ export const ALGORITHMS_CATALOG = [
       const targetX = parseNum(params.targetX, 0.2);
       const steps = [];
 
-      let iter = 0;
-      while (currX < targetX - 1e-9 && iter < 5) {
-        // For dy/dx = x + y: y' = x + y, y'' = 1 + y', y''' = y'', y'''' = y'''
-        const y1 = evaluateMath(expr, { x: currX, y: currY });
-        const y2 = 1 + y1;
-        const y3 = y2;
-        const y4 = y3;
+      // Differentiate y' = f(x, y) along the solution: y^(k+1) = d/dx y^(k) + d/dy y^(k) * f
+      const fStr = simplifyExpression(expr);
+      const totalDerivative = (g) =>
+        simplifyExpression(`(${getSymbolicDerivative(g, 'x')}) + (${getSymbolicDerivative(g, 'y')}) * (${fStr})`);
+      const y2Str = totalDerivative(fStr);
+      const y3Str = totalDerivative(y2Str);
+      const y4Str = totalDerivative(y3Str);
+
+      const x0 = currX;
+      const stepCount = odeStepCount(x0, targetX, h);
+      for (let iter = 0; iter < stepCount; iter++) {
+        const scope = { x: currX, y: currY };
+        const y1 = evaluateMath(fStr, scope);
+        const y2 = evaluateMath(y2Str, scope);
+        const y3 = evaluateMath(y3Str, scope);
+        const y4 = evaluateMath(y4Str, scope);
 
         const term1 = h * y1;
         const term2 = ((h * h) / 2) * y2;
@@ -1159,15 +1252,14 @@ export const ALGORITHMS_CATALOG = [
           nextY: nextY.toFixed(4)
         });
 
-        currX += h;
+        currX = x0 + (iter + 1) * h;
         currY = nextY;
-        iter++;
       }
 
       return {
-        result: `Taylor Series y(${currX.toFixed(2)}) ≈ ${currY.toFixed(5)}`,
+        result: `Taylor Series y(${currX.toFixed(2)}) ≈ ${currY.toFixed(5)} (y'' = ${y2Str})`,
         steps,
-        headers: ['x_n', 'y_n', "y' = f(x,y)", "y'' = 1+y'", 'y_(n+1)']
+        headers: ['x_n', 'y_n', "y' = f(x,y)", "y''", 'y_(n+1)']
       };
     }
   },
@@ -1187,7 +1279,9 @@ export const ALGORITHMS_CATALOG = [
       const steps = [];
       let stepIdx = 0;
 
-      while (currX < targetX - 1e-9 && stepIdx < 10) {
+      const x0 = currX;
+      const stepCount = odeStepCount(x0, targetX, h);
+      while (stepIdx < stepCount) {
         const slope = evaluateMath(expr, { x: currX, y: currY });
         const nextY = currY + h * slope;
         steps.push({
@@ -1197,7 +1291,7 @@ export const ALGORITHMS_CATALOG = [
           slope: slope.toFixed(4),
           nextY: nextY.toFixed(4)
         });
-        currX += h;
+        currX = x0 + (stepIdx + 1) * h;
         currY = nextY;
         stepIdx++;
       }
@@ -1220,7 +1314,9 @@ export const ALGORITHMS_CATALOG = [
       const steps = [];
       let stepIdx = 0;
 
-      while (currX < targetX - 1e-9 && stepIdx < 8) {
+      const x0 = currX;
+      const stepCount = odeStepCount(x0, targetX, h);
+      while (stepIdx < stepCount) {
         const k1 = evaluateMath(expr, { x: currX, y: currY });
         const yPred = currY + h * k1;
         const k2 = evaluateMath(expr, { x: currX + h, y: yPred });
@@ -1236,7 +1332,7 @@ export const ALGORITHMS_CATALOG = [
           nextY: nextY.toFixed(4)
         });
 
-        currX += h;
+        currX = x0 + (stepIdx + 1) * h;
         currY = nextY;
         stepIdx++;
       }
@@ -1264,7 +1360,9 @@ export const ALGORITHMS_CATALOG = [
       const steps = [];
       let stepIdx = 0;
 
-      while (currX < targetX - 1e-9 && stepIdx < 5) {
+      const x0 = currX;
+      const stepCount = odeStepCount(x0, targetX, h);
+      while (stepIdx < stepCount) {
         const k1 = h * evaluateMath(expr, { x: currX, y: currY });
         const k2 = h * evaluateMath(expr, { x: currX + h / 2, y: currY + k1 / 2 });
         const k3 = h * evaluateMath(expr, { x: currX + h / 2, y: currY + k2 / 2 });
@@ -1281,7 +1379,7 @@ export const ALGORITHMS_CATALOG = [
           k4: k4.toFixed(4),
           nextY: nextY.toFixed(4)
         });
-        currX += h;
+        currX = x0 + (stepIdx + 1) * h;
         currY = nextY;
         stepIdx++;
       }
@@ -1483,7 +1581,9 @@ export const ALGORITHMS_CATALOG = [
 
       const se = sigma / Math.sqrt(n);
       const zStat = (xbar - mu) / se;
-      const zCrit = 1.96;
+      // Nearest tabulated two-tailed level (10%, 5%, 2%, 1%)
+      const level = Object.keys(Z_CRIT).map(Number).reduce((best, a) => (Math.abs(a - alpha) < Math.abs(best - alpha) ? a : best), 0.05);
+      const zCrit = Z_CRIT[level];
       const isRejected = Math.abs(zStat) > zCrit;
 
       return {
@@ -1493,7 +1593,7 @@ export const ALGORITHMS_CATALOG = [
           { param: 'Hypothesized Mean (μ0)', val: mu },
           { param: 'Standard Error (σ/√n)', val: se.toFixed(4) },
           { param: 'Z Calculated Stat', val: zStat.toFixed(4) },
-          { param: 'Z Critical (α=0.05)', val: `±${zCrit}` }
+          { param: `Z Critical (α=${level})`, val: `±${zCrit}` }
         ],
         headers: ['Metric Parameter', 'Value']
       };
@@ -1515,7 +1615,7 @@ export const ALGORITHMS_CATALOG = [
 
       const se = s / Math.sqrt(n);
       const tStat = (xbar - mu) / se;
-      const tCrit = 2.131;
+      const tCrit = tCritical5(df);
       const isRejected = Math.abs(tStat) > tCrit;
 
       return {
@@ -1525,7 +1625,7 @@ export const ALGORITHMS_CATALOG = [
           { param: 'Null Mean (μ0)', val: mu },
           { param: 'Degrees of Freedom (n-1)', val: df },
           { param: 't Calculated', val: tStat.toFixed(4) },
-          { param: 't Critical (α=0.05)', val: `±${tCrit}` }
+          { param: `t Critical (α=0.05, df=${df})`, val: `±${tCrit}` }
         ],
         headers: ['Parameter', 'Value']
       };

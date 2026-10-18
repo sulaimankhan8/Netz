@@ -31,20 +31,36 @@ const LUDecomposition = () => {
     const L = Array.from({ length: sz }, (_, i) => Array.from({ length: sz }, (_, j) => (i === j ? 1 : 0)));
     const U = Array.from({ length: sz }, () => new Array(sz).fill(0));
 
+    // Working lines shown to the student, grouped by phase
+    const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(4));
+    const paren = (v) => (v < 0 ? `(${fmt(v)})` : fmt(v));
+    const products = (pairs) => pairs.map(([p, q]) => ` - ${paren(p)}\\cdot ${paren(q)}`).join('');
+    const work = { lu: [], forward: [], back: [] };
+
     for (let i = 0; i < sz; i++) {
       // U row
       for (let k = i; k < sz; k++) {
         let sum = 0;
-        for (let j = 0; j < i; j++) sum += L[i][j] * U[j][k];
+        const pairs = [];
+        for (let j = 0; j < i; j++) {
+          sum += L[i][j] * U[j][k];
+          pairs.push([L[i][j], U[j][k]]);
+        }
         U[i][k] = A[i][k] - sum;
+        work.lu.push(`u_{${i + 1}${k + 1}} = a_{${i + 1}${k + 1}}${pairs.length ? ' - ' + pairs.map((_, j) => `l_{${i + 1}${j + 1}}u_{${j + 1}${k + 1}}`).join(' - ') : ''} = ${fmt(A[i][k])}${products(pairs)} = ${fmt(U[i][k])}`);
       }
       if (Math.abs(U[i][i]) < 1e-12) return { error: `Zero pivot at position [${i + 1}][${i + 1}]. Matrix may be singular.` };
 
       // L column
       for (let k = i + 1; k < sz; k++) {
         let sum = 0;
-        for (let j = 0; j < i; j++) sum += L[k][j] * U[j][i];
+        const pairs = [];
+        for (let j = 0; j < i; j++) {
+          sum += L[k][j] * U[j][i];
+          pairs.push([L[k][j], U[j][i]]);
+        }
         L[k][i] = (A[k][i] - sum) / U[i][i];
+        work.lu.push(`l_{${k + 1}${i + 1}} = \\frac{a_{${k + 1}${i + 1}}${pairs.length ? ' - ' + pairs.map((_, j) => `l_{${k + 1}${j + 1}}u_{${j + 1}${i + 1}}`).join(' - ') : ''}}{u_{${i + 1}${i + 1}}} = \\frac{${fmt(A[k][i])}${products(pairs)}}{${fmt(U[i][i])}} = ${fmt(L[k][i])}`);
       }
     }
 
@@ -52,19 +68,29 @@ const LUDecomposition = () => {
     const y = new Array(sz).fill(0);
     for (let i = 0; i < sz; i++) {
       let sum = 0;
-      for (let j = 0; j < i; j++) sum += L[i][j] * y[j];
+      const pairs = [];
+      for (let j = 0; j < i; j++) {
+        sum += L[i][j] * y[j];
+        pairs.push([L[i][j], y[j]]);
+      }
       y[i] = (b[i] - sum) / L[i][i]; // L[i][i] === 1 for Doolittle
+      work.forward.push(`y_{${i + 1}} = ${fmt(b[i])}${products(pairs)} = ${fmt(y[i])}`);
     }
 
     // Back substitution: Ux = y
     const x = new Array(sz).fill(0);
     for (let i = sz - 1; i >= 0; i--) {
       let sum = 0;
-      for (let j = i + 1; j < sz; j++) sum += U[i][j] * x[j];
+      const pairs = [];
+      for (let j = i + 1; j < sz; j++) {
+        sum += U[i][j] * x[j];
+        pairs.push([U[i][j], x[j]]);
+      }
       x[i] = (y[i] - sum) / U[i][i];
+      work.back.push(`x_{${i + 1}} = \\frac{${fmt(y[i])}${products(pairs)}}{${fmt(U[i][i])}} = ${fmt(x[i])}`);
     }
 
-    return { L, U, y, x };
+    return { L, U, y, x, work };
   };
 
   const handleSolve = () => {
@@ -154,6 +180,25 @@ const LUDecomposition = () => {
               <MatrixDisplay data={result.L} label="Lower Triangular Matrix L (Doolittle: 1s on diagonal)" highlight />
               <MatrixDisplay data={result.U} label="Upper Triangular Matrix U" highlight />
             </div>
+          </div>
+
+          {/* Working: every u, l, y and x entry */}
+          <div className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
+            <h4 className="text-lg font-black uppercase text-black dark:text-white">Step-by-Step Working</h4>
+            {[
+              ['Step 1 — Find U (row by row) and L (column by column)', result.work.lu],
+              ['Step 2 — Forward substitution: Ly = b', result.work.forward],
+              ['Step 3 — Back substitution: Ux = y (last row first)', result.work.back],
+            ].map(([title, lines]) => (
+              <div key={title} className="p-4 border border-black/20 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-1">
+                <span className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400 block">{title}</span>
+                {lines.map((line, i) => (
+                  <div key={i} className="overflow-x-auto text-black dark:text-white">
+                    <BlockMath math={line} />
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
 
           {/* Intermediate y and final x */}

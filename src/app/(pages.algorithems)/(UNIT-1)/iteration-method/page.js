@@ -14,9 +14,9 @@ export default function IterationMethods() {
     { k: 1, xprev: '1.500000', xk: '1.357209', err: '0.142791' },
     { k: 2, xprev: '1.357209', xk: '1.330861', err: '0.026348' },
     { k: 3, xprev: '1.330861', xk: '1.325884', err: '0.004977' },
-    { k: 4, xprev: '1.325884', xk: '1.324942', err: '0.000942' },
-    { k: 5, xprev: '1.324942', xk: '1.324764', err: '0.000178' },
-    { k: 6, xprev: '1.324764', xk: '1.324730', err: '0.000034' },
+    { k: 4, xprev: '1.325884', xk: '1.324939', err: '0.000944' },
+    { k: 5, xprev: '1.324939', xk: '1.324760', err: '0.000179' },
+    { k: 6, xprev: '1.324760', xk: '1.324726', err: '0.000034' },
   ];
 
   return (
@@ -169,7 +169,7 @@ export default function IterationMethods() {
                   {/* Iteration 4 */}
                   <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
                     <strong className="text-amber-600 dark:text-amber-400 block">Iteration 4:</strong>
-                    <div>Calculation: <InlineMath math="x_4 = (1.325884 + 1)^{1/3} = (2.325884)^{1/3} \approx 1.324942" /></div>
+                    <div>Calculation: <InlineMath math="x_4 = (1.325884 + 1)^{1/3} = (2.325884)^{1/3} \approx 1.324939" /></div>
                   </div>
                 </div>
 

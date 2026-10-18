@@ -10,7 +10,7 @@ import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiA
 
 const FalsePositionMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
-  const [functionInput, setFunctionInput] = useState("x^2 - 4");
+  const [functionInput, setFunctionInput] = useState("x^3 - 4*x - 9");
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
   const [intervalSteps, setIntervalSteps] = useState([]);
@@ -54,14 +54,14 @@ const FalsePositionMethod = () => {
       steps.push(`Skipping positive direction due to evaluation error at x = ${a}`);
     } else if (fa === 0) {
       steps.push(`Exact root found at x = ${a}`);
-      return { interval: [a - 1, a + 1], steps };
+      return { interval: [a, a], exactRoot: a, steps };
     } else {
       for (let x = a + step; x <= maxRange; x += step) {
         const fx = evaluateFunction(x);
         if (fx === null) continue;
         if (fx === 0) {
           steps.push(`Exact root found at x = ${x}`);
-          return { interval: [x - 1, x + 1], steps };
+          return { interval: [x, x], exactRoot: x, steps };
         }
         if (fa * fx < 0) {
           b = x;
@@ -81,6 +81,10 @@ const FalsePositionMethod = () => {
       for (let x = a - step; x >= -maxRange; x -= step) {
         const fx = evaluateFunction(x);
         if (fx === null) continue;
+        if (fx === 0) {
+          steps.push(`Exact root found at x = ${x}`);
+          return { interval: [x, x], exactRoot: x, steps };
+        }
         if (fa * fx < 0) {
           b = a;
           a = x;
@@ -98,6 +102,7 @@ const FalsePositionMethod = () => {
   const falsePositionMethod = (f, a, b, tol, maxIter = 100) => {
     let iterations = [];
     let c = a;
+    let prevC = null;
     let iter = 0;
 
     while (iter < maxIter) {
@@ -109,12 +114,14 @@ const FalsePositionMethod = () => {
 
       iterations.push({ iteration: iter, a, b, c, fa, fb, fc });
 
-      if (Math.abs(fc) < tol) {
+      // Stop when f(c) is small enough, or the intercept has stopped moving
+      if (Math.abs(fc) < tol || (prevC !== null && Math.abs(c - prevC) < tol)) {
         return {
           message: `Root found at x = ${c.toFixed(6)} with tolerance ${tol}`,
           iterations,
         };
       }
+      prevC = c;
 
       if (fa * fc < 0) {
         b = c;
@@ -146,7 +153,7 @@ const FalsePositionMethod = () => {
       return;
     }
 
-    const { interval, steps: intervalLog } = findInterval(f, 1000);
+    const { interval, exactRoot, steps: intervalLog } = findInterval(f, 1000);
     setIntervalSteps(intervalLog);
 
     if (!interval) {
@@ -154,17 +161,24 @@ const FalsePositionMethod = () => {
       return;
     }
 
-    const [a, b] = interval;
-    const { message, iterations } = falsePositionMethod(f, a, b, tolerance);
+    const { message, iterations } = exactRoot !== undefined
+      ? exactRootResult(exactRoot)
+      : falsePositionMethod(f, interval[0], interval[1], tolerance);
 
     setResult(message);
     setFalsePositionIterations(iterations);
     setIterationsCount(iterations.length);
   };
 
+  // The sign-change search hit f(x) = 0 exactly, so no chord iterations are needed
+  const exactRootResult = (x) => ({
+    message: `f(${x}) = 0 exactly, so x = ${x} is the root (found while searching for a sign change; no iterations needed)`,
+    iterations: [],
+  });
+
   const handleDemo = () => {
     setDemoInProgress(true);
-    const demoFn = "x^2 - 4";
+    const demoFn = "x^3 - 4*x - 9";
     const demoTol = 0.0001;
 
     setFunctionInput(demoFn);
@@ -181,7 +195,7 @@ const FalsePositionMethod = () => {
       return;
     }
 
-    const { interval, steps: intervalLog } = findInterval(f, 1000);
+    const { interval, exactRoot, steps: intervalLog } = findInterval(f, 1000);
     setIntervalSteps(intervalLog);
 
     if (!interval) {
@@ -190,8 +204,9 @@ const FalsePositionMethod = () => {
       return;
     }
 
-    const [a, b] = interval;
-    const { message, iterations } = falsePositionMethod(f, a, b, demoTol);
+    const { message, iterations } = exactRoot !== undefined
+      ? exactRootResult(exactRoot)
+      : falsePositionMethod(f, interval[0], interval[1], demoTol);
 
     setResult(message);
     setFalsePositionIterations(iterations);
@@ -200,7 +215,7 @@ const FalsePositionMethod = () => {
   };
 
   const handleReset = () => {
-    setFunctionInput("x^2 - 4");
+    setFunctionInput("x^3 - 4*x - 9");
     setTolerance(0.0001);
     setResult(null);
     setIntervalSteps([]);

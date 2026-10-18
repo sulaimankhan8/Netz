@@ -31,14 +31,13 @@ const GaussJordan = () => {
     const stepsLog = [];
 
     for (let col = 0; col < n; col++) {
-      // Partial pivoting
-      let maxRow = col;
-      for (let r = col + 1; r < n; r++) {
-        if (Math.abs(m[r][col]) > Math.abs(m[maxRow][col])) maxRow = r;
-      }
-      if (maxRow !== col) {
-        [m[col], m[maxRow]] = [m[maxRow], m[col]];
-        stepsLog.push({ label: `Pivot: Swap R${col + 1} ↔ R${maxRow + 1}`, matrix: deepCopy(m) });
+      // Swap rows only when the pivot is 0 (as in the textbook working)
+      if (Math.abs(m[col][col]) < 1e-12) {
+        const swapRow = m.findIndex((row, r) => r > col && Math.abs(row[col]) > 1e-12);
+        if (swapRow !== -1) {
+          [m[col], m[swapRow]] = [m[swapRow], m[col]];
+          stepsLog.push({ label: `Zero pivot: Swap R${col + 1} ↔ R${swapRow + 1}`, matrix: deepCopy(m) });
+        }
       }
 
       if (Math.abs(m[col][col]) < 1e-12) {
@@ -47,8 +46,10 @@ const GaussJordan = () => {
 
       // Normalize pivot row
       const pivot = m[col][col];
-      for (let c = col; c <= n; c++) m[col][c] /= pivot;
-      stepsLog.push({ label: `R${col + 1} ÷ ${pivot.toFixed(4)} (normalize pivot)`, matrix: deepCopy(m) });
+      if (Math.abs(pivot - 1) > 1e-12) { // a pivot of 1 needs no step
+        for (let c = col; c <= n; c++) m[col][c] /= pivot;
+        stepsLog.push({ label: `R${col + 1} ÷ ${pivot.toFixed(4)} (normalize pivot)`, matrix: deepCopy(m) });
+      }
 
       // Eliminate ABOVE and BELOW pivot
       for (let r = 0; r < n; r++) {

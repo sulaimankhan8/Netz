@@ -11,11 +11,12 @@ import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
 
 export default function FalsePositionMethods() {
   const iterationData = [
-    { k: 1, a: '2.0000', b: '3.0000', c: '2.0588', fc: '-0.3869', sign: 'f(c) < 0', next: '[2.0588, 3.0000]' },
-    { k: 2, a: '2.0588', b: '3.0000', c: '2.0813', fc: '-0.1425', sign: 'f(c) < 0', next: '[2.0813, 3.0000]' },
-    { k: 3, a: '2.0813', b: '3.0000', c: '2.0895', fc: '-0.0516', sign: 'f(c) < 0', next: '[2.0895, 3.0000]' },
-    { k: 4, a: '2.0895', b: '3.0000', c: '2.0924', fc: '-0.0185', sign: 'f(c) < 0', next: '[2.0924, 3.0000]' },
-    { k: 5, a: '2.0924', b: '3.0000', c: '2.0935', fc: '-0.0066', sign: 'f(c) < 0', next: '[2.0935, 3.0000]' },
+    { k: 1, a: '2.0000', b: '3.0000', c: '2.6000', fc: '-1.8240', sign: 'f(c) < 0', next: '[2.6000, 3.0000]' },
+    { k: 2, a: '2.6000', b: '3.0000', c: '2.6933', fc: '-0.2372', sign: 'f(c) < 0', next: '[2.6933, 3.0000]' },
+    { k: 3, a: '2.6933', b: '3.0000', c: '2.7049', fc: '-0.0289', sign: 'f(c) < 0', next: '[2.7049, 3.0000]' },
+    { k: 4, a: '2.7049', b: '3.0000', c: '2.7063', fc: '-0.0035', sign: 'f(c) < 0', next: '[2.7063, 3.0000]' },
+    { k: 5, a: '2.7063', b: '3.0000', c: '2.7065', fc: '-0.0004', sign: 'f(c) < 0', next: '[2.7065, 3.0000]' },
+    { k: 6, a: '2.7065', b: '3.0000', c: '2.706525', fc: '-0.00005', sign: '|C₆ − C₅| = 0.00002 < 0.0001', next: 'Stop' },
   ];
 
   return (
@@ -108,7 +109,7 @@ export default function FalsePositionMethods() {
                     </span>
                   </div>
                   <p className="text-sm md:text-base font-semibold text-emerald-950 dark:text-emerald-200">
-                    Find the real root of <InlineMath math="f(x) = x^3 - 2x - 5 = 0" /> in the interval <InlineMath math="[a, b] = [2, 3]" />.
+                    Find the real root of <InlineMath math="f(x) = x^3 - 4x - 9 = 0" /> in the interval <InlineMath math="[a, b] = [2, 3]" />, stopping when two successive intercepts differ by less than <InlineMath math="0.0001" />.
                   </p>
                 </div>
 
@@ -121,8 +122,8 @@ export default function FalsePositionMethods() {
                     Evaluate <InlineMath math="f(x)" /> at initial points <InlineMath math="a = 2" /> and <InlineMath math="b = 3" />:
                   </p>
                   <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-2">
-                    <BlockMath math="f(2) = (2)^3 - 2(2) - 5 = 8 - 4 - 5 = -1 \quad (\text{Negative})" />
-                    <BlockMath math="f(3) = (3)^3 - 2(3) - 5 = 27 - 6 - 5 = +16 \quad (\text{Positive})" />
+                    <BlockMath math="f(2) = (2)^3 - 4(2) - 9 = 8 - 8 - 9 = -9 \quad (\text{Negative})" />
+                    <BlockMath math="f(3) = (3)^3 - 4(3) - 9 = 27 - 12 - 9 = +6 \quad (\text{Positive})" />
                   </div>
                   <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">
                     Since <InlineMath math="f(2) < 0" /> and <InlineMath math="f(3) > 0" />, a root exists in <InlineMath math="[2, 3]" />.
@@ -138,8 +139,8 @@ export default function FalsePositionMethods() {
                     Substitute values into the Regula Falsi secant formula:
                   </p>
                   <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-2">
-                    <BlockMath math="C_1 = \frac{a \cdot f(b) - b \cdot f(a)}{f(b) - f(a)} = \frac{2(16) - 3(-1)}{16 - (-1)} = \frac{32 + 3}{17} = \frac{35}{17} \approx 2.0588" />
-                    <BlockMath math="f(2.0588) = (2.0588)^3 - 2(2.0588) - 5 = -0.3869 \quad (\text{Negative})" />
+                    <BlockMath math="C_1 = \frac{a \cdot f(b) - b \cdot f(a)}{f(b) - f(a)} = \frac{2(6) - 3(-9)}{6 - (-9)} = \frac{12 + 27}{15} = \frac{39}{15} = 2.6" />
+                    <BlockMath math="f(2.6) = (2.6)^3 - 4(2.6) - 9 = 17.576 - 10.4 - 9 = -1.824 \quad (\text{Negative})" />
                   </div>
                 </div>
 
@@ -149,10 +150,10 @@ export default function FalsePositionMethods() {
                     <span>STEP 03</span> • <span>UPDATE INTERVAL BOUNDS</span>
                   </div>
                   <p className="text-sm text-neutral-700 dark:text-neutral-300">
-                    Since <InlineMath math="f(2.0588) < 0" /> and <InlineMath math="f(3) > 0" />, replace the old left bound <InlineMath math="a = 2" /> with <InlineMath math="a = 2.0588" />.
+                    Since <InlineMath math="f(2.6) < 0" /> and <InlineMath math="f(3) > 0" />, replace the old left bound <InlineMath math="a = 2" /> with <InlineMath math="a = 2.6" />.
                   </p>
                   <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 rounded-xl font-mono text-xs text-center font-bold">
-                    New Search Bracket: <InlineMath math="[a, b] = [2.0588, 3.0000]" />
+                    New Search Bracket: <InlineMath math="[a, b] = [2.6, 3]" />
                   </div>
                 </div>
 
@@ -165,24 +166,41 @@ export default function FalsePositionMethods() {
                   {/* Iteration 2 */}
                   <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
                     <strong className="text-amber-600 dark:text-amber-400 block">Iteration 2:</strong>
-                    <div>Secant Formula: <InlineMath math="C_2 = \frac{2.0588(16) - 3(-0.3869)}{16 - (-0.3869)} = \frac{34.1019}{16.3869} \approx 2.0813" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.0813) = -0.1425" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.0813" />. New bracket: <InlineMath math="[2.0813, 3.0000]" /></div>
+                    <div>Secant Formula: <InlineMath math="C_2 = \frac{2.6(6) - 3(-1.824)}{6 - (-1.824)} = \frac{21.072}{7.824} \approx 2.693252" /></div>
+                    <div>Function Evaluation: <InlineMath math="f(2.693252) = -0.237227" /> (Negative)</div>
+                    <div>Update: Set <InlineMath math="a = 2.693252" />. Change from last intercept: <InlineMath math="|C_2 - C_1| = 0.093252" /></div>
                   </div>
 
                   {/* Iteration 3 */}
                   <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
                     <strong className="text-amber-600 dark:text-amber-400 block">Iteration 3:</strong>
-                    <div>Secant Formula: <InlineMath math="C_3 = \frac{2.0813(16) - 3(-0.1425)}{16 - (-0.1425)} = \frac{33.728}{16.1425} \approx 2.0895" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.0895) = -0.0516" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.0895" />. New bracket: <InlineMath math="[2.0895, 3.0000]" /></div>
+                    <div>Secant Formula: <InlineMath math="C_3 \approx 2.704918" /></div>
+                    <div>Function Evaluation: <InlineMath math="f(2.704918) = -0.028912" /> (Negative)</div>
+                    <div>Update: Set <InlineMath math="a = 2.704918" />. <InlineMath math="|C_3 - C_2| = 0.011667" /></div>
                   </div>
 
                   {/* Iteration 4 */}
                   <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
                     <strong className="text-amber-600 dark:text-amber-400 block">Iteration 4:</strong>
-                    <div>Secant Formula: <InlineMath math="C_4 \approx 2.0924" />, <InlineMath math="f(2.0924) = -0.0185" /></div>
-                    <div>Update: Set <InlineMath math="a = 2.0924" />. New bracket: <InlineMath math="[2.0924, 3.0000]" /></div>
+                    <div>Secant Formula: <InlineMath math="C_4 \approx 2.706333" /></div>
+                    <div>Function Evaluation: <InlineMath math="f(2.706333) = -0.003495" /> (Negative)</div>
+                    <div>Update: Set <InlineMath math="a = 2.706333" />. <InlineMath math="|C_4 - C_3| = 0.001415" /></div>
+                  </div>
+
+                  {/* Iteration 5 */}
+                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
+                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 5:</strong>
+                    <div>Secant Formula: <InlineMath math="C_5 \approx 2.706504" /></div>
+                    <div>Function Evaluation: <InlineMath math="f(2.706504) = -0.000422" /> (Negative)</div>
+                    <div>Update: Set <InlineMath math="a = 2.706504" />. <InlineMath math="|C_5 - C_4| = 0.000171" /></div>
+                  </div>
+
+                  {/* Iteration 6 */}
+                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
+                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 6:</strong>
+                    <div>Secant Formula: <InlineMath math="C_6 \approx 2.706525" /></div>
+                    <div>Function Evaluation: <InlineMath math="f(2.706525) = -0.000051" /> (Negative)</div>
+                    <div>Stop: <InlineMath math="|C_6 - C_5| = 0.000021 < 0.0001" />.</div>
                   </div>
                 </div>
 
@@ -229,13 +247,13 @@ export default function FalsePositionMethods() {
                       FINAL CONCLUSION
                     </span>
                     <h3 className="text-xl font-bold text-black dark:text-white">
-                      Approximated Root: x ≈ 2.0945
+                      Approximated Root: x ≈ 2.7065
                     </h3>
                     <div className="p-3 bg-neutral-50 dark:bg-neutral-800 border border-black/20 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center">
-                      <BlockMath math={`\\text{Exact Root } \\alpha \\approx 2.09455, \\quad f(2.09455) = 0`} />
+                      <BlockMath math={`\\text{Exact Root } \\alpha \\approx 2.706528, \\quad f(2.706525) = -0.00005 \\approx 0`} />
                     </div>
                     <p className="text-sm text-neutral-700 dark:text-neutral-300 font-medium leading-relaxed">
-                      Iterating with the secant line intercept formula rapidly pulls the estimate toward the true root <strong>2.09455</strong> faster than standard bisection!
+                      Six chord steps pin the root to 4 decimal places. Bisection needs 14 halvings for the same accuracy on the same interval.
                     </p>
                   </div>
                 </div>

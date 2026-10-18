@@ -85,9 +85,9 @@ const GaussSeidel = () => {
   const handleDemo = () => {
     setDemoInProgress(true);
     const demoEqs = [
-      { a: 10, b: 2, c: 1, constant: 27 },
-      { a: 3, b: 8, c: 2, constant: 45 },
-      { a: 1, b: -1, c: 5, constant: 13 },
+      { a: 10, b: -2, c: -1, constant: 3 },
+      { a: -2, b: 10, c: -1, constant: 15 },
+      { a: -1, b: -1, c: 10, constant: 27 },
     ];
     const demoErr = 0.0001;
 
@@ -253,7 +253,7 @@ const GaussSeidel = () => {
           <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4 shadow-[2px_2px_0px_0px_rgba(16,185,129,0.3)]">
             <div>
               <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-                Convergence Reached ({results.length} iterations)
+                Convergence Reached ({results.length - 1} iterations)
               </span>
               <span className="text-base md:text-lg font-mono font-black">
                 x = {results[results.length - 1].x.toFixed(4)}, y = {results[results.length - 1].y.toFixed(4)}, z = {results[results.length - 1].z.toFixed(4)}
@@ -562,19 +562,19 @@ function GaussSeidels(equations, error) {
         detailedIterations += `\\displaystyle x^{(${iterationCount})} = 
         \\frac{${constant} - (${b}) \\cdot y^{(${iterationCount - 1})} - (${c}) \\cdot z^{(${iterationCount - 1})}}{${a}} `
         detailedIterations += `\\displaystyle =
-        \\frac{${constant} - (${a}) \\cdot (${xPrev.toFixed(4)}) - (${b}) \\cdot (${yPrev.toFixed(4)})}{${a}}  `
+        \\frac{${constant} - (${b}) \\cdot (${yPrev.toFixed(4)}) - (${c}) \\cdot (${zPrev.toFixed(4)})}{${a}}  `
         detailedIterations += `\\displaystyle  =${newValue.toFixed(4)} \\quad `;
       } else if (solveFor === 'y') {
         newValue = (constant - a * newValues.x - c * zPrev) / b;
         newValues.y = newValue;
         detailedIterations2 += `\\displaystyle y^{(${iterationCount})} = \\frac{${constant} - (${a}) \\cdot x^{(${iterationCount})} - (${c}) \\cdot z^{(${iterationCount - 1})}}{${b}} `
-        detailedIterations2 += `\\displaystyle  = \\frac{(${constant} - ${a} \\cdot (${newValues.x.toFixed(4)}) - ${c} \\cdot (${zPrev.toFixed(4)}))}{(${b})} `
+        detailedIterations2 += `\\displaystyle  = \\frac{${constant} - (${a}) \\cdot (${newValues.x.toFixed(4)}) - (${c}) \\cdot (${zPrev.toFixed(4)})}{${b}} `
         detailedIterations2 += `\\displaystyle = ${newValue.toFixed(4)} \\quad `;
       } else if (solveFor === 'z') {
         newValue = (constant - a * newValues.x - b * newValues.y) / c;
         newValues.z = newValue;
         detailedIterations3 += `\\displaystyle z^{(${iterationCount})} = \\frac{${constant} - (${a}) \\cdot x^{(${iterationCount})} - (${b}) \\cdot y^{(${iterationCount})}}{${c}} `
-        detailedIterations3 += `\\displaystyle  =  \\frac{(${constant} - ${a} \\cdot (${newValues.x.toFixed(4)}) - ${c} \\cdot (${zPrev.toFixed(4)}))}{(${b})}  `
+        detailedIterations3 += `\\displaystyle  =  \\frac{${constant} - (${a}) \\cdot (${newValues.x.toFixed(4)}) - (${b}) \\cdot (${newValues.y.toFixed(4)})}{${c}}  `
         detailedIterations3 += `\\displaystyle = ${newValue.toFixed(4)} \\quad `;
       }
     });

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import { parseUserFunction } from '@/app/utils/evaluateMath';
+import { evaluateMath, getSymbolicDerivative, simplifyExpression, expressionToTex } from '@/app/utils/evaluateMath';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
@@ -35,19 +35,28 @@ const TaylorSeriesSolver = () => {
     log.push(`Initial Condition: (x0, y0) = (${xStart}, ${yStart})`);
     log.push(`Target Point x = ${xTarget}, Step Size h = x - x0 = ${h.toFixed(6)}`);
 
-    let f;
+    // Differentiate y' = f(x, y) along the solution, where y' itself is f:
+    //   y''  = f_x + f_y * f
+    //   y''' = (y'')_x + (y'')_y * f
+    let derivs;
     try {
-      f = parseUserFunction(fExpr, ['x', 'y']);
-      f(xStart, yStart);
+      const fStr = simplifyExpression(fExpr);
+      const totalDerivative = (g) =>
+        simplifyExpression(`(${getSymbolicDerivative(g, 'x')}) + (${getSymbolicDerivative(g, 'y')}) * (${fStr})`);
+      const y2Str = totalDerivative(fStr);
+      const y3Str = totalDerivative(y2Str);
+      const at = (g) => evaluateMath(g, { x: xStart, y: yStart });
+      derivs = [
+        { order: 1, expr: fStr, value: at(fStr) },
+        { order: 2, expr: y2Str, value: at(y2Str) },
+        { order: 3, expr: y3Str, value: at(y3Str) },
+      ];
     } catch (err) {
-      setError('Invalid function input. Please enter a valid function like x + y.');
+      setError('Invalid function input. Please enter a valid function of x and y, like x + y.');
       return;
     }
 
-    const y1_val = f(xStart, yStart);
-    const eps = 1e-4;
-    const y2_val = (f(xStart + eps, yStart + eps * y1_val) - f(xStart - eps, yStart - eps * y1_val)) / (2 * eps);
-    const y3_val = (f(xStart + eps, yStart + eps * y1_val) - 2 * y1_val + f(xStart - eps, yStart - eps * y1_val)) / (eps * eps);
+    const [y1_val, y2_val, y3_val] = derivs.map((d) => d.value);
 
     const t1 = yStart;
     const t2 = h * y1_val;
@@ -58,6 +67,8 @@ const TaylorSeriesSolver = () => {
     setGridLog(log);
     setResult({
       h,
+      x0: xStart,
+      derivs,
       y1_val,
       y2_val,
       y3_val,
@@ -340,7 +351,22 @@ const TaylorSeriesSolver = () => {
 
               <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Expansion Formula:</span>
+                  <span className="font-bold text-neutral-500 uppercase block">Step 1: Differentiate y&apos; = f(x, y) (replace y&apos; by f each time)</span>
+                  {result.derivs.map((d) => {
+                    const primes = "'".repeat(d.order);
+                    const rule = d.order === 1
+                      ? `y' = f(x, y)`
+                      : `y${primes} = \\frac{\\partial y${"'".repeat(d.order - 1)}}{\\partial x} + \\frac{\\partial y${"'".repeat(d.order - 1)}}{\\partial y} \\cdot y'`;
+                    return (
+                      <div key={d.order} className="overflow-x-auto">
+                        <BlockMath math={`${rule} = ${expressionToTex(d.expr)}`} />
+                        <BlockMath math={`y${primes}(${result.x0}) = ${d.value.toFixed(6)}`} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="space-y-1">
+                  <span className="font-bold text-neutral-500 uppercase block">Step 2: Expansion Formula (h = {result.h.toFixed(4)}):</span>
                   <BlockMath math={`y(x_0 + h) = y(x_0) + h \\cdot y'(x_0) + \\frac{h^2}{2!} y''(x_0) + \\frac{h^3}{3!} y'''(x_0)`} />
                   <BlockMath math={`y(${targetX}) = ${result.t1.toFixed(6)} + ${result.t2.toFixed(6)} + ${result.t3.toFixed(6)} + ${result.t4.toFixed(6)}`} />
                   <BlockMath math={`y(${targetX}) \\approx ${result.approxY.toFixed(6)}`} />

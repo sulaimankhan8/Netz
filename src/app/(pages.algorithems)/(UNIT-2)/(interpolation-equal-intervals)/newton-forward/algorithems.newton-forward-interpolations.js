@@ -496,6 +496,13 @@ function  newtonForwardInterpolation(points, x) {
 
   // Building the polynomial step by step
   for (let i = 1; i < n; i++) {
+    // A column of zero differences means the data is a polynomial of degree i - 1: stop here
+    const column = diffTable.slice(0, n - i).map((row) => row[i]);
+    if (column.every((d) => Math.abs(d) < 1e-12)) {
+      vSteps.push(`\\Delta^{${i}} y = 0 \\Rightarrow \\text{stop after } \\Delta^{${i - 1}}`);
+      break;
+    }
+
     uProduct *= v - (i - 1); // Update uProduct for each term
     factorial *= i; // Calculate factorial
 

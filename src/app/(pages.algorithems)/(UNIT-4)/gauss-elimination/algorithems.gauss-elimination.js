@@ -31,14 +31,13 @@ const GaussElimination = () => {
     const stepsLog = [];
 
     for (let col = 0; col < n; col++) {
-      // Partial pivoting
-      let maxRow = col;
-      for (let r = col + 1; r < n; r++) {
-        if (Math.abs(m[r][col]) > Math.abs(m[maxRow][col])) maxRow = r;
-      }
-      [m[col], m[maxRow]] = [m[maxRow], m[col]];
-      if (maxRow !== col) {
-        stepsLog.push({ label: `Pivot: Swap R${col + 1} ↔ R${maxRow + 1}`, matrix: deepCopy(m) });
+      // Swap rows only when the pivot is 0 (as in the textbook working)
+      if (Math.abs(m[col][col]) < 1e-12) {
+        const swapRow = m.findIndex((row, r) => r > col && Math.abs(row[col]) > 1e-12);
+        if (swapRow !== -1) {
+          [m[col], m[swapRow]] = [m[swapRow], m[col]];
+          stepsLog.push({ label: `Zero pivot: Swap R${col + 1} ↔ R${swapRow + 1}`, matrix: deepCopy(m) });
+        }
       }
 
       if (Math.abs(m[col][col]) < 1e-12) {
@@ -59,12 +58,18 @@ const GaussElimination = () => {
       }
     }
 
-    // Back substitution
+    // Back substitution (one step per unknown, last row first)
     const x = new Array(n).fill(0);
     for (let i = n - 1; i >= 0; i--) {
       x[i] = m[i][n];
       for (let j = i + 1; j < n; j++) x[i] -= m[i][j] * x[j];
       x[i] /= m[i][i];
+      const known = [];
+      for (let j = i + 1; j < n; j++) known.push(` - (${m[i][j].toFixed(4)})(${x[j].toFixed(4)})`);
+      stepsLog.push({
+        label: `Back substitution: solve R${i + 1} for x${i + 1}`,
+        math: `x_{${i + 1}} = \\frac{${m[i][n].toFixed(4)}${known.join('')}}{${m[i][i].toFixed(4)}} = ${x[i].toFixed(4)}`,
+      });
     }
 
     return { steps: stepsLog, solution: x, upper: m };
@@ -165,7 +170,7 @@ const GaussElimination = () => {
       {steps.length > 0 && (
         <div id="gauss-elim-steps" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
           <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-            <FiList className="w-5 h-5 text-neutral-500" /> Elimination Steps ({steps.length})
+            <FiList className="w-5 h-5 text-neutral-500" /> Elimination and Back-Substitution Steps ({steps.length})
           </h4>
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
             {steps.map((step, idx) => (
@@ -173,6 +178,11 @@ const GaussElimination = () => {
                 <div className="bg-neutral-100 dark:bg-neutral-800 px-4 py-2 text-xs font-mono font-bold text-black dark:text-white border-b border-black/20 dark:border-neutral-700">
                   Step {idx + 1}: {step.label}
                 </div>
+                {step.math ? (
+                  <div className="overflow-x-auto p-3 text-center text-black dark:text-white">
+                    <BlockMath math={step.math} />
+                  </div>
+                ) : (
                 <div className="overflow-x-auto p-3">
                   <table className="text-xs font-mono border-collapse">
                     <tbody>
@@ -189,6 +199,7 @@ const GaussElimination = () => {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             ))}
           </div>

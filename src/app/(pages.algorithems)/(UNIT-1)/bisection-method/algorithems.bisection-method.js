@@ -11,7 +11,7 @@ import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiA
 const BisectionMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
   const [functionInput, setFunctionInput] = useState("x * x * x - 4 * x - 9"); // Default function
-  const [tolerance, setTolerance] = useState(0.0001);
+  const [tolerance, setTolerance] = useState(0.05);
   const [result, setResult] = useState(null);
   const [intervalSteps, setIntervalSteps] = useState([]);
   const [bisectionIterations, setBisectionIterations] = useState([]);
@@ -28,7 +28,7 @@ const BisectionMethod = () => {
   const handleToleranceChange = (e) => {
     const value = parseFloat(e.target.value);
     if (isNaN(value) || value <= 0) {
-      setTolerance(0.0001);
+      setTolerance(0.05);
     } else {
       setTolerance(value);
     }
@@ -169,7 +169,8 @@ const BisectionMethod = () => {
 
       iterations.push({ iteration: iter, a, b, c, fa, fb, fc });
 
-      if (Math.abs(fc) < tol || (b - a) / 2 < tol) {
+      // Stop when the root is pinned within tol: half the interval width (or an exact hit)
+      if (fc === 0 || (b - a) / 2 < tol) {
         return {
           message: `Root found at x = ${c.toFixed(6)} with tolerance ${tol}`,
           iterations,
@@ -192,7 +193,7 @@ const BisectionMethod = () => {
   const handleDemo = () => {
     setDemoInProgress(true);
     const demoFn = "x * x * x - 4 * x - 9";
-    const demoTol = 0.0001;
+    const demoTol = 0.05;
 
     setFunctionInput(demoFn);
     setTolerance(demoTol);
@@ -253,7 +254,7 @@ const BisectionMethod = () => {
 
   const handleReset = () => {
     setFunctionInput("x * x * x - 4 * x - 9");
-    setTolerance(0.0001);
+    setTolerance(0.05);
     setResult(null);
     setIntervalSteps([]);
     setBisectionIterations([]);
@@ -339,10 +340,10 @@ const BisectionMethod = () => {
               <input
                 type="number"
                 id="tolerance"
-                step="0.00001"
+                step="any"
                 value={tolerance}
                 onChange={handleToleranceChange}
-                placeholder="e.g., 0.0001"
+                placeholder="e.g., 0.05"
                 required
                 className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border-2 border-black/80 dark:border-neutral-700 rounded-xl font-mono text-sm font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
@@ -519,6 +520,10 @@ const BisectionMethod = () => {
                 </div>
               </div>
 
+              <div className="p-3 border border-black/30 dark:border-neutral-700 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-xs font-mono text-center text-black dark:text-white overflow-x-auto">
+                <InlineMath math={`\\text{Steps needed: } \\frac{b-a}{2^k} < \\varepsilon \\iff k > \\log_2\\frac{${bisectionIterations[0].b} - ${bisectionIterations[0].a}}{${tolerance}} \\approx ${Math.log2((bisectionIterations[0].b - bisectionIterations[0].a) / tolerance).toFixed(2)}`} />
+              </div>
+
               <div className="space-y-3">
                 {(showAllSteps ? bisectionIterations : bisectionIterations.slice(0, 5)).map((iter, index) => (
                   <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
@@ -530,7 +535,11 @@ const BisectionMethod = () => {
                       <BlockMath math={`c^{(${iter.iteration})} = \\frac{a + b}{2} = \\frac{${iter.a.toFixed(6)} + ${iter.b.toFixed(6)}}{2} = ${iter.c.toFixed(6)}`} />
                     </div>
                     <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(c) = ${iter.fc.toFixed(6)}`} /> &rarr; {iter.fa * iter.fc < 0 ? 'Sign change in left interval [a, c]. New b = c.' : 'Sign change in right interval [c, b]. New a = c.'}
+                      <InlineMath math={`f(c) = ${iter.fc.toFixed(6)}`} /> &rarr; {index === bisectionIterations.length - 1
+                        ? (iter.fc === 0
+                          ? `f(c) = 0 exactly, so c = ${iter.c} is the root.`
+                          : `Half-width (b − a)/2 = ${((iter.b - iter.a) / 2).toFixed(6)} < ${tolerance}, so stop: root ≈ ${iter.c.toFixed(6)}.`)
+                        : iter.fa * iter.fc < 0 ? 'Sign change in left interval [a, c]. New b = c.' : 'Sign change in right interval [c, b]. New a = c.'}
                     </div>
                   </div>
                 ))}

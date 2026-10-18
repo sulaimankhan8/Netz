@@ -11,9 +11,10 @@ import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
 
 export default function SecantMethodPage() {
   const iterationData = [
-    { k: 1, x0: '2.000000', x1: '3.000000', x2: '2.058824', fx0: '-1.000000', fx1: '16.000000', fx2: '-0.351...', ea: '2.857%' },
-    { k: 2, x0: '3.000000', x1: '2.058824', x2: '2.094568', fx0: '16.000000', fx1: '-0.351...', fx2: '-0.002...', ea: '1.705%' },
-    { k: 3, x0: '2.058824', x1: '2.094568', x2: '2.094552', fx0: '-0.351...', fx1: '-0.002...', fx2: '≈ 0', ea: '0.001%' },
+    { k: 1, x0: '2.000000', x1: '3.000000', x2: '2.058824', fx0: '-1.000000', fx1: '16.000000', fx2: '-0.390800', ea: '45.714%' },
+    { k: 2, x0: '3.000000', x1: '2.058824', x2: '2.081264', fx0: '16.000000', fx1: '-0.390800', fx2: '-0.147204', ea: '1.078%' },
+    { k: 3, x0: '2.058824', x1: '2.081264', x2: '2.094824', fx0: '-0.390800', fx1: '-0.147204', fx2: '0.003044', ea: '0.647%' },
+    { k: 4, x0: '2.081264', x1: '2.094824', x2: '2.094549', fx0: '-0.147204', fx1: '0.003044', fx2: '-0.000023', ea: '0.013%' },
   ];
 
   return (
@@ -199,13 +200,13 @@ export default function SecantMethodPage() {
                       FINAL CONCLUSION
                     </span>
                     <h3 className="text-xl font-bold text-black dark:text-white">
-                      Root Converged: x ≈ 2.094552
+                      Root Converged: x ≈ 2.094549
                     </h3>
                     <div className="p-3 bg-neutral-50 dark:bg-neutral-800 border border-black/20 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center">
-                      <BlockMath math={`f(2.094552) = (2.094552)^3 - 2(2.094552) - 5 \\approx 0`} />
+                      <BlockMath math={`f(2.094549) = (2.094549)^3 - 2(2.094549) - 5 = -0.000023 \\approx 0`} />
                     </div>
                     <p className="text-sm text-neutral-700 dark:text-neutral-300 font-medium leading-relaxed">
-                      The Secant Method converged in just <strong>3 iterations</strong>, compared to ~14 for Bisection on the same problem.
+                      The Secant Method converged in just <strong>4 iterations</strong>, compared to 14 for Bisection on the same problem.
                       This is the power of the <InlineMath math="\phi" />-order (≈1.618) convergence rate — each step dramatically improves accuracy!
                       Note: unlike Newton-Raphson, no derivative <InlineMath math="f'(x)" /> was required.
                     </p>

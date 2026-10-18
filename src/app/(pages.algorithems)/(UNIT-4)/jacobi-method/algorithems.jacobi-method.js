@@ -102,9 +102,9 @@ const JacobiMethod = () => {
 
   const handleDemo = () => {
     const demo = [
-      ['10', '-1', '2', '6'],
-      ['-1', '11', '-1', '25'],
-      ['2', '-1', '10', '-11'],
+      ['20', '1', '-2', '17'],
+      ['3', '20', '-1', '-18'],
+      ['2', '-3', '20', '25'],
     ];
     setN(3); setMatrix(demo); setMaxIter(50); setTolerance(0.0001);
     setError(''); setWarning(''); setSolution(null); setIterations([]);
