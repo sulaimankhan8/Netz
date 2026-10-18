@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
 import React from 'react';
 import Head from 'next/head';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -9,84 +8,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import GaussSeidel from './algorithems.gauss-seidale-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
-import { STATUS } from 'react-joyride';
-import { useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
-
-const Joyride = dynamic(() => import('react-joyride').then(mod => mod.Joyride), { ssr: false });
-
-const GaussSeidelSearchParamsWrapper = ({ setRunTour }) => {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const tourParam = searchParams.get('tour');
-    if (tourParam === 'true') {
-      const hasCompletedTour = localStorage.getItem('gaussSeidelTourCompleted');
-      if (hasCompletedTour !== 'true') {
-        setRunTour(true);
-      }
-    }
-  }, [searchParams, setRunTour]);
-
-  return null;
-};
+import Tour from '@/app/components/tour/Tour';
 
 const GaussSeidelPage = () => {
-  const [runTour, setRunTour] = useState(false);
-
-  useEffect(() => {
-    localStorage.removeItem('gaussSeidelTourCompleted');
-  }, []);
-
-  const steps = [
-    {
-      target: '.step-intro-1',
-      content: 'Start by exploring the topic at hand. Understand its significance and applications in real-world scenarios, providing a foundation for deeper learning.',
-      placement: 'bottom',
-    },
-    {
-      target: '.step-intro-2',
-      content: 'Familiarize yourself with the key formulas associated with the topic. This knowledge is crucial for grasping the underlying concepts and for practical applications.',
-      placement: 'left',
-    },
-    {
-      target: '.step-intro-3',
-      content: 'Learn the systematic approach to solving problems related to the topic. Breaking down the procedure into clear steps will enhance your problem-solving skills.',
-      placement: 'top',
-    },
-    {
-      target: '.step-intro-4',
-      content: 'Review example problems that demonstrate the concepts in action. Analyzing these examples will help you understand the application of theories in practical situations.',
-      placement: 'top',
-    },
-    {
-      target: '.step-intro-5',
-      content: 'Finally, put your knowledge to the test with an algorithm calculator. This interactive tool allows you to experiment with different scenarios and solidify your understanding of the topic.',
-      placement: 'top',
-    },
-  ];
-
-  const handleJoyrideCallback = (data) => {
-    const { status } = data;
-    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
-
-    if (finishedStatuses.includes(status)) {
-      setRunTour(false);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('gaussSeidelTourCompleted', 'true');
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (runTour) {
-      const hasCompletedTour = localStorage.getItem('gaussSeidelTourCompleted');
-      if (hasCompletedTour === 'true') {
-        setRunTour(false);
-      }
-    }
-  }, [runTour]);
-
   return (
     <>
       <Head>
@@ -94,41 +18,8 @@ const GaussSeidelPage = () => {
         <meta name="description" content="Master the Gauss-Seidel Method for solving linear systems with step-by-step guidance, matrix iterations, and interactive tour." />
       </Head>
 
-      <Suspense fallback={<div>Loading Search Params...</div>}>
-        <GaussSeidelSearchParamsWrapper setRunTour={setRunTour} />
-      </Suspense>
-      <Suspense fallback={<div>Loading Tour...</div>}>
-        <Joyride
-          steps={steps}
-          run={runTour}
-          continuous
-          scrollToFirstStep
-          showSkipButton
-          showProgress
-          styles={{
-            options: {
-              zIndex: 10000,
-              primaryColor: '#FF5733',
-              textColor: '#333',
-              overlayColor: 'rgba(0, 0, 0, 0.5)',
-            },
-            buttonNext: {
-              backgroundColor: '#FF5733',
-            },
-            buttonBack: {
-              color: '#FF5733',
-            },
-          }}
-          callback={handleJoyrideCallback}
-          locale={{
-            back: 'Back',
-            close: 'Close',
-            last: 'Finish',
-            next: 'Next',
-            skip: 'Skip',
-          }}
-        />
-      </Suspense>
+      {/* The tour from the landing page's "Learn a method" card (?tour=true) */}
+      <Tour ids={['gauss-seidel']} aliases={{ true: 'gauss-seidel' }} />
 
       <FullscreenToggle className="w-full min-h-screen">
         <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">

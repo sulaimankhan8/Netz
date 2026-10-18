@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Tour from '../../components/tour/Tour';
 import { 
   FaSun, 
   FaMoon, 
@@ -47,6 +48,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen w-full bg-neutral-50 dark:bg-[#141414] text-neutral-900 dark:text-neutral-100 font-sans pl-0 md:pl-[78px] transition-colors duration-200">
+      <Tour ids={['settings']} />
       <div className="max-w-4xl mx-auto px-4 sm:px-8 py-10 space-y-8">
         
         {/* Page Header */}
@@ -84,7 +86,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Theme Selector Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2" data-tour="settings-theme">
             
             {/* Light Mode Card */}
             <button

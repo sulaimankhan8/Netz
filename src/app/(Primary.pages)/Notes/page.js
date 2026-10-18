@@ -7,6 +7,7 @@ import NoteShareModal from './components/NoteShareModal';
 import AlgorithmPickerModal from './components/AlgorithmPickerModal';
 import { Notice, useIsPhone } from './components/ui';
 import { NT_FONT } from './utils/fonts';
+import Tour from '../../components/tour/Tour';
 import {
   getNotes,
   createNewNote,
@@ -245,6 +246,7 @@ export default function NotesPage() {
 
   return (
     <div className={`${NT_FONT} relative flex h-[calc(100dvh-var(--app-nav-h,0px))] w-full bg-nt-paper text-nt-ink overflow-hidden pl-0 md:pl-[78px]`}>
+      <Tour ids={['notes', 'blocks']} />
       {showList && (
         <NoteSidebar
           notes={notes}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ALGORITHMS_CATALOG } from '../Notes/utils/algorithmRegistry';
+import Tour from '../../components/tour/Tour';
 import { 
   FaSearch, 
   FaCalculator, 
@@ -59,6 +60,7 @@ export default function AlgorithmsPage() {
 
   return (
     <div className="min-h-screen bg-[#191919] text-slate-100 font-sans p-4 sm:p-6 md:p-10 pl-0 md:pl-[78px] custom-notion-scrollbar">
+      <Tour ids={['hub']} />
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Title Section */}
         <div className="space-y-3 border-b border-[#2e2e2e] pb-6">
@@ -80,7 +82,7 @@ export default function AlgorithmsPage() {
         {/* Search & Filter Controls */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#202020] p-4 rounded-2xl border border-[#2e2e2e]">
           {/* Search Input */}
-          <div className="relative w-full md:w-80">
+          <div className="relative w-full md:w-80" data-tour="hub-search">
             <FaSearch className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
             <input
               type="text"
@@ -92,7 +94,7 @@ export default function AlgorithmsPage() {
           </div>
 
           {/* Unit Filter Tabs */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto custom-notion-scrollbar pb-1 md:pb-0">
+          <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto custom-notion-scrollbar pb-1 md:pb-0" data-tour="hub-units">
             {units.map((unit) => {
               const count = unit === 'All'
                 ? ALGORITHMS_CATALOG.length
@@ -140,7 +142,7 @@ export default function AlgorithmsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Algorithm Cards Grid */}
           <div className={`space-y-4 ${activeAlgorithm ? 'lg:col-span-6' : 'lg:col-span-12'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="hub-list">
               {filteredAlgorithms.map((alg) => {
                 const isSelected = activeAlgorithm?.id === alg.id;
                 return (

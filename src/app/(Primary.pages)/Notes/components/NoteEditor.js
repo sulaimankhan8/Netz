@@ -364,13 +364,14 @@ export default function NoteEditor({
           </button>
           <span className="flex-1" />
           {status}
-          <button type="button" onClick={onOpenShareModal} aria-label="Share" title="Share" className={ICON_BTN}>
+          <button type="button" onClick={onOpenShareModal} aria-label="Share" title="Share" className={ICON_BTN} data-tour="notes-share">
             <LuShare2 className="w-5 h-5" aria-hidden="true" />
           </button>
           <button
             ref={exportRef}
             type="button"
             onClick={() => setExportOpen((v) => !v)}
+            data-tour="notes-export"
             aria-label="More: note look, export"
             aria-haspopup="menu"
             aria-expanded={exportOpen}
@@ -404,7 +405,7 @@ export default function NoteEditor({
             <LuPalette className="w-[18px] h-[18px]" aria-hidden="true" />
             Note look
           </button>
-          <button type="button" onClick={onOpenShareModal} className={BTN_SECONDARY}>
+          <button type="button" onClick={onOpenShareModal} className={BTN_SECONDARY} data-tour="notes-share">
             <LuShare2 className="w-[18px] h-[18px]" aria-hidden="true" />
             Share
           </button>
@@ -412,6 +413,7 @@ export default function NoteEditor({
             ref={exportRef}
             type="button"
             onClick={() => setExportOpen((v) => !v)}
+            data-tour="notes-export"
             aria-haspopup="menu"
             aria-expanded={exportOpen}
             className={`${BTN_SECONDARY} ${exportOpen ? '!bg-nt-line' : ''}`}
@@ -564,7 +566,7 @@ export default function NoteEditor({
               </div>
             )}
             {!isPhone && gridOpen && (
-              <section aria-label="Add block" className="pt-6 border-t border-nt-line">
+              <section aria-label="Add block" className="pt-6 border-t border-nt-line" data-tour="notes-add-block">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="text-[13px] font-semibold text-nt-text2">Add block</h2>
                   <span className="flex items-center gap-3">
@@ -581,6 +583,7 @@ export default function NoteEditor({
                       key={t.id}
                       type="button"
                       onClick={() => handleAddBlock(t.type)}
+                      data-tour={`notes-block-${t.id}`}
                       className={`flex items-center gap-2.5 h-11 px-2.5 rounded-xl border border-nt-line bg-nt-surface text-left text-sm font-medium text-nt-ink hover:bg-nt-tray transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nt-accent`}
                     >
                       <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${t.tile}`} aria-hidden="true">
@@ -603,6 +606,7 @@ export default function NoteEditor({
           <button
             type="button"
             onClick={() => setAddSheetOpen(true)}
+            data-tour="notes-add-block"
             className="fixed left-1/2 -translate-x-1/2 bottom-6 z-20 inline-flex items-center gap-2 h-[52px] pl-[18px] pr-[22px] rounded-full bg-nt-ink text-nt-on-ink text-base font-semibold shadow-nt-bar"
           >
             <LuPlus className="w-5 h-5" aria-hidden="true" />

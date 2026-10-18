@@ -71,15 +71,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-       <head><Script async src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0"></Script>
-<Script id="netz"> {`
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-MH5QX2N0Q0');`}
-</Script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3746721364737268" crossOrigin="anonymous"></script>
+       <head>
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
         <meta name="google-adsense-account" content="ca-pub-3746721364737268"></meta>
         </head>
@@ -89,6 +81,22 @@ export default function RootLayout({ children }) {
         </Layout>
         <Analytics />
         <SpeedInsights />
+        {/* Ads and Google Analytics load while the browser is idle, after the page itself
+            (LANDING_REDESIGN_PLAN.md, build step 7) */}
+        <Script id="netz-gtag-src" strategy="lazyOnload" src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0" />
+        <Script id="netz" strategy="lazyOnload">{`
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MH5QX2N0Q0');`}
+        </Script>
+        <Script
+          id="netz-adsense"
+          strategy="lazyOnload"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3746721364737268"
+          crossOrigin="anonymous"
+        />
       </body>
       </html>
   );
