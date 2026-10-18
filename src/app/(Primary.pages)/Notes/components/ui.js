@@ -384,6 +384,71 @@ export function Menu({ title, items, onClose, anchorRef, isPhone, align = 'end',
 }
 
 /**
+ * A panel of controls opened from a button (Note look). On phones it is a bottom sheet (Modal);
+ * otherwise it floats next to anchorRef, drawn above everything so scrolling never clips it.
+ * Escape, the × and an outside press close it; focus stays inside while it is open.
+ */
+export function Popover({ title, onClose, anchorRef, isPhone, children, width = 380, icon = null }) {
+  const panelRef = useRef(null);
+  const ready = usePortalReady();
+  const [pos, setPos] = useState(null);
+  usePanelFocus(panelRef, { trap: !isPhone, ready });
+  useEscape(isPhone ? () => {} : onClose);
+
+  useLayoutEffect(() => {
+    if (isPhone || !ready || !anchorRef?.current) return;
+    const r = anchorRef.current.getBoundingClientRect();
+    const height = Math.min(panelRef.current?.scrollHeight || 500, window.innerHeight - 16);
+    // Below the button when it fits, else as low as it can go; never past the screen's bottom
+    // edge (the panel scrolls inside instead)
+    const top = r.bottom + 8 + height <= window.innerHeight - 8 ? r.bottom + 8 : Math.max(8, Math.min(r.bottom + 8, window.innerHeight - 8 - height));
+    setPos({
+      left: Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8)),
+      top,
+      maxH: window.innerHeight - top - 8
+    });
+  }, [anchorRef, isPhone, width, ready]);
+
+  useEffect(() => {
+    if (isPhone) return undefined;
+    const down = (e) => {
+      if (panelRef.current?.contains(e.target) || anchorRef?.current?.contains(e.target)) return;
+      onClose();
+    };
+    window.addEventListener('pointerdown', down, true);
+    return () => window.removeEventListener('pointerdown', down, true);
+  }, [isPhone, anchorRef, onClose]);
+
+  if (isPhone) {
+    return (
+      <Modal title={title} onClose={onClose} isPhone>
+        {children}
+      </Modal>
+    );
+  }
+  if (!ready) return null;
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-label={title}
+      tabIndex={-1}
+      className={`${NT_FONT} fixed z-[210] flex flex-col rounded-2xl bg-nt-surface border border-nt-line shadow-nt-menu text-nt-ink outline-none overflow-hidden`}
+      style={{ width, left: pos?.left ?? -9999, top: pos?.top ?? -9999, maxHeight: pos?.maxH ?? '80vh' }}
+    >
+      <div className="flex items-center gap-2.5 pl-4 pr-2 pt-3 pb-2 shrink-0">
+        {icon}
+        <h2 className="flex-1 text-base font-bold">{title}</h2>
+        <CloseButton onClose={onClose} label={`Close ${title}`} />
+      </div>
+      <div className="overflow-y-auto custom-notion-scrollbar">{children}</div>
+    </div>,
+    document.body
+  );
+}
+
+/**
  * A short notice at the bottom of the screen, with one action (Undo). The owner decides when it
  * goes away; it is announced to screen readers.
  */

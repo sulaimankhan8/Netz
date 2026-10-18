@@ -152,6 +152,32 @@ export function deleteNote(id) {
   return filtered;
 }
 
+// Tag colours belong to the tag, not to one note: # Calculus has one colour everywhere
+const TAG_COLOURS_KEY = "netz_notes_tag_colours";
+
+export function getTagColours() {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(TAG_COLOURS_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Sets (or, with colour null, clears) a tag's colour; returns the new map. */
+export function setTagColour(tag, colour) {
+  const map = { ...getTagColours() };
+  if (colour) map[tag] = colour;
+  else delete map[tag];
+  try {
+    localStorage.setItem(TAG_COLOURS_KEY, JSON.stringify(map));
+  } catch (err) {
+    console.error("Failed to save tag colours:", err);
+  }
+  return map;
+}
+
 /** Puts a deleted note back where it was (Undo after Delete note). */
 export function restoreNote(note, index) {
   const existing = getNotes().filter((n) => n.id !== note.id);

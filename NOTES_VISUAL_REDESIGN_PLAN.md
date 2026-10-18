@@ -90,6 +90,38 @@ Checks (production build, `next start -p 3211`):
 - The one failure was outside Notes: the app shell's phone `NavBar` sat beside every page, so a 390 px phone laid pages out up to 558 px wide.
 - Screenshots: `tests/browser/shots/notes-*.png`.
 
+### Note look (2026-10-18, board artboards 11 to 14, owner: "build it as drawn")
+
+Owner's answers: line icons like Notion's (yes), status names Draft / Learning / Revise / Exam ready (yes), a status filter in the list (yes); "don't make it overtly like Notion, keep it close and add a bit of colour".
+
+- Data: `note.look = { colour, icon: { kind: 'maths' | 'icon' | 'letters', value }, cover }`, `note.status`; tag colours shared by every note in `localStorage` `netz_notes_tag_colours` (`getTagColours` / `setTagColour` in `utils/noteStorage.js`). Notes without these fields look as before (plus a grey letter tile in the list).
+- `utils/noteLook.js`: nine look colours (`--lk-*` tokens in `notes.css`, light and dark, each with text colour, tint and swatch), 4 statuses with their own icons, 21 maths symbols (KaTeX's font), 26 line icons, 4 cover patterns (plain, graph paper, dots, ruled lines) drawn with CSS, `NoteIcon`, `StatusBadge`.
+- `components/NoteLookPanel.js` in a new `Popover` (`ui.js`; a bottom sheet on phones): Note colour, Icon (Maths / Icons / Letters, Remove), Cover (Remove), Status (No status), Tag colours. The first icon or cover brings a colour (blue) if the note has none.
+- Editor: "Note look" button in the top bar, tinted with the note colour (phones: ⋯ → Note look). Cover band edge to edge at the top of the sheet; icon on its edge (80 px, phones 64); status badge beside it; a dashed palette tile when a note has no look. All open the panel. Tag chips take their colours. Cover and icon are inside the printed area, so the PDF shows them.
+- List: icon tile on every row (grey first letter without an icon), status badge in the details line, one filter row: Any + the statuses in use with counts, a divider, then tags in their colours.
+- Found while checking: the panel ran past the bottom of the screen (now it stops at the edge and scrolls), and the colour row wrapped (one row of ten with a mouse; two rows of five on touch, where swatches are 44 px).
+- Checks (development server `next dev -p 3212`, see below): new `tests/browser/notes-look.mjs` **22/22** (panel on screen, colour saved, Icons / Maths / Letters, graph cover in the note colour with the icon on its edge, status on note + list row + filter count, tag colour in note and filter, Escape, filter on/off, reload keeps everything, dark tints, Remove; phone sheet from ⋯ with every control ≥ 44 px, dots cover edge to edge, no sideways scroll). `notes.mjs` 54/54, `notes-export.mjs` 8/8, `shell-phone.mjs` all OK. Lint: 0 errors.
+- **`npm run build` could not be run to the end on 2026-10-18**: nine attempts failed while reading random files inside `node_modules` or `.next` (`UNKNOWN: unknown error, open/lstat …`, `Cannot find module …` for files that exist, `EBUSY … locked`), including one after clearing `.next`. Compiling always succeeded; the failures come from file access on this machine (Windows Defender was scanning, an IDE was open on the folder). Rerun `npm run build` when the machine is quiet. `.next` was cleared, so the next `next dev` or build starts fresh.
+
+#### Banner art, uploads and badges: built locally (2026-10-18)
+
+- `note.look.cover = { kind: 'pattern' | 'art' | 'image', value }` (old strings read as patterns); `note.badges` (≤ 4). Eight built-in art pieces drawn as SVG in the note colour (`COVER_ART`, `CoverArt`); uploads resized to ≤ 1600 × 900 and kept in IndexedDB `NETZ_NOTES_IMAGES` (`utils/imageStore.js`), deleted when replaced or removed; ten badges (`BADGES`) shown in the banner's top-right corner, or beside the status without a banner.
+- Checks on `next dev -p 3212`: `notes-look.mjs` 29/29, `notes.mjs` 54/54, `notes-export.mjs` 8/8, `shell-phone.mjs` OK. `npm run build` not rerun (machine file errors, see above).
+- **Open:** in the PDF, the page icon and the status icon print blank (banner, badges, title and blocks print). The browser draws the printed copy correctly; html2canvas drops those two icons. Tried in `pdfExport.js`: real colours instead of `currentColor`, kept buttons turned into blocks, icons turned into images and into background pictures, plain flow without overlap (so the icon prints below the banner). Next idea: draw the icon tile and status badge onto a small canvas first and print that.
+
+#### Later, with the backend (owner, 2026-10-18; not built)
+
+- **Banner art and images.** Besides the four patterns, the banner (cover) can show built-in art, or an image the student uploads. Uploads need file storage, so they come with the backend.
+- **Badges on the banner.** Up to four badges in a corner of the banner, over the pattern or the art (or the art alone, with no badges). What a badge is and how it is earned comes with the backend.
+- **What this means for today's data.** `note.look.cover` is a pattern id string (`'graph'`, …). When art and uploads arrive, change it to `{ kind: 'pattern' | 'art' | 'image', value }` and read an old string as `{ kind: 'pattern', value }`, so existing notes keep their covers. Badges go in a separate list (`note.badges`, at most 4), drawn by the banner, never inside the pattern code. `lookOf`, `coverStyle` and the Cover section of `NoteLookPanel.js` are the places to change.
+
+### Handle, click below, folding grid (2026-10-18, owner's screenshots)
+
+- Block handle: **+ then grip in one row** in the left margin, centred on the block's first line (`HANDLE_CENTER` in `NoteBlockItem.js`). Only one block shows it: the one under the mouse, else the one you are in (before, a hovered block and the focused block both showed a two-button column, and short blocks' columns overlapped). Touch tablets show the grip alone (its menu has Add block below). Sheet padding is 64 px from 768 px up so the row fits.
+- **Click under the last block to type** (as in Notion): it focuses the last block if it is an empty text block, else adds one (`data-click-below`, 120 px; 200 px on phones).
+- **Add block grid folds** to one quiet "+ Add block" row; open it and it stays open (remembered in `localStorage` `netz_notes_add_grid_open`); Hide folds it.
+- Checks: `notes.mjs` 54/54 (new: one handle at a time, row and level, click below adds then reuses, grid folded / open after reload / Hide), `notes-export.mjs` 8/8, `shell-phone.mjs` all OK, build passes.
+
 ### Export and links checked (2026-10-18)
 
 New `tests/browser/notes-export.mjs` (8/8): PDF in light and dark mode, Markdown, `?open=` (laptop and phone), `?key=` import. Looking at the PDF page found four print faults, fixed in `utils/pdfExport.js`:

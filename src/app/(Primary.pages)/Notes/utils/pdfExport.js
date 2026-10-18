@@ -38,8 +38,21 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area')
     clone.classList.add('nt-force-light', ...NT_FONT.split(' '));
 
     // Remove interactive edit buttons and hover toolbars from clone (quiz answers stay)
+    // A kept button (banner, page icon, status, quiz answers) becomes a plain block with the same
+    // look: html2canvas leaves icons inside buttons blank.
     clone.querySelectorAll('button').forEach((b) => {
-      if (b.dataset.print !== 'keep') b.style.display = 'none';
+      if (b.dataset.print !== 'keep') {
+        b.style.display = 'none';
+        return;
+      }
+      const plain = document.createElement('div');
+      plain.className = b.className;
+      plain.setAttribute('style', b.getAttribute('style') || '');
+      [...b.attributes].forEach((a) => {
+        if (a.name.startsWith('data-')) plain.setAttribute(a.name, a.value);
+      });
+      plain.append(...b.childNodes);
+      b.replaceWith(plain);
     });
 
     // html2canvas draws a text box as one line and clips its text, so print each one as plain
@@ -56,7 +69,59 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area')
       field.replaceWith(text);
     });
 
+    // The banner runs edge to edge: match the printed page's own margins (36 px, 40 px)
+    const banner = clone.querySelector('[data-note-cover]');
+    if (banner) {
+      banner.style.margin = '-36px -40px 0';
+      // html2canvas paints overlapping positioned layers out of order (the banner covered the
+      // page icon, and icons in the row went blank). Plain flow paints in page order; the
+      // badges stay in the corner because the copy itself is positioned and the banner is first.
+      banner.style.position = 'static';
+      const fill = banner.firstElementChild;
+      if (fill) {
+        fill.style.position = 'static';
+        fill.style.height = '100%';
+      }
+      const row = banner.nextElementSibling;
+      if (row) {
+        row.style.position = 'static';
+        row.style.marginTop = '14px';
+      }
+    }
+
     document.body.appendChild(clone);
+
+    // html2canvas leaves some inline SVG icons blank ("currentColor" means nothing to it, and it
+    // drops icons in some layouts), so every icon becomes a plain picture of itself: its real
+    // colour written in, its drawn size fixed.
+    clone.querySelectorAll('svg').forEach((svg) => {
+      const colour = getComputedStyle(svg).color;
+      const { width, height } = svg.getBoundingClientRect();
+      if (!width || !height) return;
+      [svg, ...svg.querySelectorAll('*')].forEach((el) => {
+        ['stroke', 'fill'].forEach((attr) => {
+          if (el.getAttribute(attr) === 'currentColor') el.setAttribute(attr, colour);
+        });
+      });
+      const copy = svg.cloneNode(true);
+      copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      copy.setAttribute('width', String(width));
+      copy.setAttribute('height', String(height));
+      // Keep only a background (banner art paints its tint there)
+      const background = getComputedStyle(svg).backgroundColor;
+      copy.setAttribute('style', background && background !== 'rgba(0, 0, 0, 0)' ? `background:${background}` : '');
+      copy.removeAttribute('class');
+      const picture = document.createElement('span');
+      picture.setAttribute('aria-hidden', 'true');
+      picture.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(copy))}")`;
+      picture.style.backgroundSize = '100% 100%';
+      picture.style.backgroundRepeat = 'no-repeat';
+      picture.style.width = `${width}px`;
+      picture.style.height = `${height}px`;
+      picture.style.flexShrink = '0';
+      picture.style.display = getComputedStyle(svg).display === 'inline' ? 'inline-block' : 'block';
+      svg.replaceWith(picture);
+    });
 
     // html2canvas finds text baselines with an <img> in this page. Tailwind makes images
     // display:block, which draws all text a few pixels low (clipping the bottom of lines and

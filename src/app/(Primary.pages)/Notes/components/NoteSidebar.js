@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { LuFileText, LuGlobe, LuLock, LuMoreHorizontal, LuPanelLeft, LuPin, LuPinOff, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu';
 import { chipClass, FIELD, FIELD_INPUT, ICON_BTN, BTN_MAIN, Menu, Segmented, TOUCH } from './ui';
+import { NoteIcon, STATUSES, StatusBadge, lookColour } from '../utils/noteLook';
 
 /**
  * The list of notes (NOTES_VISUAL_REDESIGN_PLAN.md, section 2). On laptops and tablets it sits
@@ -16,11 +17,13 @@ export default function NoteSidebar({
   onDeleteNote,
   onTogglePinNote,
   onHide,
-  isPhone
+  isPhone,
+  tagColours = {}
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
   const [filterTab, setFilterTab] = useState('all'); // 'all', 'private', 'public'
+  const [selectedStatus, setSelectedStatus] = useState(null);
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || [])));
   const q = searchQuery.toLowerCase();
@@ -36,12 +39,19 @@ export default function NoteSidebar({
 
     const matchesTab = filterTab === 'all' ? true : filterTab === 'public' ? note.isPublic : !note.isPublic;
 
-    return matchesSearch && matchesTag && matchesTab;
+    const matchesStatus = selectedStatus ? note.status === selectedStatus : true;
+
+    return matchesSearch && matchesTag && matchesTab && matchesStatus;
   });
+
+  // Statuses some note has (or the one being filtered by), with how many notes have each
+  const usedStatuses = STATUSES.map((s) => ({ ...s, count: notes.filter((n) => n.status === s.id).length })).filter(
+    (s) => s.count > 0 || s.id === selectedStatus
+  );
 
   const pinnedList = filteredNotes.filter((n) => n.isPinned);
   const unpinnedList = filteredNotes.filter((n) => !n.isPinned);
-  const filtersOn = Boolean(searchQuery || selectedTag || filterTab !== 'all');
+  const filtersOn = Boolean(searchQuery || selectedTag || selectedStatus || filterTab !== 'all');
 
   return (
     <aside
@@ -103,25 +113,61 @@ export default function NoteSidebar({
           ]}
         />
 
-        {allTags.length > 0 && (
+        {/* One scrolling row: status filter (with counts), then tags in their colours */}
+        {(allTags.length > 0 || usedStatuses.length > 0) && (
           <div
-            className={`flex gap-1.5 overflow-x-auto nt-noscroll ${isPhone ? '-mr-5 pr-5' : '-mr-4 pr-4'}`}
+            data-filter-row
+            className={`flex items-center gap-1.5 overflow-x-auto nt-noscroll ${isPhone ? '-mr-5 pr-5' : '-mr-4 pr-4'}`}
             style={{ WebkitMaskImage: 'linear-gradient(90deg, #000 85%, transparent)', maskImage: 'linear-gradient(90deg, #000 85%, transparent)' }}
           >
-            <button type="button" aria-pressed={selectedTag === null} onClick={() => setSelectedTag(null)} className={chipClass(selectedTag === null)}>
-              All tags
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                aria-pressed={tag === selectedTag}
-                onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
-                className={chipClass(tag === selectedTag)}
-              >
-                # {tag}
+            {usedStatuses.length > 0 && (
+              <>
+                <button type="button" aria-pressed={selectedStatus === null} onClick={() => setSelectedStatus(null)} className={chipClass(selectedStatus === null)} aria-label="Any status">
+                  Any
+                </button>
+                {usedStatuses.map((s) => {
+                  const on = selectedStatus === s.id;
+                  const c = lookColour(s.colour);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      data-status-filter={s.id}
+                      aria-pressed={on}
+                      onClick={() => setSelectedStatus(on ? null : s.id)}
+                      className={chipClass(false)}
+                      style={on ? { background: c.fg, color: 'rgb(var(--nt-surface))' } : { background: c.tint, color: c.fg }}
+                    >
+                      <s.Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                      {s.name}
+                      <span className="opacity-75 tabular-nums">{s.count}</span>
+                    </button>
+                  );
+                })}
+                {allTags.length > 0 && <span aria-hidden="true" className="w-px h-5 bg-nt-line shrink-0 mx-0.5" />}
+              </>
+            )}
+            {allTags.length > 0 && (
+              <button type="button" aria-pressed={selectedTag === null} onClick={() => setSelectedTag(null)} className={chipClass(selectedTag === null)}>
+                All tags
               </button>
-            ))}
+            )}
+            {allTags.map((tag) => {
+              const on = tag === selectedTag;
+              const c = tagColours[tag] ? lookColour(tagColours[tag]) : null;
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setSelectedTag(on ? null : tag)}
+                  className={chipClass(on)}
+                  style={!on && c ? { background: c.tint, color: c.fg } : undefined}
+                >
+                  # {tag}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -142,6 +188,7 @@ export default function NoteSidebar({
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedTag(null);
+                    setSelectedStatus(null);
                     setFilterTab('all');
                   }}
                   className={`${BTN_MAIN} !bg-nt-tray !text-nt-ink`}
@@ -206,15 +253,18 @@ function NoteRow({ note, active, isPhone, onSelect, onDelete, onTogglePin }) {
         type="button"
         onClick={() => onSelect(note.id)}
         aria-current={active ? 'true' : undefined}
-        className="flex-1 min-w-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-nt-accent rounded-lg"
+        className="flex-1 min-w-0 flex items-start gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-nt-accent rounded-lg"
       >
+        <NoteIcon note={note} size={isPhone ? 36 : 32} className="mt-0.5" />
+        <span className="flex-1 min-w-0">
         <span className={`font-semibold line-clamp-2 ${isPhone ? 'text-base leading-[22px]' : 'text-[15px] leading-[21px]'} ${active ? 'text-nt-accent-on-tint' : 'text-nt-ink'}`}>
           {title}
         </span>
         {snippetText && (
           <span className={`text-nt-text2 mt-0.5 ${isPhone ? 'text-sm leading-5 line-clamp-2' : 'text-[13px] leading-[19px] line-clamp-1'}`}>{snippetText}</span>
         )}
-        <span className={`flex items-center gap-1.5 mt-1 text-nt-text2 ${isPhone ? 'text-[13px]' : 'text-xs'}`}>
+        <span className={`flex flex-wrap items-center gap-1.5 mt-1 text-nt-text2 ${isPhone ? 'text-[13px]' : 'text-xs'}`}>
+          {note.status && <StatusBadge id={note.status} small />}
           {note.isPublic ? (
             <LuGlobe className="w-3.5 h-3.5 text-nt-ok shrink-0" aria-hidden="true" />
           ) : (
@@ -223,6 +273,7 @@ function NoteRow({ note, active, isPhone, onSelect, onDelete, onTogglePin }) {
           <span>
             {note.isPublic ? 'Public' : 'Private'} · {date} · {blockCount} {blockCount === 1 ? 'block' : 'blocks'}
           </span>
+        </span>
         </span>
       </button>
       <button

@@ -12,6 +12,10 @@ import { blockTypeOf, newQuizConfig } from '../utils/blockTypes';
 
 const CARD_TYPES = ['widget', 'quiz', 'ink'];
 
+// Where the middle of each block's first line is (px from the block's top), so the handle in
+// the margin sits level with it
+const HANDLE_CENTER = { paragraph: 17, heading1: 34, heading2: 27, heading3: 21, callout: 30, math: 24, widget: 36, quiz: 36, ink: 36 };
+
 /**
  * One block of a note (NOTES_VISUAL_REDESIGN_PLAN.md, section 4). Its tools (Add block below,
  * Move up, Move down, Delete block) sit behind a grip: in the left margin on laptops (shown on
@@ -30,7 +34,9 @@ export default function NoteBlockItem({
   coarse,
   isNew,
   isActive,
-  onActivate
+  onActivate,
+  hoveredId,
+  onHover
 }) {
   const [slashQuery, setSlashQuery] = useState('');
   const [isSlashOpen, setIsSlashOpen] = useState(false);
@@ -126,6 +132,8 @@ export default function NoteBlockItem({
   const typeInfo = blockTypeOf(block.type);
   const isCard = CARD_TYPES.includes(block.type);
   const showTouchGrip = coarse && (isActive || menuOpen);
+  // With a mouse: on the block under the pointer, else on the block you are in (never on two)
+  const showMouseHandle = menuOpen || hoveredId === block.id || (hoveredId === null && isActive);
 
   const gripButton = (extra = '') => (
     <button
@@ -150,21 +158,24 @@ export default function NoteBlockItem({
       data-block-id={block.id}
       onPointerDownCapture={() => onActivate(block.id)}
       onFocusCapture={() => onActivate(block.id)}
-      className="group/block relative w-full"
+      onMouseEnter={() => onHover(block.id)}
+      className="relative w-full"
     >
-      {/* Laptops and tablets: grip and + in the left margin */}
+      {/* Laptops: + and grip side by side in the left margin, level with the first line, on
+          one block at a time. Touch tablets: the grip alone (its menu has Add block below). */}
       {!isPhone && (!coarse || showTouchGrip) && (
         <div
-          className={`absolute -left-12 top-0.5 flex flex-col gap-0.5 transition-opacity ${
-            coarse || menuOpen
-              ? 'opacity-100'
-              : 'opacity-0 pointer-events-none group-hover/block:opacity-100 group-hover/block:pointer-events-auto group-focus-within/block:opacity-100 group-focus-within/block:pointer-events-auto'
+          className={`absolute flex items-center gap-0.5 transition-opacity ${coarse ? '-left-12' : '-left-[60px]'} ${
+            coarse || showMouseHandle ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
+          style={{ top: (HANDLE_CENTER[block.type] ?? 17) - (coarse ? 22 : 14) }}
         >
-          {gripButton(coarse ? '' : '!w-8 !h-8')}
-          <button type="button" onClick={handlePlusClick} aria-label="Add block below" title="Add block below" className={`${ICON_BTN} ${coarse ? '' : '!w-8 !h-8'}`}>
-            <LuPlus className="w-[18px] h-[18px]" aria-hidden="true" />
-          </button>
+          {!coarse && (
+            <button type="button" onClick={handlePlusClick} aria-label="Add block below" title="Add block below" className={`${ICON_BTN} !w-7 !h-7 !rounded-lg`}>
+              <LuPlus className="w-[18px] h-[18px]" aria-hidden="true" />
+            </button>
+          )}
+          {gripButton(coarse ? '' : '!w-7 !h-7 !rounded-lg')}
         </div>
       )}
 

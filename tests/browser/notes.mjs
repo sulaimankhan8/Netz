@@ -34,7 +34,7 @@ async function press(page, css, text, { tap = false } = {}) {
 
 const count = (page, css) => page.evaluate((css) => [...document.querySelectorAll(css)].filter((e) => e.getClientRects().length > 0).length, css);
 const rowTitles = (page) =>
-  page.evaluate(() => [...document.querySelectorAll('aside[aria-label="Notes"] [aria-current], aside[aria-label="Notes"] button.flex-1')].map((b) => b.querySelector('span')?.innerText || ''));
+  page.evaluate(() => [...document.querySelectorAll('aside[aria-label="Notes"] [aria-current], aside[aria-label="Notes"] button.flex-1')].map((b) => b.querySelector('span.font-semibold')?.innerText || ''));
 const blockCount = (page) => page.evaluate(() => document.querySelectorAll('[data-block-id]').length);
 
 // ---------------------------------------------------------------- laptop
@@ -128,6 +128,45 @@ const blockCount = (page) => page.evaluate(() => document.querySelectorAll('[dat
     const restoredAt = await page.evaluate((id) => [...document.querySelectorAll('[data-block-id]')].findIndex((b) => b.dataset.blockId === id), firstId);
     check('laptop: Undo puts the block back', (await blockCount(page)) === nBlocks && restoredAt === 1, `at ${restoredAt}`);
 
+    // The handle is one row (+ then grip), level with the first line, on one block at a time
+    const paraId = await page.evaluate(() => document.querySelector('[data-block-id] textarea[aria-label="Text"]')?.closest('[data-block-id]').dataset.blockId);
+    await page.click(`[data-block-id="${paraId}"] textarea`);
+    await sleep(150);
+    const otherId = await page.evaluate((id) => [...document.querySelectorAll('[data-block-id]')].map((b) => b.dataset.blockId).find((x) => x !== id), paraId);
+    await page.hover(`[data-block-id="${otherId}"]`);
+    await sleep(250);
+    const handles = await page.evaluate((paraId) => {
+      const shown = [...document.querySelectorAll('[data-block-id]')].filter((b) => {
+        const g = b.querySelector('button[aria-label$="block options"]');
+        return g && getComputedStyle(g.parentElement).opacity === '1';
+      });
+      const para = document.querySelector(`[data-block-id="${paraId}"]`);
+      const plus = para.querySelector('button[aria-label="Add block below"]').getBoundingClientRect();
+      const grip = para.querySelector('button[aria-label$="block options"]').getBoundingClientRect();
+      const line = para.querySelector('textarea').getBoundingClientRect();
+      return { shown: shown.length, sameRow: Math.abs(plus.top - grip.top) < 1 && plus.right <= grip.left, gap: Math.round(line.left - grip.right), lineMid: Math.round(line.top + 17 - (grip.top + grip.height / 2)) };
+    }, paraId);
+    check('laptop: only one block shows its handle (hover wins over typing)', handles.shown === 1, JSON.stringify(handles));
+    check('laptop: + and grip sit side by side, level with the first line', handles.sameRow && Math.abs(handles.lineMid) <= 2 && handles.gap >= 0, JSON.stringify(handles));
+
+    // Click under the last block to keep typing
+    const beforeBelow = await blockCount(page);
+    await page.click('[data-click-below]');
+    await sleep(300);
+    const below = await page.evaluate(() => {
+      const blocks = [...document.querySelectorAll('[data-block-id]')];
+      const last = blocks[blocks.length - 1];
+      return { n: blocks.length, focusedInLast: last.contains(document.activeElement) && document.activeElement.tagName === 'TEXTAREA' };
+    });
+    check('laptop: clicking under the last block starts a text block there', below.n === beforeBelow + 1 && below.focusedInLast, JSON.stringify(below));
+    await page.click('[data-click-below]');
+    await sleep(300);
+    check('laptop: clicking again reuses that empty block', (await blockCount(page)) === beforeBelow + 1);
+    await page.keyboard.type('typed below');
+    await sleep(300);
+    const lastText = await page.evaluate(() => [...document.querySelectorAll('[data-block-id] textarea')].pop()?.value);
+    check('laptop: typing goes into it', lastText === 'typed below', lastText);
+
     // Tags as chips
     await press(page, 'main button', 'Add tag');
     await page.keyboard.type('Exam,');
@@ -138,9 +177,17 @@ const blockCount = (page) => page.evaluate(() => document.querySelectorAll('[dat
     await sleep(200);
     check('laptop: × removes the tag', !(await page.evaluate(() => !!document.querySelector('button[aria-label="Remove tag Exam"]'))));
 
-    // Add block grid and the / menu
-    const gridButtons = await count(page, 'section[aria-label="Add block"] button');
-    check('laptop: Add block grid shows nine block types', gridButtons === 9, String(gridButtons));
+    // Add block grid: folded to one row until opened, remembered after a reload
+    check('laptop: Add block grid is folded at first', (await count(page, 'section[aria-label="Add block"]')) === 0);
+    await press(page, 'main button[aria-expanded="false"]', 'Add block');
+    const gridButtons = await count(page, 'section[aria-label="Add block"] .grid button');
+    check('laptop: opening it shows nine block types', gridButtons === 9, String(gridButtons));
+    await page.reload({ waitUntil: 'networkidle2' });
+    await sleep(800);
+    check('laptop: the grid stays open after a reload', (await count(page, 'section[aria-label="Add block"]')) === 1);
+    await press(page, 'section[aria-label="Add block"] button', 'Hide');
+    check('laptop: Hide folds it again', (await count(page, 'section[aria-label="Add block"]')) === 0);
+    await press(page, 'main button[aria-expanded="false"]', 'Add block');
     await press(page, 'section[aria-label="Add block"] button', 'Text');
     await sleep(300);
     await page.keyboard.type('/form');

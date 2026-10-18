@@ -15,7 +15,9 @@ import {
   restoreNote,
   togglePinNote,
   importNoteByKey,
-  didLastSaveSucceed
+  didLastSaveSucceed,
+  getTagColours,
+  setTagColour
 } from './utils/noteStorage';
 
 const NOTICE_MS = 6000;
@@ -33,12 +35,15 @@ export default function NotesPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [notice, setNotice] = useState(null);
+  // Tag colours are shared by every note
+  const [tagColours, setTagColours] = useState({});
   const noticeTimer = useRef(null);
   const isPhone = useIsPhone();
 
   useEffect(() => {
     const loadedNotes = getNotes();
     setNotes(loadedNotes);
+    setTagColours(getTagColours());
 
     if (loadedNotes.length > 0) {
       setActiveNoteId(loadedNotes[0].id);
@@ -250,6 +255,7 @@ export default function NotesPage() {
           onTogglePinNote={handleTogglePinNote}
           onHide={() => setIsSidebarOpen(false)}
           isPhone={isPhone}
+          tagColours={tagColours}
         />
       )}
 
@@ -268,6 +274,8 @@ export default function NotesPage() {
           saveFailed={saveFailed}
           onNotify={showNotice}
           onRestoreBlock={handleRestoreBlock}
+          tagColours={tagColours}
+          onSetTagColour={(tag, colour) => setTagColours(setTagColour(tag, colour))}
         />
       )}
 

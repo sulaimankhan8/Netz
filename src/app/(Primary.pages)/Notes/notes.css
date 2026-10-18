@@ -79,6 +79,36 @@ html.dark:root {
   --nt-shadow-menu: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 40px rgb(0 0 0 / 0.5);
 }
 
+/*
+ * Note look colours (utils/noteLook.js): a note's colour, its icon tile and cover, status
+ * badges and tag colours. Each name has a strong colour (text, icons: 4.5:1 on its tint and on
+ * white), a tint (backgrounds) and a dot (the swatch in pickers).
+ */
+:root,
+.nt-force-light {
+  --lk-grey: 85 85 90;      --lk-grey-t: 239 239 235;  --lk-grey-dot: 133 133 140;
+  --lk-red: 180 35 24;      --lk-red-t: 253 236 234;   --lk-red-dot: 217 45 32;
+  --lk-orange: 181 71 8;    --lk-orange-t: 253 235 221; --lk-orange-dot: 234 108 20;
+  --lk-yellow: 138 97 0;    --lk-yellow-t: 254 246 216; --lk-yellow-dot: 217 164 0;
+  --lk-green: 4 120 87;     --lk-green-t: 230 244 238; --lk-green-dot: 16 152 101;
+  --lk-teal: 15 118 110;    --lk-teal-t: 231 245 242;  --lk-teal-dot: 20 150 140;
+  --lk-blue: 29 78 216;     --lk-blue-t: 234 240 254;  --lk-blue-dot: 47 107 240;
+  --lk-purple: 109 40 217;  --lk-purple-t: 241 235 253; --lk-purple-dot: 132 72 230;
+  --lk-pink: 190 24 93;     --lk-pink-t: 252 232 241;  --lk-pink-dot: 221 45 120;
+}
+
+html.dark:root {
+  --lk-grey: 180 180 186;   --lk-grey-t: 42 42 45;     --lk-grey-dot: 150 150 158;
+  --lk-red: 249 112 102;    --lk-red-t: 58 29 27;      --lk-red-dot: 249 112 102;
+  --lk-orange: 253 186 116; --lk-orange-t: 58 36 20;   --lk-orange-dot: 251 146 60;
+  --lk-yellow: 253 230 138; --lk-yellow-t: 53 44 16;   --lk-yellow-dot: 250 204 21;
+  --lk-green: 110 231 183;  --lk-green-t: 18 50 39;    --lk-green-dot: 52 211 153;
+  --lk-teal: 94 234 212;    --lk-teal-t: 18 48 44;     --lk-teal-dot: 45 212 191;
+  --lk-blue: 147 197 253;   --lk-blue-t: 23 34 56;     --lk-blue-dot: 96 165 250;
+  --lk-purple: 196 181 253; --lk-purple-t: 42 33 66;   --lk-purple-dot: 167 139 250;
+  --lk-pink: 249 168 212;   --lk-pink-t: 53 24 38;     --lk-pink-dot: 244 114 182;
+}
+
 /* A row that scrolls sideways without a visible scrollbar */
 .nt-noscroll {
   scrollbar-width: none;

@@ -6,22 +6,28 @@ import {
   LuCheck,
   LuChevronDown,
   LuChevronLeft,
+  LuChevronUp,
   LuDownload,
   LuFileDown,
   LuFileText,
   LuGlobe,
   LuLock,
   LuMoreHorizontal,
+  LuPalette,
   LuPanelLeft,
   LuPlus,
   LuShare2,
   LuX
 } from 'react-icons/lu';
 import NoteBlockItem from './NoteBlockItem';
+import NoteLookPanel from './NoteLookPanel';
+import { BadgeRow, BannerFill, NoteIcon, StatusBadge, badgesOf, lookColour, lookOf } from '../utils/noteLook';
 import { exportNoteAsMarkdown } from '../utils/noteStorage';
 import { exportNoteToPdf } from '../utils/pdfExport';
 import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
-import { BTN_MAIN, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
+import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
+
+const GRID_OPEN_KEY = 'netz_notes_add_grid_open';
 
 /** A text box that grows with its text and never wraps to a new line on Enter (title, subtitle). */
 function GrowingLine({ value, onChange, className, placeholder, label }) {
@@ -52,7 +58,7 @@ function GrowingLine({ value, onChange, className, placeholder, label }) {
  * The note's tags as chips (Q6). Enter or a comma adds what was typed, × removes a tag, and
  * Backspace in the empty box removes the last one. Saves the same `tags` list as before.
  */
-function TagEditor({ tags, onChange }) {
+function TagEditor({ tags, onChange, tagColours = {} }) {
   const [draft, setDraft] = useState('');
   const [adding, setAdding] = useState(false);
   const inputRef = useRef(null);
@@ -73,13 +79,18 @@ function TagEditor({ tags, onChange }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tags">
       {tags.map((tag) => (
-        <span key={tag} className="inline-flex items-center h-8 pl-3 pr-1 rounded-full bg-nt-tray text-[13px] font-medium text-nt-text2">
+        <span
+          key={tag}
+          data-tag-colour={tagColours[tag] || 'none'}
+          className="inline-flex items-center h-8 pl-3 pr-1 rounded-full bg-nt-tray text-[13px] font-medium text-nt-text2"
+          style={tagColours[tag] ? { background: lookColour(tagColours[tag]).tint, color: lookColour(tagColours[tag]).fg } : undefined}
+        >
           # {tag}
           <button
             type="button"
             onClick={() => onChange(tags.filter((t) => t !== tag))}
             aria-label={`Remove tag ${tag}`}
-            className={`ml-0.5 w-6 h-6 ${TOUCH} flex items-center justify-center rounded-full hover:bg-nt-line hover:text-nt-ink`}
+            className={`ml-0.5 w-6 h-6 ${TOUCH} flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10`}
           >
             <LuX className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
@@ -141,7 +152,9 @@ export default function NoteEditor({
   isPhone,
   saveFailed,
   onNotify,
-  onRestoreBlock
+  onRestoreBlock,
+  tagColours = {},
+  onSetTagColour
 }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -150,11 +163,35 @@ export default function NoteEditor({
   const [justAddedId, setJustAddedId] = useState(null);
   // The block you are in: on touch screens its grip shows
   const [activeBlockId, setActiveBlockId] = useState(null);
+  // The block under the mouse: only one block shows its handle at a time
+  const [hoveredBlockId, setHoveredBlockId] = useState(null);
   useEffect(() => {
     setJustAddedId(null);
     setActiveBlockId(null);
+    setHoveredBlockId(null);
   }, [note?.id]);
+  // The Add block grid at the end of a note: folded away unless you open it (remembered)
+  const [gridOpen, setGridOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setGridOpen(localStorage.getItem(GRID_OPEN_KEY) === '1');
+    } catch {
+      // storage blocked: stays folded
+    }
+  }, []);
+  const toggleGrid = (open) => {
+    setGridOpen(open);
+    try {
+      localStorage.setItem(GRID_OPEN_KEY, open ? '1' : '0');
+    } catch {
+      // storage blocked: only this visit remembers
+    }
+  };
   const exportRef = useRef(null);
+  // Note look: the panel and the button (or, on phones, the ⋯ button) it opens from
+  const [lookOpen, setLookOpen] = useState(false);
+  const lookRef = useRef(null);
+  useEffect(() => setLookOpen(false), [note?.id]);
   const coarse = useCoarsePointer();
 
   // Calculate word count & estimated reading time
@@ -242,6 +279,17 @@ export default function NoteEditor({
     onUpdateNote({ ...note, blocks: newBlocks });
   };
 
+  // A click under the last block: type into it if it is an empty text block, else start one
+  const handleClickBelow = () => {
+    const last = note.blocks[note.blocks.length - 1];
+    if (last && last.type === 'paragraph' && !last.content) {
+      document.querySelector(`[data-block-id="${last.id}"] textarea`)?.focus();
+      setActiveBlockId(last.id);
+      return;
+    }
+    handleInsertBlockAfter(note.blocks.length - 1);
+  };
+
   const handleAddBlock = (type) => {
     setAddSheetOpen(false);
     if (type === 'widget') {
@@ -273,7 +321,11 @@ export default function NoteEditor({
     }
   };
 
+  const look = lookOf(note);
+  const badges = badgesOf(note);
+  const lookC = lookColour(look.colour || 'grey');
   const exportItems = [
+    ...(isPhone ? [{ id: 'look', label: 'Note look', icon: <LuPalette className="w-[18px] h-[18px]" />, onSelect: () => setLookOpen(true) }, 'divider'] : []),
     { id: 'pdf', label: isExportingPdf ? 'Exporting PDF…' : 'Export PDF', disabled: isExportingPdf, icon: <LuFileDown className="w-[18px] h-[18px]" />, onSelect: handleExportPdf },
     { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteAsMarkdown(note) }
   ];
@@ -319,7 +371,7 @@ export default function NoteEditor({
             ref={exportRef}
             type="button"
             onClick={() => setExportOpen((v) => !v)}
-            aria-label="More: export"
+            aria-label="More: note look, export"
             aria-haspopup="menu"
             aria-expanded={exportOpen}
             className={ICON_BTN}
@@ -340,6 +392,18 @@ export default function NoteEditor({
           </span>
           {status}
           <span className="flex-1" />
+          <button
+            ref={lookRef}
+            type="button"
+            onClick={() => setLookOpen((v) => !v)}
+            aria-haspopup="dialog"
+            aria-expanded={lookOpen}
+            className={`${BTN_SECONDARY} hover:brightness-95`}
+            style={look.colour ? { background: lookC.tint, color: lookC.fg } : undefined}
+          >
+            <LuPalette className="w-[18px] h-[18px]" aria-hidden="true" />
+            Note look
+          </button>
           <button type="button" onClick={onOpenShareModal} className={BTN_SECONDARY}>
             <LuShare2 className="w-[18px] h-[18px]" aria-hidden="true" />
             Share
@@ -358,7 +422,18 @@ export default function NoteEditor({
           </button>
         </div>
       )}
-      {exportOpen && <Menu title="Export" items={exportItems} isPhone={isPhone} anchorRef={exportRef} onClose={() => setExportOpen(false)} />}
+      {exportOpen && <Menu title={isPhone ? 'This note' : 'Export'} items={exportItems} isPhone={isPhone} anchorRef={exportRef} onClose={() => setExportOpen(false)} />}
+      {lookOpen && (
+        <NoteLookPanel
+          note={note}
+          onUpdateNote={onUpdateNote}
+          tagColours={tagColours}
+          onSetTagColour={onSetTagColour}
+          anchorRef={isPhone ? exportRef : lookRef}
+          onClose={() => setLookOpen(false)}
+          isPhone={isPhone}
+        />
+      )}
 
       {/* The note */}
       <div className="flex-1 overflow-y-auto custom-notion-scrollbar">
@@ -367,16 +442,57 @@ export default function NoteEditor({
             className={
               isPhone
                 ? 'px-5 pt-5 pb-32'
-                : 'mx-auto w-full max-w-[800px] bg-nt-surface border border-nt-line rounded-2xl px-8 md:px-14 lg:px-16 pt-12 pb-10'
+                : `mx-auto w-full max-w-[800px] bg-nt-surface border border-nt-line rounded-2xl px-8 md:px-16 pb-10 overflow-hidden ${look.cover ? 'pt-0' : 'pt-12'}`
             }
           >
             <div id="note-printable-area" className="flex flex-col gap-3">
-              {isPhone && (
-                <div className="flex items-center gap-2 mb-1">
-                  {privacyChip}
-                  <span className="text-xs text-nt-text2 tabular-nums">
-                    {wordCount} words · {readingTimeMinutes} min read
-                  </span>
+              {/* Cover band: the note colour with an exercise-book pattern, edge to edge */}
+              {look.cover && (
+                <div
+                  data-note-cover={look.cover.value}
+                  data-cover-kind={look.cover.kind}
+                  className={`relative shrink-0 ${isPhone ? '-mx-5 -mt-5 h-28' : '-mx-8 md:-mx-16 h-[150px]'}`}
+                >
+                  <button type="button" data-print="keep" aria-label="Change the banner (Note look)" onClick={() => setLookOpen(true)} className="absolute inset-0 block overflow-hidden">
+                    <BannerFill cover={look.cover} colour={look.colour} />
+                  </button>
+                  <BadgeRow ids={badges} size={isPhone ? 32 : 36} className="absolute top-3 right-3 pointer-events-none" />
+                </div>
+              )}
+              {/* Icon and status, above the title (a dashed tile invites a look when there is none) */}
+              {(look.icon || note.status || !look.cover || isPhone || badges.length > 0) && (
+                <div className={`relative flex items-end gap-3 ${look.cover && look.icon ? (isPhone ? '-mt-11' : '-mt-14') : ''}`}>
+                  {look.icon ? (
+                    <button type="button" data-print="keep" data-note-icon onClick={() => setLookOpen(true)} aria-label="Change the icon (Note look)" className="rounded-[22px] shrink-0">
+                      <NoteIcon note={note} size={isPhone ? 64 : 80} ring={!!look.cover} />
+                    </button>
+                  ) : (
+                    !note.status && badges.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setLookOpen(true)}
+                        aria-label="Give this note a look"
+                        title="Note look: colour, icon, cover, status"
+                        className={`w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-[14px] border-[1.5px] border-dashed border-nt-line text-nt-muted hover:text-nt-text2 hover:border-nt-text2 transition-colors`}
+                      >
+                        <LuPalette className="w-5 h-5" aria-hidden="true" />
+                      </button>
+                    )
+                  )}
+                  {note.status && (
+                    <button type="button" data-print="keep" onClick={() => setLookOpen(true)} aria-label="Change the status (Note look)" className={look.icon ? 'mb-1' : ''}>
+                      <StatusBadge id={note.status} />
+                    </button>
+                  )}
+                  {!look.cover && badges.length > 0 && <BadgeRow ids={badges} size={30} className={look.icon ? 'mb-1' : ''} />}
+                  {isPhone && (
+                    <span className={`ml-auto flex flex-col items-end gap-1 ${look.icon ? 'mb-1' : ''}`}>
+                      {privacyChip}
+                      <span className="text-xs text-nt-text2 tabular-nums">
+                        {wordCount} words · {readingTimeMinutes} min read
+                      </span>
+                    </span>
+                  )}
                 </div>
               )}
               <GrowingLine
@@ -395,7 +511,7 @@ export default function NoteEditor({
               />
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 pb-5 border-b border-nt-line">
                 <div className="flex-1 min-w-0">
-                  <TagEditor tags={note.tags || []} onChange={handleTagsChange} />
+                  <TagEditor tags={note.tags || []} onChange={handleTagsChange} tagColours={tagColours} />
                 </div>
                 {!isPhone && (
                   <span className="text-xs text-nt-text2 tabular-nums shrink-0">
@@ -405,7 +521,7 @@ export default function NoteEditor({
               </div>
 
               {/* Blocks */}
-              <div className="flex flex-col gap-1 pt-4 min-h-[200px]">
+              <div className="flex flex-col gap-1 pt-4" onMouseLeave={() => setHoveredBlockId(null)}>
                 {note.blocks.map((block, idx) => (
                   <NoteBlockItem
                     key={block.id}
@@ -422,17 +538,42 @@ export default function NoteEditor({
                     isNew={block.id === justAddedId}
                     isActive={block.id === activeBlockId}
                     onActivate={setActiveBlockId}
+                    hoveredId={hoveredBlockId}
+                    onHover={setHoveredBlockId}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Add a block (laptops and tablets; phones use the Add block button) */}
-            {!isPhone && (
-              <section aria-label="Add block" className="mt-8 pt-6 border-t border-nt-line">
-                <div className="flex items-baseline justify-between gap-3 mb-3">
+            {/* The empty space under the last block: click it to keep typing (as in Notion) */}
+            <div
+              data-click-below
+              onClick={handleClickBelow}
+              className={`cursor-text ${isPhone ? 'min-h-[200px]' : 'min-h-[120px]'}`}
+            />
+
+            {/* Add a block (laptops and tablets; phones use the Add block button), folded away
+                to one quiet row unless opened */}
+            {!isPhone && !gridOpen && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button type="button" onClick={() => toggleGrid(true)} aria-expanded={false} className={`${BTN_QUIET} !px-2.5 !text-nt-text2 hover:!text-nt-ink`}>
+                  <LuPlus className="w-4 h-4" aria-hidden="true" />
+                  Add block
+                </button>
+                <span className="text-xs text-nt-text2">or type / in a text block</span>
+              </div>
+            )}
+            {!isPhone && gridOpen && (
+              <section aria-label="Add block" className="pt-6 border-t border-nt-line">
+                <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="text-[13px] font-semibold text-nt-text2">Add block</h2>
-                  <span className="text-xs text-nt-text2">or type / in a text block</span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-xs text-nt-text2">or type / in a text block</span>
+                    <button type="button" onClick={() => toggleGrid(false)} aria-expanded={true} className={`${BTN_QUIET} !h-8 !px-2 !text-nt-text2 hover:!text-nt-ink`}>
+                      Hide
+                      <LuChevronUp className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {BLOCK_TYPES.map((t) => (
