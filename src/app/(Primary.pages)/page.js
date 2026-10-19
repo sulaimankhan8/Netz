@@ -12,7 +12,7 @@ import RevealObserver from '../components/landing/RevealObserver';
 import TourCards from '../components/landing/TourCards';
 
 const DESCRIPTION =
-  'Handwrite maths on any screen and NETZ types it for you. Work through 34 numerical methods with every step shown, and keep it all in notes with formulas, solvers and quizzes. Free, works offline, no account.';
+  'Write maths by hand and NETZ types it for you. Solve it step by step, see it on a graph, and keep it all in your notes. Free, works offline, no account.';
 
 export const metadata = {
   title: 'NETZ: write, solve and keep your maths',
@@ -60,8 +60,8 @@ export default function Home() {
             </span>
             <h1 className="ld-h1">Maths you can write, solve and keep.</h1>
             <p className="ld-lead">
-              Handwrite on any screen and NETZ types it for you. Work through 34 numerical methods with every step
-              shown. Keep it all in notes that hold formulas, solvers and quizzes.
+              Write maths by hand and NETZ types it for you. Solve it step by step, see it on a graph, and keep
+              everything in your notes.
             </p>
             <div className="ld-actions">
               <Link href="/Playground" className="ld-btn ld-btn-main">
@@ -73,7 +73,7 @@ export default function Home() {
             <div className="ld-hero-notes">
               <span>Finger, pen or mouse</span>
               <span>Phone, tablet, laptop</span>
-              <span>34 methods, every step</span>
+              <span>Every step shown</span>
             </div>
           </div>
           <HeroDemo />
@@ -86,8 +86,8 @@ export default function Home() {
           <div className="ld-float-text ld-on-bg" data-reveal="">
             <h2 className="ld-h2">Everything a method gives you</h2>
             <p className="ld-sec-lead">
-              Graphs, worked steps, value tables and clean exports come with every method. As you scroll, the cards
-              spread out of the pile; tap one to bring it to the front.
+              Every method comes with a graph, the full working, a table of values and a one-tap export, ready to
+              drop into your notes.
             </p>
             <Link href="/Algorithems" className="ld-btn ld-btn-secondary" style={{ alignSelf: 'flex-start' }}>
               Open the Algorithms hub
@@ -100,8 +100,8 @@ export default function Home() {
             <div className="ld-sec-head-text ld-on-bg">
               <h2 className="ld-h2">Every step, shown</h2>
               <p className="ld-sec-lead">
-                A method page takes you from the idea to the answer. Here is Gauss–Seidel, one step at a time; all 34
-                methods work the same way.
+                Each method page takes you from the idea to the answer. Here is Gauss–Seidel, one step at a time;
+                every method works the same way.
               </p>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function Home() {
           <div className="ld-sec-head">
             <div className="ld-sec-head-text ld-on-bg">
               <h2 className="ld-h2">Made for the way you study</h2>
-              <p className="ld-sec-lead">At your desk, on the bus or in the library, with or without Wi‑Fi.</p>
+              <p className="ld-sec-lead">At your desk, on the bus or in the library, with or without a signal.</p>
             </div>
           </div>
           <div className="ld-facts">
@@ -124,7 +124,7 @@ export default function Home() {
                 <span className="ld-fact-devices" aria-hidden="true"><IconPhone size={20} /><IconTablet size={20} /><IconLaptop size={22} /></span>
               </div>
               <h3>Any screen, touch first</h3>
-              <p>Made for phones and tablets as much as laptops. Draw with a finger, a pen or a mouse; two fingers move and zoom the page.</p>
+              <p>Built for phones and tablets as much as laptops. Write with a finger, a pen or a mouse, and use two fingers to move and zoom.</p>
               <ul className="ld-fact-tags">
                 <li>Finger</li>
                 <li>Pen</li>
@@ -136,7 +136,7 @@ export default function Home() {
                 <span className="ld-fact-icon" aria-hidden="true"><IconWifiOff size={24} /></span>
               </div>
               <h3>Works offline</h3>
-              <p>Install NETZ as an app. Handwriting is read on your own device, so it keeps working on a train or in an exam hall.</p>
+              <p>Install NETZ like any app. Your handwriting is read on your own device, so it keeps working on a train, in a lecture hall or anywhere without signal.</p>
               <ul className="ld-fact-tags">
                 <li>No Wi‑Fi needed</li>
                 <li>Installs like an app</li>
@@ -147,10 +147,10 @@ export default function Home() {
                 <span className="ld-fact-icon" aria-hidden="true"><IconGift size={24} /></span>
               </div>
               <h3>Free, no account</h3>
-              <p>Open it and start. Your pages and notes are saved in this browser, so nothing waits on a sign-up.</p>
+              <p>Just open it and start. Your pages and notes are kept in your browser, so there is nothing to sign up for and nothing to wait on.</p>
               <ul className="ld-fact-tags">
                 <li>No sign-up</li>
-                <li>Saved on this device</li>
+                <li>Saved in your browser</li>
               </ul>
             </article>
           </div>
@@ -159,7 +159,7 @@ export default function Home() {
         <section className="ld-cta" data-reveal="">
           <div className="ld-cta-text">
             <h2>Open a page and start writing.</h2>
-            <p>Nothing to sign up for. It&apos;s ready when you are.</p>
+            <p>Your first page is one tap away.</p>
           </div>
           <div className="ld-actions">
             <Link href="/Playground" className="ld-btn ld-btn-light">Open the Playground</Link>

@@ -126,7 +126,7 @@ export const TOURS = {
       {
         target: ['[data-tour="notes-block-widget"]', '[data-tour="notes-add-block"]'],
         title: 'Solvers',
-        content: 'Pick any of the 34 methods and press Calculate: the answer and its steps stay inside the note.',
+        content: 'Pick any method and press Calculate: the answer and its steps stay inside the note.',
       },
       {
         target: ['[data-tour="notes-block-quiz"]', '[data-tour="notes-add-block"]'],
