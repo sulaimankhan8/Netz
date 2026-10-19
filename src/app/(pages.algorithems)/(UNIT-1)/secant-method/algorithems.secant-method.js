@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -15,6 +16,7 @@ const SecantMethod = () => {
   const [tolerance, setTolerance] = useState(0.0001);
   const [maxIter, setMaxIter] = useState(50);
   const [result, setResult] = useState(null);
+  useRecordSolve('secant', 1, result, () => ({ fn: functionInput }));
   const [iterations, setIterations] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all');

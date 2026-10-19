@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -16,6 +17,7 @@ const TaylorSeriesSolver = () => {
   const [targetX, setTargetX] = useState(0.2);
 
   const [result, setResult] = useState(null);
+  useRecordSolve('taylor', 4, result);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all'); // 'all' | 'table' | 'steps'

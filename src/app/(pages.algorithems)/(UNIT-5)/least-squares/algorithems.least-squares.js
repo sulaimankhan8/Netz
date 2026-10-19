@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -14,6 +15,7 @@ const LeastSquaresSolver = () => {
   const [yValuesInput, setYValuesInput] = useState('2.5, 4.2, 7.5, 12.8, 22.1');
 
   const [result, setResult] = useState(null);
+  useRecordSolve('least-squares', 5, result);
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

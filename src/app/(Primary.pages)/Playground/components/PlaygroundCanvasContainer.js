@@ -79,6 +79,7 @@ import { DEFAULT_INK, DEFAULT_PEN_TYPE, DEFAULT_PEN_WIDTHS, penTypeOf, readPenSe
 import DocBar from './DocBar';
 import { PreferencesDialog } from './PageMenu';
 import useSidebarRight from './ui/useSidebarRight';
+import { recordActivity } from '@/app/utils/activity';
 
 // A function whose identity never changes but always runs the latest version: memoized blocks
 // skip re-rendering only while what they are given stays the same
@@ -846,6 +847,9 @@ export default function PlaygroundCanvasContainer() {
       if (passId !== ocrPassRef.current) return;
 
       setClusters(processed);
+      if (processed.some((c) => c.evaluatedResult !== null && c.evaluatedResult !== undefined && c.evaluatedResult !== '')) {
+        recordActivity('playground.eval', {});
+      }
 
       // Auto-select latest recognized cluster if Lasso tool is active
       const recognizedClusters = processed.filter((c) => c.detectedText);
@@ -894,6 +898,7 @@ export default function PlaygroundCanvasContainer() {
     };
 
     dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+    if (finalText.trim()) recordActivity('ink.converted', { kind: cluster.isMath ? 'math' : 'text' });
 
     // Erase converted handwritten ink strokes from canvas.
     // The new block and the erased ink are one undo step, recorded once the block has landed.
@@ -1150,6 +1155,7 @@ export default function PlaygroundCanvasContainer() {
   // Spawn New Smart Block with Compact Type-Specific Dimensions.
   // content: starting content (Insert > Equation passes the LaTeX and display style)
   const handleAddBlock = (type, content = null) => {
+    if (type === 'graph') recordActivity('playground.block', { type: 'graph' });
     const newBlockId = `block_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     // Each new block lands a little down and to the right of the last, so they do not stack
     const cascade = (blockStateRef.current.blocks.length % 6) * 28;
@@ -1658,6 +1664,7 @@ export default function PlaygroundCanvasContainer() {
     };
 
     dispatch({ type: 'ADD_BLOCK', payload: graphBlock });
+    recordActivity('playground.block', { type: 'graph' });
     dispatch({
       type: 'LINK_BLOCKS',
       payload: { sourceBlockId: equationBlock.blockId, targetBlockId: graphBlockId },
@@ -1749,6 +1756,7 @@ export default function PlaygroundCanvasContainer() {
     });
     if (result.ok) {
       showNotice(`Saved ${result.fileName}`);
+      recordActivity('page.exported', { format });
     } else if (result.reason === 'empty') {
       showNotice('There is nothing on this page to export yet.');
     } else {
@@ -1851,6 +1859,7 @@ export default function PlaygroundCanvasContainer() {
   }, []);
 
   const handleInsertSymbol = useCallback((text) => {
+    recordActivity('playground.block', { type: 'symbol' });
     const target = capturedTextTargetRef.current;
 
     // The text of a shape: changed in the page (its editor closed when Symbol took the focus)
@@ -2130,6 +2139,7 @@ export default function PlaygroundCanvasContainer() {
 
   // A shape picked in the gallery is armed: drag on the page to draw it, or tap for its default size
   const handlePickShape = useCallback((item) => {
+    recordActivity('playground.block', { type: 'shape' });
     setArmedShape(item);
     setActiveTool('shape');
     showNotice(`${item.name}: drag on the page to draw it, or tap for the default size`, 3000);

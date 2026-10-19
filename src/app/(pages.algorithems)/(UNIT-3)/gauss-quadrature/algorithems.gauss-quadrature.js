@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -33,6 +34,7 @@ const GaussQuadrature = () => {
   const [bInput, setBInput] = useState("1");
   const [nPoints, setNPoints] = useState(3);
   const [result, setResult] = useState(null);
+  useRecordSolve('gauss-quadrature', 3, result, () => ({ fn: functionInput, a: String(aInput), b: String(bInput) }));
   const [tableRows, setTableRows] = useState([]);
   const [error, setError] = useState('');
   const [demoInProgress, setDemoInProgress] = useState(false);

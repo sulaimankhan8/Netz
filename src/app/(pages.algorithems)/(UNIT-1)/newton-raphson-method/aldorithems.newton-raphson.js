@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import 'katex/dist/katex.min.css';
@@ -14,6 +15,7 @@ const NewtonRaphsonMethod = () => {
   const [initialGuess, setInitialGuess] = useState('2.5');
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
+  useRecordSolve('newton-raphson', 1, result, () => ({ fn: expression }));
   const [tableResults, setTableResults] = useState([]);
   const [stepDetails, setStepDetails] = useState([]);
   const [intervalSteps, setIntervalSteps] = useState([]);

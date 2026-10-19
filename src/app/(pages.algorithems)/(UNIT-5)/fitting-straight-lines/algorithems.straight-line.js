@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -17,6 +18,7 @@ const StraightLineSolver = () => {
   const [yValuesInput, setYValuesInput] = useState('1, 1.8, 3.3, 4.5, 6.3');
 
   const [result, setResult] = useState(null);
+  useRecordSolve('straight-line', 5, result);
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -22,6 +23,7 @@ const FittingParabolaSolver = () => {
   const [yValuesInput, setYValuesInput] = useState('15, 7, 3, 3, 7');
 
   const [result, setResult] = useState(null);
+  useRecordSolve('parabola', 5, result);
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

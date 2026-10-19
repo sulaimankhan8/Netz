@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -14,6 +15,7 @@ const FTestSolver = () => {
   const [sample2Input, setSample2Input] = useState('18, 17, 21, 19, 16');
 
   const [result, setResult] = useState(null);
+  useRecordSolve('f-test', 5, result);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all'); // 'all' | 'table' | 'steps'

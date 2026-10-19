@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import EditorialSidebar from './editorial/EditorialSidebar';
 import NavBar from './NavBar';
+import ProgressToast from './mascot/ProgressToast';
 
 const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -52,6 +53,7 @@ const Layout = ({ children }) => {
       <div className={`flex-1 w-full min-w-0 ${showNavBar ? '' : 'min-h-screen'}`}>
         {children}
       </div>
+      <ProgressToast />
     </div>
   );
 };

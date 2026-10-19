@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -15,6 +16,7 @@ const NumericalDifferentiationSolver = () => {
   const [stepH, setStepH] = useState(0.01);
 
   const [result, setResult] = useState(null);
+  useRecordSolve('numerical-differentiation', 3, result, () => ({ fn: functionInput }));
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

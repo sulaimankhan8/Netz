@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -14,6 +15,7 @@ const FalsePositionMethod = () => {
   const [functionInput, setFunctionInput] = useState("x^3 - 4*x - 9");
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
+  useRecordSolve('false-position', 1, result, () => ({ fn: functionInput }));
   const [intervalSteps, setIntervalSteps] = useState([]);
   const [falsePositionIterations, setFalsePositionIterations] = useState([]);
   const [error, setError] = useState('');

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState ,useEffect} from 'react';
 import { useRouter } from 'next/navigation'; // Import for App Router
 import { LuMenu, LuX } from 'react-icons/lu';
+import ProgressChip from './mascot/ProgressChip';
 
 const NavBar = () => {
     const [isClosed, setIsClosed] = useState(true); // Sidebar toggle state
@@ -36,8 +37,13 @@ const NavBar = () => {
                     <Image src="/icons/icon.svg" alt="icon logo" width={50} height={50}/>
                 </div>
 
+                {/* Streak and gems: opens the Profile page */}
+                <div className="ml-auto mr-10">
+                    <ProgressChip variant="phone" />
+                </div>
+
                 {/* Dropdown and sidebar toggle button */}
-                <div className="relative ml-auto">
+                <div className="relative">
                     {/* The menu button draws its own icon: the old .menuToggle2 styles live in
                         sidebar.css, which nothing loads any more, so the button had no size */}
                     <button

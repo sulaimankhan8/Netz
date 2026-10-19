@@ -1,0 +1,72 @@
+/* NETZ robot (Classic Calc). Moods switch which face and effects show; see NetzRobot.js. */
+
+.nr .nr-face,
+.nr .nr-fx { display: none; }
+.nr.nr-idle .nr-f-happy,
+.nr.nr-press .nr-f-happy { display: inline; }
+.nr.nr-wave .nr-f-joy,
+.nr.nr-cheer .nr-f-joy { display: inline; }
+.nr.nr-think .nr-f-think,
+.nr.nr-think .nr-fx-dots { display: inline; }
+.nr.nr-surp .nr-f-surp,
+.nr.nr-surp .nr-fx-drop { display: inline; }
+.nr.nr-sad .nr-f-sad { display: inline; }
+.nr.nr-sleep .nr-f-sleep,
+.nr.nr-sleep .nr-fx-zzz { display: inline; }
+.nr.nr-cheer .nr-fx-rays { display: inline; }
+.nr.nr-wake .nr-f-yawn { display: inline; }
+
+.nr .nr-head { transform-origin: 120px 150px; transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.nr .nr-arm-l { transform-origin: 80px 162px; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.nr .nr-arm-r { transform-origin: 160px 162px; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.nr .nr-rig { animation: nr-bob 2.6s ease-in-out infinite; }
+.nr .nr-blink { transform-origin: 120px 86px; animation: nr-blink 4.2s infinite; }
+.nr .nr-eyes { transition: transform 0.12s linear; }
+
+.nr.nr-wave .nr-arm-r { animation: nr-wave 0.9s ease-in-out infinite; }
+.nr.nr-cheer .nr-rig { animation: nr-jump 0.55s ease-in-out infinite; }
+.nr.nr-cheer .nr-arm-l { transform: rotate(145deg); }
+.nr.nr-cheer .nr-arm-r { transform: rotate(-145deg); }
+.nr.nr-cheer .nr-fx-rays { transform-origin: 120px 40px; animation: nr-pop 0.55s ease-out infinite; }
+.nr.nr-think .nr-head { transform: rotate(-7deg); }
+.nr.nr-think .nr-arm-r { transform: rotate(-115deg); }
+.nr.nr-think .nr-fx-dots circle { animation: nr-dot 1.2s ease-in-out infinite; }
+.nr.nr-think .nr-fx-dots circle:nth-child(2) { animation-delay: 0.2s; }
+.nr.nr-surp .nr-rig { animation: nr-jolt 0.5s ease-out 1; }
+.nr.nr-surp .nr-arm-l { transform: rotate(55deg); }
+.nr.nr-surp .nr-arm-r { transform: rotate(-55deg); }
+.nr.nr-sad .nr-head { transform: translateY(7px) rotate(5deg); }
+.nr.nr-sad .nr-rig { animation: nr-bob 4.5s ease-in-out infinite; filter: saturate(0.65); }
+.nr.nr-sleep .nr-head { transform: translateY(12px) rotate(-10deg); }
+.nr.nr-sleep .nr-rig { animation: nr-breathe 3.6s ease-in-out infinite; }
+.nr.nr-sleep .nr-screen { fill: #0a080a; }
+.nr.nr-sleep .nr-fx-zzz text { animation: nr-zz 2.4s ease-in infinite; opacity: 0; }
+.nr.nr-sleep .nr-fx-zzz text:nth-child(2) { animation-delay: 0.8s; }
+.nr.nr-sleep .nr-fx-zzz text:nth-child(3) { animation-delay: 1.6s; }
+.nr.nr-press .nr-eqkey { animation: nr-press 0.5s ease-out 1; }
+.nr.nr-wake .nr-head { animation: nr-stretch-head 1.6s ease-in-out 1; }
+.nr.nr-wake .nr-arm-l { animation: nr-stretch-l 1.6s ease-in-out 1; }
+.nr.nr-wake .nr-arm-r { animation: nr-stretch-r 1.6s ease-in-out 1; }
+.nr.nr-wake .nr-yawn { transform-origin: 120px 112px; animation: nr-yawn 1.6s ease-in-out 1; }
+
+@keyframes nr-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes nr-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1px); } }
+@keyframes nr-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes nr-wave { 0%, 100% { transform: rotate(-150deg); } 50% { transform: rotate(-115deg); } }
+@keyframes nr-jump { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-20px); } }
+@keyframes nr-pop { 0% { transform: scale(0.6); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.15); opacity: 0; } }
+@keyframes nr-dot { 0%, 100% { opacity: 0.35; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+@keyframes nr-jolt { 0% { transform: translateY(0); } 30% { transform: translateY(-14px); } 60% { transform: translateY(2px); } 100% { transform: translateY(0); } }
+@keyframes nr-zz { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(14px, -30px); } }
+@keyframes nr-press { 0% { transform: translateY(0); } 30% { transform: translateY(4px); } 100% { transform: translateY(0); } }
+@keyframes nr-stretch-head { 0% { transform: translateY(12px) rotate(-10deg); } 50% { transform: translateY(-6px) rotate(0); } 100% { transform: none; } }
+@keyframes nr-stretch-l { 0%, 100% { transform: none; } 45%, 70% { transform: rotate(150deg); } }
+@keyframes nr-stretch-r { 0%, 100% { transform: none; } 45%, 70% { transform: rotate(-150deg); } }
+@keyframes nr-yawn { 0% { transform: scale(0.3); } 50% { transform: scale(1.15); } 100% { transform: scale(0.4); } }
+
+/* Moods still change the face and pose, but nothing bounces or loops */
+@media (prefers-reduced-motion: reduce) {
+  .nr *,
+  .nr .nr-rig { animation: none !important; transition: none !important; }
+  .nr.nr-sleep .nr-fx-zzz text { opacity: 1; }
+}

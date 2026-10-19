@@ -24,6 +24,7 @@ import NoteLookPanel from './NoteLookPanel';
 import { BadgeRow, BannerFill, NoteIcon, StatusBadge, badgesOf, lookColour, lookOf } from '../utils/noteLook';
 import { exportNoteAsMarkdown } from '../utils/noteStorage';
 import { exportNoteToPdf } from '../utils/pdfExport';
+import { recordActivity } from '@/app/utils/activity';
 import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
 
@@ -314,6 +315,7 @@ export default function NoteEditor({
     setIsExportingPdf(true);
     try {
       await exportNoteToPdf(note, 'note-printable-area');
+      recordActivity('note.exported', { kind: 'pdf' });
     } catch (err) {
       alert('Could not export PDF: ' + (err.message || 'Unknown error'));
     } finally {

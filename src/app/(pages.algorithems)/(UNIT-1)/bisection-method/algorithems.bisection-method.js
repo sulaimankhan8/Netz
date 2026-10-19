@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -14,6 +15,7 @@ const BisectionMethod = () => {
   const [functionInput, setFunctionInput] = useState("x * x * x - 4 * x - 9"); // Default function
   const [tolerance, setTolerance] = useState(0.05);
   const [result, setResult] = useState(null);
+  useRecordSolve('bisection', 1, result, () => ({ fn: functionInput }));
   const [intervalSteps, setIntervalSteps] = useState([]);
   const [bisectionIterations, setBisectionIterations] = useState([]);
   const [error, setError] = useState('');

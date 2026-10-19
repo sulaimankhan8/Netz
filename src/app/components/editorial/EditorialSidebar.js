@@ -19,6 +19,7 @@ import {
   FiCornerDownRight,
   FiX
 } from 'react-icons/fi';
+import ProgressChip from '../mascot/ProgressChip';
 
 // Unified Navigation Schema (Badges removed as requested)
 const PRIMARY_NAV = [
@@ -763,6 +764,11 @@ export default function EditorialSidebar({ className = '' }) {
             </>
           )}
 
+        </div>
+
+        {/* Streak, gems and today's tasks: opens the Profile page */}
+        <div className={`shrink-0 border-t border-neutral-200 dark:border-neutral-800 ${isCollapsed ? 'py-2' : 'p-3'}`}>
+          <ProgressChip variant={isCollapsed ? 'rail' : 'row'} />
         </div>
 
         {/* BOTTOM USER PROFILE & LINKEDIN CARD */}

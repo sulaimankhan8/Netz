@@ -210,7 +210,8 @@ export default function NotesPage() {
       updatedAt: new Date().toISOString(),
       isPublic: false
     };
-    const saved = saveSingleNote(cloned);
+    // A copied community note is not the student's own writing, so it finishes no task
+    const saved = saveSingleNote(cloned, { report: false });
     setSaveFailed(!didLastSaveSucceed());
     const updated = getNotes();
     setNotes(updated);

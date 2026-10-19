@@ -1,0 +1,60 @@
+/*
+ * Profile page tokens (board artboards 8–9). Neutrals follow the landing --ld- tokens; the accents
+ * are the bg1 sunset palette shared with the medals, banners and robot.
+ */
+
+:root {
+  --pf-paper: #F6F6F3;
+  --pf-surface: #FFFFFF;
+  --pf-tray: #EFEFEB;
+  --pf-line: #E4E4DF;
+  --pf-ink: #1D1D1F;
+  --pf-text2: #55555A;
+  --pf-accent: #FBAE3D;
+  --pf-accent-ink: #141415;
+  --pf-accent-text: #9A5B00;
+  --pf-flame: #C2410C;
+  --pf-done-bg: #E8F5EC;
+  --pf-done-ink: #15803D;
+  --pf-day-done: #F88F4A;
+  --pf-lock-rim: #D2D2CD;
+  --pf-lock-fill: #EDEDEA;
+  --pf-lock-mark: #9C9CA2;
+}
+
+.dark {
+  --pf-paper: #141415;
+  --pf-surface: #1E1E20;
+  --pf-tray: #2A2A2D;
+  --pf-line: #34343A;
+  --pf-ink: #F4F4F2;
+  --pf-text2: #B4B4BA;
+  --pf-accent-text: #FBAE3D;
+  --pf-flame: #F88F4A;
+  --pf-done-bg: #143322;
+  --pf-done-ink: #86EFAC;
+  --pf-lock-rim: #3A3A40;
+  --pf-lock-fill: #26262A;
+  --pf-lock-mark: #6B6B73;
+}
+
+.pf {
+  background: var(--pf-paper);
+  color: var(--pf-ink);
+  font-family: var(--ld-font-sans), 'DM Sans', system-ui, sans-serif;
+}
+
+.pf-display {
+  font-family: var(--pf-font-display), var(--ld-font-sans), system-ui, sans-serif;
+}
+
+.pf-card {
+  background: var(--pf-surface);
+  border: 1px solid var(--pf-line);
+  border-radius: 24px;
+}
+
+.pf :focus-visible {
+  outline: 3px solid #F88F4A;
+  outline-offset: 2px;
+}

@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -17,6 +18,7 @@ const Simpson38RuleSolver = () => {
   const [subintervals, setSubintervals] = useState(6);
 
   const [result, setResult] = useState(null);
+  useRecordSolve('simpson-38', 3, result, () => ({ fn: functionInput, a: String(lowerLimit), b: String(upperLimit) }));
   const [stepsData, setStepsData] = useState([]);
   const [plotPoints, setPlotPoints] = useState([]);
   const [gridLog, setGridLog] = useState([]);

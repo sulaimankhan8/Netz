@@ -1,10 +1,11 @@
-'use client';
+import ProfileView from './ProfileView';
+import './profile.css';
 
-import UnderConstruction from "../../utils/underconstruction";
+export const metadata = {
+  title: 'Profile | NETZ',
+  description: 'Your streak, gems, medals and today\'s tasks in NETZ.',
+};
 
-export default function test(){
-
-    return(
-        <UnderConstruction/>
-    );
+export default function ProfilePage() {
+  return <ProfileView />;
 }

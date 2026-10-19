@@ -1,5 +1,6 @@
 import { INITIAL_SAMPLE_NOTES } from "./sampleNotes";
 import { CURATED_COMMUNITY_NOTES } from "../components/NoteShareModal";
+import { recordActivity } from "@/app/utils/activity";
 
 const STORAGE_KEY = "netz_notes_v2_data";
 
@@ -125,7 +126,36 @@ export function createNewNote() {
   return newNote;
 }
 
-export function saveSingleNote(updatedNote) {
+// Text a new note or block starts with; it does not count as the student's own writing
+const STARTER_TEXT = new Set([
+  "Heading 1",
+  "Start typing your notes here. You can add LaTeX equations, callouts, and interactive widgets.",
+  "f(x) = x^2 - 4",
+  "e^{i\\pi} + 1 = 0",
+]);
+
+// Last progress signature per note, so typing does not report the same note over and over
+const reportedNotes = new Map();
+
+/** Tells the task system what this note now contains (tasks 38–41, onboarding "first note"). */
+function reportNoteProgress(note) {
+  const blocks = Array.isArray(note.blocks) ? note.blocks : [];
+  const written = (b) => typeof b.content === "string" && b.content.trim() !== "" && !STARTER_TEXT.has(b.content.trim());
+  const details = {
+    blocks: blocks.filter((b) => b.type === "widget" || b.type === "quiz" || b.type === "ink" || written(b)).length,
+    hasMath: blocks.some((b) => b.type === "math" && written(b)),
+    hasWidget: blocks.some((b) => b.type === "widget"),
+    hasQuiz: blocks.some((b) => b.type === "quiz"),
+  };
+  if (details.blocks === 0) return;
+  const signature = JSON.stringify(details);
+  if (reportedNotes.get(note.id) === signature) return;
+  reportedNotes.set(note.id, signature);
+  recordActivity("note.saved", details);
+}
+
+export function saveSingleNote(updatedNote, { report = true } = {}) {
+  if (report) reportNoteProgress(updatedNote);
   const existing = getNotes();
   const index = existing.findIndex((n) => n.id === updatedNote.id);
   const noteToSave = {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import KaTeXRenderer from './KaTeXRenderer';
 import { LuCheck, LuChevronDown, LuEye, LuHelpCircle, LuPencil, LuPlus, LuRotateCcw, LuTrash2, LuX } from 'react-icons/lu';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, FIELD, FIELD_INPUT, ICON_BTN, LABEL, Segmented } from './ui';
+import { recordActivity } from '@/app/utils/activity';
 
 export default function QuizBlock({ block, onUpdate, menuButton = null }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -64,7 +65,10 @@ export default function QuizBlock({ block, onUpdate, menuButton = null }) {
     const correct = selectedOption === config.correctOptionIndex;
     setIsCorrect(correct);
     setHasSubmitted(true);
-    if (correct) setShowExplanation(true);
+    if (correct) {
+      setShowExplanation(true);
+      recordActivity('quiz.correct', { blockId: block?.id });
+    }
   };
 
   const handleSubmitNumeric = () => {
@@ -75,7 +79,10 @@ export default function QuizBlock({ block, onUpdate, menuButton = null }) {
     const correct = Math.abs(val - target) <= tol;
     setIsCorrect(correct);
     setHasSubmitted(true);
-    if (correct) setShowExplanation(true);
+    if (correct) {
+      setShowExplanation(true);
+      recordActivity('quiz.correct', { blockId: block?.id });
+    }
   };
 
   const handleReset = () => {

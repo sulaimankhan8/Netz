@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -13,6 +14,7 @@ const FixedPointMethod = () => {
   const [initialGuess, setInitialGuess] = useState('1.5');
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
+  useRecordSolve('fixed-point', 1, result, () => ({ fn: functionInput }));
   const [iterationSteps, setIterationSteps] = useState([]);
   const [error, setError] = useState('');
   const [demoInProgress, setDemoInProgress] = useState(false);

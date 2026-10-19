@@ -1,4 +1,5 @@
 'use client';
+import { useRecordSolve } from '@/app/utils/activity';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -15,6 +16,7 @@ const ZTestSolver = () => {
   const [sampleSize, setSampleSize] = useState(50);
 
   const [result, setResult] = useState(null);
+  useRecordSolve('z-test', 5, result);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all'); // 'all' | 'table' | 'steps'
