@@ -7,8 +7,11 @@ import useAccount from '@/app/utils/progress/useAccount';
 import { markOnboardingSeen, PROGRESS_EVENT } from '@/app/utils/progress/engine';
 import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, STREAK_MEDALS, TASKS, MAX_FREEZES } from '@/app/utils/progress/catalog';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
-import { FlameIcon, GemIcon, MedalBadge, MedalIcon, RobotHead, SunsetBandsBanner } from '@/app/components/mascot/art';
+import { FlameIcon, GemIcon, MedalBadge, MedalIcon, RobotHead } from '@/app/components/mascot/art';
 import OnboardingDialog from './OnboardingDialog';
+import ShopDialog from './ShopDialog';
+import Banner from '@/app/components/mascot/banners';
+import { equippedBanner } from '@/app/utils/progress/shop';
 import { PF_FONT } from './fonts';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -38,10 +41,10 @@ function Hex({ group, size = 36 }) {
 
 /* ---------------- sections ---------------- */
 
-function Header({ summary, robotName, signedIn }) {
+function Header({ summary, robotName, signedIn, bannerId, onOpenShop }) {
   return (
     <section className="pf-card overflow-hidden">
-      <SunsetBandsBanner height={180} className="md:h-[200px]" />
+      <Banner id={bannerId} height={180} className="md:h-[200px]" />
       <div className="flex flex-wrap items-start gap-4 md:gap-6 px-4 md:px-8 pb-6 pt-3">
         <div className="relative z-[1] -mt-14 md:-mt-16 flex h-[96px] w-[96px] md:h-[120px] md:w-[120px] flex-none items-center justify-center rounded-full border-[5px] border-[var(--pf-surface)] bg-[#132034]">
           <RobotHead size={76} title={robotName ? `Your robot, ${robotName}` : 'Your robot'} />
@@ -60,8 +63,8 @@ function Header({ summary, robotName, signedIn }) {
           </ul>
         </div>
         <div className="flex gap-2 self-end">
-          <button type="button" disabled className={BTN_SOON} title="Banners come with the shop">Change banner · soon</button>
-          <button type="button" disabled className={BTN_SOON} title="The shop opens with accounts">Shop · soon</button>
+          <button type="button" className={BTN_QUIET} onClick={() => onOpenShop('banners')}>Change banner</button>
+          <button type="button" className={BTN_MAIN} onClick={() => onOpenShop('banners')}>Shop</button>
         </div>
       </div>
     </section>
@@ -353,7 +356,7 @@ function AllTasks({ state, className }) {
   );
 }
 
-function Gems({ summary, className }) {
+function Gems({ summary, className, onOpenShop }) {
   return (
     <section className={`pf-card p-5 md:p-6 flex flex-col gap-3 ${className}`} aria-labelledby="pf-gems">
       <h2 id="pf-gems" className="sr-only">Gems</h2>
@@ -366,7 +369,7 @@ function Gems({ summary, className }) {
       <div className="h-2 overflow-hidden rounded-full bg-[var(--pf-tray)]" aria-hidden="true">
         <div className="h-full bg-[#FBAE3D]" style={{ width: `${Math.min(100, (summary.gemsToday / GEMS.dailyCap) * 100)}%` }} />
       </div>
-      <button type="button" disabled className={BTN_SOON}>Shop for skins, banners and freezes · soon</button>
+      <button type="button" className={BTN_QUIET} onClick={() => onOpenShop('banners')}>Open shop: banners, streak freezes, skins</button>
     </section>
   );
 }
@@ -436,6 +439,8 @@ export default function ProfileView() {
   const snap = useProgress();
   const account = useAccount();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  // Which shop tab is open, or null when the shop is closed
+  const [shopTab, setShopTab] = useState(null);
 
   // First visit: open the onboarding by itself once
   useEffect(() => {
@@ -459,7 +464,7 @@ export default function ProfileView() {
           <div className="pf-card h-[320px]" aria-busy="true" aria-label="Loading your profile" />
         ) : (
           <>
-            <Header summary={snap.summary} robotName={snap.state.robotName} signedIn={!!account.user} />
+            <Header summary={snap.summary} robotName={snap.state.robotName} signedIn={!!account.user} bannerId={equippedBanner(snap.state)} onOpenShop={setShopTab} />
             <GettingStarted state={snap.state} onMeetRobot={() => setOnboardingOpen(true)} account={account} />
             <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start">
               <div className="contents lg:flex lg:flex-col lg:gap-6">
@@ -469,7 +474,7 @@ export default function ProfileView() {
               </div>
               <div className="contents lg:flex lg:flex-col lg:gap-6">
                 <Streak state={snap.state} summary={snap.summary} today={snap.today} className="order-2" />
-                <Gems summary={snap.summary} className="order-5" />
+                <Gems summary={snap.summary} className="order-5" onOpenShop={setShopTab} />
                 <Pro className="order-6" />
                 <SaveProgress account={account} className="order-7" />
               </div>
@@ -477,6 +482,9 @@ export default function ProfileView() {
           </>
         )}
       </main>
+      {shopTab && snap && (
+        <ShopDialog state={snap.state} account={account} initialTab={shopTab} onClose={() => setShopTab(null)} />
+      )}
       {onboardingOpen && snap && (
         <OnboardingDialog
           initial={{ robotName: snap.state.robotName, displayName: snap.state.displayName, units: snap.state.units }}

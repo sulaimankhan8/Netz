@@ -69,6 +69,42 @@ export function flushSoon(delay = FLUSH_DELAY_MS) {
   flushTimer = setTimeout(() => { flush(); }, delay);
 }
 
+/**
+ * Buys or wears a shop item on the server ('buy' | 'equip'). Sends the outbox first, so every gem
+ * earned on this device counts. Resolves to { ok, error? }.
+ */
+export async function shopAction(action, itemId) {
+  if (!currentAccount()) return { ok: false, error: 'signed_out' };
+  await flush();
+  let res;
+  try {
+    res = await fetch(`/api/shop/${action === 'equip' ? 'equip' : 'buy'}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId }),
+    });
+  } catch {
+    return { ok: false, error: 'offline' };
+  }
+  if (res.status === 401) {
+    setAccount(null);
+    return { ok: false, error: 'signed_out' };
+  }
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+  if (data.state) {
+    const remaining = read(OUTBOX_KEY, []);
+    remaining.forEach((a) => reduceActivity(data.state, a.kind, a.details, a.at));
+    replaceProgress(data.state);
+    window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind: `shop.${action}`, events: [] } }));
+  }
+  return res.ok ? { ok: true } : { ok: false, error: data.error || 'failed' };
+}
+
 /** Sends the outbox now. Resolves to true when the server's state was taken. */
 export async function flush() {
   if (inFlight) return inFlight;

@@ -420,6 +420,12 @@ CREATE TABLE entitlements (        -- is this user Pro / ad-free right now?
 - A device that signs in to an account that already has progress takes the account's progress; what that device
   did while signed out is not merged (it is only uploaded on an account's very first sync).
 
+**Shop (step 4), built 2026-10-19:** `utils/progress/shop.js` (prices, buy, wear; pure), `api/shop/buy` + `api/shop/equip`
+through `db/progressStore.js` (row lock + `gem_ledger`), `components/mascot/banners.js` (all 8 banners), `Profile/ShopDialog.js`
+(Banners, Streak freezes, Robot skins "being drawn"). The Profile header shows the worn banner. Buying needs sign-in.
+Tests: `node test_shop.mjs` (11); `tests/db/sync-db.mjs` now 11, including two buys at once charging only once.
+Next: the robot skins need an art board first; Notes covers can reuse `Banner`.
+
 **Owner setup (all free), then sign-in works:**
 1. supabase.com → New project, region **Mumbai (ap-south-1)**, free plan. Save the database password.
 2. SQL editor → paste and run `supabase/migrations/20261019000000_progress.sql`.

@@ -90,6 +90,28 @@ await Promise.all([
 const [row3] = await db.select().from(progress).where(eq(progress.userId, userId));
 expect('parallel syncs both kept', row3.state.tasksFirstDone['unit1.secant'] && row3.state.tasksFirstDone['unit4.lu']);
 
+// Shop: the same row lock as src/db/progressStore.js; two buys at once must charge only once
+const { buyItem } = await import(`file://${root}/src/app/utils/progress/shop.js`);
+const { gemLedger } = schema;
+async function routeBuy(itemId) {
+  return db.transaction(async (tx) => {
+    const rows = await tx.select().from(progress).where(eq(progress.userId, userId)).for('update');
+    const state = rows[0].state;
+    const result = buyItem(state, itemId, Date.now());
+    if (!result.ok) return result;
+    await tx.insert(gemLedger).values({ userId, amount: result.ledger.amount, reason: result.ledger.reason });
+    await tx.update(progress).set({ state, updatedAt: sql`now()` }).where(eq(progress.userId, userId));
+    return result;
+  });
+}
+await db.execute(sql`update public.progress set state = jsonb_set(state, '{gems}', '300') where user_id = ${userId}`);
+const buys = await Promise.allSettled([routeBuy('banner.hex-net'), routeBuy('banner.hex-net')]);
+const wins = buys.filter((b) => b.status === 'fulfilled' && b.value.ok).length;
+const [afterBuy] = await db.select().from(progress).where(eq(progress.userId, userId));
+const spent = await db.select().from(gemLedger).where(eq(gemLedger.userId, userId));
+expect('parallel buys: one succeeds', wins === 1, String(wins));
+expect('parallel buys: charged once', afterBuy.state.gems === 50 && spent.length === 1, `${afterBuy.state.gems} gems, ${spent.length} ledger rows`);
+
 const rls = await client.unsafe("select relname, relrowsecurity from pg_class where relname in ('profiles','progress','activity_log','gem_ledger')");
 expect('row-level security on all 4 tables', rls.length === 4 && rls.every((r) => r.relrowsecurity));
 
