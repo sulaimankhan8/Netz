@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Tour from '../../components/tour/Tour';
+import { TOASTS_OFF_KEY } from '../../components/mascot/ProgressToast';
+import { PROGRESS_EVENT, resetProgress } from '../../utils/progress/engine';
 import { 
   FaSun, 
   FaMoon, 
@@ -12,6 +14,100 @@ import {
   FaShieldAlt,
   FaBell
 } from 'react-icons/fa';
+
+/** Task toasts on or off, and starting progress over (NETZ_LAUNCH_PLAN.md 2.8). */
+function ProgressSettings() {
+  const [toastsOn, setToastsOn] = useState(true);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+
+  useEffect(() => {
+    try {
+      setToastsOn(localStorage.getItem(TOASTS_OFF_KEY) !== '1');
+    } catch {
+      setToastsOn(true);
+    }
+  }, []);
+
+  const toggleToasts = () => {
+    const next = !toastsOn;
+    setToastsOn(next);
+    try {
+      if (next) localStorage.removeItem(TOASTS_OFF_KEY);
+      else localStorage.setItem(TOASTS_OFF_KEY, '1');
+    } catch {
+      // Storage blocked: the switch still works for this visit
+    }
+  };
+
+  const handleReset = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    resetProgress();
+    window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind: 'progress.reset', events: [] } }));
+    setConfirmReset(false);
+    setResetDone(true);
+    setTimeout(() => setResetDone(false), 3000);
+  };
+
+  return (
+    <section className="bg-white dark:bg-[#1c1c1c] border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm space-y-5">
+      <div className="flex items-center space-x-3 text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-4">
+        <div className="p-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+          <FaBell className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
+        </div>
+        <div>
+          <h2 className="text-base font-bold">Tasks, streaks and medals</h2>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Your progress is kept on this device.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 id="set-toasts" className="text-sm font-bold text-neutral-900 dark:text-white">Show the robot when you finish a task</h3>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">A short message at the bottom of the screen with the medal or gems you earned.</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={toastsOn}
+          aria-labelledby="set-toasts"
+          onClick={toggleToasts}
+          className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${toastsOn ? 'bg-amber-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}
+        >
+          <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${toastsOn ? 'left-7' : 'left-1'}`} />
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-5">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Start progress over</h3>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+            {resetDone ? 'Done. Your tasks, streak, gems and medals start from zero.' : 'Removes your tasks, streak, gems and medals on this device. Notes are not touched. If you are signed in, your account keeps its progress and it comes back here.'}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {confirmReset && (
+            <button type="button" onClick={() => setConfirmReset(false)} className="min-h-[44px] px-4 rounded-xl text-sm font-bold border border-neutral-200 dark:border-neutral-700">
+              Cancel
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleReset}
+            className={`min-h-[44px] px-4 rounded-xl text-sm font-bold ${confirmReset ? 'bg-red-600 text-white' : 'border border-red-300 text-red-700 dark:border-red-900 dark:text-red-400'}`}
+          >
+            {confirmReset ? 'Yes, start over' : 'Reset progress'}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function SettingsPage() {
   const [theme, setTheme] = useState('dark');
@@ -150,6 +246,8 @@ export default function SettingsPage() {
 
           </div>
         </section>
+
+        <ProgressSettings />
 
         {/* Preferences Summary Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { loadProgress, localDay, progressSummary, PROGRESS_EVENT, saveProfile, STORAGE_KEY } from './engine.js';
+import { flushSoon, queueActivity } from './cloudSync.js';
 
 /**
  * The student's progress, kept up to date: after any task (PROGRESS_EVENT), when another tab
@@ -45,7 +46,9 @@ export default function useProgress() {
 
 /** Saves onboarding answers and tells the toast and every progress view. */
 export function completeOnboarding(profile) {
-  const { events } = saveProfile(profile);
+  const { events, skipped } = saveProfile(profile);
+  if (skipped === false) queueActivity('robot.named', {});
+  else flushSoon();
   window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind: 'robot.named', events } }));
   return events;
 }

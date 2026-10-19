@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import useProgress from '@/app/utils/progress/useProgress';
+import useAccount from '@/app/utils/progress/useAccount';
 import { markOnboardingSeen, PROGRESS_EVENT } from '@/app/utils/progress/engine';
 import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, STREAK_MEDALS, TASKS, MAX_FREEZES } from '@/app/utils/progress/catalog';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
@@ -37,7 +38,7 @@ function Hex({ group, size = 36 }) {
 
 /* ---------------- sections ---------------- */
 
-function Header({ summary, robotName }) {
+function Header({ summary, robotName, signedIn }) {
   return (
     <section className="pf-card overflow-hidden">
       <SunsetBandsBanner height={180} className="md:h-[200px]" />
@@ -49,7 +50,7 @@ function Header({ summary, robotName }) {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="pf-display m-0 text-[26px] md:text-[32px] font-semibold">{summary.displayName || 'Your profile'}</h1>
             <span className="text-[14px] text-[var(--pf-text2)]">
-              {robotName ? `Robot: ${robotName}` : 'Robot not named yet'} · saved on this device
+              {robotName ? `Robot: ${robotName}` : 'Robot not named yet'} · {signedIn ? 'saved to your account' : 'saved on this device'}
             </span>
           </div>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Your progress">
@@ -67,7 +68,7 @@ function Header({ summary, robotName }) {
   );
 }
 
-function GettingStarted({ state, onMeetRobot }) {
+function GettingStarted({ state, onMeetRobot, account }) {
   const done = ONBOARDING.filter((s) => state.onboarding[s.id]).length;
   if (done === ONBOARDING.length) return null;
   return (
@@ -84,7 +85,7 @@ function GettingStarted({ state, onMeetRobot }) {
       <ol className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-5">
         {ONBOARDING.map((step) => {
           const isDone = !!state.onboarding[step.id];
-          const soon = step.id === 'onboard.account';
+          const soon = step.id === 'onboard.account' && !account.configured;
           return (
             <li key={step.id} className="flex items-center gap-3 rounded-2xl bg-[var(--pf-tray)] p-3">
               <MedalBadge family="onboarding" earned={isDone} size={40} label={`${step.medal}${isDone ? ', earned' : ', not earned yet'}`} />
@@ -386,12 +387,45 @@ function Pro({ className }) {
   );
 }
 
-function SaveProgress({ className }) {
+function SaveProgress({ account, className }) {
+  const { configured, user, loading, signIn, signOut } = account;
+  const [busy, setBusy] = useState(false);
+
+  if (user) {
+    return (
+      <section className={`pf-card p-5 md:p-6 flex flex-col gap-3 ${className}`} aria-labelledby="pf-save">
+        <h2 id="pf-save" className="pf-display m-0 text-[20px] font-semibold">Saved to your account</h2>
+        <p className="m-0 text-[14px] leading-relaxed text-[var(--pf-text2)]">
+          Signed in as <span className="font-semibold text-[var(--pf-ink)]">{user.email}</span>. Your medals, streak and gems are kept safe and follow you to every device you sign in on.
+        </p>
+        <button type="button" className={BTN_QUIET} onClick={signOut}>Sign out</button>
+      </section>
+    );
+  }
+
+  const start = async () => {
+    setBusy(true);
+    try {
+      await signIn();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <section className={`pf-card p-5 md:p-6 flex flex-col gap-3 ${className}`} aria-labelledby="pf-save">
       <h2 id="pf-save" className="pf-display m-0 text-[20px] font-semibold">Save your progress</h2>
-      <p className="m-0 text-[14px] leading-relaxed text-[var(--pf-text2)]">Your medals, streak and gems live on this device. Accounts are coming soon, so you can keep them safe and use them on other devices.</p>
-      <button type="button" disabled className={BTN_SOON}>Continue with Google · soon</button>
+      <p className="m-0 text-[14px] leading-relaxed text-[var(--pf-text2)]">
+        Your medals, streak and gems live on this device. Sign in to keep them safe and use them on your other devices. What you have earned here comes with you.
+      </p>
+      {configured ? (
+        <button type="button" className={`${BTN} border border-[var(--pf-line)] bg-white text-[#141415] hover:brightness-95`} onClick={start} disabled={busy || loading}>
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+          {busy ? 'Opening Google…' : 'Continue with Google'}
+        </button>
+      ) : (
+        <button type="button" disabled className={BTN_SOON}>Continue with Google · soon</button>
+      )}
     </section>
   );
 }
@@ -400,6 +434,7 @@ function SaveProgress({ className }) {
 
 export default function ProfileView() {
   const snap = useProgress();
+  const account = useAccount();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   // First visit: open the onboarding by itself once
@@ -424,8 +459,8 @@ export default function ProfileView() {
           <div className="pf-card h-[320px]" aria-busy="true" aria-label="Loading your profile" />
         ) : (
           <>
-            <Header summary={snap.summary} robotName={snap.state.robotName} />
-            <GettingStarted state={snap.state} onMeetRobot={() => setOnboardingOpen(true)} />
+            <Header summary={snap.summary} robotName={snap.state.robotName} signedIn={!!account.user} />
+            <GettingStarted state={snap.state} onMeetRobot={() => setOnboardingOpen(true)} account={account} />
             <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start">
               <div className="contents lg:flex lg:flex-col lg:gap-6">
                 <Today summary={snap.summary} className="order-1" />
@@ -436,7 +471,7 @@ export default function ProfileView() {
                 <Streak state={snap.state} summary={snap.summary} today={snap.today} className="order-2" />
                 <Gems summary={snap.summary} className="order-5" />
                 <Pro className="order-6" />
-                <SaveProgress className="order-7" />
+                <SaveProgress account={account} className="order-7" />
               </div>
             </div>
           </>

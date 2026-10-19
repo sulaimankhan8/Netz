@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import EditorialSidebar from './editorial/EditorialSidebar';
 import NavBar from './NavBar';
 import ProgressToast from './mascot/ProgressToast';
+import CloudSync from './CloudSync';
 
 const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -54,6 +55,7 @@ const Layout = ({ children }) => {
         {children}
       </div>
       <ProgressToast />
+      <CloudSync />
     </div>
   );
 };

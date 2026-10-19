@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ALGORITHMS_CATALOG } from '../utils/algorithmRegistry';
 import { LuAlertTriangle, LuArrowLeftRight, LuCalculator, LuCheckCircle, LuExternalLink } from 'react-icons/lu';
 import { BTN_MAIN, FIELD, FIELD_INPUT, ICON_BTN, LABEL } from './ui';
+import { recordActivity } from '@/app/utils/activity';
 
 // Sentence-case labels for the solvers' inputs (the rest are spelled out from their names)
 const PARAM_LABELS = {
@@ -35,6 +36,36 @@ const PARAM_LABELS = {
   alpha: 'Significance level α',
   points: 'Points'
 };
+
+// Widget algorithm ids → the method ids tasks use (utils/progress/catalog.js); same as the id when absent
+const TASK_METHOD = {
+  'secant-method': 'secant',
+  'lagrange-interpolation': 'lagrange',
+  'simpson-1-3': 'simpson-13',
+  'simpson-3-8': 'simpson-38',
+  'boole-rule': 'boole',
+  'weddle-rule': 'weddle',
+  'jacobi-method': 'jacobi',
+  'lu-decomposition': 'lu',
+  'taylor-series': 'taylor',
+  rk4: 'runge-kutta',
+  'fitting-straight-lines': 'straight-line',
+  'fitting-parabola': 'parabola',
+};
+
+/** What a widget solve tells the task system (function, limits, number of points). */
+function solveDetails(alg, params) {
+  const unit = Number(String(alg.unit).match(/\d/)?.[0]) || undefined;
+  const details = { method: TASK_METHOD[alg.id] || alg.id, unit };
+  if (params.expression) details.fn = String(params.expression);
+  if (params.a !== undefined && params.b !== undefined) {
+    details.a = String(params.a);
+    details.b = String(params.b);
+  }
+  const xs = params.xValues ?? params.points;
+  if (typeof xs === 'string') details.points = xs.split(/[;,]/).filter((s) => s.trim() !== '').length;
+  return details;
+}
 
 function paramLabel(key) {
   if (PARAM_LABELS[key]) return PARAM_LABELS[key];
@@ -78,6 +109,7 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
     try {
       const output = currentAlg.solve(params);
       setSolverOutput(output);
+      recordActivity('solver.run', solveDetails(currentAlg, params));
     } catch (err) {
       setErrorMsg(err.message || 'Calculation error. Please check parameter inputs.');
     } finally {

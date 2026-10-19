@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { applyActivity, PROGRESS_EVENT } from './progress/engine';
+import { queueActivity } from './progress/cloudSync';
 
 /**
  * Tells NETZ that the student did something that may finish a task (NETZ_LAUNCH_PLAN.md 2.6).
@@ -13,7 +14,8 @@ import { applyActivity, PROGRESS_EVENT } from './progress/engine';
 export function recordActivity(kind, details = {}) {
   if (typeof window === 'undefined') return [];
   try {
-    const { events } = applyActivity(kind, details);
+    const { events, skipped } = applyActivity(kind, details);
+    if (!skipped) queueActivity(kind, details);
     window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind, events } }));
     return events;
   } catch {

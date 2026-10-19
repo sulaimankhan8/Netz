@@ -194,11 +194,21 @@ function isRepeatOfLast(state, activity, now) {
  */
 export function applyActivity(kind, details = {}, now = Date.now()) {
   const state = loadProgress();
-  const today = localDay(new Date(now));
+  const result = reduceActivity(state, kind, details, now);
+  if (!result.skipped) saveProgress(result.state);
+  return result;
+}
+
+/**
+ * The engine itself, with no storage: changes `state` for one activity and returns what it earned.
+ * The device calls it through applyActivity; the server runs the same function on its own copy
+ * (api/progress/sync), so both always count the same way. `today` is the student's local day.
+ */
+export function reduceActivity(state, kind, details = {}, now = Date.now(), today = localDay(new Date(now))) {
   const activity = { kind, details };
   const events = [];
 
-  if (isRepeatOfLast(state, activity, now)) return { state, events };
+  if (isRepeatOfLast(state, activity, now)) return { state, events, skipped: true };
   state.activity.push({ key: `${kind}|${JSON.stringify(details)}`, kind, day: today, at: now });
 
   const recent = state.recentSolves.filter((r) => daysBetween(r.day, today) <= 7);
@@ -263,8 +273,17 @@ export function applyActivity(kind, details = {}, now = Date.now()) {
   }
 
   trimActivity(state, today);
-  saveProgress(state);
-  return { state, events };
+  return { state, events, skipped: false };
+}
+
+/** A fresh, empty progress record (the server's starting point for a new account). */
+export function newProgressState() {
+  return emptyState();
+}
+
+/** Replaces the device copy, e.g. with the server's true state after a sync. */
+export function replaceProgress(state) {
+  saveProgress({ ...emptyState(), ...state });
 }
 
 /**

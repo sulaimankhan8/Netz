@@ -232,7 +232,7 @@ localStorage key: netz_progress_v1
 - Onboarding: opens by itself on the first Profile visit (robot name, your name, units); units shape today's suggestions. Skipping keeps a "Getting started" card.
 - Nav chip (`components/mascot/ProgressChip.js`) in the side rail / open sidebar and the phone top bar; it is also the phone's way to Profile.
 - Year badge is now awarded (6 monthly medals; 2 in 2026).
-- Not yet: settings switches (toasts off, reset progress), and the Notes solver widget does not report solves.
+- Settings: "Tasks, streaks and medals" section (robot toast switch, reset progress with a second tap). The Notes solver widget now reports solves too. Step 2 is complete; next is step 3, the backend.
 
 1. `activity.js`, `progress/catalog.js` (all 50 + 5 tasks, 20 streak levels, monthly rule, gem amounts), `progress/engine.js` (counts tasks, streak, medals, gems; saves).
 2. Call `recordActivity` from algorithm pages, embedded widget, quiz block, note save/export, Playground convert / `=` / blocks / export.
@@ -287,17 +287,30 @@ After the owner decides, the rest is made in batches (medals first, because Prof
 
 ---
 
-## 4. Backend (Vercel + Neon)
+## 4. Backend (Vercel + Supabase, all free)
+
+> **Changed 2026-10-19:** the owner chose **Supabase on the free plan** instead of Neon, and wants
+> everything to stay free. The code stays on plain Postgres (Drizzle), so moving off Supabase later
+> (for example to Postgres on the Lightsail server already paid for) is a connection-string change.
 
 ### 4.1 Choices
 
-| Part | Choice | Cost to start |
+| Part | Choice | Cost |
 | :--- | :--- | :--- |
-| Server code | **Next.js route handlers in this app** (`src/app/api/...`), no separate server | $0 (same Vercel deploy) |
-| Database | **Neon PostgreSQL** (free tier) + Drizzle ORM | $0 |
-| Sign-in | **Google sign-in** first, email magic link second (no passwords to store) | $0 |
-| Rate limits | a Postgres table at first; Upstash Redis only if needed | $0 |
-| Later | move to the Lightsail VPS → `NETZ_VPS_DEPLOYMENT_LIGHTSAIL.md` | — |
+| Server code | **Next.js route handlers in this app** (`src/app/api/...`), no separate server | ₹0 (Vercel free) |
+| Database | **Supabase Postgres** (free plan, Mumbai region) through **Drizzle** + `postgres` driver on the pooler URL | ₹0 |
+| Sign-in | **Supabase Auth with Google** (no passwords stored) via `@supabase/ssr` cookies | ₹0 |
+| Note images (later) | Supabase Storage (1 GB free) | ₹0 |
+| Keep awake | GitHub Actions job pings the database daily, so a quiet week never pauses the free project | ₹0 |
+| Rate limits | a Postgres table / per-request caps; nothing paid | ₹0 |
+| If it ever outgrows free | Postgres on the existing Lightsail server → `NETZ_VPS_DEPLOYMENT_LIGHTSAIL.md` | ₹0 extra |
+
+Free-plan limits to watch (check supabase.com/pricing): about 500 MB database, 50,000 monthly sign-in users,
+1 GB storage, and a pause after about a week with no activity at all.
+
+**Security:** the browser only ever gets the public anon key. All tables have row-level security turned on
+with **no** policies, so the browser cannot read or write them directly; only our route handlers can,
+through the server-side database connection.
 
 > This project's Next.js version has breaking changes (see `AGENTS.md`). Before writing route handlers,
 > read `node_modules/next/dist/docs/` (route handlers, server functions, caching; middleware is now called `proxy`).
@@ -313,8 +326,16 @@ its activities; the server checks them and replies with the true numbers.
 
 ### 4.3 Tables
 
-Keep the old plan's `users`, `profiles` (without `total_xp`, `current_level`, `rank_title`), `notes`, `note_forks`, `subscriptions`.
-**Delete** `xp_transactions`. **Add**:
+**As built (2026-10-19), simpler than the sketch below:** the server runs the *same* engine as the device
+(`utils/progress/engine.js`, pure `reduceActivity`), so the true progress is one JSON record per user that only
+the server writes. Tables (`src/db/schema.js`, migration in `supabase/migrations/`):
+
+- `profiles` (user id from Supabase Auth, display name, robot name, created)
+- `progress` (user id, `state` JSONB, `version`, `updated_at`) — the server's copy of the engine state
+- `activity_log` (user id, kind, details JSONB, local day, received at) — every reported activity, for audits and re-counts
+- `gem_ledger` (user id, amount, reason, created) — shop spending and later Razorpay/ad rewards; unique reason per user
+
+Notes, public notes and entitlements are added in their own rounds. The longer sketch below is kept for reference:
 
 ```sql
 CREATE TABLE activity (            -- what the device reported (kept 60 days)
@@ -389,7 +410,27 @@ CREATE TABLE entitlements (        -- is this user Pro / ad-free right now?
 
 ### 4.5 Build steps
 
-1. Neon project, Drizzle, tables, `.env` keys (never committed).
+**Progress 2026-10-19:** steps 2 and 3 are built and tested; they switch on when the keys are set.
+- Code: `src/db/` (Drizzle schema + pooled connection), `supabase/migrations/20261019000000_progress.sql`,
+  `src/lib/supabase/` (browser + server clients), `src/proxy.js` (session refresh, only with a Supabase cookie),
+  `app/auth/callback`, `app/api/progress/sync`, `app/api/health`, `utils/progress/syncCore.js` (pure server counting),
+  `cloudSync.js` (outbox + sync), `useAccount.js`, `components/CloudSync.js`; Profile's account card and sign-out.
+- Tests: `node test_progress_sync.mjs` (18), `node test_progress_engine.mjs` (25), `tests/db/sync-db.mjs` against
+  Postgres in Docker (9: migration, row lock, parallel syncs, row-level security).
+- A device that signs in to an account that already has progress takes the account's progress; what that device
+  did while signed out is not merged (it is only uploaded on an account's very first sync).
+
+**Owner setup (all free), then sign-in works:**
+1. supabase.com → New project, region **Mumbai (ap-south-1)**, free plan. Save the database password.
+2. SQL editor → paste and run `supabase/migrations/20261019000000_progress.sql`.
+3. Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application). Authorised redirect URI:
+   the callback URL Supabase shows under Authentication → Providers → Google. Paste the client ID and secret there and enable Google.
+4. Supabase → Authentication → URL configuration: Site URL = the live site; Redirect URLs = `http://localhost:3210/auth/callback`
+   and `https://<live site>/auth/callback`.
+5. `Netz/.env.local` from `.env.example` (URL, publishable key, pooler `DATABASE_URL`); the same three in Vercel → Settings → Environment Variables.
+6. GitHub repo → Settings → Secrets → Actions: `NETZ_SITE_URL` = the live site (for the daily keep-awake job).
+
+1. Supabase project (free, Mumbai), Drizzle, tables, `.env.local` keys (never committed).
 2. Google sign-in, session, `GET /api/me`, sign-in on Profile and Settings (finishes onboarding task 5).
 3. `progress/sync` with server counting and caps; first sign-in upload of device progress.
 4. Shop endpoints → open the shop in the app.
