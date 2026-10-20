@@ -104,7 +104,7 @@ const GaussJordan = () => {
       <div className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
-            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">MATRIX LABORATORY</span>
+            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">Matrix calculator</span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">Gauss-Jordan Elimination Engine</h3>
           </div>
           <div className="flex items-center gap-2">

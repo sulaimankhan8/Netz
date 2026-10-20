@@ -160,7 +160,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
             <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
-              BACKWARD INTERPOLATION LABORATORY
+              Backward interpolation calculator
             </span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">
               Newton Backward Interactive Engine
