@@ -7,6 +7,7 @@ import { BrushCleaning } from 'lucide-react';
 import { Dialog, TOUCH_TARGET } from './ui/Dialog';
 import { MENU_ROW, SECTION_LABEL, Segmented, SwitchRow, BTN_SECONDARY } from './ui/parts';
 import { UI } from '../utils/uiText';
+import useIsPro from '@/app/utils/useIsPro';
 
 const PAGE_BACKGROUNDS = [
   { value: 'dots', label: 'Dots' },
@@ -92,6 +93,7 @@ export default function PageMenu({
   onResetZoom,
   onFitToContent,
 }) {
+  const pro = useIsPro();
   const square = `w-11 h-11 ${TOUCH_TARGET} flex items-center justify-center rounded-xl bg-pg-tray text-pg-ink hover:bg-pg-line`;
   const more = isMobile ? <FiChevronRight className="w-4 h-4 ml-auto text-pg-muted" aria-hidden="true" /> : null;
 
@@ -171,11 +173,16 @@ export default function PageMenu({
         <div className="flex items-center gap-1.5 pl-3 pr-1 min-h-[48px]">
           <FiDownload className={icon} aria-hidden="true" />
           <span className="flex-1 ml-1.5 text-pg-body font-medium text-pg-ink">{UI.export}</span>
-          {['PNG', 'SVG', 'PDF'].map((format) => (
+          {['PNG', 'SVG', 'PDF'].map((format) => (format === 'SVG' && !pro ? (
+            // SVG comes with Pro: this opens Pricing in a new tab so the page stays as it is
+            <a key={format} href="/Pricing" target="_blank" rel="noopener" title="SVG export comes with NETZ Pro" aria-label="SVG export comes with NETZ Pro: see Pricing" className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
+              {format}<span className="text-[11px] font-bold">PRO</span>
+            </a>
+          ) : (
             <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={`Export this page as ${format}`} aria-label={`Export as ${format}`} className={`${BTN_SECONDARY} px-2.5`}>
               {format}
             </button>
-          ))}
+          )))}
         </div>
       )}
       {onOpenMusic && (

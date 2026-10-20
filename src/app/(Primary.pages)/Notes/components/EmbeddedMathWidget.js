@@ -136,9 +136,11 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
             <LuExternalLink className="w-[18px] h-[18px]" aria-hidden="true" />
           </a>
         )}
-        <button type="button" onClick={onOpenPicker} className={ICON_BTN} aria-label="Change algorithm" title="Change algorithm">
-          <LuArrowLeftRight className="w-[18px] h-[18px]" aria-hidden="true" />
-        </button>
+        {onOpenPicker && (
+          <button type="button" onClick={onOpenPicker} className={ICON_BTN} aria-label="Change algorithm" title="Change algorithm">
+            <LuArrowLeftRight className="w-[18px] h-[18px]" aria-hidden="true" />
+          </button>
+        )}
         {menuButton}
       </div>
 

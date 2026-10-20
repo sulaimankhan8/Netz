@@ -37,7 +37,7 @@ export default function GaussQuadraturePage() {
                 </h1>
 
                 <p className="text-base md:text-lg font-medium text-neutral-700 dark:text-neutral-300 max-w-3xl leading-relaxed">
-                  <strong>Gauss-Legendre Quadrature</strong> is a remarkably accurate numerical integration technique. With just <em>n</em> strategically placed points, it integrates polynomials of degree up to <InlineMath math="2n-1" /> <em>exactly</em> — making it far more efficient than Simpson's Rule or Trapezoidal for smooth functions.
+                  <strong>Gauss-Legendre Quadrature</strong> is a remarkably accurate numerical integration technique. With just <em>n</em> strategically placed points, it integrates polynomials of degree up to <InlineMath math="2n-1" /> <em>exactly</em> — making it far more efficient than Simpson’s Rule or Trapezoidal for smooth functions.
                 </p>
               </div>
 

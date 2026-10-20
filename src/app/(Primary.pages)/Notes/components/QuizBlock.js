@@ -6,7 +6,7 @@ import { LuCheck, LuChevronDown, LuEye, LuHelpCircle, LuPencil, LuPlus, LuRotate
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, FIELD, FIELD_INPUT, ICON_BTN, LABEL, Segmented } from './ui';
 import { recordActivity } from '@/app/utils/activity';
 
-export default function QuizBlock({ block, onUpdate, menuButton = null }) {
+export default function QuizBlock({ block, onUpdate, menuButton = null, canEdit = true }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -120,15 +120,17 @@ export default function QuizBlock({ block, onUpdate, menuButton = null }) {
         </span>
         <span className="text-[13px] font-semibold text-nt-quiz shrink-0">Quiz</span>
         <span className="flex-1 min-w-0 text-[13px] text-nt-text2 truncate">{config.mode === 'mcq' ? 'Multiple choice' : 'Number answer'}</span>
-        <button
-          type="button"
-          onClick={() => setIsEditing(!isEditing)}
-          className={`${isEditing ? BTN_SECONDARY : BTN_QUIET} !h-9 !px-3`}
-          title={isEditing ? 'See it as a student does' : 'Edit the question and answers'}
-        >
-          {isEditing ? <LuEye className="w-4 h-4" aria-hidden="true" /> : <LuPencil className="w-4 h-4" aria-hidden="true" />}
-          {isEditing ? 'Preview' : 'Edit'}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setIsEditing(!isEditing)}
+            className={`${isEditing ? BTN_SECONDARY : BTN_QUIET} !h-9 !px-3`}
+            title={isEditing ? 'See it as a student does' : 'Edit the question and answers'}
+          >
+            {isEditing ? <LuEye className="w-4 h-4" aria-hidden="true" /> : <LuPencil className="w-4 h-4" aria-hidden="true" />}
+            {isEditing ? 'Preview' : 'Edit'}
+          </button>
+        )}
         {menuButton}
       </div>
 

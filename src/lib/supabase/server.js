@@ -28,9 +28,14 @@ export async function getSupabaseServer() {
  * Null when nobody is signed in or Supabase is not set up.
  */
 export async function getSignedInUserId() {
+  return (await getSignedInUser())?.id || null;
+}
+
+/** The signed-in user's id and email (checked as above), or null. */
+export async function getSignedInUser() {
   const supabase = await getSupabaseServer();
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) return null;
-  return data.claims.sub;
+  return { id: data.claims.sub, email: typeof data.claims.email === 'string' ? data.claims.email : '' };
 }

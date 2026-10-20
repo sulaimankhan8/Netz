@@ -5,13 +5,22 @@ import Link from 'next/link';
 import useProgress from '@/app/utils/progress/useProgress';
 import useAccount from '@/app/utils/progress/useAccount';
 import { markOnboardingSeen, PROGRESS_EVENT } from '@/app/utils/progress/engine';
-import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, STREAK_MEDALS, TASKS, MAX_FREEZES } from '@/app/utils/progress/catalog';
+import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, PRO_REWARD_AT, PRO_SEASONS, PRO_TASKS, STREAK_MEDALS, TASKS, MAX_FREEZES } from '@/app/utils/progress/catalog';
+import useIsPro, { useProStatus } from '@/app/utils/useIsPro';
+import { refreshPro } from '@/app/utils/proClient';
+import { PLANS } from '@/app/utils/pricing';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
 import { FlameIcon, GemIcon, MedalBadge, MedalIcon, RobotHead } from '@/app/components/mascot/art';
 import OnboardingDialog from './OnboardingDialog';
+import AdSlot from '@/app/components/ads/AdSlot';
+import useAdsAllowed from '@/app/utils/ads/useAdsAllowed';
+import { AD_REWARD } from '@/app/utils/ads/adsPolicy';
+import { adRewardsLeft } from '@/app/utils/ads/adReward';
+import { REWARDED_UNIT, playRewarded } from '@/app/utils/ads/gpt';
+import { claimAdReward } from '@/app/utils/progress/cloudSync';
 import ShopDialog from './ShopDialog';
 import Banner from '@/app/components/mascot/banners';
-import { equippedBanner } from '@/app/utils/progress/shop';
+import { BANNER_BY_ID, SKIN_BY_ID, equippedBanner, equippedSkin } from '@/app/utils/progress/shop';
 import { PF_FONT } from './fonts';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -34,20 +43,20 @@ function formatDay(day) {
   return `${d} ${MONTHS[m - 1].slice(0, 3)} ${y}`;
 }
 
-function Hex({ group, size = 36 }) {
+function Hex({ group, id, size = 36 }) {
   const g = GROUPS[group] || GROUPS.unit1;
-  return <MedalBadge family="task" earned fill={g.fill} rim={g.rim} size={size} label="" />;
+  return <MedalBadge family="task" id={id} earned fill={g.fill} rim={g.rim} size={size} label="" />;
 }
 
 /* ---------------- sections ---------------- */
 
-function Header({ summary, robotName, signedIn, bannerId, onOpenShop }) {
+function Header({ summary, robotName, signedIn, bannerId, skinId, onOpenShop }) {
   return (
     <section className="pf-card overflow-hidden">
       <Banner id={bannerId} height={180} className="md:h-[200px]" />
       <div className="flex flex-wrap items-start gap-4 md:gap-6 px-4 md:px-8 pb-6 pt-3">
         <div className="relative z-[1] -mt-14 md:-mt-16 flex h-[96px] w-[96px] md:h-[120px] md:w-[120px] flex-none items-center justify-center rounded-full border-[5px] border-[var(--pf-surface)] bg-[#132034]">
-          <RobotHead size={76} title={robotName ? `Your robot, ${robotName}` : 'Your robot'} />
+          <RobotHead size={76} skin={skinId} title={robotName ? `Your robot, ${robotName}` : 'Your robot'} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -91,7 +100,7 @@ function GettingStarted({ state, onMeetRobot, account }) {
           const soon = step.id === 'onboard.account' && !account.configured;
           return (
             <li key={step.id} className="flex items-center gap-3 rounded-2xl bg-[var(--pf-tray)] p-3">
-              <MedalBadge family="onboarding" earned={isDone} size={40} label={`${step.medal}${isDone ? ', earned' : ', not earned yet'}`} />
+              <MedalBadge family="onboarding" id={step.id} earned={isDone} size={40} label={`${step.medal}${isDone ? ', earned' : ', not earned yet'}`} />
               <div className="min-w-0">
                 <div className="text-[14px] font-bold leading-snug">{step.medal}</div>
                 <div className="text-[12px] leading-snug text-[var(--pf-text2)]">{soon && !isDone ? 'Accounts are coming soon' : step.name}</div>
@@ -133,7 +142,7 @@ function Today({ summary, className }) {
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {summary.today.map((t) => (
           <li key={t.id} className="flex items-center gap-3 rounded-2xl bg-[var(--pf-tray)] p-3">
-            <Hex group={t.group} />
+            <Hex group={t.group} id={t.id} />
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-bold leading-snug">{t.name}</div>
               <div className="text-[13px] text-[var(--pf-text2)]">{t.medal} · {t.first ? 'first time, new medal' : 'repeat'}</div>
@@ -251,6 +260,7 @@ function MedalCase({ state, today, className }) {
             return { id, family: 'season', name: `${MONTHS[month - 1]} ${y}`, how: `Do tasks on ${MONTH_MEDAL_DAYS} days of ${MONTHS[month - 1]} · +${GEMS.monthMedal} gems`, earnedOn: state.medals[id] };
           }),
           { id: `year.${year}`, family: 'season', name: `${year} year badge`, how: year === String(LAUNCH.year) ? 'Earn 2 of the 3 monthly medals of 2026' : `Earn 6 monthly medals in ${year}`, earnedOn: state.medals[`year.${year}`] },
+          { id: `pro.${year}`, family: 'season', name: `${year} Pro medal`, how: `Pro members: finish the ${year} Pro tasks. Kept forever.`, earnedOn: state.medals[`pro.${year}`] },
         ],
       },
     };
@@ -291,13 +301,13 @@ function MedalCase({ state, today, className }) {
             aria-label={`${m.name}, ${m.earnedOn ? 'earned' : 'not earned yet'}`}
             className={`flex aspect-square items-center justify-center rounded-xl p-0.5 ${m.id === selected ? 'bg-[var(--pf-tray)] ring-2 ring-[#FBAE3D]' : ''}`}
           >
-            <MedalBadge family={m.family} earned={!!m.earnedOn} fill={m.fill} rim={m.rim} tier={m.tier} days={m.days} size={48} label="" />
+            <MedalBadge family={m.family} id={m.id} earned={!!m.earnedOn} fill={m.fill} rim={m.rim} tier={m.tier} days={m.days} size={48} label="" />
           </button>
         ))}
       </div>
       {current ? (
         <div className="flex items-center gap-4 rounded-2xl bg-[var(--pf-tray)] p-4" aria-live="polite">
-          <MedalBadge family={current.family} earned={!!current.earnedOn} fill={current.fill} rim={current.rim} tier={current.tier} days={current.days} size={80} label={current.name} />
+          <MedalBadge family={current.family} id={current.id} earned={!!current.earnedOn} fill={current.fill} rim={current.rim} tier={current.tier} days={current.days} size={80} label={current.name} />
           <div className="min-w-0 flex-1">
             <div className="pf-display text-[19px] font-semibold">{current.name}</div>
             <div className="text-[14px] text-[var(--pf-text2)]">{current.how}</div>
@@ -336,7 +346,7 @@ function AllTasks({ state, className }) {
                 const soon = t.id === 'sharing.publish';
                 return (
                   <li key={t.id} className="flex items-center gap-3 rounded-xl bg-[var(--pf-tray)] px-3 py-2">
-                    <MedalBadge family="task" earned={isDone} fill={g.fill} rim={g.rim} size={30} label="" />
+                    <MedalBadge family="task" id={t.id} earned={isDone} fill={g.fill} rim={g.rim} size={30} label="" />
                     <span className="min-w-0 flex-1 text-[14px]"><span className="font-semibold">{t.medal}</span> · {t.name}</span>
                     {isDone ? (
                       <span className="text-[13px] font-bold text-[var(--pf-done-ink)]">Done</span>
@@ -356,7 +366,42 @@ function AllTasks({ state, className }) {
   );
 }
 
-function Gems({ summary, className, onOpenShop }) {
+/** "Watch an ad, get gems" (NETZ_LAUNCH_PLAN.md 6.4): free accounts where ads are allowed, 3 a day. */
+function WatchAd({ state, today, signedIn }) {
+  const allowed = useAdsAllowed();
+  const [phase, setPhase] = useState('idle');
+  const [message, setMessage] = useState('');
+  if (!allowed || !REWARDED_UNIT || !signedIn) return null;
+  const left = adRewardsLeft(state, today);
+
+  const watch = async () => {
+    setPhase('playing');
+    setMessage('');
+    const result = await playRewarded();
+    if (result === 'granted') {
+      const claim = await claimAdReward();
+      setMessage(claim.ok ? `+${AD_REWARD.gems} gems. Thanks for watching!` : 'The gems could not be added just now. Please try again later.');
+    } else if (result === 'closed') {
+      setMessage('Watch to the end to get the gems.');
+    } else if (result === 'blocked') {
+      setMessage('The ad could not load. An ad blocker may be stopping it.');
+    } else {
+      setMessage('No ad is available right now. Try again later.');
+    }
+    setPhase('idle');
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button type="button" className={BTN_QUIET} onClick={watch} disabled={left === 0 || phase === 'playing'}>
+        {phase === 'playing' ? 'Loading the ad…' : left === 0 ? 'No more ad gems today' : `Watch an ad · +${AD_REWARD.gems} gems (${left} left today)`}
+      </button>
+      {message && <p className="m-0 text-[13px] text-[var(--pf-text2)]" role="status">{message}</p>}
+    </div>
+  );
+}
+
+function Gems({ summary, state, today, signedIn, className, onOpenShop }) {
   return (
     <section className={`pf-card p-5 md:p-6 flex flex-col gap-3 ${className}`} aria-labelledby="pf-gems">
       <h2 id="pf-gems" className="sr-only">Gems</h2>
@@ -370,22 +415,122 @@ function Gems({ summary, className, onOpenShop }) {
         <div className="h-full bg-[#FBAE3D]" style={{ width: `${Math.min(100, (summary.gemsToday / GEMS.dailyCap) * 100)}%` }} />
       </div>
       <button type="button" className={BTN_QUIET} onClick={() => onOpenShop('banners')}>Open shop: banners, streak freezes, skins</button>
+      <WatchAd state={state} today={today} signedIn={signedIn} />
     </section>
   );
 }
 
-function Pro({ className }) {
+/** The student's plan: what it is, when it renews or ends, and cancelling the renewal (plan 5.4 step 5). */
+function YourPlan({ userId }) {
+  const status = useProStatus();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  if (!status?.pro) return null;
+
+  const date = status.until ? formatDay(status.until.slice(0, 10)) : '';
+  const line = status.lifetime ? 'Pro for life. Nothing more to pay.'
+    : status.renews ? `Renews on ${date}.` : `Pro until ${date}. It will not renew.`;
+
+  const cancel = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/billing/cancel', { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'failed');
+      await refreshPro(userId, { force: true });
+      setMessage(`Cancelled. You keep Pro until ${date}.`);
+    } catch {
+      setMessage('Could not cancel just now. Please try again, or email us from the Contact page.');
+    } finally {
+      setBusy(false);
+      setConfirming(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl bg-[#1A2B45] p-4" aria-labelledby="pf-plan">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 id="pf-plan" className="m-0 text-[15px] font-bold">Your plan: Pro {PLANS[status.plan]?.label.toLowerCase() || ''}</h3>
+      </div>
+      <p className="m-0 text-[14px] text-[#D8D8DC]">{line}</p>
+      {status.renews && !confirming && (
+        <button type="button" className={`${BTN} self-start border border-[#2B4570] bg-transparent text-[#F4F4F2] hover:bg-[#2B4570]`} onClick={() => setConfirming(true)}>
+          Cancel renewal
+        </button>
+      )}
+      {status.renews && confirming && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[14px]">Stop renewing? You keep Pro until {date}.</span>
+          <button type="button" disabled={busy} className={`${BTN} bg-[#D55E64] text-white hover:brightness-105`} onClick={cancel}>{busy ? 'Cancelling…' : 'Yes, cancel'}</button>
+          <button type="button" disabled={busy} className={`${BTN} bg-transparent text-[#F4F4F2] hover:bg-[#2B4570]`} onClick={() => setConfirming(false)}>Keep it</button>
+        </div>
+      )}
+      {message && <p className="m-0 text-[13px] text-[#FBAE3D]" role="status">{message}</p>}
+      <p className="m-0 text-[12px] text-[#B4B4BA]">Refunds within 7 days of a first payment: see <Link href="/Refund" className="underline">Refunds</Link>.</p>
+    </div>
+  );
+}
+
+function Pro({ state, today, userId, className }) {
+  const pro = useIsPro();
+  const year = today.slice(0, 4);
+  const season = PRO_SEASONS[year];
+  // A year without a season yet still shows the student's plan
+  if (!season) {
+    return pro ? (
+      <section className={`rounded-[24px] border border-[#2B4570] bg-[#132034] p-5 md:p-6 text-[#F4F4F2] ${className}`} aria-label="NETZ Pro">
+        <YourPlan userId={userId} />
+      </section>
+    ) : null;
+  }
+  const tasks = PRO_TASKS.filter((t) => t.id.startsWith(`pro.${year}.`));
+  const done = state.proTasks?.[year] || {};
+  const count = tasks.filter((t) => done[t.id]).length;
+  const rewards = [
+    [`${BANNER_BY_ID[season.banner]?.name || 'Season'} banner`, PRO_REWARD_AT.banner],
+    [`${SKIN_BY_ID[season.skin]?.name || 'Season'} robot skin`, PRO_REWARD_AT.skin],
+    [`${year} Pro medal`, PRO_REWARD_AT.medal],
+  ];
   return (
     <section className={`rounded-[24px] border border-[#2B4570] bg-[#132034] p-5 md:p-6 flex flex-col gap-3 text-[#F4F4F2] ${className}`} aria-labelledby="pf-pro">
-      <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#FBAE3D]">Pro · Season 1 · Circuit</div>
-      <h2 id="pf-pro" className="pf-display m-0 text-[21px] font-semibold">10 Pro tasks each year</h2>
+      <YourPlan userId={userId} />
+      <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#FBAE3D]">Pro · Season 1 · {season.name}</div>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="pf-pro" className="pf-display m-0 text-[21px] font-semibold">{tasks.length} Pro tasks in {year}</h2>
+        <span className="pf-display font-semibold text-[#B4B4BA]">{count}/{tasks.length}</span>
+      </div>
+      <span className="h-2.5 overflow-hidden rounded-full bg-[#2B4570]" aria-hidden="true">
+        <span className="block h-full rounded-full bg-[#FBAE3D]" style={{ width: `${(count / tasks.length) * 100}%` }} />
+      </span>
       <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[14px]">
-        <li className="flex justify-between"><span>Circuit Night banner</span><span className="text-[#B4B4BA]">at 3</span></li>
-        <li className="flex justify-between"><span>Circuit robot skin</span><span className="text-[#B4B4BA]">at 6</span></li>
-        <li className="flex justify-between"><span>2026 Pro medal</span><span className="text-[#B4B4BA]">at 10</span></li>
+        {rewards.map(([name, at]) => (
+          <li key={name} className="flex justify-between">
+            <span>{name}</span>
+            <span className={count >= at ? 'font-bold text-[#FBAE3D]' : 'text-[#B4B4BA]'}>{count >= at ? 'Yours' : `at ${at}`}</span>
+          </li>
+        ))}
       </ul>
-      <p className="m-0 text-[13px] text-[#B4B4BA]">Kept forever, even after Pro ends.</p>
-      <button type="button" disabled className={`${BTN} cursor-not-allowed bg-[#2B4570] text-[#B4B4BA]`}>Pro is coming soon</button>
+      <details className="group">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between text-[14px] font-bold">
+          See the {tasks.length} tasks
+          <span className="text-[#B4B4BA] transition-transform group-open:rotate-90" aria-hidden="true">›</span>
+        </summary>
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 pb-1">
+          {tasks.map((t) => (
+            <li key={t.id} className="flex items-center gap-2 rounded-xl bg-[#1A2B45] px-3 py-2 text-[13px]">
+              <span className={done[t.id] ? 'text-[#86EFAC]' : 'text-[#6B7A99]'} aria-hidden="true">{done[t.id] ? '✓' : '○'}</span>
+              <span className="min-w-0 flex-1">{t.name}</span>
+              <span className="sr-only">{done[t.id] ? 'done' : 'not done yet'}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <p className="m-0 text-[13px] text-[#B4B4BA]">
+        {pro ? 'Pro tasks count while you have Pro. What you unlock is kept forever.' : 'For Pro members. What you unlock is kept forever, even after Pro ends.'}
+      </p>
+      {!pro && <Link href="/Pricing" className={`${BTN} bg-[#FBAE3D] text-[#141415] hover:brightness-105`}>See Pro plans</Link>}
     </section>
   );
 }
@@ -464,18 +609,20 @@ export default function ProfileView() {
           <div className="pf-card h-[320px]" aria-busy="true" aria-label="Loading your profile" />
         ) : (
           <>
-            <Header summary={snap.summary} robotName={snap.state.robotName} signedIn={!!account.user} bannerId={equippedBanner(snap.state)} onOpenShop={setShopTab} />
+            <Header summary={snap.summary} robotName={snap.state.robotName} signedIn={!!account.user} bannerId={equippedBanner(snap.state)} skinId={equippedSkin(snap.state)} onOpenShop={setShopTab} />
             <GettingStarted state={snap.state} onMeetRobot={() => setOnboardingOpen(true)} account={account} />
             <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start">
               <div className="contents lg:flex lg:flex-col lg:gap-6">
                 <Today summary={snap.summary} className="order-1" />
                 <MedalCase state={snap.state} today={snap.today} className="order-3" />
                 <AllTasks state={snap.state} className="order-4" />
+                {/* Profile's one ad, below the tasks (plan 6.2) */}
+                <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PROFILE} className="order-4" />
               </div>
               <div className="contents lg:flex lg:flex-col lg:gap-6">
                 <Streak state={snap.state} summary={snap.summary} today={snap.today} className="order-2" />
-                <Gems summary={snap.summary} className="order-5" onOpenShop={setShopTab} />
-                <Pro className="order-6" />
+                <Gems summary={snap.summary} state={snap.state} today={snap.today} signedIn={!!account.user} className="order-5" onOpenShop={setShopTab} />
+                <Pro state={snap.state} today={snap.today} userId={account.user?.id || null} className="order-6" />
                 <SaveProgress account={account} className="order-7" />
               </div>
             </div>

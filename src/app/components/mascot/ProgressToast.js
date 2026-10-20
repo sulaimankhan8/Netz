@@ -3,13 +3,39 @@
 import { useEffect, useRef, useState } from 'react';
 import NetzRobot, { robotReact } from './NetzRobot';
 import { PROGRESS_EVENT } from '@/app/utils/progress/engine';
+import { GROUPS, PRO_TASKS, STREAK_MEDALS, TASK_BY_ID } from '@/app/utils/progress/catalog';
+import { BANNER_BY_ID, SKIN_BY_ID } from '@/app/utils/progress/shop';
+import { MedalBadge } from './medals';
 
 // Settings can switch these toasts off (NETZ_LAUNCH_PLAN.md 2.8)
 export const TOASTS_OFF_KEY = 'netz_progress_toasts_off';
 const SHOW_MS = 3600;
 
 // The most important thing earned is the one shown
-const RANK = { yearBadge: 7, monthMedal: 6, streakMedal: 5, onboarding: 4, taskFirst: 4, dailyGoal: 3, streakLost: 2, freezeUsed: 1, taskRepeat: 1 };
+const RANK = { proReward: 8, yearBadge: 7, monthMedal: 6, streakMedal: 5, proTask: 5, onboarding: 4, taskFirst: 4, dailyGoal: 3, streakLost: 2, freezeUsed: 1, proFreeze: 1, taskRepeat: 1 };
+
+/** The medal a toast shows next to the robot, when the event earned one. */
+function medalOf(event) {
+  switch (event.type) {
+    case 'taskFirst': {
+      const g = GROUPS[TASK_BY_ID[event.taskId]?.group];
+      return g ? { family: 'task', id: event.taskId, fill: g.fill, rim: g.rim } : null;
+    }
+    case 'onboarding':
+      return { family: 'onboarding', id: event.taskId };
+    case 'streakMedal': {
+      const m = STREAK_MEDALS.find((x) => x.id === event.medalId);
+      return m ? { family: 'streak', tier: m.tier, days: m.days } : null;
+    }
+    case 'monthMedal':
+    case 'yearBadge':
+      return { family: 'season', id: event.medalId };
+    case 'proReward':
+      return event.kind === 'medal' ? { family: 'season', id: event.itemId } : null;
+    default:
+      return null;
+  }
+}
 
 function describe(event) {
   switch (event.type) {
@@ -28,6 +54,15 @@ function describe(event) {
       return { mood: 'sad', title: 'Your streak ended', text: `It was ${event.was} days. Today starts a new one, and your medals stay.` };
     case 'freezeUsed':
       return { mood: 'wave', title: 'Streak saved', text: `A streak freeze covered the missed day${event.count > 1 ? 's' : ''}.` };
+    case 'proTask':
+      return { mood: 'cheer', title: `Pro task ${event.count} of ${PRO_TASKS.length} done`, text: event.name };
+    case 'proReward': {
+      const what = event.kind === 'banner' ? `${BANNER_BY_ID[event.itemId]?.name || 'New'} banner`
+        : event.kind === 'skin' ? `${SKIN_BY_ID[event.itemId]?.name || 'New'} robot skin` : `${event.year} Pro medal`;
+      return { mood: 'cheer', title: `Unlocked: ${what}!`, text: 'Earned with Pro tasks. Yours to keep, even after Pro ends.' };
+    }
+    case 'proFreeze':
+      return { mood: 'wave', title: 'A free streak freeze', text: 'Pro gives you one every month.' };
     case 'taskRepeat':
       return { mood: 'wave', title: event.name, text: event.gems ? `Done again today · +${event.gems} gems` : 'Done again today · gem limit reached for today' };
     default:
@@ -60,8 +95,9 @@ export default function ProgressToast() {
       const events = e.detail?.events || [];
       if (off || !events.length) return;
       const top = [...events].sort((a, b) => (RANK[b.type] || 0) - (RANK[a.type] || 0))[0];
-      const next = describe(top);
-      if (!next) return;
+      const text = describe(top);
+      if (!text) return;
+      const next = { ...text, medal: medalOf(top) };
       // Never while a pen or finger is on the page: wait for it to lift
       if (pointersDownRef.current > 0) pendingRef.current = next;
       else show(next);
@@ -104,6 +140,7 @@ export default function ProgressToast() {
           style={{ background: '#1E1E20', borderColor: '#34343A', color: '#F4F4F2' }}
         >
           <NetzRobot size={52} mood={toast.mood} listen={false} title="NETZ robot" />
+          {toast.medal && <span className="flex-none"><MedalBadge {...toast.medal} earned size={44} /></span>}
           <div className="min-w-0">
             <div className="text-[15px] font-bold leading-snug">{toast.title}</div>
             <div className="text-[13px] leading-snug" style={{ color: '#B4B4BA' }}>{toast.text}</div>

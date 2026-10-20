@@ -36,7 +36,7 @@ export default function JacobiMethodPage() {
                 </h1>
 
                 <p className="text-base md:text-lg font-medium text-neutral-700 dark:text-neutral-300 max-w-3xl leading-relaxed">
-                  The <strong>Jacobi Method</strong> is an iterative solver for systems <InlineMath math="Ax = b" />. Starting from an initial guess (typically <InlineMath math="x^{(0)} = 0" />), each variable is updated simultaneously using the previous iteration's values — converging when the matrix <InlineMath math="A" /> is <strong>strictly diagonally dominant</strong>.
+                  The <strong>Jacobi Method</strong> is an iterative solver for systems <InlineMath math="Ax = b" />. Starting from an initial guess (typically <InlineMath math="x^{(0)} = 0" />), each variable is updated simultaneously using the previous iteration’s values — converging when the matrix <InlineMath math="A" /> is <strong>strictly diagonally dominant</strong>.
                 </p>
               </div>
 

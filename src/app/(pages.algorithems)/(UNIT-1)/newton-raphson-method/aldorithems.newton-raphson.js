@@ -433,7 +433,7 @@ const NewtonRaphsonMethod = () => {
                       <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">Iter</th>
                       <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">x_n</th>
                       <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">f(x_n)</th>
-                      <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">f'(x_n)</th>
+                      <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">f′(x_n)</th>
                       <th className="p-3">x_{'{n+1}'}</th>
                     </tr>
                   </thead>

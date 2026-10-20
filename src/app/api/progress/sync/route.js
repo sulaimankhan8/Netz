@@ -4,6 +4,7 @@ import { getDb, isDatabaseConfigured } from '@/db';
 import { activityLog, profiles, progress } from '@/db/schema';
 import { getSignedInUserId } from '@/lib/supabase/server';
 import { syncProgress } from '@/app/utils/progress/syncCore';
+import { getProStatus } from '@/db/billingStore';
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -26,6 +27,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'bad_json' }, { status: 400 });
   }
 
+  const { pro } = await getProStatus(userId);
   const db = getDb();
   const result = await db.transaction(async (tx) => {
     // Lock this student's row so two tabs syncing at once cannot double-count
@@ -39,6 +41,7 @@ export async function POST(request) {
       profile: body.profile,
       tz: body.tz,
       now: Date.now(),
+      pro,
     });
 
     if (out.isNew) {

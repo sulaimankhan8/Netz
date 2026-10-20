@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ALGORITHMS_CATALOG } from '../Notes/utils/algorithmRegistry';
 import Tour from '../../components/tour/Tour';
+import AdSlot from '../../components/ads/AdSlot';
 import { 
   FaSearch, 
   FaCalculator, 
@@ -191,6 +192,8 @@ export default function AlgorithmsPage() {
                 );
               })}
             </div>
+            {/* The hub's one ad, after the list (plan 6.2) */}
+            <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HUB} />
           </div>
 
           {/* Active Interactive Solver Drawer */}

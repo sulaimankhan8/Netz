@@ -80,6 +80,7 @@ import DocBar from './DocBar';
 import { PreferencesDialog } from './PageMenu';
 import useSidebarRight from './ui/useSidebarRight';
 import { recordActivity } from '@/app/utils/activity';
+import { isProOnDevice } from '@/app/utils/proClient';
 
 // A function whose identity never changes but always runs the latest version: memoized blocks
 // skip re-rendering only while what they are given stays the same
@@ -1742,6 +1743,12 @@ export default function PlaygroundCanvasContainer() {
   // Exports the whole current page from its data (not a screenshot of the screen)
   const handleExportCanvas = async (format) => {
     if (!containerRef.current) return;
+    // SVG is a Pro export; Free PDFs carry a small NETZ mark (NETZ_LAUNCH_PLAN.md 5.1)
+    const pro = isProOnDevice();
+    if (format === 'SVG' && !pro) {
+      showNotice('SVG export comes with NETZ Pro. PNG and PDF are free.');
+      return;
+    }
     const pageTitle = pagesRef.current[currentPageIndexRef.current]?.title || 'page';
     const isDark = document.documentElement.classList.contains('dark');
     showNotice(`Preparing ${format}...`, 60000);
@@ -1753,6 +1760,7 @@ export default function PlaygroundCanvasContainer() {
       containerElement: containerRef.current,
       fileBaseName: `netz-${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page'}`,
       background: isDark ? '#09090B' : '#FFFFFF',
+      mark: !pro,
     });
     if (result.ok) {
       showNotice(`Saved ${result.fileName}`);

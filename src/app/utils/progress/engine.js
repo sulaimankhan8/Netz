@@ -7,8 +7,10 @@
  */
 
 import {
-  DAILY_GOAL_TASKS, GEMS, MAX_FREEZES, MONTH_MEDAL_DAYS, ONBOARDING, STREAK_MEDALS, TASKS, TASK_BY_ID,
+  DAILY_GOAL_TASKS, GEMS, MAX_FREEZES, MONTH_MEDAL_DAYS, ONBOARDING, PRO_REWARD_AT, PRO_SEASONS, PRO_TASKS, STREAK_MEDALS,
+  TASKS, TASK_BY_ID,
 } from './catalog.js';
+import { isProOnDevice } from '../proClient.js';
 
 export const STORAGE_KEY = 'netz_progress_v1';
 export const PROGRESS_EVENT = 'netz:progress';
@@ -36,6 +38,9 @@ const emptyState = () => ({
   units: [],
   onboardingSeen: false,
   daily: { date: null, ids: [] },
+  // Pro: tasks done per year ({ '2026': { taskId: day } }) and the month the free freeze was given
+  proTasks: {},
+  proFreezeMonth: '',
 });
 
 /* ---------- dates (the student's own local day) ---------- */
@@ -123,6 +128,51 @@ function advanceStreak(state, today, events) {
   });
 }
 
+/* ---------- Pro (NETZ_LAUNCH_PLAN.md 2.7 and 5.1) ---------- */
+
+/** Pro members get one free streak freeze each calendar month, given with their first activity. */
+function giveProFreeze(state, today, events) {
+  const month = today.slice(0, 7);
+  if (state.proFreezeMonth === month) return;
+  state.proFreezeMonth = month;
+  if (state.streak.freezes >= MAX_FREEZES) return;
+  state.streak.freezes += 1;
+  events.push({ type: 'proFreeze', month });
+}
+
+/** The year's Pro tasks, and the banner, skin and medal they unlock (kept forever). */
+function countProTasks(state, activity, today, recent, events) {
+  const year = today.slice(0, 4);
+  const season = PRO_SEASONS[year];
+  if (!season) return;
+  state.proTasks = state.proTasks || {};
+  const done = { ...(state.proTasks[year] || {}) };
+  PRO_TASKS.forEach((task) => {
+    if (!task.id.startsWith(`pro.${year}.`) || done[task.id]) return;
+    if (!task.check({ activity, state, today, recent })) return;
+    done[task.id] = today;
+    events.push({ type: 'proTask', taskId: task.id, name: task.name, count: Object.keys(done).length });
+  });
+  state.proTasks[year] = done;
+
+  const count = Object.keys(done).length;
+  const owned = { skins: [...(state.owned?.skins || [])], banners: [...(state.owned?.banners || [])] };
+  if (count >= PRO_REWARD_AT.banner && !owned.banners.includes(season.banner)) {
+    owned.banners.push(season.banner);
+    events.push({ type: 'proReward', kind: 'banner', itemId: season.banner, year });
+  }
+  if (count >= PRO_REWARD_AT.skin && !owned.skins.includes(season.skin)) {
+    owned.skins.push(season.skin);
+    events.push({ type: 'proReward', kind: 'skin', itemId: season.skin, year });
+  }
+  state.owned = { ...state.owned, ...owned };
+  const medalId = `pro.${year}`;
+  if (count >= PRO_REWARD_AT.medal && !state.medals[medalId]) {
+    state.medals[medalId] = today;
+    events.push({ type: 'proReward', kind: 'medal', itemId: medalId, year });
+  }
+}
+
 /* ---------- gems ---------- */
 
 /** Adds gems; capped ones (repeats, daily goal) stop at GEMS.dailyCap a day. Returns what was given. */
@@ -194,7 +244,8 @@ function isRepeatOfLast(state, activity, now) {
  */
 export function applyActivity(kind, details = {}, now = Date.now()) {
   const state = loadProgress();
-  const result = reduceActivity(state, kind, details, now);
+  // The device's idea of Pro is only a guess for the toast; the server re-counts with its own
+  const result = reduceActivity(state, kind, details, now, undefined, { pro: isProOnDevice() });
   if (!result.skipped) saveProgress(result.state);
   return result;
 }
@@ -204,12 +255,13 @@ export function applyActivity(kind, details = {}, now = Date.now()) {
  * The device calls it through applyActivity; the server runs the same function on its own copy
  * (api/progress/sync), so both always count the same way. `today` is the student's local day.
  */
-export function reduceActivity(state, kind, details = {}, now = Date.now(), today = localDay(new Date(now))) {
+export function reduceActivity(state, kind, details = {}, now = Date.now(), today = localDay(new Date(now)), { pro = false } = {}) {
   const activity = { kind, details };
   const events = [];
 
   if (isRepeatOfLast(state, activity, now)) return { state, events, skipped: true };
   state.activity.push({ key: `${kind}|${JSON.stringify(details)}`, kind, day: today, at: now });
+  if (pro) giveProFreeze(state, today, events);
 
   const recent = state.recentSolves.filter((r) => daysBetween(r.day, today) <= 7);
 
@@ -267,6 +319,8 @@ export function reduceActivity(state, kind, details = {}, now = Date.now(), toda
       }
     }
   }
+
+  if (pro) countProTasks(state, activity, today, recent, events);
 
   if (kind === 'solver.run') {
     state.recentSolves.push({ day: today, method: details.method, fn: details.fn, a: details.a, b: details.b });

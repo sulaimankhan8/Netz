@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './netzRobot.css';
+import { skinLook } from './skins';
+import { loadProgress, PROGRESS_EVENT } from '@/app/utils/progress/engine';
+import { DEFAULT_SKIN, equippedSkin } from '@/app/utils/progress/shop';
 
 /**
  * The NETZ robot, "Classic Calc" (NETZ_MEDALS_CATALOG.md, Mascot). Drawn as separate parts so it can
@@ -10,6 +13,8 @@ import './netzRobot.css';
  * Moods: idle, wave, think, press, cheer, surp, sad, sleep, wake.
  * Pass `mood` to hold one, or let it react: robotReact('cheer') anywhere in the app plays that
  * reaction on every robot with `listen` (the default).
+ *
+ * `skin` dresses it (shop skins, board artboard 13); without it the robot wears the student's own skin.
  */
 
 export const ROBOT_EVENT = 'netz:robot';
@@ -40,8 +45,10 @@ export default function NetzRobot({
   title = 'NETZ robot',
   className = '',
   style,
+  skin,
 }) {
   const [playing, setPlaying] = useState('idle');
+  const [worn, setWorn] = useState(DEFAULT_SKIN);
   const [eyes, setEyes] = useState({ x: 0, y: 0 });
   const rootRef = useRef(null);
   const timerRef = useRef(null);
@@ -70,6 +77,15 @@ export default function NetzRobot({
   }, []);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  // No skin given: wear the student's own, and change with it
+  useEffect(() => {
+    if (skin) return undefined;
+    const read = () => setWorn(equippedSkin(loadProgress()));
+    read();
+    window.addEventListener(PROGRESS_EVENT, read);
+    return () => window.removeEventListener(PROGRESS_EVENT, read);
+  }, [skin]);
 
   useEffect(() => {
     if (!listen) return undefined;
@@ -128,46 +144,50 @@ export default function NetzRobot({
   }, [trackPointer]);
 
   const eyeShift = mood === 'idle' ? eyes : { x: 0, y: 0 };
+  const look = skinLook(skin || worn);
+  const c = look.palette;
 
   return (
     <span ref={rootRef} className={`nr nr-${mood} ${className}`} style={{ display: 'inline-block', lineHeight: 0, ...style }}>
-      <svg width={size} height={Math.round(size * 260 / 240)} viewBox="0 0 240 260" role="img" aria-label={title}>
+      <svg width={size} height={Math.round(size * 290 / 240)} viewBox="0 -30 240 290" role="img" aria-label={title}>
         <ellipse cx="120" cy="248" rx="58" ry="8" fill="#000000" opacity="0.3" />
+        {look.under}
         <g className="nr-rig">
           <g className="nr-fx nr-fx-rays">
             <path d="M120 4 V16 M84 12 L90 22 M156 12 L150 22 M60 30 L70 36 M180 30 L170 36" stroke="#FBAE3D" strokeWidth="5" strokeLinecap="round" />
           </g>
-          <rect x="88" y="206" width="24" height="30" rx="11" fill="#46264D" />
-          <rect x="128" y="206" width="24" height="30" rx="11" fill="#46264D" />
-          <ellipse cx="99" cy="238" rx="18" ry="9" fill="#D55E64" />
-          <ellipse cx="141" cy="238" rx="18" ry="9" fill="#D55E64" />
+          <rect x="88" y="206" width="24" height="30" rx="11" fill={c.shade} />
+          <rect x="128" y="206" width="24" height="30" rx="11" fill={c.shade} />
+          <ellipse cx="99" cy="238" rx="18" ry="9" fill={c.hands} />
+          <ellipse cx="141" cy="238" rx="18" ry="9" fill={c.hands} />
           <g className="nr-arm-l">
-            <ellipse cx="70" cy="182" rx="13" ry="22" fill="#5E3463" transform="rotate(18 70 182)" />
-            <circle cx="63" cy="202" r="14" fill="#D55E64" />
+            <ellipse cx="70" cy="182" rx="13" ry="22" fill={c.arms} transform="rotate(18 70 182)" />
+            <circle cx="63" cy="202" r="14" fill={c.hands} />
           </g>
-          <rect x="74" y="146" width="92" height="74" rx="26" fill="#46264D" />
-          <rect x="72" y="144" width="90" height="70" rx="25" fill="#5E3463" />
+          <rect x="74" y="146" width="92" height="74" rx="26" fill={c.shade} />
+          <rect x="72" y="144" width="90" height="70" rx="25" fill={c.body} />
           {[160, 174, 188].map((y) => (
             <g key={y}>
-              <rect x="86" y={y} width="16" height="9" rx="4.5" fill="#2E1A33" />
-              <rect x="106" y={y} width="16" height="9" rx="4.5" fill="#2E1A33" />
+              <rect x="86" y={y} width="16" height="9" rx="4.5" fill={c.keys} />
+              <rect x="106" y={y} width="16" height="9" rx="4.5" fill={c.keys} />
             </g>
           ))}
           <g className="nr-eqkey">
-            <rect x="128" y="158" width="24" height="40" rx="8" fill="#F88F4A" />
+            <rect x="128" y="158" width="24" height="40" rx="8" fill={c.eqKey} />
             <path d="M134 172 H146 M134 183 H146" stroke="#F4F4F2" strokeWidth="4" strokeLinecap="round" />
           </g>
+          {look.body}
           <g className="nr-arm-r">
-            <ellipse cx="170" cy="182" rx="13" ry="22" fill="#5E3463" transform="rotate(-18 170 182)" />
-            <circle cx="177" cy="202" r="14" fill="#D55E64" />
+            <ellipse cx="170" cy="182" rx="13" ry="22" fill={c.arms} transform="rotate(-18 170 182)" />
+            <circle cx="177" cy="202" r="14" fill={c.hands} />
           </g>
           <g className="nr-head">
-            <ellipse cx="40" cy="94" rx="15" ry="24" fill="#F88F4A" />
-            <ellipse cx="36" cy="94" rx="7" ry="14" fill="#D55E64" />
-            <ellipse cx="200" cy="94" rx="15" ry="24" fill="#F88F4A" />
-            <ellipse cx="204" cy="94" rx="7" ry="14" fill="#D55E64" />
-            <rect x="50" y="38" width="146" height="116" rx="38" fill="#46264D" />
-            <rect x="44" y="32" width="146" height="114" rx="38" fill="#5E3463" />
+            <ellipse cx="40" cy="94" rx="15" ry="24" fill={c.ear} />
+            <ellipse cx="36" cy="94" rx="7" ry="14" fill={c.earInner} />
+            <ellipse cx="200" cy="94" rx="15" ry="24" fill={c.ear} />
+            <ellipse cx="204" cy="94" rx="7" ry="14" fill={c.earInner} />
+            <rect x="50" y="38" width="146" height="116" rx="38" fill={c.shade} />
+            <rect x="44" y="32" width="146" height="114" rx="38" fill={c.body} stroke={c.headStroke || undefined} strokeWidth={c.headStroke ? 3 : undefined} />
             <path d="M70 40 C78 36 90 35 104 35" stroke="#8A4C8C" strokeWidth="5" fill="none" strokeLinecap="round" />
             <rect className="nr-screen" x="62" y="50" width="112" height="80" rx="26" fill="#141012" />
 
@@ -223,6 +243,7 @@ export default function NetzRobot({
               <text x="192" y="28" fontFamily="inherit" fontWeight="700" fontSize="20" fill="#F88F4A">z</text>
               <text x="206" y="14" fontFamily="inherit" fontWeight="700" fontSize="24" fill="#F88F4A">Z</text>
             </g>
+            {look.head}
           </g>
         </g>
       </svg>

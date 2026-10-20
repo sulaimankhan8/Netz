@@ -6,6 +6,8 @@ import '../styles/globals.css';
 import './primary.css';
 import Layout from '../components/layout'; 
 import Script from 'next/script';
+import AdsenseScript from '../components/AdsenseScript';
+import TimedAds from '../components/ads/TimedAds';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
@@ -97,12 +99,9 @@ export default function RootLayout({ children }) {
 
   gtag('config', 'G-MH5QX2N0Q0');`}
         </Script>
-        <Script
-          id="netz-adsense"
-          strategy="lazyOnload"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3746721364737268"
-          crossOrigin="anonymous"
-        />
+        {/* Ads load when idle, only where allowed, never for Pro; the full-screen ad waits 15 active minutes */}
+        <AdsenseScript />
+        <TimedAds />
       </body>
       </html>
   );

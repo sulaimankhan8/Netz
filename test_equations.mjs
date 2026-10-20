@@ -46,7 +46,13 @@ expect('Common Equations: Math, Physics, Chemistry', COMMON_EQUATIONS.map((c) =>
 expect('Math starts with WPS\'s order', COMMON_EQUATIONS[0].items.slice(0, 8).map((i) => i.name).join('|') === 'Quadratic Formula|Binomial Theorem|Pythagorean Theorem|Law of Sines|Law of Cosines|Circumference of a Circle|Trig Identity 1|Trig Identity 2');
 const badEquations = COMMON_EQUATIONS.flatMap((c) => c.items.map((i) => [i.name, renders(i.latex)])).filter(([, e]) => e);
 expect('every common equation renders (chemistry through mhchem)', badEquations.length === 0, JSON.stringify(badEquations.slice(0, 3)));
-expect('chemistry equations are recognised as such', COMMON_EQUATIONS[2].items.every((i) => usesChemistry(i.latex)) && !usesChemistry('x^2'));
+// The chemistry list (as in WPS) has reactions written with \ce{} and ordinary formulas such as pV=nRT;
+// only the reactions need mhchem, and no maths or physics item may use it
+const [mathList, physicsList, chemistryList] = COMMON_EQUATIONS;
+expect('chemistry reactions are recognised as such',
+  chemistryList.items.some((i) => usesChemistry(i.latex))
+  && [...mathList.items, ...physicsList.items].every((i) => !usesChemistry(i.latex))
+  && !usesChemistry('x^2') && usesChemistry(String.raw`\ce{H2O}`));
 
 console.log(`${checks - failed}/${checks} checks passed`);
 process.exit(failed ? 1 : 0);

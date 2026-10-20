@@ -13,7 +13,9 @@ const Layout = ({ children }) => {
   const shellRef = useRef(null);
   const pathname = usePathname();
   const isPlayground = pathname?.startsWith('/Playground');
-  const showNavBar = isMobile && !isPlayground;
+  // A published note (/p/<slug>) is opened from a shared link: it has its own top bar, no app menus
+  const isPublicNote = pathname?.startsWith('/p/');
+  const showNavBar = isMobile && !isPlayground && !isPublicNote;
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,7 +50,7 @@ const Layout = ({ children }) => {
       className={`min-h-screen w-full relative flex ${showNavBar ? 'flex-col' : ''}`}
       style={{ '--app-nav-h': `${navHeight}px` }}
     >
-      {!isMobile && <EditorialSidebar />}
+      {!isMobile && !isPublicNote && <EditorialSidebar />}
       {/* Phones: the nav bar sits above the page, not beside it */}
       {showNavBar && <NavBar />}
       <div className={`flex-1 w-full min-w-0 ${showNavBar ? '' : 'min-h-screen'}`}>

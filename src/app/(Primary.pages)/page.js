@@ -177,7 +177,11 @@ export default function Home() {
               <Link href="/Notes">Notes</Link>
               <Link href="/Algorithems">Algorithms</Link>
               <Link href="/Setting">Settings</Link>
+              <Link href="/Pricing">Pricing</Link>
               <Link href="/Privacy">Privacy</Link>
+              <Link href="/Terms">Terms</Link>
+              <Link href="/Refund">Refunds</Link>
+              <Link href="/Contact">Contact</Link>
             </nav>
           </footer>
         </div>

@@ -96,13 +96,36 @@ export async function shopAction(action, itemId) {
   } catch {
     data = {};
   }
-  if (data.state) {
-    const remaining = read(OUTBOX_KEY, []);
-    remaining.forEach((a) => reduceActivity(data.state, a.kind, a.details, a.at));
-    replaceProgress(data.state);
-    window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind: `shop.${action}`, events: [] } }));
-  }
+  if (data.state) applyServerState(data.state, `shop.${action}`);
   return res.ok ? { ok: true } : { ok: false, error: data.error || 'failed' };
+}
+
+/** Claims the gems for a watched rewarded ad (api/ads/reward). Signed in only. */
+export async function claimAdReward() {
+  if (!currentAccount()) return { ok: false, error: 'signed_out' };
+  await flush();
+  let res;
+  try {
+    res = await fetch('/api/ads/reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tz: new Date().getTimezoneOffset() }),
+    });
+  } catch {
+    return { ok: false, error: 'offline' };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (data.state) applyServerState(data.state, 'ad.reward');
+  return res.ok ? { ok: true } : { ok: false, error: data.error || 'failed' };
+}
+
+/** Takes a progress state the server sent back, replaying activities still waiting to be sent. */
+export function applyServerState(state, kind = 'server') {
+  if (!state) return;
+  const remaining = read(OUTBOX_KEY, []);
+  remaining.forEach((a) => reduceActivity(state, a.kind, a.details, a.at));
+  replaceProgress(state);
+  window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind, events: [] } }));
 }
 
 /** Sends the outbox now. Resolves to true when the server's state was taken. */

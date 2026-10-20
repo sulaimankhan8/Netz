@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { LuCheck, LuCopy, LuGlobe, LuLock, LuSearch } from 'react-icons/lu';
-import { BTN_MAIN, BTN_SECONDARY, BTN_TINT, chipClass, FIELD, FIELD_INPUT, LABEL, Modal, Segmented, Switch } from './ui';
+import { useEffect, useState } from 'react';
+import { LuCheck, LuCopy, LuDownload, LuExternalLink, LuFileDown, LuGlobe, LuLock, LuSearch } from 'react-icons/lu';
+import { BTN_DANGER, BTN_MAIN, BTN_QUIET, BTN_SECONDARY, BTN_TINT, chipClass, FIELD, FIELD_INPUT, LABEL, Modal, Segmented } from './ui';
+import useAccount from '@/app/utils/progress/useAccount';
+import { recordActivity } from '@/app/utils/activity';
+import { exportNoteAsMarkdown } from '../utils/noteStorage';
+import { exportNoteToPdf } from '../utils/pdfExport';
+import { loadPublished, PUBLISHED_EVENT, publicUrl, publishedState, publishNote, unpublishNote } from '../utils/publishClient';
+import { FREE_PUBLIC_NOTES } from '../utils/publishCore';
+import { isProOnDevice } from '@/app/utils/proClient';
 
 export const CURATED_COMMUNITY_NOTES = [
   {
@@ -138,70 +145,175 @@ export const CURATED_COMMUNITY_NOTES = [
   }
 ];
 
-export default function NoteShareModal({
-  note,
-  isOpen,
-  onClose,
-  onUpdateNote,
-  onImportKey,
-  onCloneNote,
-  isPhone
-}) {
-  const [activeTab, setActiveTab] = useState('share'); // 'share' | 'community'
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [importInputKey, setImportInputKey] = useState('');
-  const [importStatus, setImportStatus] = useState(null);
 
-  // Community search & filters
+
+const PUBLISH_ERRORS = {
+  limit_reached: 'You have published as many notes as your plan allows. Unpublish one to publish this.',
+  empty_note: 'Write something first: an empty note cannot be published.',
+  sample_note: 'Sample notes cannot be published. Make your own note, or copy this one first.',
+  too_large: 'This note is too big to publish. Split it into two notes.',
+  offline: "You're offline. Try again when you're connected.",
+  signed_out: 'Please sign in again.',
+};
+
+/** "This note" tab (board artboard 10): A signed out, B private, C published; then Export. */
+function ShareThisNote({ note }) {
+  const account = useAccount();
+  const [published, setPublished] = useState(publishedState());
+  const [busy, setBusy] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const onChange = (e) => setPublished(e.detail);
+    window.addEventListener(PUBLISHED_EVENT, onChange);
+    if (account.user) loadPublished();
+    return () => window.removeEventListener(PUBLISHED_EVENT, onChange);
+  }, [account.user]);
+
+  const mine = published.notes.find((n) => n.noteId === note.id);
+  const changedSince = mine && note.updatedAt && Date.parse(note.updatedAt) > Date.parse(mine.updatedAt) + 1000;
+  const link = mine ? publicUrl(mine.slug) : '';
+
+  const run = async (kind, fn, okText) => {
+    setBusy(kind);
+    setMessage(null);
+    const r = await fn();
+    setBusy(null);
+    setMessage(r.ok ? { ok: true, text: okText } : { ok: false, text: PUBLISH_ERRORS[r.error] || 'That did not work. Please try again.' });
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setMessage({ ok: false, text: 'Could not copy. Select the link and copy it by hand.' });
+    }
+  };
+
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      await exportNoteToPdf(note, 'note-printable-area', { clean: isProOnDevice() });
+      recordActivity('note.exported', { kind: 'pdf' });
+    } catch (err) {
+      setMessage({ ok: false, text: `Could not export the PDF: ${err.message || 'unknown error'}` });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  let status;
+  if (account.configured && !account.user) {
+    status = (
+      <>
+        <StatusRow icon={<LuGlobe className="w-5 h-5" />} title="Publish to the web" text="Give classmates a link to read this note, try its solvers and answer its quizzes." />
+        <p className="m-0 text-[14px] text-nt-text2">Publishing needs an account, so the link keeps working on every device.</p>
+        <button type="button" className={`${BTN_SECONDARY} !h-11`} onClick={account.signIn}>Continue with Google</button>
+      </>
+    );
+  } else if (!account.configured) {
+    status = (
+      <StatusRow icon={<LuLock className="w-5 h-5" />} title="Private" text="Only you can see this note. Publishing to the web is coming soon." />
+    );
+  } else if (!mine) {
+    const used = published.notes.length;
+    status = (
+      <>
+        <StatusRow icon={<LuLock className="w-5 h-5" />} title="Private" text="Only you can see this note." />
+        <div className="flex flex-col gap-1">
+          <p className="m-0 text-[14px] text-nt-text2">Publishing shares a copy of the note as it is now. Later edits stay private until you press &ldquo;Update the public copy&rdquo;.</p>
+          {published.loaded && <p className="m-0 text-[13px] text-nt-text2">{used} of {published.limit} {published.limit > FREE_PUBLIC_NOTES ? '' : 'free '}public notes used</p>}
+        </div>
+        <button type="button" className={`${BTN_MAIN} !h-11`} disabled={!!busy} onClick={() => run('publish', () => publishNote(note), 'Published. Copy the link and share it.')}>
+          {busy === 'publish' ? 'Publishing…' : 'Publish to the web'}
+        </button>
+      </>
+    );
+  } else {
+    status = (
+      <>
+        <StatusRow ok icon={<LuGlobe className="w-5 h-5" />} title="Published" text={`Anyone with the link can read it · ${mine.views} ${mine.views === 1 ? 'view' : 'views'}`} />
+        <div className="flex gap-2">
+          <label className={`${FIELD} flex-1 min-w-0 !h-11`}>
+            <input type="text" readOnly value={link} aria-label="Link to the public note" onFocus={(e) => e.target.select()} className={`${FIELD_INPUT} font-nt-mono text-[13px] text-nt-text2`} />
+          </label>
+          <button type="button" onClick={copyLink} className={`${BTN_MAIN} !h-11`}>
+            {copied ? <LuCheck className="w-4 h-4" aria-hidden="true" /> : <LuCopy className="w-4 h-4" aria-hidden="true" />}
+            {copied ? 'Copied' : 'Copy link'}
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-dashed border-nt-line px-3.5 py-3">
+          <p className="m-0 flex-1 min-w-[160px] text-[14px] text-nt-text2">{changedSince ? 'You changed this note since publishing.' : 'The public copy matches this note.'}</p>
+          <button type="button" className={`${BTN_SECONDARY} !h-10`} disabled={!!busy} onClick={() => run('update', () => publishNote(note), 'The public copy is up to date.')}>
+            {busy === 'update' ? 'Updating…' : 'Update the public copy'}
+          </button>
+        </div>
+        <a href={link} target="_blank" rel="noopener noreferrer" className={`${BTN_QUIET} !h-11 justify-center`}>
+          <LuExternalLink className="w-4 h-4" aria-hidden="true" />
+          Open the public page
+        </a>
+        <button type="button" className={`${BTN_DANGER} !h-11 justify-center border border-nt-line`} disabled={!!busy} onClick={() => run('unpublish', () => unpublishNote(note.id), 'Unpublished. The link no longer works.')}>
+          {busy === 'unpublish' ? 'Unpublishing…' : 'Unpublish'}
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {status}
+      <div aria-live="polite">
+        {message && <p className={`m-0 text-[14px] font-medium ${message.ok ? 'text-nt-ok' : 'text-nt-danger'}`}>{message.text}</p>}
+      </div>
+      <div className="h-px bg-nt-line" />
+      <div className="flex flex-col gap-2">
+        <span className={LABEL}>Export</span>
+        <div className="flex gap-2">
+          <button type="button" className={`${BTN_SECONDARY} !h-11 flex-1`} disabled={exporting} onClick={exportPdf}>
+            <LuFileDown className="w-4 h-4" aria-hidden="true" />
+            {exporting ? 'Exporting PDF…' : 'PDF'}
+          </button>
+          <button type="button" className={`${BTN_SECONDARY} !h-11 flex-1`} onClick={() => exportNoteAsMarkdown(note)}>
+            <LuDownload className="w-4 h-4" aria-hidden="true" />
+            Markdown
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function StatusRow({ icon, title, text, ok = false }) {
+  return (
+    <div className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl ${ok ? 'bg-nt-ok-tint' : 'bg-nt-tray'}`}>
+      <span className={`w-10 h-10 rounded-xl bg-nt-surface flex items-center justify-center shrink-0 ${ok ? 'text-nt-ok' : 'text-nt-text2'}`} aria-hidden="true">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className={`m-0 text-[15px] font-semibold ${ok ? 'text-nt-ok' : ''}`}>{title}</p>
+        <p className="m-0 text-[13px] leading-[19px] text-nt-text2">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function NoteShareModal({ note, isOpen, onClose, onCloneNote, isPhone }) {
+  const [activeTab, setActiveTab] = useState('share'); // 'share' | 'community'
   const [communitySearch, setCommunitySearch] = useState('');
   const [communityUnit, setCommunityUnit] = useState('All');
 
   if (!isOpen || !note) return null;
 
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/Notes?key=${note.accessKey}`
-    : `https://netz.app/Notes?key=${note.accessKey}`;
-
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText(note.accessKey);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const handleTogglePublic = () => {
-    onUpdateNote({ ...note, isPublic: !note.isPublic });
-  };
-
-  const handleImportSubmit = (e) => {
-    e.preventDefault();
-    if (!importInputKey.trim()) return;
-    const result = onImportKey(importInputKey.trim());
-    if (result) {
-      setImportStatus({ success: true, message: `Imported "${result.title}".` });
-      setImportInputKey('');
-    } else {
-      setImportStatus({ success: false, message: 'No note has this key.' });
-    }
-  };
-
   const filteredCommunityNotes = CURATED_COMMUNITY_NOTES.filter((item) => {
+    const q = communitySearch.toLowerCase();
     const matchesSearch =
-      item.title.toLowerCase().includes(communitySearch.toLowerCase()) ||
-      item.subtitle.toLowerCase().includes(communitySearch.toLowerCase()) ||
-      item.author.toLowerCase().includes(communitySearch.toLowerCase()) ||
-      item.tags.some((t) => t.toLowerCase().includes(communitySearch.toLowerCase()));
-
-    const matchesUnit =
-      communityUnit === 'All' || item.unit === communityUnit;
-
-    return matchesSearch && matchesUnit;
+      item.title.toLowerCase().includes(q) ||
+      item.subtitle.toLowerCase().includes(q) ||
+      item.author.toLowerCase().includes(q) ||
+      item.tags.some((t) => t.toLowerCase().includes(q));
+    return matchesSearch && (communityUnit === 'All' || item.unit === communityUnit);
   });
 
   const units = ['All', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5'];
@@ -219,82 +331,8 @@ export default function NoteShareModal({
           ]}
         />
 
-        {/* TAB 1: SHARE THIS NOTE */}
-        {activeTab === 'share' && (
-          <>
-            <div className={`flex items-center gap-3.5 pl-4 pr-2 py-3 rounded-2xl ${note.isPublic ? 'bg-nt-ok-tint' : 'bg-nt-tray'}`}>
-              <span className={`w-10 h-10 rounded-xl bg-nt-surface flex items-center justify-center shrink-0 ${note.isPublic ? 'text-nt-ok' : 'text-nt-text2'}`} aria-hidden="true">
-                {note.isPublic ? <LuGlobe className="w-5 h-5" /> : <LuLock className="w-5 h-5" />}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="m-0 text-[15px] font-semibold">{note.isPublic ? 'Public' : 'Private'}</p>
-                <p className="m-0 text-[13px] leading-[19px] text-nt-text2">
-                  {note.isPublic ? 'Anyone with the key can view or import this note.' : 'Only you can see it, in this browser.'}
-                </p>
-              </div>
-              <Switch checked={!!note.isPublic} onChange={handleTogglePublic} label="Public" />
-            </div>
+        {activeTab === 'share' && <ShareThisNote note={note} />}
 
-            {note.isPublic && (
-              <>
-                <div className="flex flex-col gap-2">
-                  <span className={LABEL}>Access key</span>
-                  <div className="flex gap-2">
-                    <div className={`${FIELD} flex-1 !h-11 font-nt-mono text-lg font-medium tracking-[0.06em]`}>{note.accessKey}</div>
-                    <button type="button" onClick={handleCopyKey} className={`${BTN_MAIN} !h-11`}>
-                      {copiedKey ? <LuCheck className="w-4 h-4" aria-hidden="true" /> : <LuCopy className="w-4 h-4" aria-hidden="true" />}
-                      {copiedKey ? 'Copied' : 'Copy key'}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className={LABEL}>Link</span>
-                  <div className="flex gap-2">
-                    <label className={`${FIELD} flex-1 min-w-0 !h-11`}>
-                      <input type="text" readOnly value={shareUrl} aria-label="Link to this note" className={`${FIELD_INPUT} font-nt-mono text-[13px] text-nt-text2`} />
-                    </label>
-                    <button type="button" onClick={handleCopyLink} className={`${BTN_SECONDARY} !h-11`}>
-                      {copiedLink ? <LuCheck className="w-4 h-4" aria-hidden="true" /> : null}
-                      {copiedLink ? 'Copied' : 'Copy link'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div className="h-px bg-nt-line" />
-
-            <form onSubmit={handleImportSubmit} className="flex flex-col gap-2">
-              <label htmlFor="nt-import-key" className={LABEL}>
-                Import a note with its key
-              </label>
-              <div className="flex gap-2">
-                <span className={`${FIELD} flex-1 !h-11 ${importStatus && !importStatus.success ? '!border-nt-danger' : ''}`}>
-                  <input
-                    id="nt-import-key"
-                    type="text"
-                    placeholder="NETZ-ROOTS1"
-                    value={importInputKey}
-                    onChange={(e) => setImportInputKey(e.target.value)}
-                    className={`${FIELD_INPUT} font-nt-mono uppercase placeholder:normal-case`}
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                  />
-                </span>
-                <button type="submit" className={`${BTN_SECONDARY} !h-11`}>
-                  Import
-                </button>
-              </div>
-              {importStatus && (
-                <p className={`m-0 text-[13px] font-medium ${importStatus.success ? 'text-nt-ok' : 'text-nt-danger'}`} role="status">
-                  {importStatus.message}
-                </p>
-              )}
-            </form>
-          </>
-        )}
-
-        {/* TAB 2: COMMUNITY NOTES */}
         {activeTab === 'community' && (
           <>
             <label className={`${FIELD} !h-11`}>
@@ -322,7 +360,7 @@ export default function NoteShareModal({
               {filteredCommunityNotes.map((comm) => (
                 <article key={comm.id} className="rounded-2xl border border-nt-line px-4 py-3.5 flex flex-col gap-1.5">
                   <p className="m-0 text-xs font-semibold text-nt-text2">
-                    {comm.unit} · <span className="font-nt-mono">{comm.accessKey}</span> · {comm.author}
+                    {comm.unit} · {comm.author}
                   </p>
                   <h3 className="m-0 text-base leading-[22px] font-semibold">{comm.title}</h3>
                   <p className="m-0 text-sm leading-5 text-nt-text2">{comm.subtitle}</p>

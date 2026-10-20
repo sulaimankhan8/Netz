@@ -6,9 +6,12 @@
 > Those plans are still the reference for the public notes pages and the Razorpay code.
 > Where this plan and an older one disagree, this plan wins.
 > **Moving to a VPS later**: see `NETZ_VPS_DEPLOYMENT_LIGHTSAIL.md`.
-> **Status**: plan only. No code has been written for any of it yet.
+> **Status (2026-10-20)**: sections 2–6 built (tasks and rewards, art, backend, pricing and Razorpay, ads); section 7 (the full check run) next; owner setup waits in `NETZ_OWNER_TODO.md`.
 
 ---
+
+> **Everything the owner still has to do** (accounts, keys, KYC, decisions) is collected in one checklist:
+> **`NETZ_OWNER_TODO.md`**. The owner setup notes in sections 4.5 and 5.4 below are the detail behind it.
 
 ## 0. Owner decisions (2026-10-19)
 
@@ -424,11 +427,36 @@ CREATE TABLE entitlements (        -- is this user Pro / ad-free right now?
 through `db/progressStore.js` (row lock + `gem_ledger`), `components/mascot/banners.js` (all 8 banners), `Profile/ShopDialog.js`
 (Banners, Streak freezes, Robot skins "being drawn"). The Profile header shows the worn banner. Buying needs sign-in.
 Tests: `node test_shop.mjs` (11); `tests/db/sync-db.mjs` now 11, including two buys at once charging only once.
-Next: the robot skins need an art board first; Notes covers can reuse `Banner`.
+**Robot skins built 2026-10-20 (artboard 13 approved):** 9 skins in `utils/progress/shop.js` (`SKINS`; Classic free,
+Lab Coat 400, Winter 450, Graduation Cap 500, Headphones 600, Neon Night 700, Wizard 900, Astronaut 1200, Circuit 2026
+Pro-only) drawn in `components/mascot/skins.js` (palette + under/body/head layers; hats move with the head). `NetzRobot`
+takes `skin` or wears the student's own; `RobotHead` avatars too (Profile header, public-note author). Shop "Robot skins"
+tab with buy/wear. Same server routes (buy/equip handle skins). `node test_shop.mjs` now 18. Then the full medal set (2026-10-20): `components/mascot/medals.js` draws every medal — 50 task hexagons with a picture of each method (`taskEmblems.js`), 5 onboarding coins where the robot's screen shows the step, 20 streak shields (tier colour, day count, 1–3 stars, wings from Plum up), 12 month coins, the year badge and the yearly Pro medal. Not-yet-earned medals show their picture in grey. Used on Profile (medal case, today, all tasks, getting started) and in the toasts. Step 4 is done; next is step 5, pricing and Razorpay.
+
+**Notes cloud copy (step 5), built 2026-10-19:** `supabase/migrations/20261020000000_notes.sql` (`notes` table,
+tombstones, row-level security), `Notes/utils/notesCore.js` (pure rules: newest version wins, 20 free cloud notes,
+samples never uploaded, 300 KB per note), `api/notes/sync` (per-student advisory lock, microsecond cursor),
+`Notes/utils/notesCloud.js` (sends changed notes a moment after a save, takes newer ones, deletions + undo),
+`NotesCloudStatus` line under the notes list. Images in notes stay on the device for now (Supabase Storage later).
+Tests: `node test_notes_sync.mjs` (12); `tests/db/sync-db.mjs` now 15.
+**Owner setup step 2 now has two files:** run both migrations in `supabase/migrations/` in name order.
+
+**Public notes (step 6), server side built 2026-10-19; screens wait for board artboards 10–12:**
+`supabase/migrations/20261021000000_public_notes.sql`, `Notes/utils/publishCore.js` (slugs, public copy without private
+fields, 2 free public notes), `db/publicNotesStore.js` (publish/update, unpublish, list, read with author + view count;
+task 50 counted on the server), routes `api/notes/publish`, `api/notes/unpublish`, `api/notes/published`.
+Tests: `node test_publish.mjs` (14); `tests/db/sync-db.mjs` now 19. Run all three migrations in name order.
+Screens built 2026-10-20 from the approved boards: `NoteShareModal` "This note" tab (A signed out, B private with
+"x of 2 used", C published with link, views, "Update the public copy", Unpublish; Export PDF/Markdown; access-key import
+removed, Community tab kept), `Notes/utils/publishClient.js`, and `/p/[slug]` (`(Primary.pages)/p/[slug]/`: no app
+menus, note cover or author banner, author robot + medals, read-only blocks with working solver and quiz, sketches only
+as images so nothing in them runs, "Copy to my notes"). "Public/Private" labels in Notes now mean really published.
+Checked in the browser against Postgres in Docker (`tests/db/seed-public.mjs` seeds a note at /p/newton-raphson-x7k2).
+A missing slug shows the not-found page with status 200 in dev (the site-wide `loading.js` streams first).
 
 **Owner setup (all free), then sign-in works:**
 1. supabase.com → New project, region **Mumbai (ap-south-1)**, free plan. Save the database password.
-2. SQL editor → paste and run `supabase/migrations/20261019000000_progress.sql`.
+2. SQL editor → run every file in `supabase/migrations/` in name order (four as of 2026-10-20).
 3. Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application). Authorised redirect URI:
    the callback URL Supabase shows under Authentication → Providers → Google. Paste the client ID and secret there and enable Google.
 4. Supabase → Authentication → URL configuration: Site URL = the live site; Redirect URLs = `http://localhost:3210/auth/callback`
@@ -487,6 +515,35 @@ Next: the robot skins need an art board first; Notes covers can reuse `Banner`.
 4. Pro checks in the app: public notes, cloud notes, exports, Pro tasks, monthly freeze, ads off.
 5. Manage plan on Profile: next payment date, cancel (Pro stays until the paid period ends).
 
+**Progress (2026-10-20):** step 1 built: `/Terms`, `/Refund` (7 days), `/Contact` and the updated `/Privacy` share `components/landing/LegalPage.js`, linked from the landing footer and from each other. **The owner fills in `components/landing/legalDetails.js`** (name, email, address, courts); empty fields are left off the pages, and Razorpay needs them real. Terms links to `/Pricing`, which comes next. Step 2 built: `/Pricing` (artboards 14 and 15, landing style) with billing and currency switches (INR guessed from the Indian time zone or locale, choice remembered in `netz_currency`). Prices live in `src/app/utils/pricing.js`, which the Razorpay routes must charge from. Linked from the sidebar, the Profile Pro card, the landing footer and the legal pages. Until `NEXT_PUBLIC_RAZORPAY_KEY_ID` is set the buy button reads "Pro opens soon". Step 3 built (2026-10-20), inert until the keys are set:
+
+- Tables `purchases`, `payments`, `billing_events` (migration `20261022000000_billing.sql`). Payment rows are kept if an account is deleted (accounts and tax).
+- `POST /api/billing/start` makes a Razorpay subscription (monthly, yearly) or order (lifetime) for the signed-in student, with the amount from `utils/pricing.js` and `notes: { user_id, plan, currency }`. It does not unlock anything.
+- `POST /api/billing/webhook` is the only thing that turns Pro on: HMAC-SHA256 signature over the raw body, each `X-Razorpay-Event-Id` handled once, one transaction per event. Handles subscription activated/charged/pending/halted/cancelled/completed, `order.paid` (a smaller payment never unlocks lifetime) and `refund.processed` (a full refund ends that purchase's Pro).
+- `GET /api/billing/status`, `POST /api/billing/cancel` (stops renewal; Pro stays until the paid date).
+- Rules in `utils/billingCore.js` (who is Pro: lifetime, or paid-until in the future, with 2 days' grace for a late renewal webhook). Pricing page opens Razorpay Checkout and waits up to 45 s for the webhook.
+- Checks: `node test_billing.mjs` (28), `tests/db/billing-db.mjs` against Postgres in Docker (16: forged signature, duplicates, parallel deliveries, late events, user mismatch, underpaid, refunds).
+
+**Owner setup for payments (test mode first):**
+1. Razorpay dashboard in **Test mode** → API Keys → generate → put Key ID and Secret in `.env.local` (`.env.example` lists every name).
+2. Subscriptions → Plans → make the 4 plans in `.env.example` with those exact prices → paste the plan ids.
+3. Webhooks → add `https://<your site>/api/billing/webhook`, choose a secret (→ `RAZORPAY_WEBHOOK_SECRET`), tick: subscription.activated, subscription.charged, subscription.pending, subscription.halted, subscription.cancelled, subscription.completed, order.paid, refund.processed. (For a local test, expose the dev server with a tunnel such as `cloudflared tunnel --url http://localhost:3210`.)
+4. Run the migration `20261022000000_billing.sql` in the Supabase SQL editor (after the three earlier ones).
+5. Add the same variables in Vercel → Project → Settings → Environment Variables.
+6. After KYC: repeat 1–3 in **Live mode** and swap the keys. Turn on international payments for USD.
+
+**Step 4 built (2026-10-20): what Pro changes.** The server always decides with its own status (`db/billingStore.js getProStatus`); the device keeps a cached copy (`utils/proClient.js`, `netz_pro_v1`, refreshed by `components/CloudSync.js`, cleared on sign-out) only for ads, exports and toasts.
+- Limits (`utils/proLimits.js`): cloud notes 20 → unlimited (`api/notes/sync`), public links 2 → 25 (`db/publicNotesStore.js`, `api/notes/published`).
+- Pro tasks: the 10 tasks of 2026 and the Season table are in `utils/progress/catalog.js` (`PRO_TASKS`, `PRO_SEASONS`, rewards at 3/6/10). The engine counts them only with `{ pro: true }`; the server passes its own status in `api/progress/sync` and when publishing. Kept in `state.proTasks`; rewards go to `owned` and `medals['pro.2026']` and stay after Pro ends. Profile's Pro card lists them with progress.
+- Monthly freeze: one free streak freeze with the first activity of each month, up to the usual maximum of 2 (`state.proFreezeMonth`).
+- Exports: free PDFs (note and Playground page) say "Made with NETZ"; Pro PDFs are clean. Playground SVG export is Pro (the button links to Pricing). LaTeX and code export do not exist yet (see `NETZ_OWNER_TODO.md` A).
+- Ads: `components/AdsenseScript.js` replaces the script tags in both layouts and never loads for Pro; `AdSlot` renders nothing for Pro.
+- Checks: `node test_pro.mjs` (22); `tests/db/billing-db.mjs` now 18 (free 2 public notes vs Pro 25).
+
+**Step 5 built (2026-10-20):** Profile's Pro card starts with "Your plan" (`YourPlan` in `Profile/ProfileView.js`): the plan, "Renews on …" / "Pro until …" / "Pro for life", and a two-tap "Cancel renewal" (`api/billing/cancel`, then the cached status is refreshed). It reads the device's cached status (`useProStatus` in `utils/useIsPro.js`). **Section 5 is done; next is section 6, ads.**
+
+Refunds are given from the Razorpay dashboard; the webhook then ends Pro by itself. When refunding a monthly or yearly plan, also cancel that subscription in the dashboard, or Razorpay will charge the next renewal. Next: step 4, Pro checks in the app.
+
 ---
 
 ## 6. Ads (free users only)
@@ -529,6 +586,15 @@ Next: the robot skins need an art board first; Notes covers can reuse `Banner`.
 - No ad requests when offline (the slot just hides, so the PWA keeps working).
 
 ### 6.6 Build steps
+
+**Built 2026-10-20 (all six steps; each part stays off until the owner's AdSense / Ad Manager setup, `NETZ_OWNER_TODO.md` H):**
+- `public/ads.txt`; the unused `components/Ad.js` (a self-made full-screen pop-up, against AdSense rules) deleted.
+- `utils/ads/adsPolicy.js` (`adsAllowedAt`: never Pro, offline, `/Playground`, `/Pricing`, `/p/…`) + `useAdsAllowed()`; `components/AdsenseScript.js` loads AdSense only on an allowed page.
+- `components/ads/AdUnit.js` + `AdSlot.js` (reserved height, "ADVERTISEMENT" label): algorithm pages (inside `AlgorithmNavigation`, so all 34), the Algorithms hub after the cards, the end of the Notes list, Profile below "All 50 tasks". Unit ids from `NEXT_PUBLIC_ADSENSE_SLOT_*`, falling back to the landing unit.
+- 15-minute ad: `utils/ads/activeClock.js` (active = tab visible and input in the last minute; 15 min, at most 4 a day) and `components/ads/TimedAds.js`, which arms Google Ad Manager's own web interstitial (`utils/ads/gpt.js`) so Google shows it at the next page change; removed again when leaving for a no-ads page.
+- Rewarded: `playRewarded()` (GPT rewarded) → `POST /api/ads/reward` (`utils/ads/adReward.js`: +10 gems, 3 a day, unique `gem_ledger` reason; refused for Pro) → Profile's gems card "Watch an ad · +10 gems (n left today)", signed in only. Web rewarded ads cannot be confirmed server-side, so the daily cap is the protection.
+- Privacy page lists every ad place, the full-screen and the rewarded ads. Checks: `node test_ads.mjs` (15); browser: no AdSense script on Pricing and Playground, one ad place on each allowed page.
+
 
 1. `ads.txt`, consent message, delete `Ad.js`.
 2. `useAdsAllowed()` hook (false for Pro, offline, Playground, Pricing), used by `AdSlot` and by `layout.js` before the script loads.

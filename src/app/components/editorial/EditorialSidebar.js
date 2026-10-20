@@ -17,7 +17,8 @@ import {
   FiZap,
   FiFolder,
   FiCornerDownRight,
-  FiX
+  FiX,
+  FiTag
 } from 'react-icons/fi';
 import ProgressChip from '../mascot/ProgressChip';
 
@@ -29,6 +30,7 @@ const PRIMARY_NAV = [
   { title: 'Notes Studio', route: '/Notes', icon: FiFileText },
   { title: 'Settings', route: '/Setting', icon: FiSliders },
   { title: 'Profile', route: '/Profile', icon: FiUser },
+  { title: 'Pricing', route: '/Pricing', icon: FiTag },
 ];
 
 // Full 3-Level Deep Units Structure (Matching Sidenav.js perfectly)

@@ -7,6 +7,7 @@ import NoteShareModal from './components/NoteShareModal';
 import AlgorithmPickerModal from './components/AlgorithmPickerModal';
 import { Notice, useIsPhone } from './components/ui';
 import { NT_FONT } from './utils/fonts';
+import { NOTES_SYNCED_EVENT } from './utils/notesCloud';
 import Tour from '../../components/tour/Tour';
 import {
   getNotes,
@@ -78,6 +79,18 @@ export default function NotesPage() {
   }, []);
 
   useEffect(() => () => clearTimeout(noticeTimer.current), []);
+
+  // Notes changed on the student's other devices arrived: show them
+  useEffect(() => {
+    const onSynced = (e) => {
+      if (!e.detail?.changed) return;
+      const fresh = getNotes();
+      setNotes(fresh);
+      setActiveNoteId((id) => (fresh.some((n) => n.id === id) ? id : fresh[0]?.id ?? null));
+    };
+    window.addEventListener(NOTES_SYNCED_EVENT, onSynced);
+    return () => window.removeEventListener(NOTES_SYNCED_EVENT, onSynced);
+  }, []);
 
   /** Shows a notice at the bottom (one at a time), gone after a few seconds. */
   const showNotice = useCallback((next) => {

@@ -34,7 +34,7 @@ const client = postgres(process.env.DATABASE_URL, { prepare: false, max: 3, onno
 const db = drizzle(client, { schema });
 
 await client.unsafe('drop schema if exists auth cascade; create schema auth; create table auth.users (id uuid primary key);');
-await client.unsafe('drop table if exists public.profiles, public.progress, public.activity_log, public.gem_ledger cascade;');
+await client.unsafe('drop table if exists public.profiles, public.progress, public.activity_log, public.gem_ledger, public.notes, public.public_notes cascade;');
 const migrations = fs.readdirSync(path.join(root, 'supabase/migrations')).sort();
 for (const file of migrations) await client.unsafe(fs.readFileSync(path.join(root, 'supabase/migrations', file), 'utf8'));
 
@@ -112,8 +112,86 @@ const spent = await db.select().from(gemLedger).where(eq(gemLedger.userId, userI
 expect('parallel buys: one succeeds', wins === 1, String(wins));
 expect('parallel buys: charged once', afterBuy.state.gems === 50 && spent.length === 1, `${afterBuy.state.gems} gems, ${spent.length} ledger rows`);
 
-const rls = await client.unsafe("select relname, relrowsecurity from pg_class where relname in ('profiles','progress','activity_log','gem_ledger')");
-expect('row-level security on all 4 tables', rls.length === 4 && rls.every((r) => r.relrowsecurity));
+// Notes cloud copy: the same transaction as api/notes/sync
+const { planNoteWrites } = await import(`file://${root}/src/app/(Primary.pages)/Notes/utils/notesCore.js`);
+const { notes } = schema;
+const { and } = await import('drizzle-orm');
+async function routeNotes(body) {
+  const since = body.since || null;
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
+    const stored = await tx.select({ id: notes.id, changedAt: notes.changedAt, deleted: notes.deleted }).from(notes).where(eq(notes.userId, userId));
+    const plan = planNoteWrites(new Map(stored.map((n) => [n.id, n])), body.pushes, body.deletions, 20);
+    for (const w of plan.writes) {
+      await tx.insert(notes).values({ userId, id: w.id, data: w.data, changedAt: w.changedAt, deleted: w.deleted, serverUpdatedAt: sql`now()` })
+        .onConflictDoUpdate({ target: [notes.userId, notes.id], set: { data: w.data, changedAt: w.changedAt, deleted: w.deleted, serverUpdatedAt: sql`now()` } });
+    }
+    const changed = await tx.select().from(notes).where(since ? and(eq(notes.userId, userId), sql`${notes.serverUpdatedAt} > ${since}::timestamptz`) : eq(notes.userId, userId));
+    const [{ cursor }] = await tx.execute(sql`select to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor`);
+    return { plan, changed, cursor };
+  });
+}
+const n1 = { id: 'note-1', title: 'Roots', blocks: [] };
+let ns = await routeNotes({ pushes: [{ id: 'note-1', data: n1, changedAt: 100 }, { id: 'note-2', data: { id: 'note-2', title: 'Two' }, changedAt: 100 }] });
+expect('notes: two stored and returned', ns.changed.length === 2 && ns.plan.writes.length === 2);
+const cursor1 = ns.cursor;
+await new Promise((r) => setTimeout(r, 20));
+ns = await routeNotes({ pushes: [{ id: 'note-1', data: { ...n1, title: 'Old' }, changedAt: 50 }], since: cursor1 });
+expect('notes: older push ignored, nothing new since cursor', ns.plan.writes.length === 0 && ns.changed.length === 0);
+ns = await routeNotes({ pushes: [{ id: 'note-1', data: { ...n1, title: 'Roots 2' }, changedAt: 200 }], deletions: [{ id: 'note-2', changedAt: 200 }], since: cursor1 });
+const back = Object.fromEntries(ns.changed.map((n) => [n.id, n]));
+expect('notes: newer edit and tombstone come back since cursor', back['note-1']?.data.title === 'Roots 2' && back['note-2']?.deleted === true);
+const parallel = await Promise.all([
+  routeNotes({ pushes: [{ id: 'note-p', data: { id: 'note-p', v: 1 }, changedAt: 300 }] }),
+  routeNotes({ pushes: [{ id: 'note-p', data: { id: 'note-p', v: 2 }, changedAt: 301 }] }),
+]);
+const [pRow] = await db.select().from(notes).where(and(eq(notes.userId, userId), eq(notes.id, 'note-p')));
+expect('notes: parallel syncs keep the newest', parallel.length === 2 && pRow.data.v === 2 && pRow.changedAt === 301);
+
+// Publishing: the same transaction as src/db/publicNotesStore.js publishNote
+const { canPublishMore, makeSlug, preparePublicCopy } = await import(`file://${root}/src/app/(Primary.pages)/Notes/utils/publishCore.js`);
+const { reduceActivity } = await import(`file://${root}/src/app/utils/progress/engine.js`);
+const { dayAt } = await import(`file://${root}/src/app/utils/progress/syncCore.js`);
+const { publicNotes } = schema;
+async function routePublish(note) {
+  const copy = preparePublicCopy(note);
+  if (!copy.ok) return copy;
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`publish:${userId}`}))`);
+    const mine = await tx.select().from(publicNotes).where(eq(publicNotes.userId, userId));
+    if (!canPublishMore(mine.map((m) => m.noteId), copy.noteId)) return { ok: false, error: 'limit_reached' };
+    let saved;
+    const existing = mine.find((m) => m.noteId === copy.noteId);
+    if (existing) {
+      [saved] = await tx.update(publicNotes).set({ title: copy.title, data: copy.data, updatedAt: sql`now()` })
+        .where(and(eq(publicNotes.userId, userId), eq(publicNotes.noteId, copy.noteId))).returning();
+    } else {
+      [saved] = await tx.insert(publicNotes).values({ slug: makeSlug(copy.title), userId, noteId: copy.noteId, title: copy.title, data: copy.data })
+        .onConflictDoNothing({ target: publicNotes.slug }).returning();
+    }
+    const [p] = await tx.select().from(progress).where(eq(progress.userId, userId)).for('update');
+    const now = Date.now();
+    reduceActivity(p.state, 'note.published', { slug: saved.slug }, now, dayAt(now, -330));
+    await tx.update(progress).set({ state: p.state, updatedAt: sql`now()` }).where(eq(progress.userId, userId));
+    return { ok: true, slug: saved.slug };
+  });
+}
+const pubNote = (id, title) => ({ id, title, blocks: [{ id: 'b1', type: 'paragraph', content: title }], accessKey: 'NETZ-SECRET' });
+const pubA = await routePublish(pubNote('note-a', 'Newton Raphson'));
+const pubB = await routePublish(pubNote('note-b', 'Simpson rule'));
+const pubC = await routePublish(pubNote('note-c', 'Third one'));
+expect('publish: two allowed, third blocked', pubA.ok && pubB.ok && !pubC.ok && pubC.error === 'limit_reached');
+const pubA2 = await routePublish({ ...pubNote('note-a', 'Newton Raphson v2') });
+const [aRow] = await db.select().from(publicNotes).where(eq(publicNotes.slug, pubA.slug));
+expect('publish: update keeps the same link, private fields dropped', pubA2.ok && pubA2.slug === pubA.slug && aRow.title === 'Newton Raphson v2' && !aRow.data.accessKey);
+const [progAfter] = await db.select().from(progress).where(eq(progress.userId, userId));
+expect('publish: task 50 counted on the server', !!progAfter.state.tasksFirstDone['sharing.publish']);
+await db.delete(publicNotes).where(and(eq(publicNotes.userId, userId), eq(publicNotes.noteId, 'note-b')));
+const pubC2 = await routePublish(pubNote('note-c', 'Third one'));
+expect('publish: unpublishing frees a place', pubC2.ok);
+
+const rls = await client.unsafe("select relname, relrowsecurity from pg_class where relname in ('profiles','progress','activity_log','gem_ledger','notes','public_notes')");
+expect('row-level security on all 6 tables', rls.length === 6 && rls.every((r) => r.relrowsecurity));
 
 await client.end();
 console.log(`${checks - failed}/${checks} checks passed`);

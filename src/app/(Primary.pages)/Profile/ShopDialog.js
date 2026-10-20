@@ -5,7 +5,7 @@ import Banner from '@/app/components/mascot/banners';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
 import { GemIcon } from '@/app/components/mascot/art';
 import { MAX_FREEZES } from '@/app/utils/progress/catalog';
-import { BANNERS, equippedBanner, FREEZE_PRICE, ownedBanners } from '@/app/utils/progress/shop';
+import { BANNERS, equippedBanner, equippedSkin, FREEZE_PRICE, ownedBanners, ownedSkins, SKINS } from '@/app/utils/progress/shop';
 import { shopAction } from '@/app/utils/progress/cloudSync';
 
 const BTN = 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 text-[14px] font-bold';
@@ -24,7 +24,7 @@ const ERRORS = {
 };
 
 /**
- * The gem shop (NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes, and robot skins (coming soon).
+ * The gem shop (NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes and robot skins (artboard 13).
  * Buying needs an account; browsing does not. onClose()
  */
 export default function ShopDialog({ state, account, initialTab = 'banners', onClose }) {
@@ -37,6 +37,8 @@ export default function ShopDialog({ state, account, initialTab = 'banners', onC
   const canBuy = account.configured && !!account.user;
   const owned = ownedBanners(state);
   const wearing = equippedBanner(state);
+  const ownedSkinIds = ownedSkins(state);
+  const wearingSkin = equippedSkin(state);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -155,11 +157,32 @@ export default function ShopDialog({ state, account, initialTab = 'banners', onC
           )}
 
           {tab === 'skins' && (
-            <div className="flex flex-col items-center gap-3 rounded-2xl bg-[var(--pf-tray)] p-6 text-center">
-              <NetzRobot size={120} mood="think" listen={false} title="Your robot, thinking about new outfits" />
-              <h3 className="pf-display m-0 text-[20px] font-semibold">Robot skins are being drawn</h3>
-              <p className="m-0 max-w-[420px] text-[14px] text-[var(--pf-text2)]">About 20 outfits for your robot are coming. Keep your gems: they will be waiting for you.</p>
-            </div>
+            <ul className="m-0 grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3">
+              {SKINS.map((k) => {
+                const isOwned = ownedSkinIds.includes(k.id);
+                const isWorn = wearingSkin === k.id;
+                const short = !isOwned && k.price !== null && state.gems < k.price;
+                let action = null;
+                if (isWorn) action = <span className={`${BTN} w-full bg-[var(--pf-done-bg)] text-[var(--pf-done-ink)]`}>Wearing</span>;
+                else if (isOwned) action = <button type="button" className={`${BTN_QUIET} w-full`} disabled={!canBuy || !!busy} onClick={() => act('equip', k.id, `Your robot is wearing ${k.name}.`)}>{busy === `equip:${k.id}` ? 'Saving…' : 'Wear'}</button>;
+                else if (k.price === null) action = <span className="block text-center text-[13px] font-semibold text-[var(--pf-text2)]">Pro · {k.pro}</span>;
+                else action = (
+                  <button type="button" className={`${canBuy && !short ? BTN_MAIN : BTN_OFF} w-full`} disabled={!canBuy || short || !!busy} onClick={() => act('buy', k.id, `${k.name} is yours. Wear it whenever you like.`)}>
+                    <GemIcon size={15} />{busy === `buy:${k.id}` ? 'Buying…' : k.price}
+                  </button>
+                );
+                return (
+                  <li key={k.id} className={`flex flex-col items-center gap-2 rounded-[18px] border bg-[var(--pf-surface)] p-3 ${isWorn ? 'border-2 border-[#FBAE3D]' : k.price === null ? 'border-[#D55E64]' : 'border-[var(--pf-line)]'}`}>
+                    <NetzRobot size={112} skin={k.id} listen={false} title={`Robot in the ${k.name} skin`} />
+                    <div className="w-full">
+                      <div className="font-bold leading-tight">{k.name}</div>
+                      <div className="text-[12px] leading-snug text-[var(--pf-text2)]">{isOwned ? 'Owned' : short ? `${k.price - state.gems} more gems` : k.idea}</div>
+                    </div>
+                    {action}
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </div>

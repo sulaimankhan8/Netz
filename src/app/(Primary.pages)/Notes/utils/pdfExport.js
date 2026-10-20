@@ -3,14 +3,17 @@ import html2canvas from 'html2canvas';
 import { NT_FONT } from './fonts';
 
 /**
- * Exports a NETZ note to a high-resolution, un-watermarked Academic PDF Report.
+ * Exports a NETZ note to a high-resolution Academic PDF Report. Free PDFs say "Made with NETZ" in
+ * the footer; Pro PDFs (`clean`) only carry the page number (NETZ_LAUNCH_PLAN.md 5.1).
  * Uses html2canvas for sharp LaTeX KaTeX rendering and jsPDF for multi-page A4 layout.
  * 
  * @param {object} note - The active note data object
  * @param {HTMLElement|string} elementOrId - The DOM element or ID containing the note content
+ * @param {{ clean?: boolean }} [options]
  * @returns {Promise<boolean>} True when successfully exported
  */
-export async function exportNoteToPdf(note, elementOrId = 'note-printable-area') {
+export async function exportNoteToPdf(note, elementOrId = 'note-printable-area', { clean = false } = {}) {
+  const footer = (page) => (clean ? `Page ${page}` : `Made with NETZ • Page ${page}`);
   try {
     const targetElement = typeof elementOrId === 'string' 
       ? document.getElementById(elementOrId) 
@@ -167,7 +170,7 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area')
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
     pdf.text(
-      `NETZ Engineering Notes • Page ${pageNumber} • Access Key: ${note?.accessKey || 'NETZ'}`,
+      footer(pageNumber),
       pdfWidth / 2,
       pdfHeight - 6,
       { align: 'center' }
@@ -185,7 +188,7 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area')
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
       pdf.text(
-        `NETZ Engineering Notes • Page ${pageNumber} • Access Key: ${note?.accessKey || 'NETZ'}`,
+        footer(pageNumber),
         pdfWidth / 2,
         pdfHeight - 6,
         { align: 'center' }

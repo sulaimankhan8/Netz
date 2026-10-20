@@ -42,5 +42,19 @@ buyItem(s, 'freeze', 2);
 r = buyItem(s, 'freeze', 3);
 expect('at most 2 freezes', !r.ok && r.error === 'freezes_full' && s.streak.freezes === 2 && s.gems === 800);
 
+// Robot skins (artboard 13)
+const { SKINS, ownedSkins, equippedSkin } = await import('./src/app/utils/progress/shop.js');
+const k = newProgressState();
+k.gems = 1000;
+expect('9 skins, one free, one Pro', SKINS.length === 9 && SKINS.filter((x) => x.price === 0).length === 1 && SKINS.filter((x) => x.price === null).length === 1);
+expect('old record "default" reads as Classic, worn', ownedSkins(k).includes('skin.classic') && equippedSkin(k) === 'skin.classic');
+r = buyItem(k, 'skin.wizard');
+expect('buy Wizard', r.ok && k.gems === 100 && r.ledger.reason === 'shop:skin.wizard' && ownedSkins(k).includes('skin.wizard'));
+expect('buying a skin leaves banners alone', ownedBanners(k).length === 1);
+expect('Pro skin not for sale', buyItem(k, 'skin.circuit-2026').error === 'not_for_sale');
+expect('cannot wear an unowned skin', !equipItem(k, 'skin.astronaut').ok && equippedSkin(k) === 'skin.classic');
+r = equipItem(k, 'skin.wizard');
+expect('wear Wizard, banner unchanged', r.ok && equippedSkin(k) === 'skin.wizard' && equippedBanner(k) === 'banner.sunset-bands');
+
 console.log(`${checks - failed}/${checks} checks passed`);
 if (failed) process.exit(1);

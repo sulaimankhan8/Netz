@@ -1,6 +1,7 @@
 import { INITIAL_SAMPLE_NOTES } from "./sampleNotes";
 import { CURATED_COMMUNITY_NOTES } from "../components/NoteShareModal";
 import { recordActivity } from "@/app/utils/activity";
+import { forgetDeleted, rememberDeleted, syncNotesSoon } from "./notesCloud";
 
 const STORAGE_KEY = "netz_notes_v2_data";
 
@@ -76,7 +77,7 @@ export function didLastSaveSucceed() {
   return lastSaveOk;
 }
 
-export function saveNotes(notes) {
+export function saveNotes(notes, { fromSync = false } = {}) {
   if (typeof window === "undefined") return true;
   try {
     const stringified = JSON.stringify(notes);
@@ -87,6 +88,8 @@ export function saveNotes(notes) {
     console.error("Failed to save notes to localStorage:", err);
     lastSaveOk = false;
   }
+  // Signed in: the account gets a copy a moment later (not for notes that just came from it)
+  if (lastSaveOk && !fromSync) syncNotesSoon();
   return lastSaveOk;
 }
 
@@ -176,6 +179,7 @@ export function saveSingleNote(updatedNote, { report = true } = {}) {
 }
 
 export function deleteNote(id) {
+  rememberDeleted(id);
   const existing = getNotes();
   const filtered = existing.filter((n) => n.id !== id);
   saveNotes(filtered);
@@ -210,6 +214,7 @@ export function setTagColour(tag, colour) {
 
 /** Puts a deleted note back where it was (Undo after Delete note). */
 export function restoreNote(note, index) {
+  forgetDeleted(note.id);
   const existing = getNotes().filter((n) => n.id !== note.id);
   const at = Math.max(0, Math.min(index, existing.length));
   const updated = [...existing.slice(0, at), note, ...existing.slice(at)];

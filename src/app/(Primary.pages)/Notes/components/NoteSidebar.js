@@ -4,6 +4,9 @@ import { useRef, useState } from 'react';
 import { LuFileText, LuGlobe, LuLock, LuMoreHorizontal, LuPanelLeft, LuPin, LuPinOff, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu';
 import { chipClass, FIELD, FIELD_INPUT, ICON_BTN, BTN_MAIN, Menu, Segmented, TOUCH } from './ui';
 import { NoteIcon, STATUSES, StatusBadge, lookColour } from '../utils/noteLook';
+import NotesCloudStatus from './NotesCloudStatus';
+import AdSlot from '@/app/components/ads/AdSlot';
+import { usePublishedIds } from '../utils/publishClient';
 
 /**
  * The list of notes (NOTES_VISUAL_REDESIGN_PLAN.md, section 2). On laptops and tablets it sits
@@ -24,6 +27,8 @@ export default function NoteSidebar({
   const [selectedTag, setSelectedTag] = useState(null);
   const [filterTab, setFilterTab] = useState('all'); // 'all', 'private', 'public'
   const [selectedStatus, setSelectedStatus] = useState(null);
+  // Published for real (on the web), not the old local isPublic flag
+  const published = usePublishedIds();
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || [])));
   const q = searchQuery.toLowerCase();
@@ -37,7 +42,7 @@ export default function NoteSidebar({
 
     const matchesTag = selectedTag ? note.tags && note.tags.includes(selectedTag) : true;
 
-    const matchesTab = filterTab === 'all' ? true : filterTab === 'public' ? note.isPublic : !note.isPublic;
+    const matchesTab = filterTab === 'all' ? true : filterTab === 'public' ? published.has(note.id) : !published.has(note.id);
 
     const matchesStatus = selectedStatus ? note.status === selectedStatus : true;
 
@@ -109,7 +114,7 @@ export default function NoteSidebar({
           options={[
             { value: 'all', label: 'All' },
             { value: 'private', label: 'Private' },
-            { value: 'public', label: 'Public' }
+            { value: 'public', label: 'Published' }
           ]}
         />
 
@@ -212,7 +217,7 @@ export default function NoteSidebar({
                   Pinned
                 </h2>
                 {pinnedList.map((note) => (
-                  <NoteRow key={note.id} note={note} active={!isPhone && note.id === activeNoteId} isPhone={isPhone} onSelect={onSelectNote} onDelete={onDeleteNote} onTogglePin={onTogglePinNote} />
+                  <NoteRow key={note.id} note={note} active={!isPhone && note.id === activeNoteId} isPhone={isPhone} onSelect={onSelectNote} onDelete={onDeleteNote} onTogglePin={onTogglePinNote} isPublished={published.has(note.id)} />
                 ))}
               </section>
             )}
@@ -222,19 +227,24 @@ export default function NoteSidebar({
                   <h2 className={`text-xs font-semibold text-nt-text2 ${isPhone ? 'px-5 pt-5 pb-1.5' : 'px-3 pt-4 pb-1'}`}>Notes</h2>
                 )}
                 {unpinnedList.map((note) => (
-                  <NoteRow key={note.id} note={note} active={!isPhone && note.id === activeNoteId} isPhone={isPhone} onSelect={onSelectNote} onDelete={onDeleteNote} onTogglePin={onTogglePinNote} />
+                  <NoteRow key={note.id} note={note} active={!isPhone && note.id === activeNoteId} isPhone={isPhone} onSelect={onSelectNote} onDelete={onDeleteNote} onTogglePin={onTogglePinNote} isPublished={published.has(note.id)} />
                 ))}
               </section>
             )}
           </>
         )}
+        {/* The Notes list's one ad: at the end of the list, never inside a note (plan 6.2) */}
+        <div className={isPhone ? 'px-4 pb-4 pt-4' : 'px-2 pb-3 pt-4'}>
+          <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NOTES} compact />
+        </div>
       </div>
+      <NotesCloudStatus isPhone={isPhone} />
     </aside>
   );
 }
 
 /** One note in the list: title, a line of its text, its details, and a ⋯ menu (Pin, Delete). */
-function NoteRow({ note, active, isPhone, onSelect, onDelete, onTogglePin }) {
+function NoteRow({ note, active, isPhone, onSelect, onDelete, onTogglePin, isPublished = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const moreRef = useRef(null);
   const blockCount = note.blocks ? note.blocks.length : 0;
@@ -265,13 +275,13 @@ function NoteRow({ note, active, isPhone, onSelect, onDelete, onTogglePin }) {
         )}
         <span className={`flex flex-wrap items-center gap-1.5 mt-1 text-nt-text2 ${isPhone ? 'text-[13px]' : 'text-xs'}`}>
           {note.status && <StatusBadge id={note.status} small />}
-          {note.isPublic ? (
+          {isPublished ? (
             <LuGlobe className="w-3.5 h-3.5 text-nt-ok shrink-0" aria-hidden="true" />
           ) : (
             <LuLock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           )}
           <span>
-            {note.isPublic ? 'Public' : 'Private'} · {date} · {blockCount} {blockCount === 1 ? 'block' : 'blocks'}
+            {isPublished ? 'Published' : 'Private'} · {date} · {blockCount} {blockCount === 1 ? 'block' : 'blocks'}
           </span>
         </span>
         </span>

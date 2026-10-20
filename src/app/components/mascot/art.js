@@ -1,109 +1,35 @@
 'use client';
 
+import { skinLook } from './skins';
+
 /**
  * Small pieces of NETZ art used on the Profile page and around the app: the robot's head for
- * avatars, the default banner, and one badge for every medal family (NETZ_MEDALS_CATALOG.md).
+ * avatars, the default banner and small icons. The medals themselves are in medals.js.
  * Colours are the bg1 sunset palette.
  */
 
-const HEX_OUTER = '60,4 108.5,32 108.5,88 60,116 11.5,88 11.5,32';
-const HEX_INNER = '60,14 99.8,37 99.8,83 60,106 20.2,83 20.2,37';
-const SHIELD_OUTER = 'M60 6 L104 21 V60 C104 88 85 108 60 122 C35 108 16 88 16 60 V21 Z';
-const SHIELD_INNER = 'M60 15 L95 27 V60 C95 83 80 100 60 112 C40 100 25 83 25 60 V27 Z';
-const FLAME = 'M60 26 C69 37 76 45 73 56 C71 64 66 68 60 68 C54 68 48 64 47 56 C46 49 51 42 55 38 C56 44 58 47 60 48 C62 40 59 33 60 26 Z';
+export { MedalBadge, STREAK_TIER_COLOURS } from './medals';
 
-const LOCKED = { rim: 'var(--pf-lock-rim, #3A3A40)', fill: 'var(--pf-lock-fill, #26262A)', mark: 'var(--pf-lock-mark, #6B6B73)' };
-
-export const STREAK_TIER_COLOURS = {
-  coral: { rim: '#A63E48', fill: '#D55E64', flame: '#FBAE3D', ink: '#FFFFFF' },
-  orange: { rim: '#C2632A', fill: '#F88F4A', flame: '#D55E64', ink: '#3A1A0A' },
-  amber: { rim: '#C98318', fill: '#FBAE3D', flame: '#D55E64', ink: '#5A3A00' },
-  cream: { rim: '#B9A9A2', fill: '#F4F0EA', flame: '#F88F4A', ink: '#4D345E' },
-  plum: { rim: '#6C2C4E', fill: '#96456E', flame: '#FBAE3D', ink: '#FFFFFF' },
-  purple: { rim: '#33213F', fill: '#5E3F75', flame: '#FBAE3D', ink: '#FFFFFF' },
-  night: { rim: '#FBAE3D', fill: '#132034', flame: '#D55E64', ink: '#FBAE3D' },
-};
-
-function Lock() {
+/** The robot's head, for avatars, wearing a skin's colours and hat (board artboard 13). */
+export function RobotHead({ size = 92, title = 'Your robot', skin }) {
+  const look = skinLook(skin);
+  const c = look.palette;
+  // Hats stick out above the head, so those skins get a taller frame
+  const box = look.hat ? '8 -34 224 200' : '20 28 200 132';
+  const [, , w, h] = box.split(' ').map(Number);
   return (
-    <g>
-      <path d="M51 58 V51 A9 9 0 0 1 69 51 V58" stroke={LOCKED.mark} strokeWidth="5" fill="none" strokeLinecap="round" />
-      <rect x="45" y="57" width="30" height="24" rx="6" fill={LOCKED.mark} />
-    </g>
-  );
-}
-
-/**
- * One medal. family: 'task' | 'onboarding' | 'streak' | 'season'.
- * The detailed emblem art per medal comes later; for now each family has its frame and a simple mark.
- */
-export function MedalBadge({ family = 'task', earned = false, fill, rim, tier = 'coral', days, label, size = 56 }) {
-  const common = { width: size, height: size, viewBox: '0 0 120 120', role: 'img', 'aria-label': label };
-
-  if (family === 'streak') {
-    const c = earned ? STREAK_TIER_COLOURS[tier] || STREAK_TIER_COLOURS.coral : null;
-    return (
-      <svg {...common} viewBox="0 0 120 128">
-        <path d={SHIELD_OUTER} fill={c ? c.rim : LOCKED.rim} />
-        <path d={SHIELD_INNER} fill={c ? c.fill : LOCKED.fill} />
-        {c ? <path d={FLAME} fill={c.flame} /> : <Lock />}
-        {days !== undefined && (
-          <text x="60" y="98" textAnchor="middle" fontWeight="700" fontSize={String(days).length > 3 ? 18 : 22} fill={c ? c.ink : LOCKED.mark} fontFamily="var(--pf-font-display, inherit)">{days}</text>
-        )}
-      </svg>
-    );
-  }
-
-  if (family === 'onboarding') {
-    return (
-      <svg {...common}>
-        <circle cx="60" cy="60" r="56" fill={earned ? '#FBAE3D' : LOCKED.rim} />
-        <circle cx="60" cy="60" r="44" fill={earned ? '#132034' : LOCKED.fill} />
-        {earned ? (
-          <g transform="translate(60 62) scale(0.36) translate(-120 -94)">
-            <rect x="44" y="32" width="146" height="114" rx="38" fill="#5E3463" />
-            <rect x="62" y="50" width="112" height="80" rx="26" fill="#141012" />
-            <ellipse cx="100" cy="86" rx="9" ry="13" fill="#FBAE3D" />
-            <ellipse cx="140" cy="86" rx="9" ry="13" fill="#FBAE3D" />
-          </g>
-        ) : <Lock />}
-      </svg>
-    );
-  }
-
-  if (family === 'season') {
-    return (
-      <svg {...common}>
-        <circle cx="60" cy="60" r="56" fill={earned ? '#132034' : LOCKED.rim} />
-        <circle cx="60" cy="60" r="42" fill={earned ? '#4D345E' : LOCKED.fill} />
-        {earned ? <circle cx="60" cy="60" r="16" fill="#FBAE3D" /> : <Lock />}
-      </svg>
-    );
-  }
-
-  return (
-    <svg {...common}>
-      <polygon points={HEX_OUTER} fill={earned ? rim : LOCKED.rim} />
-      <polygon points={HEX_INNER} fill={earned ? fill : LOCKED.fill} />
-      {earned ? <circle cx="60" cy="60" r="14" fill="rgba(255,255,255,0.55)" /> : <Lock />}
-    </svg>
-  );
-}
-
-/** The robot's head, for avatars. */
-export function RobotHead({ size = 92, title = 'Your robot' }) {
-  return (
-    <svg width={size} height={Math.round(size * 132 / 200)} viewBox="20 28 200 132" role="img" aria-label={title}>
-      <ellipse cx="40" cy="94" rx="15" ry="24" fill="#F88F4A" />
-      <ellipse cx="36" cy="94" rx="7" ry="14" fill="#D55E64" />
-      <ellipse cx="200" cy="94" rx="15" ry="24" fill="#F88F4A" />
-      <ellipse cx="204" cy="94" rx="7" ry="14" fill="#D55E64" />
-      <rect x="50" y="38" width="146" height="116" rx="38" fill="#46264D" />
-      <rect x="44" y="32" width="146" height="114" rx="38" fill="#5E3463" />
+    <svg width={size} height={Math.round((size * h) / w)} viewBox={box} role={title ? 'img' : undefined} aria-label={title || undefined} aria-hidden={title ? undefined : 'true'}>
+      <ellipse cx="40" cy="94" rx="15" ry="24" fill={c.ear} />
+      <ellipse cx="36" cy="94" rx="7" ry="14" fill={c.earInner} />
+      <ellipse cx="200" cy="94" rx="15" ry="24" fill={c.ear} />
+      <ellipse cx="204" cy="94" rx="7" ry="14" fill={c.earInner} />
+      <rect x="50" y="38" width="146" height="116" rx="38" fill={c.shade} />
+      <rect x="44" y="32" width="146" height="114" rx="38" fill={c.body} stroke={c.headStroke || undefined} strokeWidth={c.headStroke ? 3 : undefined} />
       <rect x="62" y="50" width="112" height="80" rx="26" fill="#141012" />
       <ellipse cx="100" cy="86" rx="9" ry="13" fill="#FBAE3D" />
       <ellipse cx="140" cy="86" rx="9" ry="13" fill="#FBAE3D" />
       <path d="M110 108 Q120 116 130 108" stroke="#FBAE3D" strokeWidth="5" fill="none" strokeLinecap="round" />
+      {look.head}
     </svg>
   );
 }

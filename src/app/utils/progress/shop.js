@@ -1,7 +1,7 @@
 /**
- * The gem shop (NETZ_LAUNCH_PLAN.md 2.5, banners from board artboard 7). Pure: the server runs
- * buyItem / equipItem on its own copy of the progress state, so prices and balances cannot be
- * changed from the browser.
+ * The gem shop (NETZ_LAUNCH_PLAN.md 2.5; banners from board artboard 7, robot skins from
+ * artboard 13). Pure: the server runs buyItem / equipItem on its own copy of the progress state, so
+ * prices and balances cannot be changed from the browser.
  */
 
 import { MAX_FREEZES } from './catalog.js';
@@ -20,19 +20,54 @@ export const BANNERS = [
   { id: 'banner.circuit-night', name: 'Circuit Night', price: null, pro: 'Season 1 · 3 Pro tasks' },
 ];
 
-export const BANNER_BY_ID = Object.fromEntries(BANNERS.map((b) => [b.id, b]));
-export const DEFAULT_BANNER = 'banner.sunset-bands';
+export const SKINS = [
+  { id: 'skin.classic', name: 'Classic', price: 0, idea: 'The robot as it comes.' },
+  { id: 'skin.lab-coat', name: 'Lab Coat', price: 400, idea: 'White coat with a pen in the pocket.' },
+  { id: 'skin.winter', name: 'Winter', price: 450, idea: 'Beanie with a pompom and a striped scarf.' },
+  { id: 'skin.grad-cap', name: 'Graduation Cap', price: 500, idea: 'Mortarboard with an amber tassel.' },
+  { id: 'skin.headphones', name: 'Headphones', price: 600, idea: 'Navy headphones over the ear lights.' },
+  { id: 'skin.neon-night', name: 'Neon Night', price: 700, idea: 'Night-navy body with a glowing edge.' },
+  { id: 'skin.wizard', name: 'Wizard', price: 900, idea: 'A starry purple hat.' },
+  { id: 'skin.astronaut', name: 'Astronaut', price: 1200, idea: 'Glass space helmet and collar ring.' },
+  // Pro Season 1: earned with 6 Pro tasks, never sold, kept forever
+  { id: 'skin.circuit-2026', name: 'Circuit 2026', price: null, pro: 'Season 1 · 6 Pro tasks', idea: 'Gold body with circuit traces.' },
+];
 
-/** Banner ids the student owns (the free one always). Older records stored 'sunset-bands'. */
+export const BANNER_BY_ID = Object.fromEntries(BANNERS.map((b) => [b.id, b]));
+export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s]));
+export const DEFAULT_BANNER = 'banner.sunset-bands';
+export const DEFAULT_SKIN = 'skin.classic';
+
+// Older device records stored 'sunset-bands' and 'default'
+const fullBannerId = (id) => (id.startsWith('banner.') ? id : `banner.${id}`);
+const fullSkinId = (id) => (id === 'default' ? DEFAULT_SKIN : id.startsWith('skin.') ? id : `skin.${id}`);
+
+/** Banner ids the student owns (the free one always). */
 export function ownedBanners(state) {
-  const list = (state.owned?.banners || []).map((id) => (id.startsWith('banner.') ? id : `banner.${id}`));
+  const list = (state.owned?.banners || []).map(fullBannerId);
   return Array.from(new Set([DEFAULT_BANNER, ...list]));
 }
 
 export function equippedBanner(state) {
-  const id = state.equipped?.banner || DEFAULT_BANNER;
-  const full = id.startsWith('banner.') ? id : `banner.${id}`;
+  const full = fullBannerId(state.equipped?.banner || DEFAULT_BANNER);
   return ownedBanners(state).includes(full) ? full : DEFAULT_BANNER;
+}
+
+/** Skin ids the student owns (Classic always). */
+export function ownedSkins(state) {
+  const list = (state.owned?.skins || []).map(fullSkinId);
+  return Array.from(new Set([DEFAULT_SKIN, ...list]));
+}
+
+export function equippedSkin(state) {
+  const full = fullSkinId(state?.equipped?.skin || DEFAULT_SKIN);
+  return state && ownedSkins(state).includes(full) ? full : DEFAULT_SKIN;
+}
+
+function shelf(itemId) {
+  if (BANNER_BY_ID[itemId]) return { item: BANNER_BY_ID[itemId], key: 'banners', owned: ownedBanners };
+  if (SKIN_BY_ID[itemId]) return { item: SKIN_BY_ID[itemId], key: 'skins', owned: ownedSkins };
+  return null;
 }
 
 /**
@@ -48,20 +83,21 @@ export function buyItem(state, itemId, now = Date.now()) {
     return { ok: true, ledger: { amount: -FREEZE_PRICE, reason: `shop:freeze:${now}` } };
   }
 
-  const banner = BANNER_BY_ID[itemId];
-  if (!banner) return { ok: false, error: 'unknown_item' };
-  if (banner.price === null) return { ok: false, error: 'not_for_sale' };
-  if (ownedBanners(state).includes(itemId)) return { ok: false, error: 'already_owned' };
-  if (state.gems < banner.price) return { ok: false, error: 'not_enough_gems' };
-  state.gems -= banner.price;
-  state.owned = { ...state.owned, banners: [...ownedBanners(state), itemId] };
-  return { ok: true, ledger: { amount: -banner.price, reason: `shop:${itemId}` } };
+  const s = shelf(itemId);
+  if (!s) return { ok: false, error: 'unknown_item' };
+  if (s.item.price === null) return { ok: false, error: 'not_for_sale' };
+  if (s.owned(state).includes(itemId)) return { ok: false, error: 'already_owned' };
+  if (state.gems < s.item.price) return { ok: false, error: 'not_enough_gems' };
+  state.gems -= s.item.price;
+  state.owned = { ...state.owned, [s.key]: [...s.owned(state), itemId] };
+  return { ok: true, ledger: { amount: -s.item.price, reason: `shop:${itemId}` } };
 }
 
-/** Wears an owned banner. */
+/** Wears an owned banner or skin. */
 export function equipItem(state, itemId) {
-  if (!BANNER_BY_ID[itemId]) return { ok: false, error: 'unknown_item' };
-  if (!ownedBanners(state).includes(itemId)) return { ok: false, error: 'not_owned' };
-  state.equipped = { ...state.equipped, banner: itemId };
+  const s = shelf(itemId);
+  if (!s) return { ok: false, error: 'unknown_item' };
+  if (!s.owned(state).includes(itemId)) return { ok: false, error: 'not_owned' };
+  state.equipped = { ...state.equipped, [s.key === 'banners' ? 'banner' : 'skin']: itemId };
   return { ok: true };
 }

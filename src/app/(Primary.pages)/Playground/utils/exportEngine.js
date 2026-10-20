@@ -156,9 +156,10 @@ export async function renderView({ strokes = [], blocks = [], shapes = [], darkP
  * @param {HTMLElement} page.containerElement - Element that contains the rendered blocks
  * @param {string} [page.fileBaseName='netz-whiteboard']
  * @param {string} [page.background] - Page colour
+ * @param {boolean} [page.mark] - Free plan: a small "Made with NETZ" in the PDF's corner (Pro exports are clean)
  * @returns {Promise<{ ok: boolean, reason?: string, fileName?: string, width?: number, height?: number }>}
  */
-export async function exportPage(format, { strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, fileBaseName = 'netz-whiteboard', background = '#FFFFFF' }) {
+export async function exportPage(format, { strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, fileBaseName = 'netz-whiteboard', background = '#FFFFFF', mark = false }) {
   try {
     const blockImages = await captureBlockImages(blocks, containerElement);
     const bounds = getPageBounds(strokes, [...blockImages, ...shapeRects(shapes)]);
@@ -182,6 +183,11 @@ export async function exportPage(format, { strokes = [], blocks = [], shapes = [
         format: [bounds.width, bounds.height],
       });
       pdf.addImage(dataUrl, 'PNG', 0, 0, bounds.width, bounds.height);
+      if (mark) {
+        pdf.setFontSize(10);
+        pdf.setTextColor(140, 140, 140);
+        pdf.text('Made with NETZ', bounds.width - 10, bounds.height - 10, { align: 'right' });
+      }
       pdf.save(`${fileBaseName}.pdf`);
       return { ok: true, fileName: `${fileBaseName}.pdf`, width: bounds.width, height: bounds.height };
     }

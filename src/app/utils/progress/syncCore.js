@@ -69,9 +69,10 @@ function parseDeviceLog(entries, todayDay) {
  * @param {object?} args.profile     robot name, display name, units, onboardingSeen
  * @param {number}  args.tz          the device's Date.getTimezoneOffset()
  * @param {number}  args.now         server time, ms
+ * @param {boolean} args.pro         the student is Pro now (server's own check): Pro tasks and the monthly freeze count
  * @returns {{ state, events, logRows, isNew }}
  */
-export function syncProgress({ stored, activities = [], device = null, profile = null, tz = 0, now = Date.now() }) {
+export function syncProgress({ stored, activities = [], device = null, profile = null, tz = 0, now = Date.now(), pro = false }) {
   const isNew = !stored;
   const state = stored ? structuredClone(stored) : newProgressState();
   const today = dayAt(now, tz);
@@ -81,7 +82,7 @@ export function syncProgress({ stored, activities = [], device = null, profile =
   const apply = (kind, details, at, day) => {
     if (!KINDS.has(kind) && kind !== 'account.created') return;
     const clean = cleanDetails(details);
-    const result = reduceActivity(state, kind, clean, at, day);
+    const result = reduceActivity(state, kind, clean, at, day, { pro });
     if (result.skipped) return;
     events.push(...result.events);
     logRows.push({ kind, details: clean, localDay: day, at: new Date(at) });

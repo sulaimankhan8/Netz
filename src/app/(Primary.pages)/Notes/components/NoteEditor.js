@@ -25,8 +25,10 @@ import { BadgeRow, BannerFill, NoteIcon, StatusBadge, badgesOf, lookColour, look
 import { exportNoteAsMarkdown } from '../utils/noteStorage';
 import { exportNoteToPdf } from '../utils/pdfExport';
 import { recordActivity } from '@/app/utils/activity';
+import { usePublishedIds } from '../utils/publishClient';
 import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
+import { isProOnDevice } from '@/app/utils/proClient';
 
 const GRID_OPEN_KEY = 'netz_notes_add_grid_open';
 
@@ -158,6 +160,7 @@ export default function NoteEditor({
   onSetTagColour
 }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const publishedIds = usePublishedIds();
   const [exportOpen, setExportOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   // The block just added: it opens ready to type (a formula opens its LaTeX field)
@@ -314,7 +317,7 @@ export default function NoteEditor({
     if (!note) return;
     setIsExportingPdf(true);
     try {
-      await exportNoteToPdf(note, 'note-printable-area');
+      await exportNoteToPdf(note, 'note-printable-area', { clean: isProOnDevice() });
       recordActivity('note.exported', { kind: 'pdf' });
     } catch (err) {
       alert('Could not export PDF: ' + (err.message || 'Unknown error'));
@@ -344,14 +347,16 @@ export default function NoteEditor({
     </span>
   );
 
+  // Published for real (on the web), not the old local isPublic flag
+  const isPublished = publishedIds.has(note.id);
   const privacyChip = (
     <span
       className={`inline-flex items-center gap-1.5 h-[30px] px-3 rounded-full text-[13px] font-semibold shrink-0 ${
-        note.isPublic ? 'bg-nt-ok-tint text-nt-ok' : 'bg-nt-tray text-nt-text2'
+        isPublished ? 'bg-nt-ok-tint text-nt-ok' : 'bg-nt-tray text-nt-text2'
       }`}
     >
-      {note.isPublic ? <LuGlobe className="w-[15px] h-[15px]" aria-hidden="true" /> : <LuLock className="w-[15px] h-[15px]" aria-hidden="true" />}
-      {note.isPublic ? 'Public' : 'Private'}
+      {isPublished ? <LuGlobe className="w-[15px] h-[15px]" aria-hidden="true" /> : <LuLock className="w-[15px] h-[15px]" aria-hidden="true" />}
+      {isPublished ? 'Published' : 'Private'}
     </span>
   );
 

@@ -32,7 +32,7 @@ export const GROUPS = {
 
 /** A task finished by one solver run of `method`. */
 const solve = (id, group, method, name, medal, href) => ({
-  id, group, name, medal, href,
+  id, group, name, medal, href, method,
   matches: (a) => a.kind === 'solver.run' && a.details.method === method,
 });
 
@@ -167,3 +167,99 @@ export const STREAK_MEDALS = [
 ].map(([days, t]) => ({ id: `streak.${days}`, days, tier: t, tierName: TIERS[t].name, gems: TIERS[t].gems }));
 
 export const TASK_BY_ID = Object.fromEntries([...TASKS, ...ONBOARDING].map((t) => [t.id, t]));
+
+/* ---------------- Pro tasks (NETZ_LAUNCH_PLAN.md 2.7) ---------------- */
+
+// Each year's Pro season: what 3, 6 and 10 Pro tasks give. Kept forever, even after Pro ends.
+export const PRO_SEASONS = {
+  2026: { name: 'Circuit', banner: 'banner.circuit-night', skin: 'skin.circuit-2026' },
+};
+export const PRO_REWARD_AT = { banner: 3, skin: 6, medal: 10 };
+
+const UNIT4_METHODS = TASKS.filter((t) => t.group === 'unit4' && t.method).map((t) => t.method);
+const UNITS = ['unit1', 'unit2', 'unit3', 'unit4', 'unit5'];
+
+/** Methods solved on `day` (or in the month `prefix`) from the 40-day activity log. */
+function solvedMethods(state, test) {
+  const methods = new Set();
+  state.activity.forEach((a) => {
+    if (a.kind !== 'solver.run' || !test(a.day)) return;
+    try {
+      const m = JSON.parse(a.key.slice(a.key.indexOf('|') + 1)).method;
+      if (m) methods.add(m);
+    } catch {
+      // an old entry without details
+    }
+  });
+  return methods;
+}
+
+const countToday = (state, today, kind) => state.activity.filter((a) => a.day === today && a.kind === kind).length;
+
+/**
+ * The 10 Pro tasks of 2026. All of them can be done within one month. `check` runs after the
+ * activity has been counted, with { activity, state, today, recent }.
+ */
+export const PRO_TASKS = [
+  {
+    id: 'pro.2026.unit4-trio', name: 'Solve 3 different Unit 4 methods in one day', href: '/euler-s-method',
+    check: ({ state, today }) => [...solvedMethods(state, (d) => d === today)].filter((m) => UNIT4_METHODS.includes(m)).length >= 3,
+  },
+  {
+    id: 'pro.2026.ten-methods', name: 'Use 10 different methods in one month', href: '/Algorithems',
+    check: ({ state, today }) => solvedMethods(state, (d) => d.startsWith(today.slice(0, 7))).size >= 10,
+  },
+  {
+    id: 'pro.2026.week-streak', name: 'Keep a 7-day streak', href: '/Profile',
+    check: ({ state }) => state.streak.current >= 7,
+  },
+  {
+    id: 'pro.2026.goal-five', name: "Finish the daily goal on 5 days in one month", href: '/Profile',
+    check: ({ state, today }) => Object.entries(state.daysDone)
+      .filter(([d, ids]) => d.startsWith(today.slice(0, 7)) && ids.length >= DAILY_GOAL_TASKS).length >= 5,
+  },
+  {
+    id: 'pro.2026.live-note', name: 'Write a note with a solver and a quiz in it', href: '/Notes',
+    check: ({ activity }) => activity.kind === 'note.saved' && !!activity.details.hasWidget && !!activity.details.hasQuiz,
+  },
+  {
+    id: 'pro.2026.quiz-five', name: 'Answer 5 quiz questions right in one day', href: '/Notes',
+    check: ({ state, today }) => countToday(state, today, 'quiz.correct') >= 5,
+  },
+  {
+    id: 'pro.2026.all-rules', name: 'Solve one integral with all 6 rules', href: '/trapezoidal-Rule',
+    check: ({ activity, recent }) => {
+      if (activity.kind !== 'solver.run' || !RULE_METHODS.includes(activity.details.method) || !activity.details.fn) return false;
+      const key = `${sameExpression(activity.details.fn)}|${activity.details.a}|${activity.details.b}`;
+      const methods = new Set([activity.details.method]);
+      recent.forEach((r) => {
+        if (RULE_METHODS.includes(r.method) && `${sameExpression(r.fn)}|${r.a}|${r.b}` === key) methods.add(r.method);
+      });
+      return methods.size >= RULE_METHODS.length;
+    },
+  },
+  {
+    id: 'pro.2026.five-units', name: 'Do a task from every unit in one day', href: '/Algorithems',
+    check: ({ state, today }) => {
+      const done = state.daysDone[today] || [];
+      return UNITS.every((u) => done.some((id) => id.startsWith(`${u}.`)));
+    },
+  },
+  {
+    id: 'pro.2026.ink-both', name: 'Turn handwriting into maths and into text on the same day', href: '/Playground',
+    check: ({ state, today }) => {
+      const kinds = new Set(state.activity.filter((a) => a.day === today && a.kind === 'ink.converted').map((a) => {
+        try {
+          return JSON.parse(a.key.slice(a.key.indexOf('|') + 1)).kind;
+        } catch {
+          return '';
+        }
+      }));
+      return kinds.has('math') && kinds.has('text');
+    },
+  },
+  {
+    id: 'pro.2026.month-medal', name: 'Earn a monthly medal', href: '/Profile',
+    check: ({ state, today }) => Object.keys(state.medals).some((id) => id.startsWith(`month.${today.slice(0, 4)}-`)),
+  },
+];

@@ -1,0 +1,411 @@
+/*
+ * Pricing page (board artboards 14 and 15). Built on the landing page tokens (--ld-*), so light and
+ * dark follow the rest of the site. Every class starts with ld-pr-.
+ */
+
+.ld-pr {
+  padding-bottom: clamp(96px, 10vw, 104px);
+}
+
+.ld-pr-hero {
+  padding: clamp(24px, 5vw, 48px) 0 40px;
+  max-width: 640px;
+}
+
+/* ---------- switches ---------- */
+
+.ld-pr-switches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 24px;
+}
+
+.ld-pr-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-line);
+}
+
+.ld-pr-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ld-text2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ld-pr-seg button.is-on {
+  background: var(--ld-tray);
+  color: var(--ld-ink);
+}
+
+.ld-pr-seg button:focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+
+.ld-pr-save {
+  font-size: 13px;
+  color: var(--ld-ok);
+}
+
+/* ---------- plans ---------- */
+
+.ld-pr-plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ld-pr-plan {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-line);
+  border-radius: 20px;
+  padding: clamp(22px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Free first on wide screens; Pro first on phones (it comes first in the page) */
+.ld-pr-plan-pro {
+  order: 2;
+  border-color: var(--ld-accent-fill);
+  box-shadow: 0 0 0 1px var(--ld-accent-fill), var(--ld-shadow);
+}
+
+.ld-pr-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ld-pr-kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ld-pr-kicker {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ld-text2);
+}
+
+.ld-pr-kicker-pro {
+  color: var(--ld-accent);
+}
+
+.ld-pr-tag {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--ld-accent-tint);
+  color: var(--ld-accent-on-tint);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ld-pr-price {
+  margin: 0;
+  color: var(--ld-text2);
+  font-size: 16px;
+}
+
+.ld-pr-price span {
+  font-size: clamp(36px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ld-ink);
+}
+
+.ld-pr-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ld-text2);
+}
+
+.ld-pr-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.ld-pr-list li {
+  display: flex;
+  gap: 10px;
+}
+
+.ld-pr-list li.is-muted {
+  color: var(--ld-text2);
+}
+
+.ld-pr-ok {
+  flex: none;
+  color: var(--ld-ok);
+  font-weight: 700;
+}
+
+.ld-pr-no {
+  flex: none;
+  color: var(--ld-text2);
+  opacity: 0.7;
+}
+
+.ld-pr-buy {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ld-pr-buy .ld-btn {
+  width: 100%;
+}
+
+.ld-pr-current {
+  cursor: default;
+  color: var(--ld-text2);
+}
+
+.ld-pr-current:hover {
+  background: var(--ld-surface);
+}
+
+.ld-pr-soon,
+.ld-pr-soon:disabled {
+  background: var(--ld-tray);
+  border: 1px dashed var(--ld-line);
+  color: var(--ld-text2);
+  cursor: not-allowed;
+}
+
+.ld-pr-fine {
+  font-size: 13px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--ld-text2);
+}
+
+/* ---------- compare + questions ---------- */
+
+.ld-pr-section {
+  padding-top: clamp(56px, 7vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ld-pr-table-wrap {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-line);
+  border-radius: 20px;
+  overflow-x: auto;
+}
+
+.ld-pr-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.ld-pr-table th,
+.ld-pr-table td {
+  padding: 14px 20px;
+  text-align: left;
+  border-top: 1px solid var(--ld-line);
+}
+
+.ld-pr-table thead th {
+  border-top: 0;
+  padding-top: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ld-text2);
+}
+
+.ld-pr-table thead th:first-child {
+  width: 52%;
+}
+
+.ld-pr-table thead th.is-pro {
+  color: var(--ld-accent);
+}
+
+.ld-pr-table tbody th {
+  font-weight: 500;
+}
+
+.ld-pr-table td.is-muted {
+  color: var(--ld-text2);
+}
+
+.ld-pr-faq {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.ld-pr-q {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-line);
+  border-radius: 20px;
+}
+
+.ld-pr-q summary {
+  min-height: 64px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ld-pr-q summary::-webkit-details-marker {
+  display: none;
+}
+
+.ld-pr-q-mark::before {
+  content: '+';
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--ld-text2);
+}
+
+.ld-pr-q[open] .ld-pr-q-mark::before {
+  content: '−';
+}
+
+.ld-pr-q p {
+  margin: 0;
+  padding: 0 24px 22px;
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--ld-text2);
+}
+
+.ld-pr-q a,
+.ld-pr-footer a {
+  color: var(--ld-accent);
+}
+
+.ld-pr-footer {
+  margin-top: clamp(56px, 7vw, 72px);
+  padding-top: 24px;
+  border-top: 1px solid var(--ld-line);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  font-size: 15px;
+  color: var(--ld-text2);
+}
+
+.ld-pr-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.ld-pr-footer a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Phones: one column, Pro first, and a buy bar fixed at the bottom */
+.ld-pr-bar {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .ld-pr-plans,
+  .ld-pr-faq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ld-pr-plan-pro {
+    order: 0;
+  }
+
+  .ld-pr-switches .ld-pr-seg:first-child {
+    flex: 1 1 100%;
+  }
+
+  .ld-pr-switches .ld-pr-seg:first-child button {
+    flex: 1;
+    padding: 0 8px;
+  }
+
+  .ld-pr-switches .ld-pr-seg:last-child {
+    margin-left: auto;
+  }
+
+  .ld-pr-plan-pro .ld-pr-buy .ld-btn {
+    display: none;
+  }
+
+  .ld-pr-bar {
+    display: block;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 20;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--ld-paper);
+    border-top: 1px solid var(--ld-line);
+  }
+
+  .ld-pr-bar-btn {
+    width: 100%;
+  }
+}
+
+/* What the buy button is doing, or the student's plan once they have Pro */
+.ld-pr-msg {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--ld-ink);
+}
+
+.ld-pr-msg:empty {
+  display: none;
+}
