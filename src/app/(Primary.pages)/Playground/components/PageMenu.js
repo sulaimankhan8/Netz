@@ -176,7 +176,7 @@ export default function PageMenu({
           {['PNG', 'SVG', 'PDF'].map((format) => (format === 'SVG' && !pro ? (
             // SVG comes with Pro: this opens Pricing in a new tab so the page stays as it is
             <a key={format} href="/Pricing" target="_blank" rel="noopener" title="SVG export comes with NETZ Pro" aria-label="SVG export comes with NETZ Pro: see Pricing" className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
-              {format}<span className="text-[11px] font-bold">PRO</span>
+              {format}<span className="text-[12px] font-bold">PRO</span>
             </a>
           ) : (
             <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={`Export this page as ${format}`} aria-label={`Export as ${format}`} className={`${BTN_SECONDARY} px-2.5`}>

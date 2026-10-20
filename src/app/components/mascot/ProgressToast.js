@@ -70,7 +70,11 @@ function describe(event) {
   }
 }
 
-/** One small toast at the bottom of the screen with the robot, for whatever a task just earned. */
+/**
+ * One small toast at the bottom of the screen with the robot, for whatever a task just earned.
+ * It sits above the page and the Playground dock (z-50) but under menus, sheets and dialogs (z-60 and up),
+ * and only its Close button takes taps, so it never blocks something the student is doing.
+ */
 export default function ProgressToast() {
   const [toast, setToast] = useState(null);
   const pendingRef = useRef(null);
@@ -130,13 +134,14 @@ export default function ProgressToast() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 z-[90] flex justify-center px-4"
+      className="pointer-events-none fixed inset-x-0 z-[55] flex justify-center px-4"
       style={{ bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}
     >
       {toast && (
         <div
           key={toast.key}
-          className="pointer-events-auto flex max-w-[440px] items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl"
+          // Taps go through to whatever is underneath (a drawing, a block, a button); only Close catches them
+          className="pointer-events-none flex max-w-[440px] items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl"
           style={{ background: '#1E1E20', borderColor: '#34343A', color: '#F4F4F2' }}
         >
           <NetzRobot size={52} mood={toast.mood} listen={false} title="NETZ robot" />
@@ -149,7 +154,7 @@ export default function ProgressToast() {
             type="button"
             onClick={() => setToast(null)}
             aria-label="Close"
-            className="ml-1 flex h-11 w-11 flex-none items-center justify-center rounded-xl"
+            className="pointer-events-auto ml-1 flex h-11 w-11 flex-none items-center justify-center rounded-xl"
             style={{ color: '#B4B4BA' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>

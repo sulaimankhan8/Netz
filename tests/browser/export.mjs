@@ -53,6 +53,27 @@ try {
   for (let i = 0; i < 8; i++) { await page.mouse.wheel({ deltaX: 150, deltaY: 60 }); await sleep(20); }
   await sleep(300);
 
+  // Free: SVG is a Pro export (a link to Pricing), and the PDF carries a small "Made with NETZ"
+  await clickTitle(page, 'Export Canvas');
+  const freeMenu = await page.evaluate(() => ({
+    svgButton: !!document.querySelector('button[aria-label="Export as SVG"]'),
+    svgLink: document.querySelector('a[href="/Pricing"][aria-label^="SVG export comes with NETZ Pro"]')?.textContent || '',
+  }));
+  check('free: SVG shows as a Pro link to Pricing, not an export button', !freeMenu.svgButton && /SVG/.test(freeMenu.svgLink) && /PRO/.test(freeMenu.svgLink), JSON.stringify(freeMenu));
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  await exportAs('Export PDF Document');
+  const freePdf = await waitForFile('.pdf');
+  check('free: the PDF says "Made with NETZ"', freePdf && fs.readFileSync(freePdf).toString('latin1').includes('Made with NETZ'));
+  if (freePdf) fs.rmSync(freePdf);
+
+  // Pro (a pretend status on this page only; the real one comes from the server): SVG export and a clean PDF
+  await page.evaluate(() => {
+    localStorage.setItem('netz_pro_v1', JSON.stringify({ pro: true, lifetime: true, plan: 'lifetime', userId: 'test', at: Date.now() }));
+    window.dispatchEvent(new CustomEvent('netz:pro'));
+  });
+  await sleep(200);
+
   // SVG
   await exportAs('Export SVG Vector');
   const svgFile = await waitForFile('.svg');
@@ -90,6 +111,7 @@ try {
   if (pdfFile) {
     const buf = fs.readFileSync(pdfFile);
     check('PDF: is a PDF with one page', buf.slice(0, 5).toString() === '%PDF-' && (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length === 1);
+    check('Pro: the PDF has no NETZ mark', !buf.toString('latin1').includes('Made with NETZ'));
   }
   const doneNotice = await page.evaluate(() => [...document.querySelectorAll('[data-status-area] [role="status"]')].map((n) => n.innerText).join(' | '));
   check('a message confirms the export', /Saved netz-page-1\.pdf/.test(doneNotice), doneNotice);
