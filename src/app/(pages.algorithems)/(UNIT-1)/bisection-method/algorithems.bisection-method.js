@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -16,6 +17,7 @@ const BisectionMethod = () => {
   const [tolerance, setTolerance] = useState(0.05);
   const [result, setResult] = useState(null);
   useRecordSolve('bisection', 1, result, () => ({ fn: functionInput }));
+  useCodeExportInputs('bisection', () => ({ f: functionInput, tol: tolerance }));
   const [intervalSteps, setIntervalSteps] = useState([]);
   const [bisectionIterations, setBisectionIterations] = useState([]);
   const [error, setError] = useState('');

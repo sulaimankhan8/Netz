@@ -1,5 +1,6 @@
 "use client";
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 import { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
@@ -18,6 +19,7 @@ export default function NewtonDividedDifference({ theme }) {
   const [interpolateX, setInterpolateX] = useState("10");
   const [output, setOutput] = useState("");
   useRecordSolve('newton-divided', 2, output, () => ({ points: rows.filter((r) => r && String(r.x ?? '').trim() !== '').length }));
+  useCodeExportInputs('newton-divided', () => ({ ...rowsToXY(rows), at: interpolateX }));
   const [diffTable, setDiffTable] = useState([]);
   const [polynomialSteps, setPolynomialSteps] = useState({
     formulas: [],

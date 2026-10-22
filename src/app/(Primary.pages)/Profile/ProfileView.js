@@ -5,7 +5,7 @@ import Link from 'next/link';
 import useProgress from '@/app/utils/progress/useProgress';
 import useAccount from '@/app/utils/progress/useAccount';
 import { markOnboardingSeen, PROGRESS_EVENT } from '@/app/utils/progress/engine';
-import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, PRO_REWARD_AT, PRO_SEASONS, PRO_TASKS, STREAK_MEDALS, TASKS, MAX_FREEZES } from '@/app/utils/progress/catalog';
+import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, PRO_REWARD_AT, PRO_SEASONS, PRO_TASKS, STREAK_MEDALS, TASKS, MAX_FREEZES, DEFAULT_ROBOT_NAME } from '@/app/utils/progress/catalog';
 import useIsPro, { useProStatus } from '@/app/utils/useIsPro';
 import { refreshPro } from '@/app/utils/proClient';
 import { PLANS } from '@/app/utils/pricing';
@@ -20,7 +20,7 @@ import { REWARDED_UNIT, playRewarded } from '@/app/utils/ads/gpt';
 import { claimAdReward } from '@/app/utils/progress/cloudSync';
 import ShopDialog from './ShopDialog';
 import Banner from '@/app/components/mascot/banners';
-import { BANNER_BY_ID, SKIN_BY_ID, equippedBanner, equippedSkin } from '@/app/utils/progress/shop';
+import { BANNER_BY_ID, SKIN_BY_ID, YEAR_BADGE_PRICE, equippedBanner, equippedSkin } from '@/app/utils/progress/shop';
 import { PF_FONT } from './fonts';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -56,13 +56,13 @@ function Header({ summary, robotName, signedIn, bannerId, skinId, onOpenShop }) 
       <Banner id={bannerId} height={180} className="md:h-[200px]" />
       <div className="flex flex-wrap items-start gap-4 md:gap-6 px-4 md:px-8 pb-6 pt-3">
         <div className="relative z-[1] -mt-14 md:-mt-16 flex h-[96px] w-[96px] md:h-[120px] md:w-[120px] flex-none items-center justify-center rounded-full border-[5px] border-[var(--pf-surface)] bg-[#132034]">
-          <RobotHead size={76} skin={skinId} title={robotName ? `Your robot, ${robotName}` : 'Your robot'} />
+          <RobotHead size={76} skin={skinId} title={`Your robot, ${robotName || DEFAULT_ROBOT_NAME}`} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="pf-display m-0 text-[26px] md:text-[32px] font-semibold">{summary.displayName || 'Your profile'}</h1>
             <span className="text-[14px] text-[var(--pf-text2)]">
-              {robotName ? `Robot: ${robotName}` : 'Robot not named yet'} · {signedIn ? 'saved to your account' : 'saved on this device'}
+              {`Robot: ${robotName || DEFAULT_ROBOT_NAME}`} · {signedIn ? 'saved to your account' : 'saved on this device'}
             </span>
           </div>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Your progress">
@@ -259,7 +259,7 @@ function MedalCase({ state, today, className }) {
             const id = `month.${y}-${String(month).padStart(2, '0')}`;
             return { id, family: 'season', name: `${MONTHS[month - 1]} ${y}`, how: `Do tasks on ${MONTH_MEDAL_DAYS} days of ${MONTHS[month - 1]} · +${GEMS.monthMedal} gems`, earnedOn: state.medals[id] };
           }),
-          { id: `year.${year}`, family: 'season', name: `${year} year badge`, how: year === String(LAUNCH.year) ? 'Earn 2 of the 3 monthly medals of 2026' : `Earn 6 monthly medals in ${year}`, earnedOn: state.medals[`year.${year}`] },
+          { id: `year.${year}`, family: 'season', name: `${year} year badge`, how: `Buy it in the shop for ${YEAR_BADGE_PRICE.toLocaleString('en-IN')} gems during ${year}. Free for everyone.`, earnedOn: state.medals[`year.${year}`] },
           { id: `pro.${year}`, family: 'season', name: `${year} Pro medal`, how: `Pro members: finish the ${year} Pro tasks. Kept forever.`, earnedOn: state.medals[`pro.${year}`] },
         ],
       },
@@ -414,7 +414,7 @@ function Gems({ summary, state, today, signedIn, className, onOpenShop }) {
       <div className="h-2 overflow-hidden rounded-full bg-[var(--pf-tray)]" aria-hidden="true">
         <div className="h-full bg-[#FBAE3D]" style={{ width: `${Math.min(100, (summary.gemsToday / GEMS.dailyCap) * 100)}%` }} />
       </div>
-      <button type="button" className={BTN_QUIET} onClick={() => onOpenShop('banners')}>Open shop: banners, streak freezes, skins</button>
+      <button type="button" className={BTN_QUIET} onClick={() => onOpenShop('banners')}>Open shop: banners, freezes, skins, year badge</button>
       <WatchAd state={state} today={today} signedIn={signedIn} />
     </section>
   );
@@ -468,7 +468,7 @@ function YourPlan({ userId }) {
         </div>
       )}
       {message && <p className="m-0 text-[13px] text-[#FBAE3D]" role="status">{message}</p>}
-      <p className="m-0 text-[12px] text-[#B4B4BA]">Refunds within 7 days of a first payment: see <Link href="/Refund" className="underline">Refunds</Link>.</p>
+      <p className="m-0 text-[12px] text-[#B4B4BA]">Payments are not refunded; cancelling keeps Pro until the paid date. See <Link href="/Refund" className="underline">Refunds</Link>.</p>
     </div>
   );
 }

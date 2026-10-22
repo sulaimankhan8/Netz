@@ -2,12 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import AdSlot from '../ads/AdSlot';
 import { PROGRESS_EVENT } from '../../utils/progress/engine';
 import { methodByRoute, methodsInUnit, neighbours, unitById } from './catalog';
 import { getProgress, markDone, onProgressChange, rememberVisit, setShowAll } from './progress';
 import { AM_FONT } from './fonts';
+import { EXPORT_INPUTS_EVENT, currentExportInputs } from '../../utils/codeExport/inputs';
+import { escapeTex, solverPanelToTex, slugFile } from '../../utils/latexExport';
 import './methods.css';
 
 /**
@@ -22,6 +25,30 @@ import './methods.css';
  * The calculator is mounted the first time Solve opens and then kept (hidden, not unmounted), so
  * switching back and forth keeps its inputs and result. `?mode=solve` opens on Solve.
  */
+
+const ProExportDialog = dynamic(() => import('../export/ProExportDialog'), { ssr: false });
+
+// How each shared input is named in the LaTeX file
+const INPUT_LABELS = {
+  f: 'Function', g: 'g(x)', a: 'a', b: 'b', tol: 'Tolerance', x0: '$x_0$', x1: '$x_1$', y0: '$y_0$', h: 'Step $h$', xn: 'Target $x$',
+  n: 'Strips $n$', points: 'Points', maxIter: 'Most iterations', at: 'Interpolate at $x$', x: '$x$ values', y: '$y$ values',
+  mean: 'Sample mean', mu: 'Population mean', sigma: 'Standard deviation', data: 'Sample', observed: 'Observed', expected: 'Expected',
+  s1: 'Sample 1', s2: 'Sample 2', model: 'Model', A: 'Augmented matrix',
+};
+
+function inputsForTex(raw) {
+  if (!raw) return [];
+  return Object.entries(raw)
+    .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+    .map(([k, v]) => {
+      let value;
+      if (k === 'A' && Array.isArray(v)) value = `$\\begin{bmatrix}${v.map((r) => r.map((c) => escapeTex(c)).join(' & ')).join(' \\\\ ')}\\end{bmatrix}$`;
+      else if (Array.isArray(v)) value = escapeTex(v.join(', '));
+      else if (k === 'f' || k === 'g') value = `\\texttt{${escapeTex(v)}}`;
+      else value = escapeTex(v);
+      return [INPUT_LABELS[k] || escapeTex(k), value];
+    });
+}
 
 const StepsContext = createContext({ shown: 0, total: 0, reveal: () => {}, current: 0 });
 
@@ -141,7 +168,7 @@ function ThemeButton() {
   );
 }
 
-function MoreMenu({ onTheme }) {
+function MoreMenu({ onTheme, onExport }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const ref = useRef(null);
@@ -200,6 +227,7 @@ function MoreMenu({ onTheme }) {
       </button>
       {open && (
         <div className="am-menu-pop" role="menu">
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); onExport(); }}>Export code or LaTeX</button>
           <button type="button" role="menuitem" onClick={fullScreen}>Full screen</button>
           <button type="button" role="menuitem" onClick={copyLink}>{note || 'Copy link'}</button>
           <button type="button" role="menuitem" onClick={() => { setOpen(false); onTheme(); }}>Switch light / dark</button>
@@ -223,6 +251,15 @@ export default function MethodShell({ route: routeProp, steps: total = 0, solve,
   const [done, setDone] = useState({});
   const mainRef = useRef(null);
   const userStepped = useRef(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportInputs, setExportInputs] = useState(() => currentExportInputs());
+
+  // The calculator shares its inputs for code export (utils/codeExport/inputs.js)
+  useEffect(() => {
+    const on = (e) => setExportInputs(e.detail);
+    window.addEventListener(EXPORT_INPUTS_EVENT, on);
+    return () => window.removeEventListener(EXPORT_INPUTS_EVENT, on);
+  }, []);
 
   // Start where the person left off: ?mode=solve, the saved step, or every step if they chose that
   useEffect(() => {
@@ -325,6 +362,12 @@ export default function MethodShell({ route: routeProp, steps: total = 0, solve,
 
   const unitClass = method ? `am-${method.unit}` : 'am-u1';
 
+  // Export works on the calculator, so it opens Solve first
+  const openExport = () => {
+    if (mode !== 'solve') switchMode('solve');
+    setExporting(true);
+  };
+
   return (
     <div className={`am-root ${AM_FONT} ${unitClass}`}>
       <div className="am-offset">
@@ -358,8 +401,11 @@ export default function MethodShell({ route: routeProp, steps: total = 0, solve,
               <span aria-hidden="true" style={{ display: 'inline' }}>›</span>
             </Link>
           )}
+          <button type="button" className="am-icon-btn am-bar-hide-phone am-export-btn" onClick={openExport} aria-label="Export code or LaTeX" title="Export code or LaTeX">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16" /></svg>
+          </button>
           <ThemeButton />
-          <MoreMenu onTheme={toggleTheme} />
+          <MoreMenu onTheme={toggleTheme} onExport={openExport} />
         </header>
 
         <div className="am-body">
@@ -403,6 +449,14 @@ export default function MethodShell({ route: routeProp, steps: total = 0, solve,
 
             <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ALGORITHM} className="am-ad" />
 
+            {exporting && (
+              <ExportFor
+                title={method?.name || 'Method'}
+                inputs={exportInputs}
+                onClose={() => setExporting(false)}
+              />
+            )}
+
             {next && (
               <Link href={next.route} className="am-next-card">
                 <span style={{ flex: 1 }}>
@@ -417,4 +471,34 @@ export default function MethodShell({ route: routeProp, steps: total = 0, solve,
       </div>
     </div>
   );
+}
+
+/** The export dialog for the open solver: code from the shared inputs, LaTeX from the Solve panel. */
+function ExportFor({ title, inputs, onClose }) {
+  const [codeLib, setCodeLib] = useState(null);
+  useEffect(() => {
+    let live = true;
+    import('../../utils/codeExport').then((m) => live && setCodeLib(m));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const getCode = useCallback(
+    (lang) => {
+      if (!codeLib) throw new Error('Getting code export ready…');
+      if (!inputs?.method) throw new Error('Open Solve and enter your numbers first.');
+      return codeLib.generateCode(inputs.method, inputs.raw, lang);
+    },
+    [codeLib, inputs],
+  );
+  const getTex = useCallback(
+    () => ({
+      tex: solverPanelToTex({ title, inputs: inputsForTex(inputs?.raw), root: document.getElementById('am-solve') }),
+      filename: `netz-${slugFile(title)}.tex`,
+    }),
+    [title, inputs],
+  );
+
+  return <ProExportDialog title={title} getCode={getCode} getTex={getTex} onClose={onClose} note="The code uses the numbers now in the calculator. The LaTeX file has your inputs and the tables shown under Solve." />;
 }

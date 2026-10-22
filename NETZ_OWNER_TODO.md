@@ -2,7 +2,7 @@
 
 Everything only the owner can do (accounts, keys, money, decisions), in one place, in the order to do it in
 one sitting. The code for all of it is already built and stays switched off until these are done.
-Claude adds every new owner task here as later steps are built. Last updated **2026-10-20** (after Pro features).
+Claude adds every new owner task here as later steps are built. Last updated **2026-10-21** (owner finished B, C, D (rupee plans), E and KYC; decisions in A answered).
 
 Secrets (keys, passwords, `DATABASE_URL`) go only in `Netz/.env.local` and in Vercel, never in chat or a commit.
 `.env.example` lists every variable name.
@@ -11,51 +11,58 @@ Secrets (keys, passwords, `DATABASE_URL`) go only in `Netz/.env.local` and in Ve
 
 ## A. Decisions (5 minutes, no accounts needed)
 
-- [ ] **Free year badge**: keep it for everyone (6 monthly medals in a year), or make yearly medals Pro-only? (plan 8.2)
-- [ ] **Robot's default name** before the student names it. (plan 8.3)
+- [x] (2026-10-21) **Year badge**: free for everyone, bought in the shop for 1,500 gems during its year (no monthly medals needed).
+- [x] (2026-10-21) **Robot's default name**: Bolt.
 - [ ] **Gem amounts and shop prices** (plan 2.5) are a first guess: fine for launch, retune after a few weeks of use. (plan 8.4)
-- [ ] **LaTeX and code export** are listed for Pro on the Pricing page but do not exist yet. Either Claude builds
-      them, or they come off the Pricing page until they do.
-- [ ] **The 10 Pro tasks of 2026** (Profile → Pro card, or `PRO_TASKS` in `src/app/utils/progress/catalog.js`):
+- [x] (2026-10-21) **LaTeX and code export**: built. Code export (Python, MATLAB, C++, JavaScript, Rust, Go) on all
+      34 solver pages; LaTeX on solver pages, Notes and the Playground. Both Pro only.
+- [x] (2026-10-21, approved as they are) **The 10 Pro tasks of 2026** (Profile → Pro card, or `PRO_TASKS` in `src/app/utils/progress/catalog.js`):
       happy with them? Each year after 2026 needs a new season (name, banner, skin) and 10 new tasks.
-- [ ] **Refunding a monthly or yearly plan**: either you also cancel the subscription in the Razorpay dashboard each time,
-      or Claude makes the webhook cancel it automatically after a full refund. Pick one.
+- [x] (2026-10-21) **Refunds**: none. Students cancel any time and keep Pro until the paid date. The Refund, Terms,
+      Pricing and Profile pages say so. The one exception kept on the Refund page: a double or mistaken charge is refunded.
+- [ ] **Handwriting models and selling NETZ** (new, 2026-10-21): NETZ is commercial, but the shipped text model was
+      trained on IAM-OnDB and the maths model on MathWriting, and both datasets say non-commercial (MathWriting: CC BY-NC-SA 4.0
+      in its paper). BRUSH is non-commercial too, so it is off the training plan. Options: ask the dataset owners for
+      commercial permission, get legal advice, or retrain on handwriting collected in the app (the maths model is
+      frozen, so that needs your say-so). Details in `PLAYGROUND_HANDOFF.md` section 7.
 
 ## B. Your details on the legal pages (5 minutes)
 
 Razorpay reads these pages before it switches payments on, so they must be real.
 
-- [ ] Fill in `src/app/components/landing/legalDetails.js`: `owner` (your name or business name), `email`,
+- [x] (2026-10-21, filled in by Claude from the owner's details) Fill in `src/app/components/landing/legalDetails.js`: `owner` (your name or business name), `email`,
       `address` (city, state, PIN), `jurisdiction` (your city and state for disputes). Empty fields are simply left off.
 - [ ] Read `/Terms`, `/Refund`, `/Privacy`, `/Contact` once. They are plain-language drafts, not legal advice;
       have a lawyer look if you can.
 
 ## C. Supabase + Google sign-in (about 30 minutes, free)
 
-1. [ ] supabase.com → New project, region **Mumbai (ap-south-1)**, free plan. Save the database password somewhere safe.
-2. [ ] Supabase → SQL editor → run **all four** files in `supabase/migrations/`, one after another in name order:
-   - [ ] `20261019000000_progress.sql`
-   - [ ] `20261020000000_notes.sql`
-   - [ ] `20261021000000_public_notes.sql`
-   - [ ] `20261022000000_billing.sql`
-3. [ ] Google Cloud Console → APIs & Services → OAuth consent screen (app name NETZ, your email) → Credentials →
+1. [x] supabase.com → New project, region **Mumbai (ap-south-1)**, free plan. Save the database password somewhere safe.
+2. [x] (done by Claude on 2026-10-20, all 9 tables with row-level security) Supabase → SQL editor → run **all four** files in `supabase/migrations/`, one after another in name order:
+   - [x] `20261019000000_progress.sql`
+   - [x] `20261020000000_notes.sql`
+   - [x] `20261021000000_public_notes.sql`
+   - [x] `20261022000000_billing.sql`
+3. [x] (2026-10-21) Google Cloud Console → APIs & Services → OAuth consent screen (app name NETZ, your email) → Credentials →
    Create OAuth client ID (Web application). Authorised redirect URI: the callback URL Supabase shows under
    Authentication → Providers → Google. Paste the client ID and secret back into Supabase and enable Google.
-4. [ ] Supabase → Authentication → URL configuration: Site URL = the live site; Redirect URLs =
+4. [x] (2026-10-21) Supabase → Authentication → URL configuration: Site URL = the live site; Redirect URLs =
    `http://localhost:3210/auth/callback` and `https://<live site>/auth/callback`.
-5. [ ] Copy `.env.example` to `Netz/.env.local` and fill in: `NEXT_PUBLIC_SUPABASE_URL`,
+5. [x] Copy `.env.example` to `Netz/.env.local` and fill in: `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL` (the **Transaction pooler** string, port 6543).
 
 ## D. Razorpay in test mode (about 30 minutes, free)
 
-1. [ ] Razorpay dashboard → switch to **Test mode** → Account & Settings → API Keys → generate.
+1. [x] Razorpay dashboard → switch to **Test mode** → Account & Settings → API Keys → generate.
    Put `NEXT_PUBLIC_RAZORPAY_KEY_ID` (rzp_test_…) and `RAZORPAY_KEY_SECRET` in `.env.local`.
-2. [ ] Subscriptions → Plans → create 4 plans with exactly these prices, and paste each plan id into `.env.local`:
-   - [ ] ₹199 every 1 month → `RAZORPAY_PLAN_MONTHLY_INR`
-   - [ ] ₹1,499 every 1 year → `RAZORPAY_PLAN_YEARLY_INR`
-   - [ ] $2.99 every 1 month → `RAZORPAY_PLAN_MONTHLY_USD`
+2. [x] (2026-10-21) Subscriptions → Plans → create 4 plans with exactly these prices, and paste each plan id into `.env.local`:
+   - [x] ₹199 every 1 month → `RAZORPAY_PLAN_MONTHLY_INR`
+   - [x] ₹1,499 every 1 year → `RAZORPAY_PLAN_YEARLY_INR` (**redo**: the first one was made with "every 1 month")
+   - [ ] $2.99 every 1 month → `RAZORPAY_PLAN_MONTHLY_USD` (Razorpay refuses USD until international payments are on)
    - [ ] $19.99 every 1 year → `RAZORPAY_PLAN_YEARLY_USD`
-3. [ ] Webhooks → Add: URL `https://<live site>/api/billing/webhook`, a secret you make up
+   - Until the two USD plans exist, Pricing shows rupees only. After making them, set `NEXT_PUBLIC_USD_PAYMENTS=on`
+     in `.env.local` and Vercel and redeploy; that brings back the ₹ / $ switch.
+3. [x] (2026-10-21) Webhooks → Add: URL `https://<live site>/api/billing/webhook`, a secret you make up
    (→ `RAZORPAY_WEBHOOK_SECRET`), and tick these 8 events: `subscription.activated`, `subscription.charged`,
    `subscription.pending`, `subscription.halted`, `subscription.cancelled`, `subscription.completed`,
    `order.paid`, `refund.processed`.
@@ -64,11 +71,11 @@ Razorpay reads these pages before it switches payments on, so they must be real.
 
 ## E. Vercel and GitHub (10 minutes)
 
-- [ ] Vercel → Project → Settings → Environment Variables: add **every** variable from your `.env.local`
+- [x] (2026-10-21) Vercel → Project → Settings → Environment Variables: add **every** variable from your `.env.local`
       (Supabase 3 + Razorpay 7). Redeploy.
-- [ ] GitHub repo → Settings → Secrets and variables → Actions → New secret `NETZ_SITE_URL` = the live site,
+- [x] (2026-10-21) GitHub repo → Settings → Secrets and variables → Actions → New secret `NETZ_SITE_URL` = the live site,
       no trailing slash (the daily job that keeps the free database awake).
-- [ ] GitHub → Actions → "Keep database awake" → Run workflow once, and check it goes green.
+- [x] (2026-10-21) GitHub → Actions → "Keep database awake" → Run workflow once, and check it goes green.
 
 ## F. Try it yourself (15 minutes)
 
@@ -81,9 +88,9 @@ Razorpay reads these pages before it switches payments on, so they must be real.
 
 ## G. Before taking real money (takes days; Razorpay and the bank are slow)
 
-- [ ] Razorpay **KYC**: your or the business's details, PAN, bank account. Business website = the live site
+- [x] (2026-10-21, done with PAN, no GST) Razorpay **KYC**: your or the business's details, PAN, bank account. Business website = the live site
       (it checks Terms, Refund, Contact, Privacy and Pricing).
-- [ ] Ask an accountant about **GST**: whether registration is needed for the expected income, and for payments
+- [ ] (No GST number yet; KYC went through on PAN.) Ask an accountant about **GST**: whether registration is needed for the expected income, and for payments
       from abroad (export of services).
 - [ ] After KYC: switch to **Live mode** and repeat D1–D3 (new keys, 4 new plans, new webhook), then swap the values
       in Vercel and redeploy.
@@ -105,6 +112,13 @@ Razorpay reads these pages before it switches payments on, so they must be real.
 - [ ] Add the Ad Manager line Google gives you to `public/ads.txt` too (tell Claude, or add it yourself).
 - [ ] Note: Google cannot confirm a watched rewarded ad to our server on the web, so the cap (3 a day, 30 gems)
       is what limits abuse. Fine for gems; never use rewarded ads for anything worth money.
+
+## Last: change the secrets that were shared in chat (2026-10-20)
+
+- [ ] Supabase → Project Settings → Database → **Reset database password** (pick one without `@`), then update
+      `DATABASE_URL` in `.env.local` and Vercel.
+- [ ] Razorpay (Test mode) → API Keys → **Regenerate** the key secret, and in Webhooks set a **new secret**; update
+      `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` in `.env.local` and Vercel.
 
 ## I. Saving the work
 

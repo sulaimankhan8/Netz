@@ -170,19 +170,22 @@ export default function PageMenu({
         </button>
       )}
       {onExportCanvas && (
-        <div className="flex items-center gap-1.5 pl-3 pr-1 min-h-[48px]">
+        <div className="flex flex-wrap items-center gap-1.5 pl-3 pr-1 py-1 min-h-[48px]">
           <FiDownload className={icon} aria-hidden="true" />
           <span className="flex-1 ml-1.5 text-pg-body font-medium text-pg-ink">{UI.export}</span>
-          {['PNG', 'SVG', 'PDF'].map((format) => (format === 'SVG' && !pro ? (
-            // SVG comes with Pro: this opens Pricing in a new tab so the page stays as it is
-            <a key={format} href="/Pricing" target="_blank" rel="noopener" title="SVG export comes with NETZ Pro" aria-label="SVG export comes with NETZ Pro: see Pricing" className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
-              {format}<span className="text-[12px] font-bold">PRO</span>
-            </a>
-          ) : (
-            <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={`Export this page as ${format}`} aria-label={`Export as ${format}`} className={`${BTN_SECONDARY} px-2.5`}>
-              {format}
-            </button>
-          )))}
+          {['PNG', 'SVG', 'PDF', 'TEX'].map((format) => {
+            const label = format === 'TEX' ? 'LaTeX' : format;
+            // SVG and LaTeX come with Pro: this opens Pricing in a new tab so the page stays as it is
+            return (format === 'SVG' || format === 'TEX') && !pro ? (
+              <a key={format} href="/Pricing" target="_blank" rel="noopener" title={`${label} export comes with NETZ Pro`} aria-label={`${label} export comes with NETZ Pro: see Pricing`} className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
+                {label}<span className="text-[12px] font-bold">PRO</span>
+              </a>
+            ) : (
+              <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={format === 'TEX' ? 'Export the typed maths and text on this page as a LaTeX file' : `Export this page as ${format}`} aria-label={`Export as ${label}`} className={`${BTN_SECONDARY} px-2.5`}>
+                {label}
+              </button>
+            );
+          })}
         </div>
       )}
       {onOpenMusic && (

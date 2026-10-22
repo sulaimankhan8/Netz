@@ -308,15 +308,7 @@ export function reduceActivity(state, kind, details = {}, now = Date.now(), toda
       state.medals[medalId] = today;
       addGems(state, today, GEMS.monthMedal, false);
       events.push({ type: 'monthMedal', medalId, month, gems: GEMS.monthMedal });
-
-      // Year badge: 6 monthly medals in a year; 2026 started in October, so 2 of its 3 months
-      const year = today.slice(0, 4);
-      const yearId = `year.${year}`;
-      const monthsWon = Object.keys(state.medals).filter((id) => id.startsWith(`month.${year}-`)).length;
-      if (!state.medals[yearId] && monthsWon >= (year === '2026' ? 2 : 6)) {
-        state.medals[yearId] = today;
-        events.push({ type: 'yearBadge', medalId: yearId, year });
-      }
+      // The year badge is bought with gems in the shop (shop.js YEAR_BADGE_PRICE), not earned here
     }
   }
 

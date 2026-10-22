@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -16,6 +17,7 @@ const FalsePositionMethod = () => {
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
   useRecordSolve('false-position', 1, result, () => ({ fn: functionInput }));
+  useCodeExportInputs('false-position', () => ({ f: functionInput, tol: tolerance }));
   const [intervalSteps, setIntervalSteps] = useState([]);
   const [falsePositionIterations, setFalsePositionIterations] = useState([]);
   const [error, setError] = useState('');

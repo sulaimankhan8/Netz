@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { FiTrash2, FiEdit2, FiCheck } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiCheck, FiPenTool } from 'react-icons/fi';
 import AIActionButton from '../AIActionButton';
 import { resizeKeepingAspect } from '../../utils/imageSizing';
 import { TOUCH_TARGET } from '../ui/Dialog';
@@ -22,6 +22,13 @@ export default function SmartBlockWrapper({
   onDeleteBlock,
   onSelectAiAction,
   actions = [],
+  // Ink over blocks (PLAYGROUND_HANDOFF.md C2): drawOver = the block's "Draw on it" switch;
+  // underInk = it sits under the ink right now (it comes up while picked with the Select tool)
+  drawOver = false,
+  underInk = false,
+  onToggleDrawOver,
+  selectSignal = 0,
+  onDeselect,
   children,
 }) {
   const [isSelected, setIsSelected] = useState(false);
@@ -39,6 +46,18 @@ export default function SmartBlockWrapper({
   const { position, size, type, linkedBlockIds = [] } = block;
   const isLinked = linkedBlockIds.length > 0;
   const aspectRatio = block.content?.aspectRatio || 0;
+
+  // Picked with the Select tool while under the ink: selected straight away
+  useEffect(() => {
+    if (selectSignal) setIsSelected(true);
+  }, [selectSignal]);
+
+  // Done with it: it can go back under the ink
+  const deselectRef = useRef(onDeselect);
+  deselectRef.current = onDeselect;
+  useEffect(() => {
+    if (!isSelected && !isEditing && !isDragging && !isResizing) deselectRef.current?.(block.blockId);
+  }, [isSelected, isEditing, isDragging, isResizing, block.blockId]);
 
   // Deselect on outside click/tap
   useEffect(() => {
@@ -269,7 +288,8 @@ export default function SmartBlockWrapper({
         }}
         data-block-id={block.blockId}
         data-selected={isSelected ? 'true' : undefined}
-        className="absolute top-0 left-0 z-40 group"
+        data-under-ink={underInk ? 'true' : undefined}
+        className={`absolute top-0 left-0 ${underInk ? 'z-[6]' : 'z-40'} group`}
       >
         {/* The card: no chrome of its own at rest. Selected: the one selection outline */}
         <div className={`relative w-full h-full ${cardPadding} rounded-xl ${
@@ -374,6 +394,23 @@ export default function SmartBlockWrapper({
             <FiEdit2 className="w-4 h-4 pointer-events-none" aria-hidden="true" />
             <span className="pointer-events-none">Edit</span>
           </button>
+          {onToggleDrawOver && (
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDrawOver(block.blockId);
+              }}
+              aria-pressed={drawOver}
+              title={drawOver ? 'The pen writes on this block. Pick it with the Select tool to move or edit it.' : 'Let the pen write on this block'}
+              aria-label="Draw on it"
+              className={`${CTX_BUTTON} cursor-pointer ${drawOver ? '!bg-pg-accent-tint !text-pg-accent-on-tint' : ''}`}
+            >
+              <FiPenTool className="w-4 h-4 pointer-events-none" aria-hidden="true" />
+              <span className="pointer-events-none hidden sm:inline">Draw on it</span>
+            </button>
+          )}
           <CtxDivider />
           <button
             type="button"

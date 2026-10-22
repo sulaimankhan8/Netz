@@ -13,7 +13,7 @@ are built and tested locally, but not against the real services yet (`NETZ_OWNER
 | All 34 solver pages report the right task | all match (34 pages, 34 one-method tasks, right units, no gaps or duplicates) |
 | Lint, whole project | clean |
 | Production build | passes, 67 pages |
-| Touch and pen browser suites (17) | HARNESS_RESULT |
+| Touch and pen browser suites (17) | see the 2026-10-21 run below |
 | Public note page in the browser | works: note, author, live solver, quiz, no ads |
 | Phone width 375 px, dark and light | no sideways scroll on 12 key pages |
 | Mascot at 32 px and 300 px | clear on dark and light, with hats |
@@ -56,7 +56,7 @@ for Pro" and real ads — **waiting on owner** (needs a signed-in Pro account an
 
 **Art** — light and dark, 32 px and 300 px mascot, phone width with no sideways scroll: checked (above).
 
-**Existing browser harness** (`tests/browser`, touch + pen): HARNESS_DETAIL
+**Existing browser harness** (`tests/browser`, touch + pen): see the 2026-10-21 run below.
 
 ## Fixed during this run
 
@@ -67,3 +67,21 @@ for Pro" and real ads — **waiting on owner** (needs a signed-in Pro account an
   real prime, and "Simpson’s Rule", "iteration’s values" use the typographic apostrophe.
 - The production build regenerates `public/sw.js` and its workbox files; the committed copies were put back
   afterwards so the build left no changes.
+
+## Run of 2026-10-21 (owner decisions, code and LaTeX export, ink over blocks)
+
+Production build of the working copy (built in a scratch copy, served on port 3211) and, for comparison,
+a production build of the last commit `8407317` (port 3212).
+
+| Check | Result |
+| :--- | :--- |
+| Node tests (27 files, incl. new `test_code_export.mjs`) | all pass; code export 650/650: all 34 methods in 6 languages, Python, JavaScript, C++ (`-Wall -Werror`) and Go compiled and run, same answer in each and as on the pages. Rust and MATLAB are generated only (no compiler here). |
+| `test_shop.mjs` | 24/24, incl. year badge for 1,500 gems, only in its year, once |
+| Lint, whole project | 0 errors (5 old warnings) |
+| Production build | passes |
+| New `tests/browser/exports.mjs` | 41/41: Pro lock for free, code in 6 languages from the page inputs, LaTeX with tables, phone menu, 17 method pages, Notes LaTeX, graph under the ink, Select lifts it, LaTeX button in the page menu |
+| blocks, touch-blocks, export, notes-export, ux-fixes | all pass |
+| visual 81/88, algorithms 32/33, notes 51/54, shell-phone (/Profile menu), screens (one save error), insert-equations, insert-shapes-format | same failures on the last commit's build: older, not from this work |
+| visual: "graph: a mouse over the plot shows the values there" | **new**: a graph now sits under the ink by default ("Draw on it" on), so the pointer reaches the ink layer, not the plot. Owner to choose: graphs off by default, or keep. |
+
+Not checked: the LaTeX files with a real LaTeX compiler (none installed here); Rust and MATLAB code with their compilers.

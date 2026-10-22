@@ -141,7 +141,7 @@ export function strokeToSvg(stroke) {
  * @param {Array<Object>} page.strokes
  * @param {Array<Object>} [page.shapes] - Shapes, painted under the ink as on screen
  * @param {Object} [page.shapeOptions] - { measure, darkPage }: how shape text is measured, and the page colour for automatic text
- * @param {Array<{ x, y, width, height, dataUrl }>} [page.blockImages] - Blocks rendered to images, placed over the ink as on screen
+ * @param {Array<{ x, y, width, height, dataUrl, underInk }>} [page.blockImages] - Blocks rendered to images, over the ink as on screen (under it when underInk)
  * @param {Object} page.bounds - From getPageBounds()
  * @param {string|null} [page.background] - Fill colour, or null for a transparent page
  * @returns {string}
@@ -159,16 +159,16 @@ export function buildPageSvg({ strokes = [], shapes = [], shapeOptions = {}, blo
     if (markup) parts.push(markup);
   }
 
+  const blockImage = (b) => `<image x="${round(b.x)}" y="${round(b.y)}" width="${round(b.width)}" height="${round(b.height)}" href="${b.dataUrl}" xlink:href="${b.dataUrl}"/>`;
+  blockImages.filter((b) => b.underInk).forEach((b) => parts.push(blockImage(b)));
+
   const ordered = orderStrokesForPainting(strokes);
   for (let i = 0; i < ordered.length; i++) {
     const markup = strokeToSvg(ordered[i]);
     if (markup) parts.push(markup);
   }
 
-  for (let i = 0; i < blockImages.length; i++) {
-    const b = blockImages[i];
-    parts.push(`<image x="${round(b.x)}" y="${round(b.y)}" width="${round(b.width)}" height="${round(b.height)}" href="${b.dataUrl}" xlink:href="${b.dataUrl}"/>`);
-  }
+  blockImages.filter((b) => !b.underInk).forEach((b) => parts.push(blockImage(b)));
 
   parts.push('</svg>');
   return parts.join('\n');

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
 import { completeOnboarding } from '@/app/utils/progress/useProgress';
+import { DEFAULT_ROBOT_NAME } from '@/app/utils/progress/catalog';
 
 const UNITS = [
   { n: 1, name: 'Roots and systems' },
@@ -48,7 +49,7 @@ export default function OnboardingDialog({ initial = {}, onClose }) {
   }, [onClose]);
 
   const finish = () => {
-    completeOnboarding({ robotName: robotName.trim() || 'Bolt', displayName, units });
+    completeOnboarding({ robotName: robotName.trim() || DEFAULT_ROBOT_NAME, displayName, units });
     onClose(true);
   };
 
@@ -76,7 +77,7 @@ export default function OnboardingDialog({ initial = {}, onClose }) {
             <p className="m-0 text-[15px] text-[var(--pf-text2)]">I cheer when you finish tasks and keep your streak warm. What should my name be?</p>
             <label className="w-full text-left">
               <span className="mb-1.5 block text-[14px] font-bold">Robot name</span>
-              <input ref={firstFieldRef} className={FIELD} value={robotName} onChange={(e) => setRobotName(e.target.value)} maxLength={24} placeholder="Bolt" autoComplete="off" />
+              <input ref={firstFieldRef} className={FIELD} value={robotName} onChange={(e) => setRobotName(e.target.value)} maxLength={24} placeholder={DEFAULT_ROBOT_NAME} autoComplete="off" />
             </label>
             <button type="submit" className={`${BTN} w-full bg-[var(--pf-accent)] text-[var(--pf-accent-ink)]`}>Next</button>
           </form>
@@ -84,7 +85,7 @@ export default function OnboardingDialog({ initial = {}, onClose }) {
           <form className="mt-2 flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); finish(); }}>
             <div className="flex items-center gap-3">
               <NetzRobot size={64} mood="think" listen={false} title="Your robot, thinking" />
-              <h2 id="pf-onboard-title" className="pf-display m-0 text-[22px] font-semibold">{robotName.trim() || 'Bolt'} says: now tell me about you!</h2>
+              <h2 id="pf-onboard-title" className="pf-display m-0 text-[22px] font-semibold">{robotName.trim() || DEFAULT_ROBOT_NAME} says: now tell me about you!</h2>
             </div>
             <label>
               <span className="mb-1.5 block text-[14px] font-bold">Your name <span className="font-normal text-[var(--pf-text2)]">(optional)</span></span>

@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -15,6 +16,7 @@ const FixedPointMethod = () => {
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
   useRecordSolve('fixed-point', 1, result, () => ({ fn: functionInput }));
+  useCodeExportInputs('fixed-point', () => ({ g: functionInput, x0: initialGuess, tol: tolerance, maxIter: 100 }));
   const [iterationSteps, setIterationSteps] = useState([]);
   const [error, setError] = useState('');
   const [demoInProgress, setDemoInProgress] = useState(false);

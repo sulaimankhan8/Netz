@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -20,6 +21,7 @@ const ModifiedEulerSolver = () => {
 
   const [result, setResult] = useState(null);
   useRecordSolve('modified-euler', 4, result);
+  useCodeExportInputs('modified-euler', () => ({ f: functionInput, x0, y0, h: stepH, xn: targetX }));
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

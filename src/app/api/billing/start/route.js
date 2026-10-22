@@ -4,7 +4,7 @@ import { getProStatus, recordStartedPurchase } from '@/db/billingStore';
 import { createOrder, createSubscription, isRazorpayConfigured, razorpayKeyId, razorpayPlanId } from '@/lib/razorpay/server';
 import { getSignedInUser } from '@/lib/supabase/server';
 import { purchaseNotes } from '@/app/utils/billingCore';
-import { PLANS } from '@/app/utils/pricing';
+import { PLANS, payableCurrencies } from '@/app/utils/pricing';
 
 /**
  * POST /api/billing/start  { plan, currency }  → what Razorpay Checkout needs to open.
@@ -25,6 +25,7 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ error: 'bad_json' }, { status: 400 });
   }
+  if (!payableCurrencies().includes(currency)) return NextResponse.json({ error: 'currency_not_open' }, { status: 400 });
   const amount = PLANS[plan]?.[currency];
   if (!amount) return NextResponse.json({ error: 'unknown_plan' }, { status: 400 });
 

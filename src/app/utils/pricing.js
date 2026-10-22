@@ -17,7 +17,18 @@ export const PLANS = {
 
 export const PLAN_ORDER = ['monthly', 'yearly', 'lifetime'];
 
-export const PRO_LIMITS = { publicNotes: 25, refundDays: 7 };
+/**
+ * Dollar prices need Razorpay's international payments, which are off while NETZ runs on rupees only.
+ * Set NEXT_PUBLIC_USD_PAYMENTS=on (in .env.local and Vercel) after turning them on and making the USD plans.
+ */
+export const USD_ENABLED = process.env.NEXT_PUBLIC_USD_PAYMENTS === 'on';
+
+/** The currencies a visitor can pay in right now. */
+export function payableCurrencies(usd = USD_ENABLED) {
+  return usd ? Object.keys(CURRENCIES) : ['INR'];
+}
+
+export const PRO_LIMITS = { publicNotes: 25 };
 
 /** "₹1,499" or "$19.99": whole amounts without decimals. */
 export function formatPrice(amount, currency) {
@@ -42,7 +53,8 @@ export function yearlyPerMonth(currency) {
  * The visitor's likely currency: INR for India (Indian time zone or an Indian locale), USD for
  * everyone else. The student can switch by hand.
  */
-export function guessCurrency() {
+export function guessCurrency(usd = USD_ENABLED) {
+  if (!usd) return 'INR';
   try {
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
     if (zone === 'Asia/Kolkata' || zone === 'Asia/Calcutta') return 'INR';

@@ -623,6 +623,9 @@ Refunds are given from the Razorpay dashboard; the webhook then ends Pro by itse
 ## 8. Still open
 
 1. **Medal count**: settled at 75 (50 + 5 + 20). Every medal and its design idea: `NETZ_MEDALS_CATALOG.md`; samples on the board https://claude.ai/artifact/JFXh5BEz6uJPHfXUiG9JGS.
-2. **Free year medal** (6 monthly medals in a year): keep, or are yearly medals Pro-only?
-3. **Robot's default name.**
+2. **Year badge**: settled 2026-10-21. Free for everyone, bought in the shop for 1,500 gems during its year (`shop.js` `YEAR_BADGE_PRICE`); no longer earned from monthly medals.
+3. **Robot's default name**: Bolt (`DEFAULT_ROBOT_NAME` in `catalog.js`).
 4. **Gem prices and amounts** in 2.5 are a first guess, to be tuned after a few weeks of real use.
+5. **Refunds**: settled 2026-10-21. No refunds; cancel any time, Pro stays until the paid date. Double or mistaken charges are still refunded.
+6. **Code and LaTeX export**: built 2026-10-21 (Pro). Code: `utils/codeExport` (one description per method, compiled to Python, MATLAB, C++, JavaScript, Rust, Go; pages share inputs with `useCodeExportInputs`), checked by `test_code_export.mjs`. LaTeX: `utils/latexExport.js` (solver Solve panel), `Notes/utils/latexNote.js`, `Playground/utils/latexPage.js`. Dialog: `components/export/ProExportDialog.js`.
+7. **Rupees only while in test mode**: Pricing shows ₹ only until `NEXT_PUBLIC_USD_PAYMENTS=on`; `/api/billing/start` refuses USD until then.

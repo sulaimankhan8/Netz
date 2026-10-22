@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
@@ -23,6 +24,7 @@ export default function GaussForwardInterpolation({ theme }) {
   const [interpolateX, setInterpolateX] = useState("3.75");
   const [output, setOutput] = useState("");
   useRecordSolve('gauss-forward', 2, output, () => ({ points: rows.filter((r) => r && String(r.x ?? '').trim() !== '').length }));
+  useCodeExportInputs('gauss-forward', () => ({ ...rowsToXY(rows), at: interpolateX }));
   const [diffTable, setDiffTable] = useState([]);
   const [mid, setMid] = useState(0);
   const [interpolatedValue, setInterpolatedValue] = useState(null);

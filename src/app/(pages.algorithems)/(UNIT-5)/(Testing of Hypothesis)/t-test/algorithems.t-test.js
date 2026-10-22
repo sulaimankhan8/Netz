@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -16,6 +17,7 @@ const TTestSolver = () => {
 
   const [result, setResult] = useState(null);
   useRecordSolve('t-test', 5, result);
+  useCodeExportInputs('t-test', () => ({ data: sampleDataInput, mu: hypothesizedMean }));
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all'); // 'all' | 'table' | 'steps'

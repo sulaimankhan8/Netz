@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -22,6 +23,7 @@ const LUDecomposition = () => {
   const [matrix, setMatrix] = useState(initMatrix(3));
   const [result, setResult] = useState(null);
   useRecordSolve('lu', 4, result);
+  useCodeExportInputs('lu', () => ({ A: matrix }));
   const [error, setError] = useState('');
 
   const luDecompose = (rawMatrix) => {

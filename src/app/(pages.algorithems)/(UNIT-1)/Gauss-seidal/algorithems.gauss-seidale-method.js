@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -32,6 +33,7 @@ const GaussSeidel = () => {
   const [error, setError] = useState(0.0001);
   const [results, setResults] = useState([]);
   useRecordSolve('gauss-seidel', 1, results);
+  useCodeExportInputs('gauss-seidel', () => ({ A: equations.map((e) => [e.a, e.b, e.c, e.constant]), tol: error, maxIter: 1000 }));
   
   const [iterationDetails, setIterationDetails] = useState([]);
   const [iterationDetails2, setIterationDetails2] = useState([]);

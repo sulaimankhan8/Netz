@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -17,6 +18,7 @@ const SecantMethod = () => {
   const [maxIter, setMaxIter] = useState(50);
   const [result, setResult] = useState(null);
   useRecordSolve('secant', 1, result, () => ({ fn: functionInput }));
+  useCodeExportInputs('secant', () => ({ f: functionInput, x0: x0Input, x1: x1Input, tol: tolerance, maxIter }));
   const [iterations, setIterations] = useState([]);
   const [error, setError] = useState('');
   const [viewTab, setViewTab] = useState('all');

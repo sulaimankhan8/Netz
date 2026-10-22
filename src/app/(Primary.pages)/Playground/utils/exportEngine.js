@@ -16,6 +16,7 @@ import { jsPDF } from 'jspdf';
 import { drawSmoothStroke } from './strokeSmoother';
 import { getPageBounds, buildPageSvg, orderStrokesForPainting, shapeRects } from './pageSvg';
 import { drawShapeOnCanvas } from './shapes/shapeRender';
+import { inkGoesOver } from './blockLayers';
 import { browserMeasure } from './shapes/shapeText';
 
 const BLOCK_PIXEL_RATIO = 2;
@@ -63,7 +64,7 @@ async function captureBlockImages(blocks, containerElement) {
         width: node.offsetWidth,
         height: node.offsetHeight,
       });
-      images.push({ x: block.position.x, y: block.position.y, width: node.offsetWidth, height: node.offsetHeight, dataUrl });
+      images.push({ x: block.position.x, y: block.position.y, width: node.offsetWidth, height: node.offsetHeight, dataUrl, underInk: inkGoesOver(block) });
     } catch (err) {
       console.error('Failed to capture block for export:', block.blockId, err);
     }
@@ -92,6 +93,17 @@ async function renderPageToCanvas({ strokes, shapes = [], darkPage = false, bloc
   // Shapes under the ink, as on screen
   for (let i = 0; i < shapes.length; i++) drawShapeOnCanvas(ctx, shapes[i], { scale, measure: browserMeasure, darkPage });
 
+  // Blocks with "Draw on it" go under the ink, the rest over it, as on screen
+  const drawBlocks = async (under) => {
+    for (let i = 0; i < blockImages.length; i++) {
+      const b = blockImages[i];
+      if (Boolean(b.underInk) !== under) continue;
+      const img = await loadImage(b.dataUrl);
+      ctx.drawImage(img, b.x, b.y, b.width, b.height);
+    }
+  };
+  await drawBlocks(true);
+
   const ordered = orderStrokesForPainting(strokes);
   for (let i = 0; i < ordered.length; i++) {
     const stroke = ordered[i];
@@ -105,11 +117,7 @@ async function renderPageToCanvas({ strokes, shapes = [], darkPage = false, bloc
     });
   }
 
-  for (let i = 0; i < blockImages.length; i++) {
-    const b = blockImages[i];
-    const img = await loadImage(b.dataUrl);
-    ctx.drawImage(img, b.x, b.y, b.width, b.height);
-  }
+  await drawBlocks(false);
 
   return canvas;
 }

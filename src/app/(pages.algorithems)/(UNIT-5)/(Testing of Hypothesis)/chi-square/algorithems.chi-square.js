@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -16,6 +17,7 @@ const ChiSquareSolver = () => {
 
   const [result, setResult] = useState(null);
   useRecordSolve('chi-square', 5, result);
+  useCodeExportInputs('chi-square', () => ({ observed: observedInput, expected: expectedInput }));
   const [stepsData, setStepsData] = useState([]);
   const [gridLog, setGridLog] = useState([]);
   const [error, setError] = useState('');

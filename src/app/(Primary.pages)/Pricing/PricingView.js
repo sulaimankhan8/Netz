@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LD_FONT } from '../../components/landing/fonts';
-import { CURRENCIES, PLANS, PLAN_ORDER, PRO_LIMITS, formatPrice, guessCurrency, yearlyPerMonth, yearlySaving } from '../../utils/pricing';
+import { CURRENCIES, PLANS, PLAN_ORDER, PRO_LIMITS, formatPrice, guessCurrency, payableCurrencies, yearlyPerMonth, yearlySaving } from '../../utils/pricing';
 import { FREE_CLOUD_NOTES } from '../Notes/utils/notesCore';
 import { FREE_PUBLIC_NOTES } from '../Notes/utils/publishCore';
 import useCheckout, { PAYMENTS_OPEN } from './useCheckout';
@@ -41,9 +41,9 @@ const COMPARE = [
 
 const QUESTIONS = [
   ['What happens if I cancel?', 'Pro stays on until the end of the period you paid for. Your notes and everything you earned stay.'],
-  ['Can I get a refund?', `Yes. A full refund within ${PRO_LIMITS.refundDays} days of your first payment.`, { href: '/Refund', label: 'Refund policy' }],
+  ['Can I get a refund?', 'No, payments are not refunded. You can cancel a monthly or yearly plan any time and Pro stays on until the paid period ends.', { href: '/Refund', label: 'Refund policy' }],
   ['Do I need an account?', 'For Pro, yes: sign in with Google so Pro works on all your devices.'],
-  ['Which payments work?', 'UPI, cards and netbanking in India; international cards in USD. Payments are handled by Razorpay.'],
+  ['Which payments work?', payableCurrencies().includes('USD') ? 'UPI, cards and netbanking in India; international cards in USD. Payments are handled by Razorpay.' : 'UPI, Indian cards and netbanking, in rupees. Payments are handled by Razorpay.'],
 ];
 
 function Check() {
@@ -83,7 +83,7 @@ export default function PricingView() {
       saved = null;
     }
     // The visitor's currency is only known in the browser, so the first render shows rupees
-    setCurrency(CURRENCIES[saved] ? saved : guessCurrency());
+    setCurrency(payableCurrencies().includes(saved) ? saved : guessCurrency());
   }, []);
 
   const pickCurrency = (next) => {
@@ -148,7 +148,9 @@ export default function PricingView() {
             onChange={setPlan}
             options={PLAN_ORDER.map((p) => [p, PLANS[p].label, p === 'yearly' ? `−${saving}%` : null])}
           />
-          <Segmented label="Currency" value={currency} onChange={pickCurrency} options={Object.entries(CURRENCIES).map(([k, c]) => [k, c.label])} />
+          {payableCurrencies().length > 1 && (
+            <Segmented label="Currency" value={currency} onChange={pickCurrency} options={payableCurrencies().map((k) => [k, CURRENCIES[k].label])} />
+          )}
         </div>
 
         <div className="ld-pr-plans">
@@ -167,7 +169,7 @@ export default function PricingView() {
             <div className="ld-pr-buy">
               {buyButton()}
               <p className="ld-pr-msg" role="status">{message || proLine}</p>
-              <span className="ld-pr-fine">UPI, card or netbanking via Razorpay · cancel any time · full refund within {PRO_LIMITS.refundDays} days</span>
+              <span className="ld-pr-fine">UPI, card or netbanking via Razorpay · cancel any time · no refunds</span>
             </div>
           </section>
 

@@ -53,7 +53,7 @@ export default function TermsPage() {
         </P>
         <P>
           Pro rewards you earn (the year&apos;s banner, robot skin and Pro medal) are yours to keep after Pro ends.
-          Refunds are described on the <Link href="/Refund" style={linkStyle}>Refund page</Link>.
+          Payments are not refunded; you can cancel any time. Details are on the <Link href="/Refund" style={linkStyle}>Refund page</Link>.
         </P>
       </LegalSection>
 

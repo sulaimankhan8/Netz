@@ -21,6 +21,7 @@ const ERRORS = {
   already_pro: 'You already have Pro.',
   already_lifetime: 'You already have Pro for life.',
   plan_not_set_up: 'This plan is not open yet. Please pick another.',
+  currency_not_open: 'Payments are in rupees for now. Please pay in ₹.',
   not_configured: 'Payments are not open yet.',
   razorpay_failed: 'Razorpay could not start the payment. Please try again.',
 };

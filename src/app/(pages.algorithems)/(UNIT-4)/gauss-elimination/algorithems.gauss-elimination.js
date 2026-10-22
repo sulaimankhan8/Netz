@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -23,6 +24,7 @@ const GaussElimination = () => {
   const [steps, setSteps] = useState([]);
   const [solution, setSolution] = useState(null);
   useRecordSolve('gauss-elimination', 4, solution);
+  useCodeExportInputs('gauss-elimination', () => ({ A: matrix }));
   const [error, setError] = useState('');
 
   const deepCopy = (m) => m.map((r) => [...r]);

@@ -56,5 +56,21 @@ expect('cannot wear an unowned skin', !equipItem(k, 'skin.astronaut').ok && equi
 r = equipItem(k, 'skin.wizard');
 expect('wear Wizard, banner unchanged', r.ok && equippedSkin(k) === 'skin.wizard' && equippedBanner(k) === 'banner.sunset-bands');
 
+// Year badge: free for everyone, 1,500 gems, only during its own year
+const { YEAR_BADGE_PRICE } = await import('./src/app/utils/progress/shop.js');
+const y = newProgressState();
+y.gems = 1600;
+const midYear = Date.UTC(2026, 10, 1);
+expect('year badge costs 1,500', YEAR_BADGE_PRICE === 1500);
+expect('last year badge not for sale', buyItem(y, 'year.2025', midYear).error === 'not_for_sale' && y.gems === 1600);
+expect('next year badge not for sale', buyItem(y, 'year.2027', midYear).error === 'not_for_sale');
+r = buyItem(y, 'year.2026', midYear);
+expect('buy 2026 badge', r.ok && y.gems === 100 && y.medals['year.2026'] === '2026-11-01' && r.ledger.reason === 'shop:year.2026');
+y.gems = 5000;
+expect('year badge only once', buyItem(y, 'year.2026', midYear).error === 'already_owned' && y.gems === 5000);
+const poor = newProgressState();
+poor.gems = 1499;
+expect('year badge needs 1,500 gems', buyItem(poor, 'year.2026', midYear).error === 'not_enough_gems' && !poor.medals['year.2026']);
+
 console.log(`${checks - failed}/${checks} checks passed`);
 if (failed) process.exit(1);

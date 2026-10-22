@@ -1,5 +1,6 @@
 "use client";
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 import { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
@@ -18,6 +19,7 @@ export default function LagrangeInterpolations({ theme }) {
   const [interpolateX, setInterpolateX] = useState("10");
   const [output, setOutput] = useState("");
   useRecordSolve('lagrange', 2, output, () => ({ points: rows.filter((r) => r && String(r.x ?? '').trim() !== '').length }));
+  useCodeExportInputs('lagrange', () => ({ ...rowsToXY(rows), at: interpolateX }));
   const [diffTable, setDiffTable] = useState([]);
   const [polynomialSteps, setPolynomialSteps] = useState({
     formulas: [],

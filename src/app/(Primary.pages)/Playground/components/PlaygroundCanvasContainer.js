@@ -81,6 +81,9 @@ import { PreferencesDialog } from './PageMenu';
 import useSidebarRight from './ui/useSidebarRight';
 import { recordActivity } from '@/app/utils/activity';
 import { isProOnDevice } from '@/app/utils/proClient';
+import { downloadText } from '@/app/utils/latexExport';
+import { pageToTex } from '../utils/latexPage';
+import { inkGoesOver } from '../utils/blockLayers';
 
 // A function whose identity never changes but always runs the latest version: memoized blocks
 // skip re-rendering only while what they are given stays the same
@@ -1745,11 +1748,20 @@ export default function PlaygroundCanvasContainer() {
     if (!containerRef.current) return;
     // SVG is a Pro export; Free PDFs carry a small NETZ mark (NETZ_LAUNCH_PLAN.md 5.1)
     const pro = isProOnDevice();
-    if (format === 'SVG' && !pro) {
-      showNotice('SVG export comes with NETZ Pro. PNG and PDF are free.');
+    if ((format === 'SVG' || format === 'TEX') && !pro) {
+      showNotice(`${format === 'TEX' ? 'LaTeX' : 'SVG'} export comes with NETZ Pro. PNG and PDF are free.`);
       return;
     }
     const pageTitle = pagesRef.current[currentPageIndexRef.current]?.title || 'page';
+    if (format === 'TEX') {
+      // LaTeX is written from the blocks (typed maths and text), not drawn
+      const strokes = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [];
+      const { tex, filename } = pageToTex({ title: pageTitle, blocks: blockStateRef.current.blocks, strokeCount: strokes.length });
+      downloadText(tex, filename, 'application/x-tex');
+      showNotice(`Saved ${filename}`);
+      recordActivity('page.exported', { format });
+      return;
+    }
     const isDark = document.documentElement.classList.contains('dark');
     showNotice(`Preparing ${format}...`, 60000);
     const result = await exportPage(format, {
@@ -1815,6 +1827,35 @@ export default function PlaygroundCanvasContainer() {
     setEditingCaret(null);
     setEditingShapeId(id);
   }, [applyShapes]);
+
+  // ── Ink over blocks (PLAYGROUND_HANDOFF.md C2) ──
+  // A block with "Draw on it" sits under the ink, so the pen writes over it. Pictures and graphs start
+  // with it on. With the Select tool, a press on such a block picks it up (above the ink) to move or
+  // edit it; when it is let go it goes back under the ink.
+  const [liftedBlockId, setLiftedBlockId] = useState(null);
+  const [liftSignal, setLiftSignal] = useState(0);
+  const handleToggleDrawOver = useCallback((blockId) => {
+    const block = blockStateRef.current.blocks.find((b) => b.blockId === blockId);
+    if (!block) return;
+    handleUpdateBlockContent(blockId, { drawOver: !inkGoesOver(block) });
+  }, [handleUpdateBlockContent]);
+  const handleBlockLetGo = useCallback((blockId) => {
+    setLiftedBlockId((current) => (current === blockId ? null : current));
+  }, []);
+  const pickBlockUnderInk = useCallback((e) => {
+    const candidates = blockStateRef.current.blocks.filter((b) => inkGoesOver(b));
+    // The block drawn last is on top
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const el = containerRef.current?.querySelector(`[data-block-id="${candidates[i].blockId}"]`);
+      const r = el?.getBoundingClientRect();
+      if (r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        setLiftedBlockId(candidates[i].blockId);
+        setLiftSignal((n) => n + 1);
+        return true;
+      }
+    }
+    return false;
+  }, []);
 
   const shapeEditor = useShapeEditor({
     shapes,
@@ -2485,7 +2526,7 @@ export default function PlaygroundCanvasContainer() {
         shapeItem={activeTool === 'shape' ? armedShape : null}
         shapeDefaults={shapeDefaults}
         onShapeDrawn={handleShapeDrawn}
-        onSelectPress={shapeEditor.handleSelectPress}
+        onSelectPress={(point, e) => pickBlockUnderInk(e) || shapeEditor.handleSelectPress(point, e)}
         onLassoFinished={handleLassoFinished}
         connectionHints={connectionHintsFor}
         onStrokesUpdated={handleStrokesUpdated}
@@ -2528,6 +2569,11 @@ export default function PlaygroundCanvasContainer() {
           onUpdateSize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
           onDeleteBlock={handleDeleteBlock}
           onSelectAiAction={handleSelectAiAction}
+          drawOver={inkGoesOver(block)}
+          underInk={inkGoesOver(block) && liftedBlockId !== block.blockId}
+          onToggleDrawOver={handleToggleDrawOver}
+          selectSignal={liftedBlockId === block.blockId ? liftSignal : 0}
+          onDeselect={handleBlockLetGo}
           actions={
             block.type === 'equation'
               ? [{ key: 'plot', label: 'Plot', title: 'Plot this equation on a graph', icon: <LuLineChart className="w-4 h-4 pointer-events-none" aria-hidden="true" />, onClick: () => plotGraphStable(block, block.content?.latex || '') }]

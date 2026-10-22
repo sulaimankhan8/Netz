@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
@@ -40,6 +41,7 @@ const JacobiMethod = () => {
   const [iterations, setIterations] = useState([]);
   const [solution, setSolution] = useState(null);
   useRecordSolve('jacobi', 4, solution);
+  useCodeExportInputs('jacobi', () => ({ A: matrix, tol: tolerance, maxIter }));
   const [converged, setConverged] = useState(true);
   const [warning, setWarning] = useState('');
   const [error, setError] = useState('');

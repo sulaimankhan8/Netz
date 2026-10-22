@@ -12,6 +12,7 @@ import { generateAccessKey, saveSingleNote } from '../../Notes/utils/noteStorage
 import { NT_FONT } from '../../Notes/utils/fonts';
 import Banner from '@/app/components/mascot/banners';
 import { RobotHead } from '@/app/components/mascot/art';
+import { DEFAULT_ROBOT_NAME } from '@/app/utils/progress/catalog';
 
 const noop = () => {};
 const BTN = 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-xl text-[15px] font-semibold transition-colors';
@@ -139,7 +140,7 @@ export default function PublicNoteView({ note }) {
             {subtitle && <p className="m-0 text-base md:text-[17px] text-nt-text2">{subtitle}</p>}
             <div className="flex items-center gap-3 pt-1">
               <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[#132034]">
-                <RobotHead size={34} skin={note.author.skin} title={note.author.robotName ? `${note.author.name}'s robot, ${note.author.robotName}` : `${note.author.name}'s robot`} />
+                <RobotHead size={34} skin={note.author.skin} title={`${note.author.name}'s robot, ${note.author.robotName || DEFAULT_ROBOT_NAME}`} />
               </span>
               <div className="flex flex-col">
                 <span className="font-bold">{note.author.name}</span>

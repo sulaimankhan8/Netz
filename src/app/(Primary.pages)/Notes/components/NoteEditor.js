@@ -8,6 +8,7 @@ import {
   LuChevronLeft,
   LuChevronUp,
   LuDownload,
+  LuFileCode,
   LuFileDown,
   LuFileText,
   LuGlobe,
@@ -29,6 +30,10 @@ import { usePublishedIds } from '../utils/publishClient';
 import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
 import { isProOnDevice } from '@/app/utils/proClient';
+import dynamic from 'next/dynamic';
+import { noteToTex } from '../utils/latexNote';
+
+const ProExportDialog = dynamic(() => import('@/app/components/export/ProExportDialog'), { ssr: false });
 
 const GRID_OPEN_KEY = 'netz_notes_add_grid_open';
 
@@ -162,6 +167,7 @@ export default function NoteEditor({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const publishedIds = usePublishedIds();
   const [exportOpen, setExportOpen] = useState(false);
+  const [texOpen, setTexOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   // The block just added: it opens ready to type (a formula opens its LaTeX field)
   const [justAddedId, setJustAddedId] = useState(null);
@@ -332,7 +338,8 @@ export default function NoteEditor({
   const exportItems = [
     ...(isPhone ? [{ id: 'look', label: 'Note look', icon: <LuPalette className="w-[18px] h-[18px]" />, onSelect: () => setLookOpen(true) }, 'divider'] : []),
     { id: 'pdf', label: isExportingPdf ? 'Exporting PDF…' : 'Export PDF', disabled: isExportingPdf, icon: <LuFileDown className="w-[18px] h-[18px]" />, onSelect: handleExportPdf },
-    { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteAsMarkdown(note) }
+    { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteAsMarkdown(note) },
+    { id: 'tex', label: 'Export LaTeX (.tex) · Pro', icon: <LuFileCode className="w-[18px] h-[18px]" />, onSelect: () => setTexOpen(true) }
   ];
 
   const status = saveFailed ? (
@@ -432,6 +439,14 @@ export default function NoteEditor({
         </div>
       )}
       {exportOpen && <Menu title={isPhone ? 'This note' : 'Export'} items={exportItems} isPhone={isPhone} anchorRef={exportRef} onClose={() => setExportOpen(false)} />}
+      {texOpen && (
+        <ProExportDialog
+          title={note.title || 'Untitled note'}
+          getTex={() => noteToTex(note)}
+          onClose={() => setTexOpen(false)}
+          note="Solver blocks come with their answer and steps table. Sketches are pictures, so they stay in the PDF export only."
+        />
+      )}
       {lookOpen && (
         <NoteLookPanel
           note={note}

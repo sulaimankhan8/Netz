@@ -8,6 +8,12 @@ import { MAX_FREEZES } from './catalog.js';
 
 export const FREEZE_PRICE = 200;
 
+// The year badge: free for everyone, bought with gems during its own year (owner's choice, 2026-10-21)
+export const YEAR_BADGE_PRICE = 1500;
+export const yearBadgeId = (year) => `year.${year}`;
+/** The badge on sale now (this calendar year, by the server's clock on the server). */
+export const yearBadgeOnSale = (now = Date.now()) => yearBadgeId(new Date(now).getUTCFullYear());
+
 export const BANNERS = [
   { id: 'banner.sunset-bands', name: 'Sunset Bands', price: 0 },
   { id: 'banner.hex-net', name: 'Hex Net', price: 250 },
@@ -81,6 +87,15 @@ export function buyItem(state, itemId, now = Date.now()) {
     state.gems -= FREEZE_PRICE;
     state.streak.freezes += 1;
     return { ok: true, ledger: { amount: -FREEZE_PRICE, reason: `shop:freeze:${now}` } };
+  }
+
+  if (/^year\.\d{4}$/.test(itemId)) {
+    if (itemId !== yearBadgeOnSale(now)) return { ok: false, error: 'not_for_sale' };
+    if (state.medals?.[itemId]) return { ok: false, error: 'already_owned' };
+    if (state.gems < YEAR_BADGE_PRICE) return { ok: false, error: 'not_enough_gems' };
+    state.gems -= YEAR_BADGE_PRICE;
+    state.medals = { ...state.medals, [itemId]: new Date(now).toISOString().slice(0, 10) };
+    return { ok: true, ledger: { amount: -YEAR_BADGE_PRICE, reason: `shop:${itemId}` } };
   }
 
   const s = shelf(itemId);

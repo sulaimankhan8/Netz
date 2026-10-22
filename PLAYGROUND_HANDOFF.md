@@ -265,7 +265,7 @@ Files: `PlaygroundCanvasContainer.js`, `InkToBlockConverterModal.js`, `SemanticL
 None of this depends on handwriting recognition. Rough order of value:
 
 - **C1. Fit to content.** A zoom control that shows everything on the page (`getPageBounds` in `pageSvg.js` already computes the box; block rectangles must be included).
-- **C2. Ink over blocks.** Blocks always sit above ink today, so you cannot annotate a picture or a graph. Needs a decision on layering (for example a per-block "send behind ink" switch) before building.
+- **C2. Ink over blocks.** [Built 2026-10-21, owner chose the per-block switch.] Each block's bar has "Draw on it" (`content.drawOver`; on by default for pictures and graphs, `utils/blockLayers.js`). Such a block sits under the ink (z-6, between shapes and ink) and in PNG, SVG and PDF exports. With the Select tool a press on it lifts it above the ink to move, resize or edit; letting it go puts it back. Not yet browser-checked; `blocks.mjs` / `touch-blocks.mjs` taps on pictures and graphs now need the Select tool.
 - **C3. Graph blocks.** Pan and zoom inside the graph by touch, and remember the chosen view in the block.
 - **C4. Storage for very large notebooks.** A save still copies the whole session into IndexedDB: about 0.1 to 0.2 s on a 3,000-stroke page, once per pause. Store each page as its own record and write only pages that changed. Needs a migration from the current single record; the newer-copy-wins rule must survive.
 - **C5. Shape tool.** Arrows, a preview of the snapped shape while drawing, corner handles after drawing.
@@ -286,9 +286,9 @@ Blocked on the owner collecting real handwriting at `/Playground/collect` on a t
 ## 7. Open decisions for the owner
 
 1. Commit this work to a branch? (Nothing is committed.)
-2. Is the app commercial? The BRUSH handwriting dataset is for non-commercial use only.
+2. ~~Is the app commercial?~~ Yes (owner, 2026-10-21). So BRUSH (non-commercial) is off the training plan; new text-model training uses handwriting collected in the app only. Open: the shipped text model was trained on IAM-OnDB and the maths model on MathWriting, and both datasets are licensed for non-commercial use (MathWriting's paper links CC BY-NC-SA 4.0). The owner needs to ask for commercial permission, take legal advice, or retrain on owned data (the maths model is frozen: only with the owner's say-so).
 3. May synthetic handwriting be used for training, or real data only? (The notebooks say real only.)
-4. C2: should ink be able to go over blocks, and how should the user choose?
+4. ~~C2~~: settled and built (per-block "Draw on it" switch).
 5. Phone dock: which five tools belong on the main bar? (B2 proposes Pen, Highlighter, Eraser, Lasso, Undo.)
 
 ---

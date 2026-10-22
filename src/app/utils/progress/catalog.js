@@ -14,6 +14,9 @@ export const GEMS = {
   dailyCap: 60,
 };
 
+// The robot's name until the student picks one (owner's choice, 2026-10-21)
+export const DEFAULT_ROBOT_NAME = 'Bolt';
+
 export const DAILY_GOAL_TASKS = 3;
 export const MONTH_MEDAL_DAYS = 20;
 export const MAX_FREEZES = 2;

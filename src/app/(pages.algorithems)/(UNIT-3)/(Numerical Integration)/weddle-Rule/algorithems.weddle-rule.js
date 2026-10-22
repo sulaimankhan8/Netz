@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -19,6 +20,7 @@ const WeddleRuleSolver = () => {
 
   const [result, setResult] = useState(null);
   useRecordSolve('weddle', 3, result, () => ({ fn: functionInput, a: String(lowerLimit), b: String(upperLimit) }));
+  useCodeExportInputs('weddle', () => ({ f: functionInput, a: lowerLimit, b: upperLimit, n: subintervals }));
   const [stepsData, setStepsData] = useState([]);
   const [plotPoints, setPlotPoints] = useState([]);
   const [gridLog, setGridLog] = useState([]);

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Banner from '@/app/components/mascot/banners';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
-import { GemIcon } from '@/app/components/mascot/art';
+import { GemIcon, MedalBadge } from '@/app/components/mascot/art';
 import { MAX_FREEZES } from '@/app/utils/progress/catalog';
-import { BANNERS, equippedBanner, equippedSkin, FREEZE_PRICE, ownedBanners, ownedSkins, SKINS } from '@/app/utils/progress/shop';
+import { BANNERS, equippedBanner, equippedSkin, FREEZE_PRICE, ownedBanners, ownedSkins, SKINS, YEAR_BADGE_PRICE, yearBadgeOnSale } from '@/app/utils/progress/shop';
 import { shopAction } from '@/app/utils/progress/cloudSync';
 
 const BTN = 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 text-[14px] font-bold';
@@ -17,14 +17,15 @@ const ERRORS = {
   not_enough_gems: 'Not enough gems yet. Finish a few tasks and come back.',
   freezes_full: `You already hold ${MAX_FREEZES} streak freezes, the most you can keep.`,
   already_owned: 'You already own this.',
-  not_for_sale: 'This one is earned with Pro tasks, not bought.',
+  not_for_sale: 'This one is not for sale right now.',
   signed_out: 'Sign in to buy. Gems are kept safe on your account.',
   offline: "You're offline. Try again when you're connected.",
   no_progress_yet: 'Your account is still saving your progress. Try again in a moment.',
 };
 
 /**
- * The gem shop (NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes and robot skins (artboard 13).
+ * The gem shop (NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes, robot skins (artboard 13) and the
+ * year badge (bought with gems, free for everyone).
  * Buying needs an account; browsing does not. onClose()
  */
 export default function ShopDialog({ state, account, initialTab = 'banners', onClose }) {
@@ -39,6 +40,9 @@ export default function ShopDialog({ state, account, initialTab = 'banners', onC
   const wearing = equippedBanner(state);
   const ownedSkinIds = ownedSkins(state);
   const wearingSkin = equippedSkin(state);
+  const badgeId = yearBadgeOnSale();
+  const badgeYear = badgeId.slice(5);
+  const hasBadge = !!state.medals?.[badgeId];
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -84,7 +88,7 @@ export default function ShopDialog({ state, account, initialTab = 'banners', onC
         </div>
 
         <div role="tablist" aria-label="Shop sections" className="flex flex-none gap-2 overflow-x-auto px-5 pt-4">
-          {[['banners', 'Banners'], ['freezes', 'Streak freezes'], ['skins', 'Robot skins']].map(([key, label]) => (
+          {[['banners', 'Banners'], ['freezes', 'Streak freezes'], ['skins', 'Robot skins'], ['year', 'Year badge']].map(([key, label]) => (
             <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => { setTab(key); setMessage(null); }} className={`min-h-[40px] flex-none rounded-full px-4 text-[14px] font-bold ${tab === key ? 'bg-[var(--pf-accent)] text-[var(--pf-accent-ink)]' : 'bg-[var(--pf-tray)] text-[var(--pf-ink)]'}`}>
               {label}
             </button>
@@ -153,6 +157,23 @@ export default function ShopDialog({ state, account, initialTab = 'banners', onC
               >
                 <GemIcon size={15} />{busy === 'buy:freeze' ? 'Buying…' : state.streak.freezes >= MAX_FREEZES ? 'You hold the most' : `Buy for ${FREEZE_PRICE}`}
               </button>
+            </div>
+          )}
+
+          {tab === 'year' && (
+            <div className="flex flex-col items-center gap-4 rounded-2xl bg-[var(--pf-tray)] p-6 text-center">
+              <MedalBadge family="season" id={badgeId} earned={hasBadge} size={96} label={`${badgeYear} year badge${hasBadge ? ', owned' : ''}`} />
+              <h3 className="pf-display m-0 text-[20px] font-semibold">{badgeYear} year badge</h3>
+              <p className="m-0 max-w-[420px] text-[14px] text-[var(--pf-text2)]">A laurel badge for your medal case, for everyone. It is only on sale during {badgeYear}, and it stays with you after.</p>
+              <button
+                type="button"
+                className={canBuy && !hasBadge && state.gems >= YEAR_BADGE_PRICE ? BTN_MAIN : BTN_OFF}
+                disabled={!canBuy || hasBadge || state.gems < YEAR_BADGE_PRICE || !!busy}
+                onClick={() => act('buy', badgeId, `The ${badgeYear} year badge is in your medal case.`)}
+              >
+                <GemIcon size={15} />{busy === `buy:${badgeId}` ? 'Buying…' : hasBadge ? 'Owned' : `Buy for ${YEAR_BADGE_PRICE.toLocaleString('en-IN')}`}
+              </button>
+              {!hasBadge && state.gems < YEAR_BADGE_PRICE && <p className="m-0 text-[13px] text-[var(--pf-text2)]">{(YEAR_BADGE_PRICE - state.gems).toLocaleString('en-IN')} more gems</p>}
             </div>
           )}
 
