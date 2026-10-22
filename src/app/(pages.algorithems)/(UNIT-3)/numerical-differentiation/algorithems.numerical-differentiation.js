@@ -109,7 +109,7 @@ const NumericalDifferentiationSolver = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
             <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
-              Finite difference derivative calculator
+              FINITE DIFFERENCE DERIVATIVE LABORATORY
             </span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">
               Numerical Differentiation Engine

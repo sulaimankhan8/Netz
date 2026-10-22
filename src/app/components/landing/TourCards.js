@@ -76,7 +76,7 @@ const TOURS = [
   {
     id: 'hub', tone: 'al', area: 'Algorithms', href: '/Algorithems?tour=hub', meta: '4 steps · 40 s',
     title: 'Find the right method', icon: IconSearch,
-    text: 'Search every method across five units, then learn it from a worked example or solve your own.',
+    text: 'Search every method across five units, run one right there, or open its full page.',
     art: (
       <>
         <div className="ld-art-search"><IconSearch size={16} />Search methods</div>

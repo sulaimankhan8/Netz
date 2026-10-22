@@ -143,3 +143,26 @@ export function solverPanelToTex({ title, inputs = [], root }) {
   if (!tables.length && !answers.length) parts.push('Run the calculator first: there is nothing to export yet.');
   return texDocument({ title, subtitle: `Solved with NETZ on ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, body: parts.join('\n\n') });
 }
+
+// How each input a solver shares (utils/codeExport/inputs.js) is named in the LaTeX file
+const INPUT_LABELS = {
+  f: 'Function', g: 'g(x)', a: 'a', b: 'b', tol: 'Tolerance', x0: '$x_0$', x1: '$x_1$', y0: '$y_0$', h: 'Step $h$', xn: 'Target $x$',
+  n: 'Strips $n$', points: 'Points', maxIter: 'Most iterations', at: 'Interpolate at $x$', x: '$x$ values', y: '$y$ values',
+  mean: 'Sample mean', mu: 'Population mean', sigma: 'Standard deviation', data: 'Sample', observed: 'Observed', expected: 'Expected',
+  s1: 'Sample 1', s2: 'Sample 2', model: 'Model', A: 'Augmented matrix',
+};
+
+/** A solver's shared inputs as [label, value] pairs written for LaTeX. */
+export function solverInputsToTex(raw) {
+  if (!raw) return [];
+  return Object.entries(raw)
+    .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+    .map(([k, v]) => {
+      let value;
+      if (k === 'A' && Array.isArray(v)) value = `$\\begin{bmatrix}${v.map((r) => r.map((c) => escapeTex(c)).join(' & ')).join(' \\\\ ')}\\end{bmatrix}$`;
+      else if (Array.isArray(v)) value = escapeTex(v.join(', '));
+      else if (k === 'f' || k === 'g') value = `\\texttt{${escapeTex(v)}}`;
+      else value = escapeTex(v);
+      return [INPUT_LABELS[k] || escapeTex(k), value];
+    });
+}

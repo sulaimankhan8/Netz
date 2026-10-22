@@ -1,10 +1,64 @@
 'use client';
 
-import React, { useState } from 'react';
-import { FiDownload, FiChevronDown, FiZap, FiImage, FiFileText, FiSliders } from 'react-icons/fi';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { FiDownload, FiChevronDown, FiZap, FiImage, FiFileText, FiSliders, FiCode, FiHash } from 'react-icons/fi';
 import EditorialButton from './EditorialButton';
 import EditorialExportModal from './EditorialExportModal';
 import { exportAsPNG, exportAsSVG, exportAsPDF } from '@/app/utils/exportEngine';
+import { EXPORT_INPUTS_EVENT, currentExportInputs } from '@/app/utils/codeExport/inputs';
+import { solverInputsToTex, solverPanelToTex, slugFile } from '@/app/utils/latexExport';
+
+const ProExportDialog = dynamic(() => import('../export/ProExportDialog'), { ssr: false });
+
+/**
+ * The calculator this button sits in: the largest box around it that is still below the page title,
+ * so the LaTeX file has the calculator's tables and not the worked example's.
+ */
+function calculatorRoot(el) {
+  let node = el;
+  while (node?.parentElement && !node.parentElement.querySelector('h1') && node.parentElement !== document.body) node = node.parentElement;
+  return node;
+}
+
+/** Code and LaTeX export (NETZ Pro) for the solver this button sits in. */
+function SolverExportDialog({ anchor, tab, onClose }) {
+  const [inputs, setInputs] = useState(() => currentExportInputs());
+  const [codeLib, setCodeLib] = useState(null);
+
+  useEffect(() => {
+    const on = (e) => setInputs(e.detail);
+    window.addEventListener(EXPORT_INPUTS_EVENT, on);
+    let live = true;
+    import('@/app/utils/codeExport').then((m) => live && setCodeLib(m));
+    return () => {
+      live = false;
+      window.removeEventListener(EXPORT_INPUTS_EVENT, on);
+    };
+  }, []);
+
+  const title = (codeLib && inputs?.method && codeLib.METHOD_NAMES[inputs.method]) || 'Solver';
+  const getCode = useCallback((lang) => {
+    if (!codeLib) throw new Error('Getting code export ready…');
+    if (!inputs?.method) throw new Error('Enter your numbers in the calculator first.');
+    return codeLib.generateCode(inputs.method, inputs.raw, lang);
+  }, [codeLib, inputs]);
+  const getTex = useCallback(() => ({
+    tex: solverPanelToTex({ title, inputs: solverInputsToTex(inputs?.raw), root: calculatorRoot(anchor) }),
+    filename: `netz-${slugFile(title)}.tex`,
+  }), [title, inputs, anchor]);
+
+  return (
+    <ProExportDialog
+      title={title}
+      initialTab={tab}
+      getCode={getCode}
+      getTex={getTex}
+      onClose={onClose}
+      note="The code uses the numbers now in the calculator. The LaTeX file has your inputs and this calculator's tables."
+    />
+  );
+}
 
 export default function EditorialExportButton({
   targetId,
@@ -27,6 +81,8 @@ export default function EditorialExportButton({
   const [modalOpen, setModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [quickExporting, setQuickExporting] = useState(false);
+  const [proTab, setProTab] = useState(null);
+  const wrapRef = useRef(null);
 
   const handleQuickExport = async (format) => {
     setDropdownOpen(false);
@@ -50,7 +106,7 @@ export default function EditorialExportButton({
 
   return (
     <>
-      <div className="relative inline-flex items-center">
+      <div className="relative inline-flex items-center" ref={wrapRef}>
         {/* Main Export Button - Opens Modal by default */}
         <EditorialButton
           onClick={() => setModalOpen(true)}
@@ -117,6 +173,28 @@ export default function EditorialExportButton({
               <span className="text-[9px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">PRO</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => { setDropdownOpen(false); setProTab('code'); }}
+              className="w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-between text-neutral-800 dark:text-neutral-200 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <FiCode className="text-violet-500" /> Code (Python, C++…)
+              </span>
+              <span className="text-[9px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">PRO</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setDropdownOpen(false); setProTab('tex'); }}
+              className="w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-between text-neutral-800 dark:text-neutral-200 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <FiHash className="text-teal-500" /> LaTeX (.tex)
+              </span>
+              <span className="text-[9px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">PRO</span>
+            </button>
+
             <div className="border-t border-neutral-200 dark:border-neutral-800 my-1" />
 
             <button
@@ -129,6 +207,8 @@ export default function EditorialExportButton({
           </div>
         )}
       </div>
+
+      {proTab && <SolverExportDialog anchor={wrapRef.current} tab={proTab} onClose={() => setProTab(null)} />}
 
       {/* Export Configuration Modal */}
       <EditorialExportModal

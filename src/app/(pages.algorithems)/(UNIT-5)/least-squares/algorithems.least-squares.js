@@ -145,7 +145,7 @@ const LeastSquaresSolver = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
             <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
-              Non-linear curve fitting calculator
+              NON-LINEAR CURVE FITTING LABORATORY
             </span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">
               Least Squares Fitting Engine

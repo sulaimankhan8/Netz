@@ -8,6 +8,7 @@ import Plot from '@/app/components/UnifiedPlot';
 import TButton from "../../../../components/TButton";
 
 import ExportToPNG from "@/app/utils/ExportToPNG";
+import { EditorialExportButton } from '@/app/components/editorial';
 
 
 export default function NewtonForwardInterpolations({ theme }) {
@@ -290,6 +291,7 @@ export default function NewtonForwardInterpolations({ theme }) {
 
         <div id="diffTable" className="mt-6 ml-8  overflow-x-auto dark:bg-neutral-700">
           <div></div><h2 className="text-xl inline-block font-semibold">Difference Table </h2>
+          <span className="ml-3 inline-block align-middle"><EditorialExportButton title="Newton Forward Report" elementId="diffTable" size="sm" /></span>
 
 
           <table className="w-full table-auto border-collapse border border-gray-300 mt-4">

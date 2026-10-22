@@ -130,7 +130,7 @@ const GaussElimination = () => {
       <div className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
-            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">Matrix calculator</span>
+            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">MATRIX LABORATORY</span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">Gauss Elimination Engine</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -159,7 +159,10 @@ const GaussElimination = () => {
 
         {solution && (
           <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl space-y-2">
-            <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">Solution Vector x</span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">Solution Vector x</span>
+              <EditorialExportButton title="Gauss Elimination Report" elementId="gauss-elim-steps" size="sm" />
+            </div>
             <div className="flex flex-wrap gap-4">
               {solution.map((xi, i) => (
                 <div key={i} className="bg-white dark:bg-neutral-800 border border-emerald-400 dark:border-emerald-700 rounded-xl px-4 py-3 font-mono text-sm font-bold text-black dark:text-white">

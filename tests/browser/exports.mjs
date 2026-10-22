@@ -28,25 +28,56 @@ const clickIn = (sel, text) => page.evaluate((s, t) => {
 }, sel, text);
 
 try {
+  // In the old (editorial) pages, export is in each calculator's Export dropdown, shown once there is a result
+  const solve = () => page.evaluate(() => {
+    const b = [...document.querySelectorAll('form button[type="submit"]')].find((x) => x.offsetParent !== null)
+      || [...document.querySelectorAll('button')].find((x) => /^(calculate|solve|find|run|compute|interpolate|integrate|fit|test|decompose)/i.test(x.innerText.trim()) && !/demo/i.test(x.innerText));
+    b?.click();
+    return b?.innerText.trim() || null;
+  });
+  const openExport = async (item) => {
+    await page.waitForSelector('button[title="Quick Export Options"]', { timeout: 20000 });
+    await page.click('button[title="Quick Export Options"]');
+    await sleep(200);
+    const ok = await page.evaluate((t) => {
+      const b = [...document.querySelectorAll('button')].find((x) => x.innerText.includes(t));
+      b?.click();
+      return Boolean(b);
+    }, item);
+    await page.waitForSelector('.xd', { timeout: 20000 });
+    await sleep(500);
+    return ok;
+  };
+
   // ---------- Solver page, free account: the Pro lock ----------
   await page.goto(BASE + '/bisection-method', { waitUntil: 'networkidle2', timeout: 180000 });
   await setPro(false);
-  await page.click('button[aria-label="Export code or LaTeX"]');
-  await page.waitForSelector('.xd', { timeout: 20000 });
-  await sleep(500);
+  check('the old page is back (no Learn / Solve bar)', await page.evaluate(() => !document.querySelector('.am-bar') && /Step-by-Step/i.test(document.querySelector('h1')?.innerText || '')));
+  const ran = await solve();
+  await sleep(1200);
+  await openExport('Code (Python');
   let text = await dialogText();
-  check('free: export opens with the Pro lock', /See NETZ Pro/.test(text) && !(await page.$('.xd-code')), text);
-  check('export opened the Solve tab', await page.evaluate(() => !document.getElementById('am-solve').hidden));
+  check('free: Code opens with the Pro lock', ran && /See NETZ Pro/.test(text) && !(await page.$('.xd-code')), `${ran} / ${text.slice(0, 120)}`);
   await page.keyboard.press('Escape');
   await sleep(200);
 
   // ---------- Solver page, Pro ----------
-  await gotoPro(BASE + '/bisection-method?mode=solve');
-  await page.click('button[aria-label="Export code or LaTeX"]');
-  await page.waitForSelector('.xd-code', { timeout: 20000 });
+  await gotoPro(BASE + '/bisection-method');
+  const changed = await page.evaluate(() => {
+    const input = [...document.querySelectorAll('input')].find((i) => /x \* x \* x/.test(i.value));
+    if (!input) return false;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    setter.call(input, 'x^3 - 2*x - 5');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  });
   await sleep(300);
+  await solve();
+  await sleep(1200);
+  await openExport('Code (Python');
+  await page.waitForSelector('.xd-code', { timeout: 20000 });
   let code = await codeText();
-  check('Pro: Python code with the page function', /def f\(x\):/.test(code) && /x \* x \* x - 4\.?0? \* x - 9/.test(code) && /Made with NETZ/.test(code), code.slice(0, 300));
+  check('Pro: Python code with the function typed on the page', changed && /def f\(x\):/.test(code) && /x \*\* 3\.?0? - 2\.?0? \* x - 5/.test(code) && /Made with NETZ/.test(code), code.slice(0, 300));
   for (const lang of ['MATLAB', 'C++', 'JavaScript', 'Rust', 'Go']) {
     await clickIn('.xd-langs button', lang);
     await sleep(150);
@@ -60,60 +91,41 @@ try {
   await page.keyboard.press('Escape');
   await sleep(200);
 
-  // A changed input goes into the code
-  const changed = await page.evaluate(() => {
-    const input = [...document.querySelectorAll('#am-solve input')].find((i) => /x \* x \* x/.test(i.value));
-    if (!input) return false;
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-    setter.call(input, 'x^3 - 2*x - 5');
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    return true;
-  });
-  await sleep(300);
-  await page.click('button[aria-label="Export code or LaTeX"]');
-  await page.waitForSelector('.xd-code', { timeout: 20000 });
-  code = await codeText();
-  check('the code follows the inputs on the page', changed && /x \*\* 3\.?0? - 2\.?0? \* x - 5/.test(code), code.split('\n').slice(4, 10).join(' / '));
-  await page.keyboard.press('Escape');
-
-  // Run the calculator, then LaTeX has its table
-  await page.evaluate(() => {
-    const b = [...document.querySelectorAll('#am-solve button')].find((x) => /calculate|solve|find root|run/i.test(x.innerText));
-    b?.click();
-  });
-  await sleep(1200);
-  await page.click('button[aria-label="Export code or LaTeX"]');
-  await page.waitForSelector('.xd', { timeout: 20000 });
-  await clickIn('.xd-tabs button', 'LaTeX');
-  await sleep(300);
+  await openExport('LaTeX (.tex)');
   const tex = await codeText();
-  check('LaTeX of the solve: a document with inputs and a table', /\\documentclass/.test(tex) && /\\section\*\{Bisection/.test(tex) && /\\begin\{longtable\}/.test(tex), tex.slice(0, 400));
+  const texParts = {
+    doc: tex.includes('\\documentclass'),
+    title: tex.includes('\\section*{Bisection'),
+    table: tex.includes('\\begin{longtable}'),
+    // The worked example's table (4 decimals) must not be in it, only the calculator's (6 decimals)
+    worked: tex.includes('2.0000 & 3.0000 & 2.5000 &'),
+  };
+  check('LaTeX of the solve: inputs and the calculator table, not the worked example', texParts.doc && texParts.title && texParts.table && !texParts.worked, JSON.stringify(texParts));
   check('LaTeX has no raw unicode minus or HTML', !/[−<>]/.test(tex.replace(/\\[a-z]+/g, '')), '');
   await shot(page, 'exports-solver-latex');
   await page.keyboard.press('Escape');
 
-  // Phones: Export is in the ⋯ menu
+  // Phones: the old page fits, and the dropdown is reachable
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
   await gotoPro(BASE + '/bisection-method');
-  await page.click('button[aria-label="More"]');
-  await sleep(200);
-  const inMenu = await page.evaluate(() => [...document.querySelectorAll('.am-menu-pop button')].some((b) => b.innerText.includes('Export code or LaTeX')));
-  check('phone: Export is in the ⋯ menu', inMenu);
   const scroll = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
   check('phone: no sideways scroll on the method page', scroll);
   await page.setViewport({ width: 1280, height: 800 });
 
-  // Every method page exports code with its default inputs
-  const methodRoutes = ['/false-position-method', '/Gauss-seidal', '/newton-forward', '/lagrange-interpolation', '/simpson-1-3-Rule', '/gauss-quadrature', '/numerical-differentiation', '/gauss-elimination', '/lu-decomposition', '/runge-kutta-method', '/taylor-s-series-method', '/chi-square', '/f-test', '/t-test', '/test-significance', '/fitting-parabola', '/least-squares'];
+  // More method pages: solve with their default inputs, then export code
+  const methodRoutes = ['/false-position-method', '/Gauss-seidal', '/lagrange-interpolation', '/simpson-1-3-Rule', '/gauss-quadrature', '/numerical-differentiation', '/gauss-elimination', '/lu-decomposition', '/runge-kutta-method', '/taylor-s-series-method', '/chi-square', '/f-test', '/t-test', '/test-significance', '/fitting-parabola', '/least-squares'];
   for (const route of methodRoutes) {
-    await gotoPro(BASE + route + '?mode=solve');
-    await page.click('button[aria-label="Export code or LaTeX"]');
-    await page.waitForSelector('.xd', { timeout: 20000 });
-    await sleep(400);
-    const out = await page.evaluate(() => ({ code: document.querySelector('.xd-code')?.innerText || '', error: document.querySelector('.xd-error')?.innerText || '' }));
-    // Newton forward starts with an empty table: the student is told what to fill in
-    if (route === '/newton-forward') check(`${route}: empty table asks for points`, /at least 2 numbers/.test(out.error), out.error || out.code.slice(0, 120));
-    else check(`${route}: code from its default inputs`, out.code.includes('Made with NETZ') && !out.error, out.error || out.code.slice(0, 120));
+    await gotoPro(BASE + route);
+    const button = await solve();
+    await sleep(1500);
+    let out = { code: '', error: 'no Export dropdown after solving' };
+    try {
+      await openExport('Code (Python');
+      out = await page.evaluate(() => ({ code: document.querySelector('.xd-code')?.innerText || '', error: document.querySelector('.xd-error')?.innerText || '' }));
+    } catch {
+      // out keeps the message above
+    }
+    check(`${route}: code from its inputs`, out.code.includes('Made with NETZ') && !out.error, `${button} / ${out.error || out.code.slice(0, 120)}`);
     await page.keyboard.press('Escape');
   }
 

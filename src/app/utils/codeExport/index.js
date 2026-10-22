@@ -170,3 +170,16 @@ export function fromRegistry(id, params) {
   if (!entry) return null;
   return { method: entry[0], raw: entry[1](params || {}) };
 }
+
+/** Names for the export dialog and file titles. */
+export const METHOD_NAMES = {
+  bisection: 'Bisection method', 'false-position': 'False position method', 'newton-raphson': 'Newton-Raphson method', secant: 'Secant method',
+  'fixed-point': 'Fixed-point iteration', 'gauss-seidel': 'Gauss-Seidel method', jacobi: 'Jacobi method', 'newton-forward': 'Newton forward interpolation',
+  'newton-backward': 'Newton backward interpolation', 'gauss-forward': 'Gauss forward interpolation', 'gauss-backward': 'Gauss backward interpolation',
+  lagrange: 'Lagrange interpolation', 'newton-divided': 'Newton divided difference', trapezoidal: 'Trapezoidal rule', 'simpson-13': "Simpson's 1/3 rule",
+  'simpson-38': "Simpson's 3/8 rule", boole: "Boole's rule", weddle: "Weddle's rule", 'gauss-quadrature': 'Gauss quadrature',
+  'numerical-differentiation': 'Numerical differentiation', 'gauss-elimination': 'Gauss elimination', 'gauss-jordan': 'Gauss-Jordan method',
+  lu: 'LU decomposition', euler: "Euler's method", 'modified-euler': "Modified Euler's method", 'runge-kutta': 'Runge-Kutta method',
+  taylor: "Taylor series method", 'straight-line': 'Fitting a straight line', parabola: 'Fitting a parabola', 'least-squares': 'Least squares fit',
+  'z-test': 'Test of significance (Z test)', 't-test': 't-test', 'chi-square': 'Chi-square test', 'f-test': 'F-test',
+};

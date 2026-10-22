@@ -3,6 +3,7 @@
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../styles/globals.css";
+import "./alg.css";
 import Script from 'next/script';
 import Laout from '../components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
 import AdsenseScript from '../components/AdsenseScript';
@@ -10,8 +11,8 @@ import TimedAds from '../components/ads/TimedAds';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
-const APP_TITLE_TEMPLATE = "%s · NETZ";
-const APP_DESCRIPTION = "Numerical methods with every step shown: worked examples and calculators for roots, interpolation, integration, linear systems, ODEs, curve fitting and tests.";
+const APP_TITLE_TEMPLATE = "%s - PWA App";
+const APP_DESCRIPTION = "Best PWA app in the world!";
 
 export const metadata = {
   applicationName: APP_NAME,
@@ -48,7 +49,7 @@ export const metadata = {
     },
     description: APP_DESCRIPTION,
   },
-  description: APP_DESCRIPTION,
+  description: "current objective: survive", // Moved here for clarity
   icons: {
     icon: [
       { url: '/favicon.ico?v=6', sizes: 'any' },

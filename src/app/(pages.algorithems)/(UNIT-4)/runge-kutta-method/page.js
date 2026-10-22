@@ -1,12 +1,13 @@
 'use client';
 
-import MethodShell, { Step, StepControls, StepsDone } from '@/app/components/algorithms/MethodShell';
 import React from 'react';
-
+import Head from 'next/head';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-
+import FullscreenToggle from '@/app/components/FullscreenToggle';
+import { EditorialThemeToggle } from '@/app/components/editorial';
 import RungeKuttaSolver from './algorithems.runge-kutta';
+import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
 
 export default function RungeKuttaMethodPage() {
   const k1Formula = `k_1 = h \\cdot f(x_n, y_n)`;
@@ -17,12 +18,34 @@ export default function RungeKuttaMethodPage() {
 
   return (
     <>
+      <Head>
+        <title>Runge-Kutta 4th Order (RK4) | Netz</title>
+        <meta name="description" content="Master Runge-Kutta 4th Order (RK4) for ODEs with friendly step-by-step guidance, 4-stage slope evaluations, and an interactive visualizer." />
+      </Head>
 
-      <MethodShell route="/runge-kutta-method" steps={2} solve={<RungeKuttaSolver />}>
+      <FullscreenToggle className="w-full min-h-screen">
+        <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">
+          <div className="md:ml-[80px]">
+            <section className="container mx-auto px-4 md:px-8 py-10 space-y-10 max-w-6xl">
+              
+              {/* Header & Badges */}
+              <div className="space-y-4 pt-2">
+                <div className="flex justify-between items-start">
+                  <div className="inline-block border-2 border-black dark:border-white bg-[#FFE600] text-black px-3 py-0.5 text-xs font-mono font-black uppercase tracking-widest shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] rounded-md">
+                    UNIT 4 • INITIAL VALUE PROBLEMS (ODE)
+                  </div>
+                  <EditorialThemeToggle />
+                </div>
 
-              <p className="text-base md:text-lg font-medium text-neutral-700 dark:text-neutral-300 max-w-3xl leading-relaxed">
+                <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase leading-tight text-black dark:text-white">
+                  Runge-Kutta 4th Order <br />
+                  <span className="underline decoration-4 underline-offset-8 decoration-black dark:decoration-white">RK4 Classical Method</span>
+                </h1>
+
+                <p className="text-base md:text-lg font-medium text-neutral-700 dark:text-neutral-300 max-w-3xl leading-relaxed">
                   The gold standard of ODE solvers, <strong>Runge-Kutta 4th Order (RK4)</strong> samples 4 trial slopes across each step interval to achieve 4th-order <InlineMath math="\mathcal{O}(h^4)" /> accuracy—matching Taylor series precision without computing high-order analytical derivatives!
                 </p>
+              </div>
 
               {/* Core Governing Formula Box */}
               <div className="border-2 border-black/80 dark:border-neutral-600 bg-[#FAF8F5] dark:bg-neutral-900 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.12)]">
@@ -30,10 +53,10 @@ export default function RungeKuttaMethodPage() {
                 <div className="relative z-10 space-y-4">
                   <div className="flex justify-between items-center border-b border-black/30 dark:border-neutral-700 pb-3">
                     <span className="font-mono font-extrabold text-xs uppercase tracking-widest text-black dark:text-white">
-                      RK4 four-stage stencil
+                      RK4 FOUR-STAGE STENCIL
                     </span>
                     <span className="bg-black text-white dark:bg-white dark:text-black font-mono font-bold text-xs px-2.5 py-0.5 rounded-md uppercase">
-                      4Th-order accuracy
+                      4TH-ORDER ACCURACY
                     </span>
                   </div>
 
@@ -72,13 +95,20 @@ export default function RungeKuttaMethodPage() {
 
               {/* Step-by-Step Worked Example */}
               <div className="space-y-6">
-                <div className="am-section-title"><h2>Worked example</h2></div>
+                <div className="flex justify-between items-center pb-2 border-b-2 border-black/80 dark:border-neutral-700">
+                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
+                    Step-by-Step Worked Example
+                  </h2>
+                  <span className="text-xs font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-3 py-1 rounded-lg border border-black/40 dark:border-neutral-600">
+                    GUIDED STORY
+                  </span>
+                </div>
 
                 {/* Problem Statement Card */}
                 <div className="border-2 border-black/80 dark:border-neutral-600 rounded-2xl p-5 bg-emerald-50 dark:bg-emerald-950/40 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="bg-emerald-600 text-white text-[10px] font-mono font-black px-2.5 py-0.5 rounded-md uppercase">
-                      Our problem to solve
+                      OUR PROBLEM TO SOLVE
                     </span>
                   </div>
                   <p className="text-sm md:text-base font-semibold text-emerald-950 dark:text-emerald-200">
@@ -93,8 +123,10 @@ export default function RungeKuttaMethodPage() {
                 </div>
 
                 {/* Step 1: Intermediate Slopes */}
-                <Step n={1} title="Evaluate 4 intermediate slopes (k₁, k₂, k₃, k₄)">
-
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-neutral-500">
+                    <span>STEP 01</span> • <span>EVALUATE 4 INTERMEDIATE SLOPES (k₁, k₂, k₃, k₄)</span>
+                  </div>
                   <p className="text-sm text-neutral-700 dark:text-neutral-300">
                     Compute each RK4 stage starting from <InlineMath math="x_0 = 0, y_0 = 1" />:
                   </p>
@@ -104,11 +136,13 @@ export default function RungeKuttaMethodPage() {
                     <BlockMath math="k_3 = (0.1)(0.05 + 1.055) = 0.11050" />
                     <BlockMath math="k_4 = (0.1)(0.1 + 1.1105) = 0.12105" />
                   </div>
-                </Step>
+                </div>
 
                 {/* Step 2: Weighted Average Update */}
-                <Step n={2} title="Weighted average increment">
-
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-neutral-500">
+                    <span>STEP 02</span> • <span>WEIGHTED AVERAGE INCREMENT</span>
+                  </div>
                   <p className="text-sm text-neutral-700 dark:text-neutral-300">
                     Combine the 4 slopes into the RK4 update equation:
                   </p>
@@ -118,16 +152,14 @@ export default function RungeKuttaMethodPage() {
                     <BlockMath math={`\\Delta y = \\frac{1}{6} \\left[ 0.10000 + 0.22000 + 0.22100 + 0.12105 \\right] = \\frac{0.66205}{6} = 0.110342`} />
                     <BlockMath math={`y(0.1) = y_0 + \\Delta y = 1.00000 + 0.110342 = 1.11034`} />
                   </div>
-                </Step>
-<StepControls />
-<StepsDone>
+                </div>
 
                 {/* Step 3: Final Conclusion */}
                 <div className="border-2 border-black/80 dark:border-neutral-600 rounded-2xl p-6 relative overflow-hidden bg-[#FAF8F5] dark:bg-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none">
                   <div className="absolute inset-0 pointer-events-none opacity-35 dark:opacity-40 editorial-dots-bg" />
                   <div className="relative z-10 space-y-3">
                     <span className="bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md uppercase">
-                      Final result
+                      FINAL RESULT
                     </span>
                     <h3 className="text-xl font-bold text-black dark:text-white">
                       RK4 Value: y(0.1) ≈ 1.11034
@@ -141,10 +173,26 @@ export default function RungeKuttaMethodPage() {
                   </div>
                 </div>
 
-              </StepsDone>
-</div>
+              </div>
 
-            </MethodShell>
+              {/* Interactive Calculator Section */}
+              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+                <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
+                  LABORATORY
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
+                  Interactive Live Calculator & Visualizer
+                </h2>
+                <RungeKuttaSolver />
+              </div>
+
+              {/* Sequential Routing Navigation */}
+              <AlgorithmNavigation />
+
+            </section>
+          </div>
+        </div>
+      </FullscreenToggle>
     </>
   );
 }

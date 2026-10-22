@@ -6,7 +6,7 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import MatrixInputGrid from '@/app/components/MatrixInputGrid';
-import { EditorialButton } from '@/app/components/editorial';
+import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 
 function initMatrix(n) {
@@ -155,7 +155,7 @@ const LUDecomposition = () => {
       <div className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-black/10 dark:border-neutral-800">
           <div>
-            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">Matrix calculator</span>
+            <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">MATRIX LABORATORY</span>
             <h3 className="text-xl md:text-2xl font-black uppercase text-black dark:text-white">LU Decomposition Engine</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -180,10 +180,13 @@ const LUDecomposition = () => {
       </div>
 
       {result && (
-        <div className="space-y-6">
+        <div id="lu-result" className="space-y-6">
           {/* L and U Matrices */}
           <div className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-6">
-            <h4 className="text-lg font-black uppercase text-black dark:text-white">Decomposition: A = L × U</h4>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-lg font-black uppercase text-black dark:text-white">Decomposition: A = L × U</h4>
+              <EditorialExportButton title="LU Decomposition Report" elementId="lu-result" size="sm" />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <MatrixDisplay data={result.L} label="Lower Triangular Matrix L (Doolittle: 1s on diagonal)" highlight />
               <MatrixDisplay data={result.U} label="Upper Triangular Matrix U" highlight />

@@ -1,5 +1,7 @@
 # Algorithm Hub + method pages redesign
 
+> **Reverted 2026-10-22 at the owner's request** ("revert, it's so bad"). The hub, the 34 method pages, the layout, `alg.css`, `AlgorithmNavigation`, the tour text and the calculator headings are back as they were before commit `8407317`. `components/algorithms/` (MethodShell, catalog, progress, methods.css), `scripts/am-codemod.mjs` and `tests/browser/algorithms.mjs` were removed; they are in git history. Code and LaTeX export moved into each calculator's Export dropdown (`EditorialExportButton`).
+
 Board: https://claude.ai/artifact/DPGCSuveZMdy5WGfHLCZJX (audit H1–H14, flow, hub laptop/phone, method page laptop, method phone Learn/Solve).
 Owner said "let's build it" on 2026-10-20 without answering Q1–Q6, so the board is built as drawn:
 
