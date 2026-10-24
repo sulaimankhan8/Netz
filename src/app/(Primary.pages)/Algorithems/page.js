@@ -193,7 +193,7 @@ export default function AlgorithmsPage() {
               })}
             </div>
             {/* The hub's one ad, after the list (plan 6.2) */}
-            <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HUB} />
+            <AdSlot place="hub" />
           </div>
 
           {/* Active Interactive Solver Drawer */}

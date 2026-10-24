@@ -12,6 +12,8 @@ import {
   LuFileDown,
   LuFileText,
   LuGlobe,
+  LuGlobe2,
+  LuPackage,
   LuLock,
   LuMoreHorizontal,
   LuPalette,
@@ -23,17 +25,20 @@ import {
 import NoteBlockItem from './NoteBlockItem';
 import NoteLookPanel from './NoteLookPanel';
 import { BadgeRow, BannerFill, NoteIcon, StatusBadge, badgesOf, lookColour, lookOf } from '../utils/noteLook';
-import { exportNoteAsMarkdown } from '../utils/noteStorage';
+import { exportNoteHtml, exportNoteMarkdown, exportNoteNetz, noteTexZip } from '../utils/noteExport';
 import { exportNoteToPdf } from '../utils/pdfExport';
 import { recordActivity } from '@/app/utils/activity';
 import { usePublishedIds } from '../utils/publishClient';
-import { BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
+import { OFFERED_BLOCK_TYPES as BLOCK_TYPES, newQuizConfig } from '../utils/blockTypes';
+import { newTable } from '@/app/utils/tableCore';
+import { assetBlockFor, blocksFromNetz } from '../utils/noteInsert';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, Menu, Modal, TOUCH, useCoarsePointer } from './ui';
 import { isProOnDevice } from '@/app/utils/proClient';
 import dynamic from 'next/dynamic';
 import { noteToTex } from '../utils/latexNote';
 
 const ProExportDialog = dynamic(() => import('@/app/components/export/ProExportDialog'), { ssr: false });
+const AssetLibrary = dynamic(() => import('./AssetLibrary'), { ssr: false });
 
 const GRID_OPEN_KEY = 'netz_notes_add_grid_open';
 
@@ -162,13 +167,16 @@ export default function NoteEditor({
   onNotify,
   onRestoreBlock,
   tagColours = {},
-  onSetTagColour
+  onSetTagColour,
+  onOpenBoard
 }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const publishedIds = usePublishedIds();
   const [exportOpen, setExportOpen] = useState(false);
   const [texOpen, setTexOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+  // From Assets: the picker is open; targetId is the block it was asked from (null: where you are)
+  const [assetPick, setAssetPick] = useState(null);
   // The block just added: it opens ready to type (a formula opens its LaTeX field)
   const [justAddedId, setJustAddedId] = useState(null);
   // The block you are in: on touch screens its grip shows
@@ -208,7 +216,7 @@ export default function NoteEditor({
   const wordCount = useMemo(() => {
     if (!note || !note.blocks) return 0;
     return note.blocks.reduce((acc, b) => {
-      if (!b.content) return acc;
+      if (!b.content || typeof b.content !== 'string' || b.type === 'divider') return acc;
       return acc + b.content.trim().split(/\s+/).filter(Boolean).length;
     }, 0);
   }, [note]);
@@ -300,10 +308,71 @@ export default function NoteEditor({
     handleInsertBlockAfter(note.blocks.length - 1);
   };
 
+  /**
+   * Puts blocks where you are: in place of `targetId` if that is an empty text block, else after
+   * it; with no target, after the block you are in, or at the end.
+   */
+  const insertBlocks = (newBlocks, targetId = null, baseNote = note) => {
+    const blocks = [...baseNote.blocks];
+    const anchorId = targetId || activeBlockId;
+    let at = blocks.findIndex((b) => b.id === anchorId);
+    let replace = false;
+    if (at >= 0 && targetId) {
+      const target = blocks[at];
+      replace = target.type === 'paragraph' && !String(target.content || '').trim();
+    }
+    if (at < 0) at = blocks.length - 1;
+    blocks.splice(replace ? at : at + 1, replace ? 1 : 0, ...newBlocks);
+    // Something to keep writing in after what was inserted
+    const lastNew = newBlocks[newBlocks.length - 1];
+    if (!blocks[blocks.indexOf(lastNew) + 1]) blocks.push({ id: 'b-' + Date.now() + '-t', type: 'paragraph', content: '' });
+    onUpdateNote({ ...baseNote, blocks });
+  };
+
+  const handlePickAsset = async (record) => {
+    const targetId = assetPick?.targetId || null;
+    setAssetPick(null);
+    const block = await assetBlockFor(record);
+    insertBlocks([block], targetId);
+    setJustAddedId(block.id);
+  };
+
+  // From file: the content of a .netz note or board, with an "Inserted from ..." line above it
+  const handleInsertFromFile = async (targetId = null) => {
+    const { pickNetzFile } = await import('@/app/utils/netzFile');
+    const result = await pickNetzFile();
+    if (!result) return;
+    if (!result.ok) {
+      onNotify({ message: result.error });
+      return;
+    }
+    try {
+      const { blocks } = await blocksFromNetz(result, result.fileName);
+      insertBlocks(blocks, targetId);
+      onNotify({ message: `Inserted ${result.fileName}. You can write between its parts.` });
+    } catch (err) {
+      onNotify({ message: err.message || 'The file could not be inserted.' });
+    }
+  };
+
   const handleAddBlock = (type) => {
     setAddSheetOpen(false);
     if (type === 'widget') {
       onAddWidgetBlock();
+      return;
+    }
+    if (type === 'assets') {
+      setAssetPick({ targetId: null });
+      return;
+    }
+    if (type === 'netzfile') {
+      handleInsertFromFile(null);
+      return;
+    }
+    if (type === 'table') {
+      const block = { id: 'b-' + Date.now(), type: 'table', content: '', table: newTable(3, 3) };
+      setJustAddedId(block.id);
+      insertBlocks([block], null);
       return;
     }
 
@@ -338,8 +407,27 @@ export default function NoteEditor({
   const exportItems = [
     ...(isPhone ? [{ id: 'look', label: 'Note look', icon: <LuPalette className="w-[18px] h-[18px]" />, onSelect: () => setLookOpen(true) }, 'divider'] : []),
     { id: 'pdf', label: isExportingPdf ? 'Exporting PDF…' : 'Export PDF', disabled: isExportingPdf, icon: <LuFileDown className="w-[18px] h-[18px]" />, onSelect: handleExportPdf },
-    { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteAsMarkdown(note) },
-    { id: 'tex', label: 'Export LaTeX (.tex) · Pro', icon: <LuFileCode className="w-[18px] h-[18px]" />, onSelect: () => setTexOpen(true) }
+    { id: 'md', label: 'Export Markdown (.md)', icon: <LuDownload className="w-[18px] h-[18px]" />, onSelect: () => exportNoteMarkdown(note).then(() => recordActivity('note.exported', { kind: 'md' })) },
+    { id: 'html', label: 'Export web page (.html)', icon: <LuGlobe2 className="w-[18px] h-[18px]" />, onSelect: () => exportNoteHtml(note).then(() => recordActivity('note.exported', { kind: 'html' })) },
+    { id: 'tex', label: 'Export LaTeX (.tex) · Pro', icon: <LuFileCode className="w-[18px] h-[18px]" />, onSelect: () => setTexOpen(true) },
+    {
+      id: 'netz',
+      label: 'Export NETZ file (.netz) · Pro',
+      icon: <LuPackage className="w-[18px] h-[18px]" />,
+      onSelect: async () => {
+        if (!isProOnDevice()) {
+          onNotify({ message: 'NETZ files come with NETZ Pro: they open again fully editable, handwriting included.', actionLabel: 'See Pro', onAction: () => window.open('/Pricing', '_blank', 'noopener') });
+          return;
+        }
+        try {
+          const { items } = await exportNoteNetz(note);
+          recordActivity('note.exported', { kind: 'netz' });
+          onNotify({ message: items ? `Saved the note with ${items} item${items === 1 ? '' : 's'} from Assets.` : 'Saved the note as a NETZ file.' });
+        } catch (err) {
+          onNotify({ message: err.message || 'The NETZ file could not be made.' });
+        }
+      }
+    }
   ];
 
   const status = saveFailed ? (
@@ -443,9 +531,13 @@ export default function NoteEditor({
         <ProExportDialog
           title={note.title || 'Untitled note'}
           getTex={() => noteToTex(note)}
+          getZip={() => noteTexZip(note)}
           onClose={() => setTexOpen(false)}
-          note="Solver blocks come with their answer and steps table. Sketches are pictures, so they stay in the PDF export only."
+          note="Solver blocks come with their answer and steps table, and tables as LaTeX tables. Sketches, boards and pictures come in the .zip, next to the .tex."
         />
+      )}
+      {assetPick && (
+        <AssetLibrary isPhone={isPhone} mode="pick" onPick={handlePickAsset} onClose={() => setAssetPick(null)} onNotify={onNotify} />
       )}
       {lookOpen && (
         <NoteLookPanel
@@ -564,6 +656,9 @@ export default function NoteEditor({
                     onActivate={setActiveBlockId}
                     hoveredId={hoveredBlockId}
                     onHover={setHoveredBlockId}
+                    onRequestAssets={(id) => setAssetPick({ targetId: id })}
+                    onRequestFile={(id) => handleInsertFromFile(id)}
+                    onOpenBoard={onOpenBoard}
                   />
                 ))}
               </div>

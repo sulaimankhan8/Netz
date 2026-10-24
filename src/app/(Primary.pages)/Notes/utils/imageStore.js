@@ -1,5 +1,7 @@
 /*
- * Banner images a student uploads, kept on this device until accounts and file storage arrive
+ * Banner images a student uploads. Since the Assets library (assetStore.js) they are kept there,
+ * tagged 'banner'; this file still reads pictures saved in the old store before they are moved.
+ * Originally: banner images kept on this device until accounts and file storage arrive
  * (NOTES_VISUAL_REDESIGN_PLAN.md, "Banner art, uploads and badges"). They live in IndexedDB,
  * not localStorage, so a few photos do not fill the notes' 5 MB. A note only keeps the image's
  * id (note.look.cover = { kind: 'image', value: id }).
@@ -59,14 +61,14 @@ async function shrink(file) {
   );
 }
 
-/** Saves a picked file as a banner image; returns its id. Throws with a message to show. */
+/** Saves a picked file as a banner image (in the Assets library, tagged 'banner'); returns its id. */
 export async function saveBannerImage(file) {
   if (!file || !file.type.startsWith('image/')) throw new Error('Choose a picture (JPG, PNG or WebP).');
   if (file.size > MAX_FILE_BYTES) throw new Error('That picture is over 15 MB. Choose a smaller one.');
   const blob = await shrink(file);
-  const id = `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  await withStore('readwrite', (store) => store.put(blob, id));
-  return id;
+  const { addImageBlob } = await import('./assetStore');
+  const record = await addImageBlob(blob, file.name.replace(/\.[^.]+$/, '') || 'Banner picture', { tags: ['banner'] });
+  return record.id;
 }
 
 /** A URL to show a saved banner image, or null if it is not on this device. */
@@ -74,6 +76,13 @@ export async function getBannerImageUrl(id) {
   if (!id) return null;
   if (urlCache.has(id)) return urlCache.get(id);
   try {
+    // Banners live in the Assets library now; older ones may still be in the old store
+    const { assetUrl } = await import('./assetStore');
+    const fromLibrary = await assetUrl(id, 'main');
+    if (fromLibrary) {
+      urlCache.set(id, fromLibrary);
+      return fromLibrary;
+    }
     const blob = await withStore('readonly', (store) => store.get(id));
     if (!blob) return null;
     const url = URL.createObjectURL(blob);
@@ -84,15 +93,8 @@ export async function getBannerImageUrl(id) {
   }
 }
 
-/** Removes a banner image from this device. */
+/** Forgets a banner image on this note. The picture stays in the Assets library for other notes. */
 export async function deleteBannerImage(id) {
   if (!id) return;
-  const url = urlCache.get(id);
-  if (url) URL.revokeObjectURL(url);
   urlCache.delete(id);
-  try {
-    await withStore('readwrite', (store) => store.delete(id));
-  } catch {
-    // already gone
-  }
 }

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { LuDownload, LuEraser, LuImage, LuImport, LuPenLine, LuTrash2, LuUpload } from 'react-icons/lu';
 import { BTN_MAIN, BTN_QUIET, BTN_SECONDARY, ICON_BTN, TOUCH } from './ui';
+import { safeImageSrc } from '../utils/importSafety';
 
 export default function InkSketchBlock({ block, onUpdate, menuButton = null }) {
   const canvasRef = useRef(null);
@@ -177,7 +178,9 @@ export default function InkSketchBlock({ block, onUpdate, menuButton = null }) {
     link.click();
   };
 
-  const hasFigure = block?.content && (block.content.startsWith('data:image') || block.content.startsWith('<svg') || block.content.startsWith('http'));
+  // Every picture is shown through <img>, which never runs script, even inside an SVG
+  const figureSrc = safeImageSrc(block?.content);
+  const hasFigure = Boolean(figureSrc);
 
   return (
     <div className={`my-2 rounded-2xl border bg-nt-surface text-nt-ink ${isEditing ? 'border-nt-sketch ring-[3px] ring-nt-sketch-tint' : 'border-nt-line'}`}>
@@ -325,11 +328,7 @@ export default function InkSketchBlock({ block, onUpdate, menuButton = null }) {
           <>
             <div className="flex items-center justify-center p-4 rounded-xl bg-white min-h-[160px] overflow-hidden">
               {hasFigure ? (
-                block.content.startsWith('<svg') ? (
-                  <div dangerouslySetInnerHTML={{ __html: block.content }} className="w-full max-w-lg" />
-                ) : (
-                  <img src={block.content} alt={block.caption || 'Handwritten mathematical sketch'} className="max-h-80 object-contain rounded" />
-                )
+                <img src={figureSrc} alt={block.caption || 'Handwritten mathematical sketch'} className="max-h-80 max-w-full object-contain rounded" />
               ) : (
                 <div className="text-center py-6 text-sm text-[#55555A] flex flex-col items-center gap-2">
                   <LuImage className="w-8 h-8" aria-hidden="true" />

@@ -3,8 +3,9 @@
 import { useEffect } from 'react';
 import { isProOnDevice } from '@/app/utils/proClient';
 import useAdsAllowed from '@/app/utils/ads/useAdsAllowed';
+import { AD_CLIENT, ADSENSE_ON } from '@/app/utils/ads/adsenseConfig';
 
-const SRC = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3746721364737268';
+const SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}`;
 
 /**
  * Loads the AdSense script when the browser is idle, the first time the student is on a page where
@@ -14,7 +15,7 @@ const SRC = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?clie
 export default function AdsenseScript() {
   const allowed = useAdsAllowed();
   useEffect(() => {
-    if (!allowed || isProOnDevice() || document.querySelector(`script[src="${SRC}"]`)) return undefined;
+    if (!ADSENSE_ON || !allowed || isProOnDevice() || document.querySelector(`script[src="${SRC}"]`)) return undefined;
     const load = () => {
       if (isProOnDevice()) return;
       const s = document.createElement('script');

@@ -433,8 +433,8 @@ export default function SmartBlockWrapper({
   // ----------------------------------------------------
   // MODE 2: EDIT MODE (Active Card Editor)
   // ----------------------------------------------------
-  // An equation or a graph being edited grows to fit its tools (never shorter than its size)
-  const editHeight = type === 'equation' || type === 'graph' ? { height: 'auto', minHeight: blockHeight } : { height: blockHeight };
+  // An equation, a graph or a table being edited grows to fit its tools (never shorter than its size)
+  const editHeight = type === 'equation' || type === 'graph' || type === 'table' ? { height: 'auto', minHeight: blockHeight } : { height: blockHeight };
   return (
     <div
       ref={wrapperRef}

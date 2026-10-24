@@ -268,27 +268,7 @@ export function importNoteByKey(key) {
   return null;
 }
 
+/** Markdown with everything in it: text, maths, tables and every picture (noteExport.js). */
 export function exportNoteAsMarkdown(note) {
-  let md = `# ${note.title}\n\n`;
-  if (note.subtitle) md += `*${note.subtitle}*\n\n`;
-  md += `**Tags**: ${note.tags.join(", ")}\n`;
-  md += `**Created**: ${new Date(note.createdAt).toLocaleDateString()}\n\n`;
-  md += `---\n\n`;
-
-  note.blocks.forEach((block) => {
-    if (block.type === "heading1") md += `## ${block.content}\n\n`;
-    else if (block.type === "heading2") md += `### ${block.content}\n\n`;
-    else if (block.type === "paragraph") md += `${block.content}\n\n`;
-    else if (block.type === "math") md += `$$\n${block.content}\n$$\n\n`;
-    else if (block.type === "callout") md += `> ${block.content}\n\n`;
-    else if (block.type === "widget") md += `\`[Interactive Solver: ${block.content}]\`\n\n`;
-  });
-
-  const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${note.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_note.md`;
-  link.click();
-  URL.revokeObjectURL(url);
+  return import("./noteExport").then((m) => m.exportNoteMarkdown(note));
 }

@@ -617,7 +617,7 @@ export default function ProfileView() {
                 <MedalCase state={snap.state} today={snap.today} className="order-3" />
                 <AllTasks state={snap.state} className="order-4" />
                 {/* Profile's one ad, below the tasks (plan 6.2) */}
-                <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PROFILE} className="order-4" />
+                <AdSlot place="profile" className="order-4" />
               </div>
               <div className="contents lg:flex lg:flex-col lg:gap-6">
                 <Streak state={snap.state} summary={snap.summary} today={snap.today} className="order-2" />

@@ -70,7 +70,7 @@ export default function AlgorithmNavigation({ currentPath: overridePath }) {
   return (
     <>
     {/* The algorithm pages' one ad: below the result and steps, above the next/previous links (plan 6.2) */}
-    <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ALGORITHM} className="w-full md:w-[80%] mx-auto mt-12" />
+    <AdSlot place="algorithm" className="w-full md:w-[80%] mx-auto mt-12" />
     <div className="w-full md:w-[80%] mx-auto mt-12 mb-6 pt-6 border-t border-gray-200 dark:border-neutral-700">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-neutral-900 p-5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-sm">
         

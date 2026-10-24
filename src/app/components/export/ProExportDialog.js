@@ -16,13 +16,15 @@ const LANG_KEY = 'netz_code_lang';
  *
  * getCode / getTex may throw an Error whose message is shown to the student (for example
  * "Enter a number for x0 first."). Leave one out to hide its tab.
+ * getZip (optional, LaTeX tab): async () => ({ blob, filename }), the .tex with its pictures.
  */
-export default function ProExportDialog({ title, getCode, getTex, initialTab, onClose, note }) {
+export default function ProExportDialog({ title, getCode, getTex, getZip, initialTab, onClose, note }) {
   const pro = useIsPro();
   const tabs = [getCode && ['code', 'Code'], getTex && ['tex', 'LaTeX']].filter(Boolean);
   const [tab, setTab] = useState(initialTab && tabs.some(([k]) => k === initialTab) ? initialTab : tabs[0]?.[0]);
   const [lang, setLang] = useState('python');
   const [copied, setCopied] = useState('');
+  const [zipping, setZipping] = useState(false);
   const closeRef = useRef(null);
   const boxRef = useRef(null);
 
@@ -135,6 +137,26 @@ export default function ProExportDialog({ title, getCode, getTex, initialTab, on
             {note && <p className="xd-note">{note}</p>}
             <div className="xd-actions">
               <button type="button" className="xd-btn xd-btn-quiet" onClick={copy} disabled={!output?.text}>{copied || 'Copy'}</button>
+              {tab === 'tex' && getZip && (
+                <button
+                  type="button"
+                  className="xd-btn xd-btn-quiet"
+                  disabled={!output?.text || zipping}
+                  onClick={async () => {
+                    setZipping(true);
+                    try {
+                      const { blob, filename } = await getZip();
+                      downloadText(blob, filename, 'application/zip');
+                    } catch {
+                      setCopied('Could not make the .zip');
+                    } finally {
+                      setZipping(false);
+                    }
+                  }}
+                >
+                  {zipping ? 'Making .zip…' : 'Download .zip (with pictures)'}
+                </button>
+              )}
               <button type="button" className="xd-btn xd-btn-main" onClick={() => output?.text && downloadText(output.text, output.filename, output.type)} disabled={!output?.text}>
                 Download {output?.filename ? `.${output.filename.split('.').pop()}` : ''}
               </button>

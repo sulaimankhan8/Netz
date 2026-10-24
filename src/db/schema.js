@@ -43,6 +43,22 @@ export const notes = pgTable('notes', {
   serverUpdatedAt: timestamp('server_updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [primaryKey({ columns: [t.userId, t.id] }), index('notes_user_server_updated').on(t.userId, t.serverUpdatedAt)]);
 
+// Notes Studio Assets library: boards, pictures and files; the files themselves are in the
+// private Storage bucket `note-assets` (supabase/migrations/20261024000000_note_assets.sql)
+export const noteAssets = pgTable('note_assets', {
+  userId: uuid('user_id').notNull(),
+  id: text('id').notNull(),
+  kind: text('kind').notNull(),
+  title: text('title').notNull().default(''),
+  mime: text('mime').notNull().default(''),
+  ext: text('ext').notNull().default(''),
+  bytes: bigint('bytes', { mode: 'number' }).notNull().default(0),
+  pageCount: integer('page_count').notNull().default(0),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.userId, t.id] })]);
+
 // Notes published to the web at /p/<slug>: a snapshot, updated only when the author asks
 export const publicNotes = pgTable('public_notes', {
   slug: text('slug').primaryKey(),

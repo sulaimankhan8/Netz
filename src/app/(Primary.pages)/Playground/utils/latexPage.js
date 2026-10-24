@@ -1,10 +1,11 @@
 import { displayMath, escapeTex, slugFile } from '../../../utils/latexExport';
+import { tableToTex } from '../../../utils/tableCore';
 
 /**
  * A Playground page as a .tex file (NETZ Pro): equation blocks become display maths, text (theory)
- * blocks keep their inline $…$ maths, graphs list the equations they plot and pictures their caption.
- * Blocks are read top to bottom, then left to right. Handwriting and drawings are pictures, so they
- * are not in the file (PNG, SVG and PDF keep them).
+ * blocks keep their inline $…$ maths, graphs list the equations they plot, tables are LaTeX tables
+ * and pictures their caption. Blocks are read top to bottom, then left to right. With `inkImage`
+ * (a file name inside the .zip) the page's handwriting and drawings come in as one picture.
  */
 
 /** Text with $…$ / $$…$$ maths: the text is escaped, the maths is kept. */
@@ -31,7 +32,7 @@ const reading = (a, b) => {
   return (a.position?.x ?? 0) - (b.position?.x ?? 0);
 };
 
-export function pageToTex({ title, blocks = [], strokeCount = 0 }) {
+export function pageToTex({ title, blocks = [], strokeCount = 0, inkImage = null }) {
   const parts = [];
   [...blocks].sort(reading).forEach((b) => {
     const c = b.content || {};
@@ -40,12 +41,23 @@ export function pageToTex({ title, blocks = [], strokeCount = 0 }) {
     else if (b.type === 'graph') {
       const curves = (c.graphData?.datasets || []).map((d) => d.latex || d.label).filter(Boolean);
       if (curves.length) parts.push(`Graph of ${curves.map((l) => `$${l}$`).join(', ')}.`);
+    } else if (b.type === 'table' && c.table?.rows?.length) {
+      parts.push(tableToTex(c.table));
     } else if ((b.type === 'image' || b.type === 'sketch') && String(c.caption || '').trim()) {
       parts.push(`\\emph{Figure: ${escapeTex(c.caption)}}`);
     }
   });
+  if (inkImage) {
+    parts.push([
+      '\\begin{figure}[h]',
+      '\\centering',
+      `\\includegraphics[width=\\linewidth,height=0.8\\textheight,keepaspectratio]{${inkImage}}`,
+      '\\caption*{Handwriting and drawings on this page}',
+      '\\end{figure}',
+    ].join('\n'));
+  }
   if (!parts.length) parts.push('This page has no typed maths or text yet. Convert handwriting to blocks first, then export again.');
-  const note = strokeCount ? `% This page also has ${strokeCount} handwritten stroke${strokeCount === 1 ? '' : 's'}; export PNG, SVG or PDF to keep them.\n` : '';
+  const note = strokeCount && !inkImage ?`% This page also has ${strokeCount} handwritten stroke${strokeCount === 1 ? '' : 's'}; export PNG, SVG or PDF to keep them.\n` : '';
   const usesChem = parts.some((p) => /\\ce\{/.test(p));
   const tex = [
     '% Made with NETZ (netz-ruby.vercel.app)',
@@ -54,6 +66,8 @@ export function pageToTex({ title, blocks = [], strokeCount = 0 }) {
     '\\usepackage[margin=2.2cm]{geometry}',
     '\\usepackage{amsmath,amssymb}',
     ...(usesChem ? ['\\usepackage[version=4]{mhchem}'] : []),
+    ...(parts.some((p) => p.includes('\\toprule')) ? ['\\usepackage{booktabs}'] : []),
+    ...(inkImage ? ['\\usepackage{graphicx}', '\\usepackage{caption}'] : []),
     '\\setlength{\\parindent}{0pt}',
     '\\setlength{\\parskip}{8pt}',
     '\\begin{document}',

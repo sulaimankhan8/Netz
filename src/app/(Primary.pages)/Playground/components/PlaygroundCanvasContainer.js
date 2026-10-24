@@ -16,6 +16,8 @@ import TheoryBlock from './blocks/TheoryBlock';
 import SketchBlock from './blocks/SketchBlock';
 import AudioMemoBlock from './blocks/AudioMemoBlock';
 import ImageBlock from './blocks/ImageBlock';
+import TableBlock from './blocks/TableBlock';
+import { newTable } from '@/app/utils/tableCore';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 import PageManager from './PageManager';
 import PageSheet from './PageSheet';
@@ -31,7 +33,9 @@ import { modelManager } from '../utils/recognition/modelManager';
 import { recordUserCorrection } from '../utils/recognition/telemetryStore';
 import { initAutocompleteTrie } from '../utils/autocompleteTrie';
 import { generateGraphDatasetFromLatex, upsertCurveForSource } from '../utils/equationToGraph';
-import { exportPage, renderView } from '../utils/exportEngine';
+import { exportPage, pageToSvgString, renderInkOnly, renderPagePreview, renderView } from '../utils/exportEngine';
+import { boardTitle, freshPages, noteBlocksToCanvas, offsetPage, pageBottom, pageTopLeft } from '../utils/boardStudio';
+import { Dialog } from './ui/Dialog';
 import {
   differentiateExpression,
   integrateExpression,
@@ -221,6 +225,7 @@ export default function PlaygroundCanvasContainer() {
   const readModeRef = useRef(readMode);
   readModeRef.current = readMode;
   const setNotesMode = useCallback((on) => {
+    lineBaselineRef.current = null;
     if (on) {
       readBeforeWritingRef.current = readModeRef.current;
       setReadMode('live');
@@ -267,6 +272,14 @@ export default function PlaygroundCanvasContainer() {
 
   // OCR Clusters State
   const [clusters, setClusters] = useState([]);
+  const clustersRef = useRef([]);
+  clustersRef.current = clusters;
+  // Writing mode "As I write": reads each finished line (set up next to handleConvertClusterToBlock)
+  const lineReaderRef = useRef(null);
+  const lineTimerRef = useRef(null);
+  // Ink already on the page when writing started (Writing mode turned on, or the page opened):
+  // it is not read, so drawings and old notes never go into the Training data
+  const lineBaselineRef = useRef(null);
 
   // The block just added from the dock: it opens ready for typing
   const [autoEditBlockId, setAutoEditBlockId] = useState(null);
@@ -797,12 +810,13 @@ export default function PlaygroundCanvasContainer() {
       return;
     }
 
-    // In Notes Mode, writing is freeform and purely on-demand via the Lasso tool.
-    // We only auto-evaluate if an explicit '=' gesture is drawn for instant math solving.
+    // Writing mode: each finished line is read by the text model (lineReaderRef, below). Ink with
+    // an "=" gesture is a calculation and goes the usual way, through the maths model.
     if (notesMode) {
       const rawClusters = clusterStrokes(allStrokes, 32);
       const instantEqualsCluster = rawClusters.find((c) => c.hasEqualsGesture);
       if (!instantEqualsCluster) {
+        lineReaderRef.current?.(allStrokes);
         return;
       }
     }
@@ -881,6 +895,13 @@ export default function PlaygroundCanvasContainer() {
 
     const finalText = editedText !== null ? editedText : (cluster.detectedText || '');
 
+    // Training data: what the writer accepted for a line read in Writing mode
+    if (cluster.trainingId) {
+      import('../../Notes/utils/assetStore')
+        .then((m) => m.updateTrainingSample(cluster.trainingId, { converted: true, acceptedText: finalText, edited: editedText !== null && editedText !== cluster.detectedText }))
+        .catch(() => {});
+    }
+
     const newBlockId = `block_${Date.now()}`;
     const blockType = cluster.isMath ? 'equation' : 'theory';
     const content = cluster.isMath
@@ -916,6 +937,108 @@ export default function PlaygroundCanvasContainer() {
     setClusters((prev) => prev.filter((c) => c.clusterId !== cluster.clusterId));
     setSelectedClusterId(null);
   }, [notesMode]);
+
+  // ── Writing mode, "As I write" (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 4) ──────────
+  // Writing is grouped by the 32 px ruled line it sits on. A line is read by the text model
+  // alone when you move down to another line, or after a one-second pause. Its reading shows as
+  // a pill; nothing is converted until you tap it (owner decision D2). Writing more on a line
+  // that is still waiting reads the whole line again. Every reading is saved to the Training
+  // data folder in Notes Studio (D5), and updated with what you accept.
+  const readLine = async (lineIdx, strokes, pageId, replacesTrainingId = null) => {
+    const cluster = {
+      clusterId: `line_${lineIdx}_${Date.now()}`,
+      lineIdx,
+      strokeIds: strokes.map((st) => st.id),
+      strokes,
+      bbox: bboxOfStrokes(strokes),
+      hasEqualsGesture: false,
+      detectedText: '',
+      isMath: false,
+      evaluatedResult: null,
+      confidence: 0,
+      ocrStatus: 'pending',
+    };
+    setClusters((prev) => [...prev.filter((c) => !(c.lineIdx === lineIdx && c.clusterId.startsWith('line_'))), cluster]);
+    const res = await processClusterOCR(cluster, { mode: 'notes', forceRefresh: true });
+    if (pagesRef.current[currentPageIndexRef.current]?.id !== pageId) return;
+    let trainingId = null;
+    const store = await import('../../Notes/utils/assetStore');
+    // The line was read before, with fewer strokes: this reading replaces that sample
+    if (replacesTrainingId) await store.deleteTrainingSample(replacesTrainingId).catch(() => {});
+    if (res && res.detectedText) {
+      const { addTrainingSample } = store;
+      trainingId = await addTrainingSample({
+        strokes,
+        readText: res.detectedText,
+        alternatives: res.alternatives,
+        routing: res.rawResult?.routing || null,
+        pointerType: strokes[0]?.points?.[0]?.pointerType || '',
+      });
+    }
+    setClusters((prev) =>
+      prev.map((c) =>
+        c.clusterId === cluster.clusterId
+          ? {
+              ...c,
+              detectedText: res ? res.detectedText : '',
+              isMath: res ? res.isMath : false,
+              evaluatedResult: res ? res.evaluatedResult : null,
+              confidence: res ? res.confidence : 0,
+              ocrStatus: res ? (res.status || 'recognized') : 'error',
+              ocrError: res ? res.error : null,
+              shouldConvert: res ? res.shouldConvert : true,
+              action: res ? res.action : 'convert_text',
+              type: res ? res.type : undefined,
+              alternatives: res ? res.alternatives : undefined,
+              confidenceDetails: res ? res.confidenceDetails : undefined,
+              mathsSkipped: res ? Boolean(res.mathsSkipped) : false,
+              trainingId,
+            }
+          : c
+      )
+    );
+  };
+
+  lineReaderRef.current = (allStrokes) => {
+    clearTimeout(lineTimerRef.current);
+    const pageId = pagesRef.current[currentPageIndexRef.current]?.id;
+    if (!lineBaselineRef.current || lineBaselineRef.current.pageId !== pageId) {
+      lineBaselineRef.current = { pageId, ids: new Set(allStrokes.slice(0, -1).map((st) => st.id)) };
+    }
+    const before = lineBaselineRef.current.ids;
+    const writing = allStrokes.filter((st) => !before.has(st.id) && st.tool !== 'highlighter' && st.tool !== 'eraser' && !st.shape && st.bbox);
+    const byId = new Map(writing.map((st) => [st.id, st]));
+    const lineClusters = clustersRef.current.filter((c) => c.clusterId?.startsWith('line_'));
+    // A line whose ink was erased (even partly) loses its pill; what is left is read again
+    const broken = lineClusters.filter((c) => c.strokeIds.some((id) => !byId.has(id)));
+    if (broken.length) setClusters((prev) => prev.filter((c) => !broken.some((b) => b.clusterId === c.clusterId)));
+    const waiting = lineClusters.filter((c) => !broken.includes(c));
+    const taken = new Set(waiting.flatMap((c) => c.strokeIds));
+    const unread = writing.filter((st) => !taken.has(st.id));
+    if (!unread.length) return;
+
+    const lineOf = (st) => Math.floor((st.bbox.minY + st.bbox.maxY) / 2 / 32);
+    const groups = new Map();
+    unread.forEach((st) => {
+      const k = lineOf(st);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(st);
+    });
+    const readGroup = (k) => {
+      const earlier = waiting.find((c) => c.lineIdx === k);
+      const strokes = earlier ? [...earlier.strokeIds.map((id) => byId.get(id)).filter(Boolean), ...groups.get(k)] : groups.get(k);
+      readLine(k, strokes, pageId, earlier?.trainingId || null);
+    };
+    const newest = allStrokes[allStrokes.length - 1];
+    const newestLine = newest?.bbox ? lineOf(newest) : null;
+    // Lines other than the one being written are finished: read them now
+    [...groups.keys()].filter((k) => k !== newestLine).forEach(readGroup);
+    // The line being written: after a pause
+    if (newestLine !== null && groups.has(newestLine)) {
+      lineTimerRef.current = setTimeout(() => readGroup(newestLine), 1000);
+    }
+  };
+  useEffect(() => () => clearTimeout(lineTimerRef.current), []);
 
   // Handle Manual Selection OCR Trigger (when user selects drawn area with Lasso)
   const handleSelectionCompleted = useCallback(async ({ strokes: selectedStrokes, bbox, lassoPolygon }) => {
@@ -1313,6 +1436,32 @@ export default function PlaygroundCanvasContainer() {
     };
 
     dispatch({ type: 'ADD_BLOCK', payload: imageBlock });
+  };
+
+  // Insert > Table: a table block in the middle of the view, ready to type in
+  const handleInsertTable = (rows, cols, header = true) => {
+    const table = newTable(rows, cols, header);
+    const width = Math.min(720, Math.max(320, cols * 120));
+    // The rows; while it is being edited the block grows to fit the table's tool bar too
+    const height = Math.min(720, 24 + rows * 44);
+    const view = viewportRef.current;
+    const spawnX = Math.round((-view.pan.x + window.innerWidth / 2) / view.zoom - width / 2);
+    const spawnY = Math.round((-view.pan.y + window.innerHeight / 2) / view.zoom - height / 2);
+    const blockId = `block_table_${Date.now()}`;
+    dispatch({
+      type: 'ADD_BLOCK',
+      payload: {
+        blockId,
+        type: 'table',
+        content: { table },
+        linkedBlockIds: [],
+        position: { x: spawnX, y: spawnY },
+        size: { width, height },
+        status: 'active',
+        isMinimal: false,
+      },
+    });
+    setAutoEditBlockId(blockId);
   };
 
   // Handle Voice Memo Recording Toggle
@@ -1754,11 +1903,61 @@ export default function PlaygroundCanvasContainer() {
     }
     const pageTitle = pagesRef.current[currentPageIndexRef.current]?.title || 'page';
     if (format === 'TEX') {
-      // LaTeX is written from the blocks (typed maths and text), not drawn
+      // LaTeX is written from the blocks (typed maths, text, tables). Handwriting and drawings
+      // come along as one picture: then the download is a .zip with the .tex and images/.
       const strokes = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [];
-      const { tex, filename } = pageToTex({ title: pageTitle, blocks: blockStateRef.current.blocks, strokeCount: strokes.length });
-      downloadText(tex, filename, 'application/x-tex');
-      showNotice(`Saved ${filename}`);
+      const inkPng = strokes.length || latestShapesRef.current.length ? await renderInkOnly({ strokes, shapes: latestShapesRef.current }) : null;
+      const inkImage = inkPng ? 'images/handwriting.png' : null;
+      const { tex, filename } = pageToTex({ title: pageTitle, blocks: blockStateRef.current.blocks, strokeCount: strokes.length, inkImage });
+      if (inkPng) {
+        const { makeZip, dataUrlBytes } = await import('@/app/utils/zip');
+        const zip = makeZip([{ name: filename, data: tex }, { name: inkImage, data: dataUrlBytes(inkPng).bytes }]);
+        const zipName = filename.replace(/\.tex$/, '.zip');
+        downloadText(new Blob([zip], { type: 'application/zip' }), zipName, 'application/zip');
+        showNotice(`Saved ${zipName} (the .tex and a picture of the handwriting)`);
+      } else {
+        downloadText(tex, filename, 'application/x-tex');
+        showNotice(`Saved ${filename}`);
+      }
+      recordActivity('page.exported', { format });
+      return;
+    }
+    if (format === 'NETZ') {
+      // The whole notebook, every page fully editable (NETZ Pro)
+      if (!pro) {
+        showNotice('NETZ files come with NETZ Pro. PNG and PDF are free.');
+        return;
+      }
+      const { buildNetzFile, netzFileName } = await import('@/app/utils/netzFile');
+      const pagesNow = getSyncedPagesState();
+      const title = boardTitle(pagesNow);
+      const text = buildNetzFile({ kind: 'document', document: { title, pages: pagesNow.map(({ id, title: t, strokes, blocks, links, shapes }) => ({ id, title: t, strokes, blocks, links, shapes })) } });
+      const name = netzFileName(title, 'board');
+      downloadText(new Blob([text], { type: 'application/json' }), name, 'application/json');
+      showNotice(`Saved ${name} (${pagesNow.length} page${pagesNow.length === 1 ? '' : 's'})`);
+      recordActivity('page.exported', { format });
+      return;
+    }
+    if (format === 'HTML') {
+      // A web page: the page as a picture (ink as vectors), then its typed text and maths as text
+      const isDarkNow = document.documentElement.classList.contains('dark');
+      const svg = await pageToSvgString({
+        strokes: whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : [],
+        blocks: blockStateRef.current.blocks,
+        shapes: latestShapesRef.current,
+        darkPage: isDarkNow,
+        containerElement: containerRef.current,
+        background: '#FFFFFF',
+      });
+      if (!svg) {
+        showNotice('There is nothing on this page to export yet.');
+        return;
+      }
+      const { pageToHtml } = await import('../utils/pageHtml');
+      const html = pageToHtml({ title: pageTitle, svg, blocks: blockStateRef.current.blocks });
+      const name = `netz-${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page'}.html`;
+      downloadText(new Blob([html], { type: 'text/html' }), name, 'text/html');
+      showNotice(`Saved ${name}`);
       recordActivity('page.exported', { format });
       return;
     }
@@ -1783,6 +1982,176 @@ export default function PlaygroundCanvasContainer() {
       showNotice('The export failed. Please try again.');
     }
   };
+
+  // ── Notes Studio (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3) ──────────────
+  // Each page remembers the library board it belongs to (page.boardId). Save to Notes Studio
+  // saves the open page's board: every page with the same boardId (pages with none form the
+  // notebook's own board, which gets an id on its first save).
+
+  // A .netz file waiting for "As new pages" or "Onto this page"
+  const [insertChoice, setInsertChoice] = useState(null);
+
+  const currentPagePreview = async () => {
+    const isDarkNow = document.documentElement.classList.contains('dark');
+    const canvas = await renderPagePreview({
+      strokes: whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : latestStrokesRef.current,
+      blocks: blockStateRef.current.blocks,
+      shapes: latestShapesRef.current,
+      darkPage: isDarkNow,
+      containerElement: containerRef.current,
+      background: isDarkNow ? '#09090B' : '#FFFFFF',
+    });
+    if (!canvas) return null;
+    return new Promise((resolve) => canvas.toBlob((b) => (b ? resolve(b) : canvas.toBlob(resolve, 'image/jpeg', 0.85)), 'image/webp', 0.8));
+  };
+
+  const handleSaveToStudio = async ({ asNew = false } = {}) => {
+    const synced = getSyncedPagesState();
+    const openBoardId = synced[currentPageIndexRef.current]?.boardId || null;
+    const inBoard = (p) => (p.boardId || null) === openBoardId;
+    const group = synced.filter(inBoard);
+    if (!group.some((p) => (p.strokes || []).length || (p.blocks || []).length || (p.shapes || []).length)) {
+      showNotice('There is nothing on this board to save yet.');
+      return;
+    }
+    showNotice('Saving to Notes Studio…', 30000);
+    try {
+      const { saveBoardAsset, getAsset } = await import('../../Notes/utils/assetStore');
+      const existing = !asNew && openBoardId ? await getAsset(openBoardId) : null;
+      const previewBlob = await currentPagePreview();
+      const record = await saveBoardAsset({
+        title: existing?.title || boardTitle(group),
+        pages: group.map(({ id, title, strokes, blocks, links, shapes }) => ({ id, title, strokes, blocks, links, shapes })),
+        previewBlob,
+        assetId: existing ? existing.id : null,
+      });
+      const stamped = synced.map((p) => (inBoard(p) ? { ...p, boardId: record.id } : p));
+      setPages(stamped);
+      pagesRef.current = stamped;
+      persistSession(stamped, currentPageIndexRef.current);
+      showNotice(existing ? `Updated “${record.title}” in Notes Studio` : `Saved “${record.title}” to Notes Studio`, {
+        action: { label: 'Open in Notes', onClick: () => router.push('/Notes?assets=1') },
+      });
+    } catch (err) {
+      showNotice(err?.message || 'The board could not be saved to Notes Studio.');
+    }
+  };
+
+  // Adds pages after the open ones and opens the first of them
+  const appendPages = (newPages) => {
+    if (!newPages.length) return;
+    const synced = getSyncedPagesState();
+    const fromPageId = synced[currentPageIndexRef.current]?.id;
+    openPage([...synced, ...newPages], synced.length, fromPageId);
+  };
+
+  // Puts content below what is already on the open page: one undo step
+  const placeOntoThisPage = (content) => {
+    const strokesNow = whiteboardCanvasRef.current?.getStrokes ? whiteboardCanvasRef.current.getStrokes() : latestStrokesRef.current;
+    const here = { strokes: strokesNow, blocks: blockStateRef.current.blocks, shapes: latestShapesRef.current };
+    const hasContent = strokesNow.length || here.blocks.length || here.shapes.length;
+    const anchor = pageTopLeft(here) || { x: 80, y: 80 };
+    const corner = pageTopLeft(content) || { x: 0, y: 0 };
+    const top = hasContent ? pageBottom(here) + 96 : anchor.y;
+    const moved = offsetPage(content, anchor.x - corner.x, top - corner.y);
+    const strokes = [...strokesNow, ...(moved.strokes || [])];
+    const blocks = [...here.blocks, ...(moved.blocks || [])];
+    const links = [...blockStateRef.current.links, ...(moved.links || [])];
+    latestStrokesRef.current = strokes;
+    setInkCount(strokes.length);
+    whiteboardCanvasRef.current?.loadStrokes(strokes);
+    dispatch({ type: 'SET_SESSION', payload: { blocks, links } });
+    blockStateRef.current = { ...blockStateRef.current, blocks, links };
+    applyShapes([...here.shapes, ...(moved.shapes || [])]);
+    commitHistory();
+    scheduleSave();
+    setTimeout(() => handleFitToContentRef.current?.(), 60);
+  };
+
+  // Insert from file: a .netz board or note someone gave you
+  const handleInsertFromFile = async () => {
+    const { pickNetzFile } = await import('@/app/utils/netzFile');
+    const result = await pickNetzFile();
+    if (!result) return;
+    if (!result.ok) {
+      showNotice(result.error);
+      return;
+    }
+    setInsertChoice(result);
+  };
+
+  const finishInsert = (where) => {
+    const result = insertChoice;
+    setInsertChoice(null);
+    if (!result) return;
+    const label = (result.fileName || 'file').replace(/\.netz$/i, '');
+    const pagesIn =
+      result.kind === 'document'
+        ? freshPages(result.document.pages)
+        : freshPages([{ title: result.note.title || label, strokes: [], links: [], shapes: [], blocks: noteBlocksToCanvas(result.note.blocks) }]);
+    if (where === 'new') {
+      appendPages(pagesIn);
+      showNotice(`Added ${pagesIn.length} page${pagesIn.length === 1 ? '' : 's'} from ${label}`);
+    } else {
+      // Every page of the file, one under the other, below what is on this page
+      let stacked = { strokes: [], blocks: [], links: [], shapes: [] };
+      pagesIn.forEach((pg) => {
+        const corner = pageTopLeft(pg);
+        if (!corner) return;
+        const top = stacked.strokes.length || stacked.blocks.length || stacked.shapes.length ? pageBottom(stacked) + 96 : 0;
+        const m = offsetPage(pg, -corner.x, top - corner.y);
+        stacked = {
+          strokes: [...stacked.strokes, ...m.strokes],
+          blocks: [...stacked.blocks, ...m.blocks],
+          links: [...stacked.links, ...(m.links || [])],
+          shapes: [...stacked.shapes, ...m.shapes],
+        };
+      });
+      placeOntoThisPage(stacked);
+      showNotice(`Put ${label} on this page`, { action: { label: UI.undo, onClick: () => handleUndoRef.current() } });
+    }
+  };
+
+  // ?asset=<id>: a board from the Notes Studio library opens here (Open in Playground)
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const assetId = new URLSearchParams(window.location.search).get('asset');
+    if (!assetId) return undefined;
+    let cancelled = false;
+    let tries = 0;
+    const go = async () => {
+      if (cancelled) return;
+      if (!isSessionLoadedRef.current) {
+        if (tries++ < 80) setTimeout(go, 100);
+        return;
+      }
+      // The address loses ?asset= (a reload must not open the board again); no navigation
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+      const { readBoardPages, getAsset } = await import('../../Notes/utils/assetStore');
+      const [data, record] = await Promise.all([readBoardPages(assetId), getAsset(assetId)]);
+      if (cancelled) return;
+      if (!data) {
+        showNotice('That board is not on this device. Sign in to get it from your account.');
+        return;
+      }
+      const synced = getSyncedPagesState();
+      const already = synced.findIndex((p) => p.boardId === assetId);
+      if (already >= 0) {
+        // Its pages are here already (with any changes made since): open them
+        if (already !== currentPageIndexRef.current) openPage(synced, already, synced[currentPageIndexRef.current]?.id);
+        showNotice(`“${record?.title || 'Board'}” is open`);
+        return;
+      }
+      const added = freshPages(data.pages).map((p) => ({ ...p, boardId: assetId }));
+      appendPages(added);
+      showNotice(`Opened “${record?.title || 'Board'}”: ${added.length} page${added.length === 1 ? '' : 's'}. Save to Notes Studio updates it.`, 6000);
+    };
+    go();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Zoom Handlers: zoom keeps the point under the anchor still, so content does not slide away.
   // The refs hold the latest viewport so several wheel events inside one frame build on each other.
@@ -2460,6 +2829,10 @@ export default function PlaygroundCanvasContainer() {
     setActiveTool,
     onOpenSyncModal: () => setIsSyncModalOpen(true),
     onExportCanvas: handleExportCanvas,
+    onSaveToStudio: () => handleSaveToStudio(),
+    onSaveToStudioAsNew: pages[currentPageIndex]?.boardId ? () => handleSaveToStudio({ asNew: true }) : null,
+    boardSaved: Boolean(pages[currentPageIndex]?.boardId),
+    onInsertFromFile: handleInsertFromFile,
     onOpenMusic: () => setMusicOpen(true),
     onOpenPreferences: () => setShowPreferences(true),
     onDuplicatePage: () => handleDuplicatePage(currentPageIndex),
@@ -2635,6 +3008,13 @@ export default function PlaygroundCanvasContainer() {
               onUpdateContent={handleUpdateBlockContent}
             />
           )}
+
+          {block.type === 'table' && (
+            <TableBlock
+              block={block}
+              onUpdateContent={handleUpdateBlockContent}
+            />
+          )}
         </SmartBlockWrapper>
       ))}
 
@@ -2677,6 +3057,25 @@ export default function PlaygroundCanvasContainer() {
             pageMenu={pageMenu}
           />
         </div>
+      )}
+
+      {insertChoice && (
+        <Dialog title="Insert from file" isMobile={isPhone} onClose={() => setInsertChoice(null)} width="w-[440px]" fullHeight={false}>
+          <p className="m-0 text-pg-body text-pg-text2">
+            {insertChoice.kind === 'document'
+              ? `${insertChoice.fileName}: a board with ${insertChoice.document.pages.length} page${insertChoice.document.pages.length === 1 ? '' : 's'}.`
+              : `${insertChoice.fileName}: the note “${insertChoice.note.title}”.`}{' '}
+            Handwriting stays handwriting, so you can write between it, erase it and read it.
+          </p>
+          <div className="flex flex-col gap-2 pt-3">
+            <button type="button" className="min-h-[48px] rounded-xl bg-pg-ink text-pg-on-ink font-semibold" onClick={() => finishInsert('new')}>
+              As new page{insertChoice.kind === 'document' && insertChoice.document.pages.length > 1 ? 's' : ''}
+            </button>
+            <button type="button" className="min-h-[48px] rounded-xl bg-pg-tray text-pg-ink font-semibold hover:bg-pg-line" onClick={() => finishInsert('here')}>
+              Onto this page, below what is here
+            </button>
+          </div>
+        </Dialog>
       )}
 
       {showPreferences && (
@@ -3055,6 +3454,7 @@ export default function PlaygroundCanvasContainer() {
         canRedo={historyFlags.canRedo}
         onAddBlock={handleAddBlock}
         onInsertEquation={handleInsertEquation}
+        onInsertTable={handleInsertTable}
         screenshot={screenshot}
         isRecording={isRecordingAudio}
         onToggleRecordAudio={handleToggleRecordAudio}

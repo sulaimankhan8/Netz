@@ -153,6 +153,35 @@ export async function renderView({ strokes = [], blocks = [], shapes = [], darkP
 }
 
 /**
+ * A small picture of the whole page (ink, shapes and blocks), at most `maxWidth` px wide, for the
+ * board's card in the Notes Studio Assets library. Null for an empty page.
+ * @returns {Promise<HTMLCanvasElement|null>}
+ */
+export async function renderPagePreview({ strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, maxWidth = 600, maxHeight = 1200, background = '#FFFFFF' }) {
+  const blockImages = await captureBlockImages(blocks, containerElement);
+  const bounds = getPageBounds(strokes, [...blockImages, ...shapeRects(shapes)]);
+  if (!bounds) return null;
+  const pixelsPerUnit = Math.min(maxWidth / bounds.width, maxHeight / bounds.height, 2);
+  return renderPageToCanvas({ strokes, shapes, darkPage, blockImages, bounds, background, pixelsPerUnit });
+}
+
+/** The ink and shapes of a page (no blocks) as a PNG data URL, or null when there is none. */
+export async function renderInkOnly({ strokes = [], shapes = [], darkPage = false, background = '#FFFFFF', pixelsPerUnit = 2 }) {
+  const bounds = getPageBounds(strokes, shapeRects(shapes));
+  if (!bounds) return null;
+  const canvas = await renderPageToCanvas({ strokes, shapes, darkPage, blockImages: [], bounds, background, pixelsPerUnit });
+  return canvas.toDataURL('image/png');
+}
+
+/** The whole page as an SVG string (ink as vectors, blocks as pictures), or null when empty. */
+export async function pageToSvgString({ strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, background = '#FFFFFF' }) {
+  const blockImages = await captureBlockImages(blocks, containerElement);
+  const bounds = getPageBounds(strokes, [...blockImages, ...shapeRects(shapes)]);
+  if (!bounds) return null;
+  return buildPageSvg({ strokes, shapes, shapeOptions: { measure: browserMeasure, darkPage }, blockImages, bounds, background });
+}
+
+/**
  * Exports the whole page.
  *
  * @param {'PNG'|'SVG'|'PDF'} format

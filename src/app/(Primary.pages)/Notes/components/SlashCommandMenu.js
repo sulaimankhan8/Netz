@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { BLOCK_TYPES } from '../utils/blockTypes';
+import { OFFERED_BLOCK_TYPES as BLOCK_TYPES } from '../utils/blockTypes';
 
 /**
- * The / menu: the same nine blocks, names, icons and colours as the Add block grid
+ * The / menu: the same blocks, names, icons and colours as the Add block grid
  * (utils/blockTypes.js). Arrow keys move, Enter adds, Escape closes.
  */
 export default function SlashCommandMenu({ isOpen, query, onSelect, onClose }) {

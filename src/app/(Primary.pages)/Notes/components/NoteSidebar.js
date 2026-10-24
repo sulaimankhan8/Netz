@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { LuFileText, LuGlobe, LuLock, LuMoreHorizontal, LuPanelLeft, LuPin, LuPinOff, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu';
+import { LuBrainCircuit, LuFileInput, LuFileText, LuGlobe, LuLibrary, LuLock, LuMoreHorizontal, LuPanelLeft, LuPin, LuPinOff, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu';
 import { chipClass, FIELD, FIELD_INPUT, ICON_BTN, BTN_MAIN, Menu, Segmented, TOUCH } from './ui';
 import { NoteIcon, STATUSES, StatusBadge, lookColour } from '../utils/noteLook';
 import NotesCloudStatus from './NotesCloudStatus';
@@ -21,7 +21,10 @@ export default function NoteSidebar({
   onTogglePinNote,
   onHide,
   isPhone,
-  tagColours = {}
+  tagColours = {},
+  onOpenAssets,
+  onOpenTraining,
+  onOpenFile
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
@@ -106,6 +109,23 @@ export default function NoteSidebar({
             </button>
           )}
         </div>
+
+        {/* Notes Studio: the Assets library, the Training data folder, and opening a .netz file */}
+        {onOpenAssets && (
+          <div className="flex gap-1.5" role="group" aria-label="Notes Studio">
+            <button type="button" onClick={onOpenAssets} data-tour="notes-assets" className={`flex-1 inline-flex items-center justify-center gap-1.5 h-10 ${TOUCH} px-2 rounded-xl bg-nt-tray text-[13px] font-semibold text-nt-ink whitespace-nowrap hover:bg-nt-line`}>
+              <LuLibrary className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Assets
+            </button>
+            <button type="button" onClick={onOpenTraining} title="Training data: the lines read in Writing mode" className={`flex-[1.4] inline-flex items-center justify-center gap-1.5 h-10 ${TOUCH} px-2 rounded-xl bg-nt-tray text-[13px] font-semibold text-nt-ink whitespace-nowrap hover:bg-nt-line`}>
+              <LuBrainCircuit className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Training data
+            </button>
+            <button type="button" onClick={onOpenFile} aria-label="Open a .netz file" title="Open a .netz file as a new note" className={`${ICON_BTN} !bg-nt-tray`}>
+              <LuFileInput className="w-[18px] h-[18px]" aria-hidden="true" />
+            </button>
+          </div>
+        )}
 
         <Segmented
           label="Show notes"
@@ -235,7 +255,7 @@ export default function NoteSidebar({
         )}
         {/* The Notes list's one ad: at the end of the list, never inside a note (plan 6.2) */}
         <div className={isPhone ? 'px-4 pb-4 pt-4' : 'px-2 pb-3 pt-4'}>
-          <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NOTES} compact />
+          <AdSlot place="notes" compact />
         </div>
       </div>
       <NotesCloudStatus isPhone={isPhone} />

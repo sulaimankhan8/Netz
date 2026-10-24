@@ -2,7 +2,7 @@
 
 Everything only the owner can do (accounts, keys, money, decisions), in one place, in the order to do it in
 one sitting. The code for all of it is already built and stays switched off until these are done.
-Claude adds every new owner task here as later steps are built. Last updated **2026-10-21** (owner finished B, C, D (rupee plans), E and KYC; decisions in A answered).
+Claude adds every new owner task here as later steps are built. Last updated **2026-10-25** (Notes Studio assets: one migration, two decisions); before that **2026-10-21** (owner finished B, C, D (rupee plans), E and KYC; decisions in A answered).
 
 Secrets (keys, passwords, `DATABASE_URL`) go only in `Netz/.env.local` and in Vercel, never in chat or a commit.
 `.env.example` lists every variable name.
@@ -26,6 +26,13 @@ Secrets (keys, passwords, `DATABASE_URL`) go only in `Netz/.env.local` and in Ve
       commercial permission, get legal advice, or retrain on handwriting collected in the app (the maths model is
       frozen, so that needs your say-so). Details in `PLAYGROUND_HANDOFF.md` section 7.
 
+- [ ] **Assets library storage per student** (new, 2026-10-25): starting values are **50 MB free** and **1 GB Pro**
+      (`FREE_ASSET_BYTES` / `PRO_ASSET_BYTES` in `src/app/(Primary.pages)/Notes/utils/assetCore.js`). Supabase's free plan
+      has about 1 GB of file storage in total, so watch it (Supabase → Storage) and move to a paid plan or lower the
+      numbers as students arrive.
+- [ ] **Training data upload** (later, 2026-10-25): lines read in Writing mode are saved on the student's device only
+      (Notes → Training data, Export JSONL). Sending them to NETZ needs a consent question and a line in `/Privacy` first.
+
 ## B. Your details on the legal pages (5 minutes)
 
 Razorpay reads these pages before it switches payments on, so they must be real.
@@ -43,6 +50,9 @@ Razorpay reads these pages before it switches payments on, so they must be real.
    - [x] `20261020000000_notes.sql`
    - [x] `20261021000000_public_notes.sql`
    - [x] `20261022000000_billing.sql`
+   - [ ] (new, 2026-10-25) `20261024000000_note_assets.sql`: the Notes Studio Assets library in your account. It makes the
+         `note_assets` table and a private Storage bucket `note-assets` (25 MB per file) with rules so each student
+         reaches only their own folder. Until it is run, the library works on each device but is not copied to accounts.
 3. [x] (2026-10-21) Google Cloud Console → APIs & Services → OAuth consent screen (app name NETZ, your email) → Credentials →
    Create OAuth client ID (Web application). Authorised redirect URI: the callback URL Supabase shows under
    Authentication → Providers → Google. Paste the client ID and secret back into Supabase and enable Google.
@@ -96,22 +106,47 @@ Razorpay reads these pages before it switches payments on, so they must be real.
       in Vercel and redeploy.
 - [ ] Turn on **international payments** in Razorpay (needed for the USD prices).
 
-## H. Ads (built 2026-10-20; all off until these are set)
+## H. Ads: a new AdSense account from scratch (redone 2026-10-22)
 
-- [ ] AdSense → Privacy & messaging → turn on the free **consent message** for Europe/UK visitors.
-- [ ] AdSense → Sites: check the site is approved and `https://<live site>/ads.txt` shows
-      `google.com, pub-3746721364737268, DIRECT, f08c47fec0942fa0` (Claude added `public/ads.txt`; check the
-      publisher id matches your account).
-- [ ] AdSense → Ads → By ad unit → make 4 **display** units (responsive) and put their ids in `.env.local` and Vercel:
-      `NEXT_PUBLIC_ADSENSE_SLOT_ALGORITHM`, `_HUB`, `_NOTES`, `_PROFILE`. (Until then they all use the landing unit.)
-- [ ] AdSense → Ads → By site → **Auto ads**: turn **off** vignette and anchor ads, or at least exclude `/Playground`,
-      `/Pricing` and `/p/` pages. NETZ's own 15-minute ad replaces vignettes, so the two never double up.
-- [ ] **Google Ad Manager**: create an account, link it to AdSense, check NETZ is eligible, then make two ad units:
-  - [ ] a **Web interstitial** unit → its path (e.g. `/1234567/netz_interstitial`) in `NEXT_PUBLIC_GAM_INTERSTITIAL_UNIT`
-  - [ ] a **Rewarded** unit → its path in `NEXT_PUBLIC_GAM_REWARDED_UNIT`
-- [ ] Add the Ad Manager line Google gives you to `public/ads.txt` too (tell Claude, or add it yourself).
-- [ ] Note: Google cannot confirm a watched rewarded ad to our server on the web, so the cap (3 a day, 30 gems)
-      is what limits abuse. Fine for gems; never use rewarded ads for anything worth money.
+The old AdSense account is no longer used: its id is gone from the code and `public/ads.txt` is deleted.
+NETZ now reads the account from settings, so **no ads, no ad script and no AdSense tag load until you set
+`NEXT_PUBLIC_ADSENSE_CLIENT`**. The steps, in order:
+
+1. [ ] **Sign up**: adsense.google.com with the Google account you want paid through. Site = the live
+   address (`netz-ruby.vercel.app`, or your own domain if you buy one first: AdSense approves one site
+   address, and a custom domain usually gets approved more easily than a `vercel.app` one).
+   Country India, your name and address exactly as on your PAN/bank (it must match for payment).
+2. [ ] **Copy your publisher id**: AdSense → Account → Account information → "Publisher ID"
+   (`pub-` and 16 digits). Put it in `.env.local` and Vercel as
+   `NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-XXXXXXXXXXXXXXXX`, then redeploy.
+   That one setting switches on everything Google checks:
+   - the `google-adsense-account` tag in every page's head,
+   - the AdSense script (only on pages where ads are allowed, never for Pro),
+   - `https://<live site>/ads.txt` with your line `google.com, pub-…, DIRECT, f08c47fec0942fa0`.
+3. [ ] **Connect the site**: AdSense → Sites → Add site → choose **"Meta tag"** (already on the pages after
+   step 2) → Verify → **Request review**. Review usually takes a few days, sometimes 2–4 weeks.
+   Google looks for real content and the Terms, Privacy, Contact and Refund pages (all filled in).
+4. [ ] **ads.txt**: AdSense → Sites shows "ads.txt status". Open `https://<live site>/ads.txt` and check it
+   shows your pub id. "Not found" for a day or two after adding the site is normal.
+5. [ ] **Privacy & messaging** → turn on the free **consent message for Europe/UK** (GDPR). Required for
+   visitors there.
+6. [ ] **After approval, make the ad units**: Ads → By ad unit → **Display ads**, responsive, one per place.
+   Copy each unit's number (`data-ad-slot="…"`) into `.env.local` and Vercel:
+   - `NEXT_PUBLIC_ADSENSE_SLOT_LANDING` (landing page; also used by any place you leave empty)
+   - `NEXT_PUBLIC_ADSENSE_SLOT_ALGORITHM`, `_HUB`, `_NOTES`, `_PROFILE` (optional, for separate reports)
+   Redeploy. Until the landing unit is set, the ad boxes stay hidden, so nothing empty shows.
+7. [ ] **Auto ads**: Ads → By site → turn Auto ads **off** (NETZ places its own ads), or at least turn off
+   vignette and anchor ads and exclude `/Playground`, `/Pricing` and `/p/`.
+8. [ ] **Payments**: AdSense → Payments → add your bank account. Google sends a PIN by post at ₹1,000 of
+   earnings (enter it), and pays out each month once you pass the threshold. A tax form for India may be asked.
+9. [ ] **Later, optional: Google Ad Manager** (the 15-minute full-screen ad and "watch an ad, get gems").
+   Needs an approved AdSense account first. Make a Web interstitial unit → `NEXT_PUBLIC_GAM_INTERSTITIAL_UNIT`,
+   a Rewarded unit → `NEXT_PUBLIC_GAM_REWARDED_UNIT`, and put the ads.txt line Ad Manager gives you in
+   `NEXT_PUBLIC_ADS_TXT_EXTRA`. Without these, those two ad types simply stay off.
+- Note: Google cannot confirm a watched rewarded ad to our server on the web, so the cap (3 a day, 30 gems)
+  is what limits abuse. Fine for gems; never use rewarded ads for anything worth money.
+- Rules to keep the account safe: never click your own ads, don't ask friends to, and don't put ads on
+  pages with no content. Invalid clicks are the most common reason accounts get closed.
 
 ## Last: change the secrets that were shared in chat (2026-10-20)
 

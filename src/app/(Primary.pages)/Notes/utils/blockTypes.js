@@ -1,4 +1,4 @@
-import { LuCalculator, LuHeading1, LuHeading2, LuHeading3, LuHelpCircle, LuLightbulb, LuPenLine, LuSigma, LuType } from 'react-icons/lu';
+import { LuCalculator, LuFile, LuFileInput, LuHeading1, LuHeading2, LuHeading3, LuHelpCircle, LuImage, LuLayoutDashboard, LuLibrary, LuLightbulb, LuMinus, LuPenLine, LuSigma, LuTable, LuType } from 'react-icons/lu';
 
 /**
  * Every kind of block, in one place (NOTES_VISUAL_REDESIGN_PLAN.md, section 1). The Add block
@@ -6,7 +6,9 @@ import { LuCalculator, LuHeading1, LuHeading2, LuHeading3, LuHelpCircle, LuLight
  * block has the same name, icon and colour everywhere.
  *
  * action: what choosing it does. 'block' makes a block of `type`; 'picker' opens the solver
- * picker (a solver block needs an algorithm first).
+ * picker (a solver block needs an algorithm first); 'assets' opens the Assets library to pick a
+ * board, picture or file; 'netzfile' inserts the content of a .netz file.
+ * hidden: a kind of block that is not offered in the lists (it comes from Assets or a file).
  * tile / text / tint: Tailwind classes for the icon tile, the coloured label and the soft
  * background. Text blocks have no colour of their own.
  */
@@ -22,7 +24,17 @@ export const BLOCK_TYPES = [
   { id: 'widget', type: 'widget', action: 'picker', name: 'Solver', hint: 'Bisection, Newton, Euler, Z-test…', keywords: 'widget calculator algorithm solver', Icon: LuCalculator, tile: 'bg-nt-solver-tint text-nt-solver', text: 'text-nt-solver', tint: 'bg-nt-solver-tint' },
   { id: 'quiz', type: 'quiz', action: 'block', name: 'Quiz', hint: 'Multiple choice or a number', keywords: 'test question mcq', Icon: LuHelpCircle, tile: 'bg-nt-quiz-tint text-nt-quiz', text: 'text-nt-quiz', tint: 'bg-nt-quiz-tint' },
   { id: 'ink', type: 'ink', action: 'block', name: 'Sketch', hint: 'Draw, or bring a drawing in', keywords: 'ink draw handwriting image', Icon: LuPenLine, tile: 'bg-nt-sketch-tint text-nt-sketch', text: 'text-nt-sketch', tint: 'bg-nt-sketch-tint' },
+  { id: 'table', type: 'table', action: 'block', name: 'Table', hint: 'Rows and columns', keywords: 'table grid rows columns', Icon: LuTable, ...plain },
+  { id: 'assets', type: 'assets', action: 'assets', name: 'From Assets', hint: 'A board, picture or file', keywords: 'assets library board image picture file pdf upload', Icon: LuLibrary, ...plain },
+  { id: 'netzfile', type: 'netzfile', action: 'netzfile', name: 'From file', hint: 'Insert a .netz note or board', keywords: 'import insert file netz', Icon: LuFileInput, ...plain },
+  { id: 'board', type: 'board', action: 'block', hidden: true, name: 'Board', hint: 'A Playground board', keywords: '', Icon: LuLayoutDashboard, ...plain },
+  { id: 'image', type: 'image', action: 'block', hidden: true, name: 'Image', hint: 'A picture', keywords: '', Icon: LuImage, ...plain },
+  { id: 'file', type: 'file', action: 'block', hidden: true, name: 'File', hint: 'A file', keywords: '', Icon: LuFile, ...plain },
+  { id: 'divider', type: 'divider', action: 'block', hidden: true, name: 'Divider', hint: 'A line', keywords: '', Icon: LuMinus, ...plain },
 ];
+
+/** The kinds of block offered in Add block, the phone sheet and the / menu. */
+export const OFFERED_BLOCK_TYPES = BLOCK_TYPES.filter((b) => !b.hidden);
 
 export function blockTypeOf(type) {
   return BLOCK_TYPES.find((b) => b.type === type) || BLOCK_TYPES[0];

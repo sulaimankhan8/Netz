@@ -1,4 +1,4 @@
-import { LuSigma, LuType, LuLineChart, LuMic, LuImage, LuPencil } from 'react-icons/lu';
+import { LuSigma, LuType, LuLineChart, LuMic, LuImage, LuPencil, LuTable } from 'react-icons/lu';
 
 /**
  * A little colour per kind of block (tokens in ../../playground.css): the card's edge, the type
@@ -38,6 +38,13 @@ const HUES = {
   },
   image: {
     icon: LuImage,
+    text: 'text-pg-text2',
+    tint: 'bg-pg-tray',
+    border: 'border-pg-line hover:border-pg-text2/30',
+    fill: 'bg-pg-ink',
+  },
+  table: {
+    icon: LuTable,
     text: 'text-pg-text2',
     tint: 'bg-pg-tray',
     border: 'border-pg-line hover:border-pg-text2/30',

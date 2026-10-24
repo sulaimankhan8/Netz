@@ -7,6 +7,8 @@ import { LuCopy, LuLightbulb } from 'react-icons/lu';
 import KaTeXRenderer from '../../Notes/components/KaTeXRenderer';
 import EmbeddedMathWidget from '../../Notes/components/EmbeddedMathWidget';
 import QuizBlock from '../../Notes/components/QuizBlock';
+import TableEditor from '@/app/components/table/TableEditor';
+import { safeImageSrc, sanitizeTable } from '../../Notes/utils/importSafety';
 import { BannerFill, NoteIcon, lookOf } from '../../Notes/utils/noteLook';
 import { generateAccessKey, saveSingleNote } from '../../Notes/utils/noteStorage';
 import { NT_FONT } from '../../Notes/utils/fonts';
@@ -67,6 +69,36 @@ function Block({ block }) {
         </figure>
       ) : null;
     }
+    case 'table':
+      return (
+        <div className="rounded-2xl border border-nt-line bg-nt-surface p-3.5">
+          <TableEditor table={sanitizeTable(block.table)} onChange={noop} readOnly tone="nt" />
+        </div>
+      );
+    case 'board':
+    case 'image':
+    case 'file': {
+      // Visitors see the small preview kept in the note; the item itself stays private to the author
+      const a = block.asset || {};
+      const src = safeImageSrc(a.preview);
+      return (
+        <figure className="m-0 rounded-2xl border border-nt-line bg-nt-surface p-4 flex flex-col items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {src && <img src={src} alt={a.title || 'Picture'} className="max-h-96 max-w-full object-contain rounded bg-white" />}
+          <figcaption className="text-[13px] text-nt-text2">
+            {{ board: 'Board', image: 'Image', file: 'File' }[block.type]}: {a.title || 'untitled'}
+          </figcaption>
+        </figure>
+      );
+    }
+    case 'divider':
+      return (
+        <div className="flex items-center gap-3 py-1" role="separator">
+          <span className="flex-1 h-px bg-nt-line" />
+          {text && <span className="text-xs text-nt-text2">{text}</span>}
+          <span className="flex-1 h-px bg-nt-line" />
+        </div>
+      );
     default:
       return null;
   }

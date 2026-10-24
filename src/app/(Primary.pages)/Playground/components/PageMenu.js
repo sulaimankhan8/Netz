@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FiDownload, FiChevronRight, FiCopy, FiTrash2, FiMaximize, FiMinus, FiPlus } from 'react-icons/fi';
-import { LuBookOpen, LuFileUp, LuHand, LuMusic, LuRedo2, LuSlidersHorizontal } from 'react-icons/lu';
+import { LuBookOpen, LuCopyPlus, LuFileInput, LuFileUp, LuHand, LuLibrary, LuMusic, LuRedo2, LuSlidersHorizontal } from 'react-icons/lu';
 import { BrushCleaning } from 'lucide-react';
 import { Dialog, TOUCH_TARGET } from './ui/Dialog';
 import { MENU_ROW, SECTION_LABEL, Segmented, SwitchRow, BTN_SECONDARY } from './ui/parts';
@@ -79,6 +79,10 @@ export default function PageMenu({
   setActiveTool,
   onOpenSyncModal,
   onExportCanvas,
+  onSaveToStudio,
+  onSaveToStudioAsNew,
+  boardSaved,
+  onInsertFromFile,
   onOpenMusic,
   onOpenPreferences,
   onDuplicatePage,
@@ -169,19 +173,51 @@ export default function PageMenu({
           {more}
         </button>
       )}
+      {onSaveToStudio && (
+        <button
+          type="button"
+          onClick={run(onSaveToStudio)}
+          title="Save this board, with a preview, to the Assets library in Notes Studio, to put it in any note"
+          aria-label={boardSaved ? 'Update this board in Notes Studio' : 'Save this board to Notes Studio'}
+          className={MENU_ROW}
+        >
+          <LuLibrary className={icon} aria-hidden="true" />
+          {boardSaved ? 'Update in Notes Studio' : 'Save to Notes Studio'}
+        </button>
+      )}
+      {onSaveToStudioAsNew && (
+        <button type="button" onClick={run(onSaveToStudioAsNew)} aria-label="Save this board to Notes Studio as a new copy" className={MENU_ROW}>
+          <LuCopyPlus className={icon} aria-hidden="true" />
+          Save as a new board
+        </button>
+      )}
+      {onInsertFromFile && (
+        <button type="button" onClick={run(onInsertFromFile)} title="Insert a .netz board or note: as new pages or onto this page" aria-label="Insert from a .netz file" className={MENU_ROW}>
+          <LuFileInput className={icon} aria-hidden="true" />
+          Insert from file
+        </button>
+      )}
       {onExportCanvas && (
         <div className="flex flex-wrap items-center gap-1.5 pl-3 pr-1 py-1 min-h-[48px]">
           <FiDownload className={icon} aria-hidden="true" />
           <span className="flex-1 ml-1.5 text-pg-body font-medium text-pg-ink">{UI.export}</span>
-          {['PNG', 'SVG', 'PDF', 'TEX'].map((format) => {
-            const label = format === 'TEX' ? 'LaTeX' : format;
-            // SVG and LaTeX come with Pro: this opens Pricing in a new tab so the page stays as it is
-            return (format === 'SVG' || format === 'TEX') && !pro ? (
+          {['PNG', 'SVG', 'PDF', 'HTML', 'TEX', 'NETZ'].map((format) => {
+            const label = format === 'TEX' ? 'LaTeX' : format === 'NETZ' ? '.netz' : format;
+            // SVG, LaTeX and NETZ files come with Pro: this opens Pricing in a new tab so the page stays as it is
+            return (format === 'SVG' || format === 'TEX' || format === 'NETZ') && !pro ? (
               <a key={format} href="/Pricing" target="_blank" rel="noopener" title={`${label} export comes with NETZ Pro`} aria-label={`${label} export comes with NETZ Pro: see Pricing`} className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
                 {label}<span className="text-[12px] font-bold">PRO</span>
               </a>
             ) : (
-              <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={format === 'TEX' ? 'Export the typed maths and text on this page as a LaTeX file' : `Export this page as ${format}`} aria-label={`Export as ${label}`} className={`${BTN_SECONDARY} px-2.5`}>
+              <button key={format} type="button" onClick={run(() => onExportCanvas(format))} title={
+                  format === 'TEX'
+                    ? 'Export this page as LaTeX: typed maths, text and tables, with the handwriting as a picture'
+                    : format === 'NETZ'
+                      ? 'Export every page as a .netz file that opens again fully editable'
+                      : format === 'HTML'
+                        ? 'Export this page as a web page'
+                        : `Export this page as ${format}`
+                } aria-label={`Export as ${label}`} className={`${BTN_SECONDARY} px-2.5`}>
                 {label}
               </button>
             );

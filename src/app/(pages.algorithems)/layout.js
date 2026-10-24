@@ -7,6 +7,7 @@ import "./alg.css";
 import Script from 'next/script';
 import Laout from '../components/layout'; // Ensure the spelling is correct (Layout vs. Laout)
 import AdsenseScript from '../components/AdsenseScript';
+import { AD_CLIENT } from '../utils/ads/adsenseConfig';
 import TimedAds from '../components/ads/TimedAds';
 
 const APP_NAME = "Netz";
@@ -89,7 +90,7 @@ export default function RootLayout({ children }) {
   gtag('config', 'G-MH5QX2N0Q0');`}
 </Script>
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
-        <meta name="google-adsense-account" content="ca-pub-3746721364737268"></meta>
+        {AD_CLIENT && <meta name="google-adsense-account" content={AD_CLIENT} />}
         </head>
       <body>
         {/* Ads load when idle, only where allowed, never for Pro; the full-screen ad waits 15 active minutes */}

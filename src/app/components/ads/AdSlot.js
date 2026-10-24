@@ -2,15 +2,17 @@
 
 import useAdsAllowed from '@/app/utils/ads/useAdsAllowed';
 import AdUnit from './AdUnit';
+import { adSlotFor } from '@/app/utils/ads/adsenseConfig';
 
 /**
  * A labelled ad place for the app's pages (NETZ_LAUNCH_PLAN.md 6.2): algorithm pages, the
  * Algorithms hub, the Notes list and Profile. Shows nothing for Pro, offline, or where ads are not
- * allowed. `slot` is the AdSense ad unit id for this place (env, set by the owner).
+ * allowed. `place` picks this place's AdSense ad unit (utils/ads/adsenseConfig.js); no unit, no box.
  */
-export default function AdSlot({ slot, className = '', compact = false }) {
+export default function AdSlot({ place = 'landing', className = '', compact = false }) {
   const allowed = useAdsAllowed();
-  if (!allowed) return null;
+  const slot = adSlotFor(place);
+  if (!allowed || !slot) return null;
   return (
     <aside
       aria-label="Advertisement"

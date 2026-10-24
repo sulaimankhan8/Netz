@@ -19,6 +19,8 @@ import {
 } from 'react-icons/lu';
 import ShapeGallery, { ShapeIcon } from './shapes/ShapeGallery';
 import SymbolMenu from './symbols/SymbolMenu';
+import TableMenu, { InsertTableDialog } from './table/TableMenu';
+import { LuTable } from 'react-icons/lu';
 import SymbolDialog from './symbols/SymbolDialog';
 import NumberDialog from './symbols/NumberDialog';
 import EquationMenu from './equation/EquationMenu';
@@ -251,6 +253,7 @@ export default function PlaygroundDock(props) {
     onInsertSymbol,
     onSymbolsClosed,
     onInsertEquation,
+    onInsertTable,
     onMoveFolded,
     screenshot = null,
   } = props;
@@ -259,6 +262,9 @@ export default function PlaygroundDock(props) {
   const [panel, setPanel] = useState(null);
   const [showShapes, setShowShapes] = useState(false);
   const [showSymbols, setShowSymbols] = useState(false);
+  // Insert > Table: the size grid, and the Insert Table… dialog
+  const [showTable, setShowTable] = useState(false);
+  const [tableDialog, setTableDialog] = useState(false);
   const showSymbolsRef = useRef(false);
   showSymbolsRef.current = showSymbols;
   const [symbolDialog, setSymbolDialog] = useState(null); // 'more' | 'number' | null
@@ -288,12 +294,13 @@ export default function PlaygroundDock(props) {
   // The Insert menus (Shapes, Symbol, Equation, Screenshot): a press outside closes them and does
   // not also draw on the page. (The other panels are Popovers, which do the same themselves.)
   useEffect(() => {
-    if (!showShapes && !showSymbols && !showEquation && !showScreenshot) return undefined;
+    if (!showShapes && !showSymbols && !showEquation && !showScreenshot && !showTable) return undefined;
     const handleOutside = (e) => {
       if (dockRef.current && !dockRef.current.contains(e.target)) {
         if (e.target.closest && e.target.closest('[data-keep-panels]')) return;
         e.stopPropagation();
         setShowShapes(false);
+        setShowTable(false);
         setShowEquation(false);
         setShowScreenshot(false);
         if (showSymbolsRef.current) {
@@ -304,7 +311,7 @@ export default function PlaygroundDock(props) {
     };
     window.addEventListener('pointerdown', handleOutside, true);
     return () => window.removeEventListener('pointerdown', handleOutside, true);
-  }, [showShapes, showSymbols, showEquation, showScreenshot]);
+  }, [showShapes, showSymbols, showEquation, showScreenshot, showTable]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -358,6 +365,7 @@ export default function PlaygroundDock(props) {
   const closePanels = () => {
     setPanel(null);
     setShowShapes(false);
+    setShowTable(false);
     setShowEquation(false);
     setShowScreenshot(false);
     if (showSymbols) {
@@ -423,6 +431,11 @@ export default function PlaygroundDock(props) {
     const open = !showShapes;
     closePanels();
     setShowShapes(open);
+  };
+  const openTable = () => {
+    const open = !showTable;
+    closePanels();
+    setShowTable(open);
   };
   const openPicture = () => {
     closePanels();
@@ -504,6 +517,14 @@ export default function PlaygroundDock(props) {
     </div>
   );
 
+  // Insert > Table (WPS): a grid to pick the size, and Insert Table…
+  const tableButton = onInsertTable && (
+    <button type="button" onClick={openTable} title="Table (Insert a table: pick the number of rows and columns)" aria-label="Table" aria-expanded={showTable} className={soloShape(showTable || tableDialog)}>
+      <LuTable className="w-[18px] h-[18px]" aria-hidden="true" />
+      {label('Table')}
+    </button>
+  );
+
   // Insert > Symbol: the field that had the cursor gets the symbol
   const symbolButton = (
     <button
@@ -541,6 +562,12 @@ export default function PlaygroundDock(props) {
   const tile = `flex flex-col items-center justify-center gap-2 min-h-[78px] px-1 rounded-[14px] bg-pg-paper hover:bg-pg-tray text-pg-ink text-pg-cap font-medium text-center transition-colors`;
   const insertTiles = (asMenu) => (
     <>
+      {onInsertTable && (
+        <button type="button" role={asMenu ? 'menuitem' : undefined} onClick={openTable} title="Table: pick the number of rows and columns" aria-label="Insert Table" className={tile}>
+          <LuTable className="w-6 h-6" aria-hidden="true" />
+          <span>Table</span>
+        </button>
+      )}
       {onInsertImage && (
         <button type="button" role={asMenu ? 'menuitem' : undefined} onClick={openPicture} title="Picture: insert an image or photo" aria-label="Insert Picture" className={tile}>
           <FiImage className="w-6 h-6" aria-hidden="true" />
@@ -722,6 +749,23 @@ export default function PlaygroundDock(props) {
         />
       )}
 
+      {/* Insert > Table: size grid and Insert Table… */}
+      {showTable && (
+        <TableMenu
+          isMobile={isMobile}
+          onInsert={(rows, cols) => {
+            setShowTable(false);
+            onInsertTable?.(rows, cols, true);
+          }}
+          onInsertDialog={() => {
+            setShowTable(false);
+            setTableDialog(true);
+          }}
+          onClose={() => setShowTable(false)}
+        />
+      )}
+      {tableDialog && <InsertTableDialog isMobile={isMobile} onInsert={(rows, cols, header) => onInsertTable?.(rows, cols, header)} onClose={() => setTableDialog(false)} />}
+
       {/* Insert > Symbol menu, and its More Symbols and Number dialogs */}
       {showSymbols && (
         <SymbolMenu
@@ -813,7 +857,7 @@ export default function PlaygroundDock(props) {
       {/* Tablet: the Insert group, folded into one menu of tiles */}
       {panel === 'insert' && (
         <Popover title={UI.insert} isMobile={isMobile} onClose={() => setPanel(null)} anchorRef={insertButtonRef} showHeader={false} role="menu" className="w-max">
-          <div className="grid grid-cols-5 gap-1.5 w-[440px] max-w-full">{insertTiles(true)}</div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-[520px] max-w-full">{insertTiles(true)}</div>
         </Popover>
       )}
 
@@ -823,7 +867,7 @@ export default function PlaygroundDock(props) {
           <div className="flex flex-col gap-4">
             <section>
               <div className={SECTION_LABEL}>{UI.insert}</div>
-              <div className="grid grid-cols-5 gap-1.5">{insertTiles(false)}</div>
+              <div className="grid grid-cols-3 gap-1.5">{insertTiles(false)}</div>
             </section>
             <section>
               <div className={SECTION_LABEL}>{UI.blocks}</div>
@@ -924,11 +968,12 @@ export default function PlaygroundDock(props) {
           </>
         )}
 
-        {/* Laptop: the Insert group, in WPS order: Picture, Screenshot, Shapes, Symbol, Equation */}
+        {/* Laptop: the Insert group, in WPS order: Table, Picture, Screenshot, Shapes, Symbol, Equation */}
         {isDesktop && (
           <>
             <Divider />
             <div className="flex items-center gap-0.5 p-0.5 rounded-[13px] bg-pg-paper" role="group" aria-label={UI.insert}>
+              {tableButton}
               {onInsertImage && (
                 <button type="button" onClick={openPicture} title="Picture: insert an image or photo" aria-label="Insert Picture" className={soloShape(false)}>
                   <FiImage className="w-[18px] h-[18px]" aria-hidden="true" />

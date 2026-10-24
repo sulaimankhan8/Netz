@@ -1,20 +1,24 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LuArrowDown, LuArrowUp, LuGripVertical, LuLightbulb, LuPlus, LuSigma, LuTrash2 } from 'react-icons/lu';
+import { LuArrowDown, LuArrowUp, LuGripVertical, LuLightbulb, LuPlus, LuSigma, LuTable, LuTrash2 } from 'react-icons/lu';
 import EmbeddedMathWidget from './EmbeddedMathWidget';
 import KaTeXRenderer from './KaTeXRenderer';
 import SlashCommandMenu from './SlashCommandMenu';
 import QuizBlock from './QuizBlock';
 import InkSketchBlock from './InkSketchBlock';
+import AssetBlock from './AssetBlock';
+import TableEditor from '@/app/components/table/TableEditor';
+import { newTable } from '@/app/utils/tableCore';
+import { sanitizeTable } from '../utils/importSafety';
 import { AutoTextarea, BTN_SECONDARY, FIELD, FIELD_INPUT, ICON_BTN, Menu } from './ui';
 import { blockTypeOf, newQuizConfig } from '../utils/blockTypes';
 
-const CARD_TYPES = ['widget', 'quiz', 'ink'];
+const CARD_TYPES = ['widget', 'quiz', 'ink', 'table', 'board', 'image', 'file'];
 
 // Where the middle of each block's first line is (px from the block's top), so the handle in
 // the margin sits level with it
-const HANDLE_CENTER = { paragraph: 17, heading1: 34, heading2: 27, heading3: 21, callout: 30, math: 24, widget: 36, quiz: 36, ink: 36 };
+const HANDLE_CENTER = { paragraph: 17, heading1: 34, heading2: 27, heading3: 21, callout: 30, math: 24, widget: 36, quiz: 36, ink: 36, table: 36, board: 36, image: 36, file: 36, divider: 16 };
 
 /**
  * One block of a note (NOTES_VISUAL_REDESIGN_PLAN.md, section 4). Its tools (Add block below,
@@ -36,7 +40,10 @@ export default function NoteBlockItem({
   isActive,
   onActivate,
   hoveredId,
-  onHover
+  onHover,
+  onRequestAssets,
+  onRequestFile,
+  onOpenBoard
 }) {
   const [slashQuery, setSlashQuery] = useState('');
   const [isSlashOpen, setIsSlashOpen] = useState(false);
@@ -99,6 +106,16 @@ export default function NoteBlockItem({
 
     if (item.action === 'picker') {
       onOpenPicker(block.id);
+      return;
+    }
+    // From Assets and From file put their blocks here (in place of this block if it is empty)
+    if (item.action === 'assets' || item.action === 'netzfile') {
+      if (cleanContent !== (block.content || '')) onUpdate({ ...block, content: cleanContent });
+      (item.action === 'assets' ? onRequestAssets : onRequestFile)?.(block.id);
+      return;
+    }
+    if (item.type === 'table') {
+      onUpdate({ ...block, type: 'table', content: '', table: newTable(3, 3) });
       return;
     }
 
@@ -336,6 +353,33 @@ export default function NoteBlockItem({
         {block.type === 'quiz' && <QuizBlock block={block} onUpdate={onUpdate} menuButton={cardMenuButton} />}
 
         {block.type === 'ink' && <InkSketchBlock block={block} onUpdate={onUpdate} menuButton={cardMenuButton} />}
+
+        {block.type === 'table' && (
+          <div className="my-2 rounded-2xl border border-nt-line bg-nt-surface">
+            <div className="flex items-center gap-2.5 pl-3.5 pr-1.5 pt-1.5 min-h-[44px]">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-nt-tray text-nt-text2" aria-hidden="true">
+                <LuTable className="w-4 h-4" />
+              </span>
+              <span className="text-[13px] font-semibold text-nt-text2 flex-1">Table</span>
+              {cardMenuButton}
+            </div>
+            <div className="px-3.5 pb-3.5 pt-1">
+              <TableEditor table={sanitizeTable(block.table)} onChange={(table) => onUpdate({ ...block, table })} tone="nt" compact={isPhone} />
+            </div>
+          </div>
+        )}
+
+        {(block.type === 'board' || block.type === 'image' || block.type === 'file') && (
+          <AssetBlock block={block} onUpdate={onUpdate} menuButton={cardMenuButton} onOpenBoard={onOpenBoard} />
+        )}
+
+        {block.type === 'divider' && (
+          <div className="flex items-center gap-3 py-2" role="separator" aria-label={block.content || 'Divider'}>
+            <span className="flex-1 h-px bg-nt-line" />
+            {block.content && <span className="text-xs font-medium text-nt-text2">{block.content}</span>}
+            <span className="flex-1 h-px bg-nt-line" />
+          </div>
+        )}
 
         {/* Slash Command Floating Menu Popover */}
         <SlashCommandMenu isOpen={isSlashOpen} query={slashQuery} onSelect={handleSelectSlashItem} onClose={() => setIsSlashOpen(false)} />

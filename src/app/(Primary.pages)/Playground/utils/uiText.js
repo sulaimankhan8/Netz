@@ -94,6 +94,7 @@ const BLOCK_LABELS = {
   image: 'Picture',
   audio: 'Voice memo',
   sketch: 'Sketch',
+  table: 'Table',
 };
 
 export function blockLabel(type) {

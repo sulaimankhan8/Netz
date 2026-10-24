@@ -1,10 +1,16 @@
 import { ALGORITHMS_CATALOG } from './algorithmRegistry';
 import { displayMath, escapeTex, slugFile } from '../../../utils/latexExport';
+import { tableToTex } from '../../../utils/tableCore';
+import { sanitizeTable } from './importSafety';
 
 /**
  * A note as a .tex file (NETZ Pro). Headings, text, callouts, formulas and quizzes are written from
  * the note itself; a solver block is solved again with the same engine the note shows, so its
- * answer and steps table are in the file. Sketches are images and stay out (the PDF keeps them).
+ * answer and steps table are in the file. Tables are LaTeX tables.
+ *
+ * Pictures (sketches, boards, images, file previews): with `images` (block id → file name inside
+ * the .zip, see noteExport.js noteTexZip) they are \includegraphics; without it a comment says the
+ * .zip has them.
  */
 
 const cell = (v) => escapeTex(String(v ?? ''));
@@ -57,7 +63,23 @@ function quizTex(block) {
   return lines.join('\n');
 }
 
-export function noteToTex(note) {
+function pictureTex(b, images) {
+  const caption = b.type === 'ink' ? b.caption || '' : b.asset?.title || '';
+  const file = images?.get(b.id);
+  if (!file) {
+    if (b.type === 'file' && !b.asset?.preview) return `\\emph{File: ${escapeTex(caption || 'attachment')}}`;
+    return `% A picture was here${caption ? ` (${caption.replace(/[\r\n%]/g, ' ')})` : ''}. Download the .zip to get the .tex with its pictures.`;
+  }
+  return [
+    '\\begin{figure}[h]',
+    '\\centering',
+    `\\includegraphics[width=0.85\\linewidth,height=0.6\\textheight,keepaspectratio]{${file}}`,
+    ...(caption ? [`\\caption*{${escapeTex(caption)}}`] : []),
+    '\\end{figure}',
+  ].join('\n');
+}
+
+export function noteToTex(note, { images = null } = {}) {
   const blocks = note?.blocks || [];
   const usesChem = blocks.some((b) => b.type === 'math' && /\\ce\{/.test(b.content || ''));
   const body = blocks
@@ -80,8 +102,15 @@ export function noteToTex(note) {
           return solverTex(b);
         case 'quiz':
           return quizTex(b);
+        case 'table':
+          return tableToTex(sanitizeTable(b.table));
+        case 'divider':
+          return text.trim() ? `\\begin{center}\\small\\textit{${escapeTex(text)}}\\end{center}` : '\\bigskip\\hrule\\bigskip';
         case 'ink':
-          return '% A sketch was here. Sketches are pictures: export the note as PDF to keep them.';
+        case 'board':
+        case 'image':
+        case 'file':
+          return pictureTex(b, images);
         default:
           return text.trim() ? escapeTex(text) : '';
       }
@@ -97,6 +126,7 @@ export function noteToTex(note) {
     '\\usepackage{amsmath,amssymb}',
     ...(usesChem ? ['\\usepackage[version=4]{mhchem}'] : []),
     '\\usepackage{booktabs,longtable}',
+    ...(images && images.size ? ['\\usepackage{graphicx}', '\\usepackage{caption}'] : []),
     '\\usepackage[hidelinks]{hyperref}',
     '\\setlength{\\parindent}{0pt}',
     '\\setlength{\\parskip}{6pt}',
