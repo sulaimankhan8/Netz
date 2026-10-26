@@ -228,7 +228,7 @@ const FTestSolver = () => {
           <SetupSteps lines={gridLog} />
 
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setViewTab('all')}
@@ -324,7 +324,9 @@ const FTestSolver = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level):</span>
-                  <BlockMath math={`H_0: \\sigma_1^2 = \\sigma_2^2 \\quad \\text{(the two populations have equal variances)}`} />
+                  <BlockMath math={`H_0: \\sigma_1^2 = \\sigma_2^2`} />
+                  {/* Words stay outside the formula so they wrap on phones */}
+                  <p className="text-center">(the two populations have equal variances)</p>
                   <BlockMath math={`F_{0.05}(${result.df1}, ${result.df2}) = ${result.critical} \\quad \\text{(table value)}`} />
                   <BlockMath math={`F_{\\text{calc}} = ${result.fRatio.toFixed(4)} ${result.reject ? '>' : '<'} ${result.critical} \\;\\Rightarrow\\; \\text{${result.reject ? 'reject' : 'accept'} } H_0`} />
                 </div>

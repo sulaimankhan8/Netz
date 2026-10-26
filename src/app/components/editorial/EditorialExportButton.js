@@ -80,6 +80,8 @@ export default function EditorialExportButton({
 
   const [modalOpen, setModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  // The menu opens to the right of the button when there is no room for it on the left (phones)
+  const [menuLeft, setMenuLeft] = useState(false);
   const [quickExporting, setQuickExporting] = useState(false);
   const [proTab, setProTab] = useState(null);
   const wrapRef = useRef(null);
@@ -106,7 +108,8 @@ export default function EditorialExportButton({
 
   return (
     <>
-      <div className="relative inline-flex items-center" ref={wrapRef}>
+      {/* items-stretch: both halves keep the same height when touch screens make buttons taller */}
+      <div className="relative inline-flex items-stretch" ref={wrapRef}>
         {/* Main Export Button - Opens Modal by default */}
         <EditorialButton
           onClick={() => setModalOpen(true)}
@@ -115,7 +118,7 @@ export default function EditorialExportButton({
           disabled={quickExporting}
           tooltipText={tooltipText}
           icon={quickExporting ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <FiDownload className="w-3.5 h-3.5" />}
-          className={`rounded-r-none border-r-0 ${className}`}
+          className={`rounded-r-none border-r-0 whitespace-nowrap ${className}`}
         >
           {quickExporting ? 'Exporting...' : label}
         </EditorialButton>
@@ -123,8 +126,12 @@ export default function EditorialExportButton({
         {/* Dropdown Quick Options Trigger */}
         <button
           type="button"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="px-2 py-1.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-r-lg transition-colors focus:outline-none"
+          onClick={() => {
+            const r = wrapRef.current?.getBoundingClientRect();
+            setMenuLeft(Boolean(r && r.right < 216));
+            setDropdownOpen(!dropdownOpen);
+          }}
+          className="flex items-center px-2 py-1.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-r-lg transition-colors focus:outline-none"
           title="Quick Export Options"
         >
           <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -133,7 +140,7 @@ export default function EditorialExportButton({
         {/* Quick Dropdown Menu */}
         {dropdownOpen && (
           <div 
-            className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-xl z-50 py-1 font-mono text-xs animate-fadeIn"
+            className={`absolute ${menuLeft ? 'left-0' : 'right-0'} top-full mt-1.5 w-52 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-xl z-50 py-1 font-mono text-xs animate-fadeIn`}
             onMouseLeave={() => setDropdownOpen(false)}
           >
             <div className="px-3 py-1.5 text-[10px] font-bold text-neutral-400 uppercase border-b border-neutral-200 dark:border-neutral-800">

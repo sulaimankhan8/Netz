@@ -260,7 +260,7 @@ const SecantMethod = () => {
 
           {/* Tab Nav */}
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {['all', 'table', 'steps', 'plot'].map((tab) => (
                 <button key={tab} type="button" onClick={() => setViewTab(tab)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 ${

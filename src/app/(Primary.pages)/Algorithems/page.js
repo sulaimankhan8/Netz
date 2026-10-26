@@ -60,7 +60,7 @@ export default function AlgorithmsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#191919] text-slate-100 font-sans p-4 sm:p-6 md:p-10 pl-0 md:pl-[78px] custom-notion-scrollbar">
+    <div className="min-h-screen bg-[#191919] text-slate-100 font-sans p-4 sm:p-6 md:p-10 md:pl-[78px] custom-notion-scrollbar">
       <Tour ids={['hub']} />
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Title Section */}

@@ -65,7 +65,8 @@ export default function NoteSidebar({
     <aside
       aria-label="Notes"
       className={`relative z-10 flex flex-col h-full shrink-0 bg-nt-surface text-nt-ink ${
-        isPhone ? 'w-full' : 'w-[300px] border-r border-nt-line'
+        // Phones: the whole column scrolls, so the title and filters move out of the way of the list
+        isPhone ? 'w-full overflow-y-auto overscroll-contain' : 'w-[300px] border-r border-nt-line'
       }`}
     >
       {/* Title row */}
@@ -198,7 +199,7 @@ export default function NoteSidebar({
       </div>
 
       {/* The notes */}
-      <div className={`flex-1 overflow-y-auto custom-notion-scrollbar ${isPhone ? 'border-t border-nt-line pb-24' : 'px-2 pb-4'}`}>
+      <div className={isPhone ? 'shrink-0 border-t border-nt-line pb-24' : 'flex-1 overflow-y-auto custom-notion-scrollbar px-2 pb-4'}>
         {filteredNotes.length === 0 ? (
           <div className="text-center py-12 px-6">
             <LuFileText className="w-8 h-8 mx-auto mb-3 text-nt-text2" aria-hidden="true" />

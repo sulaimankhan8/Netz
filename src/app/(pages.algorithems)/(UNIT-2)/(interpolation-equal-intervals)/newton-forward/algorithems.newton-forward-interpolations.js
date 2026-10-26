@@ -145,9 +145,9 @@ export default function NewtonForwardInterpolations({ theme }) {
   };
   
   return (
-    <div className="w-full md:w-[80%] mx-auto p-6 bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-700 transition-all duration-300 dark:text-white">
-      <div className="flex justify-between items-center mb-6 text-slate-900 dark:text-white">
-        <h1 className="text-2xl font-bold">
+    <div className="w-full md:w-[80%] mx-auto p-4 sm:p-6 bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-700 transition-all duration-300 dark:text-white">
+      <div className="flex justify-between items-center gap-3 mb-6 text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-bold">
           Newton Forward Interpolation Calculator
         </h1>
         <TButton
@@ -160,7 +160,7 @@ export default function NewtonForwardInterpolations({ theme }) {
       </div>
   
       <form onSubmit={handleSubmit} className="space-y-4">
-      <table className="w-[80%] m-auto table-auto md:ml-[15%] md:table-fixed   p-4 shadow-md ">
+      <table className="w-full sm:w-[80%] m-auto table-auto md:ml-[15%] md:table-fixed   p-4 shadow-md ">
           <thead>
             <tr >
               <th className="border border-gray-300 p-2">X Value</th>
@@ -199,7 +199,7 @@ export default function NewtonForwardInterpolations({ theme }) {
                     required
                   />
                 </td>
-                <td className=" p-2  flex justify-center w-[80px]">
+                <td className="p-1 sm:p-2 flex justify-center w-[60px] sm:w-[80px]">
 
                   <TButton
                     imgSrc="/delete.svg"

@@ -367,7 +367,7 @@ const NewtonRaphsonMethod = () => {
       {tableResults.length > 0 && (
         <div id="newton-raphson-results-container" className="space-y-6">
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setViewTab('all')}

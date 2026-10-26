@@ -107,7 +107,8 @@ export default function ChiSquarePage() {
                     Test for equal distribution across 4 categories:
                   </p>
                   <div className="p-3 bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded-xl font-mono text-xs text-center">
-                    <BlockMath math="O = [25, 19, 16, 20], \quad E_i = 20 \quad (\text{Equal expected counts})" />
+                    <BlockMath math="O = [25, 19, 16, 20], \quad E_i = 20" />
+                    <p>(equal expected counts)</p>
                   </div>
                   <p className="text-sm font-semibold text-center text-neutral-700 dark:text-neutral-300">
                     Test <InlineMath math="H_0" /> at significance level <InlineMath math="\alpha = 0.05" />!

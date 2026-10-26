@@ -72,14 +72,15 @@ export default function MatrixInputGrid({ n, setN, matrix, setMatrix, augmented 
       </div>
 
       <div className="overflow-x-auto">
-        <div className="inline-flex items-center gap-1">
+        {/* Phones: the cells share the width so the b column stays on screen; bigger systems scroll */}
+        <div className="flex w-full sm:inline-flex sm:w-auto items-center gap-1">
           {/* Left bracket */}
           <div className="flex flex-col items-end">
             <div className="w-3 h-full border-l-2 border-t-2 border-b-2 border-black dark:border-white" style={{ height: `${n * 52}px` }} />
           </div>
 
           {/* Matrix cells */}
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          <div className="grid gap-1 flex-1 min-w-0 sm:flex-none" style={{ gridTemplateColumns: `repeat(${cols}, minmax(3.25rem, 1fr))` }}>
             {matrix.map((row, r) =>
               row.map((val, c) => (
                 <div key={`${r}-${c}`} className="relative">
@@ -91,7 +92,7 @@ export default function MatrixInputGrid({ n, setN, matrix, setMatrix, augmented 
                     step="any"
                     value={val}
                     onChange={(e) => handleCellChange(r, c, e.target.value)}
-                    className={`w-20 h-12 text-center font-mono text-sm font-bold rounded-xl border-2 focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full sm:w-20 min-w-0 h-12 text-center font-mono text-sm font-bold rounded-xl border-2 focus:outline-none focus:ring-2 transition-all ${
                       augmented && c === n
                         ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 focus:ring-amber-400'
                         : 'bg-neutral-50 dark:bg-neutral-800 border-black/60 dark:border-neutral-600 text-black dark:text-white focus:ring-black dark:focus:ring-white'

@@ -119,7 +119,7 @@ function Today({ summary, className }) {
   const next = summary.today.find((t) => !t.done);
   const goalMet = summary.doneToday >= summary.goal;
   return (
-    <section className={`pf-card p-5 md:p-6 flex flex-col gap-4 ${className}`} aria-labelledby="pf-today">
+    <section className={`pf-card p-4 sm:p-5 md:p-6 flex flex-col gap-4 ${className}`} aria-labelledby="pf-today">
       <div className="flex flex-wrap items-center gap-4">
         <svg width="76" height="76" viewBox="0 0 84 84" role="img" aria-label={`Daily goal: ${done} of ${summary.goal} tasks`}>
           <circle cx="42" cy="42" r="34" fill="none" stroke="var(--pf-tray)" strokeWidth="10" />
@@ -145,13 +145,17 @@ function Today({ summary, className }) {
             <Hex group={t.group} id={t.id} />
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-bold leading-snug">{t.name}</div>
-              <div className="text-[13px] text-[var(--pf-text2)]">{t.medal} · {t.first ? 'first time, new medal' : 'repeat'}</div>
+              <div className="text-[13px] text-[var(--pf-text2)]">
+                {/* Phones: the gems sit in this line so the task name keeps its width */}
+                <span className="sm:hidden font-semibold text-[var(--pf-accent-text)]">+{t.first ? GEMS.firstTime : GEMS.repeat} gems · </span>
+                {t.medal} · {t.first ? 'first time, new medal' : 'repeat'}
+              </div>
             </div>
-            <span className="pf-display font-semibold text-[var(--pf-accent-text)]">+{t.first ? GEMS.firstTime : GEMS.repeat}</span>
+            <span className="hidden sm:inline pf-display font-semibold text-[var(--pf-accent-text)]">+{t.first ? GEMS.firstTime : GEMS.repeat}</span>
             {t.done ? (
-              <span className="inline-flex min-h-[44px] min-w-[76px] items-center justify-center rounded-xl bg-[var(--pf-done-bg)] px-3 text-[14px] font-bold text-[var(--pf-done-ink)]">Done</span>
+              <span className="inline-flex min-h-[44px] min-w-[56px] sm:min-w-[76px] items-center justify-center rounded-xl bg-[var(--pf-done-bg)] px-3 text-[14px] font-bold text-[var(--pf-done-ink)]">Done</span>
             ) : (
-              <Link href={t.href} className={`${BTN_MAIN} min-w-[76px]`} aria-label={`Go: ${t.name}`}>Go</Link>
+              <Link href={t.href} className={`${BTN_MAIN} min-w-[56px] sm:min-w-[76px]`} aria-label={`Go: ${t.name}`}>Go</Link>
             )}
           </li>
         ))}

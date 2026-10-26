@@ -39,14 +39,17 @@ html.netz-focus-mode .lg\:ml-\[72px\],
   margin-left: 0 !important;
 }
 
-/* No side bar (phones, short landscape screens): drop the room pages leave for it */
-[data-rail="off"] .md\:ml-\[80px\],
-[data-rail="off"] .md\:ml-\[72px\],
-[data-rail="off"] .lg\:ml-\[72px\] {
-  margin-left: 0 !important;
-}
-[data-rail="off"] .md\:pl-\[78px\] {
-  padding-left: 0 !important;
+/* No side bar on a wide but short screen (a phone turned sideways): drop the room pages leave for it.
+   Only from 768px, where these md: gaps apply; below that the pages' own phone padding stays. */
+@media (min-width: 768px) {
+  [data-rail="off"] .md\:ml-\[80px\],
+  [data-rail="off"] .md\:ml-\[72px\],
+  [data-rail="off"] .lg\:ml-\[72px\] {
+    margin-left: 0 !important;
+  }
+  [data-rail="off"] .md\:pl-\[78px\] {
+    padding-left: 0 !important;
+  }
 }
 
 /* ================= THEME TOGGLE ANIMATIONS ================= */
@@ -204,3 +207,17 @@ input::-webkit-inner-spin-button {
 }
 
 
+
+/* A formula wider than its box scrolls sideways inside the box instead of being cut off (phones) */
+.katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+@media (max-width: 480px) {
+  /* KaTeX draws formulas 21% larger than the text; on phones that pushes most worked steps off the edge */
+  .katex-display > .katex {
+    font-size: 1em;
+  }
+}

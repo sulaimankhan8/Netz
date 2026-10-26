@@ -126,8 +126,9 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
         <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-nt-solver-tint text-nt-solver" aria-hidden="true">
           <LuCalculator className="w-4 h-4" />
         </span>
-        <span className="text-[13px] font-semibold text-nt-solver shrink-0">Solver</span>
-        <span className="flex-1 min-w-0 text-[15px] font-semibold truncate" title={currentAlg.name}>
+        {/* On phones the icon says "solver"; the room goes to the method name */}
+        <span className="hidden sm:inline text-[13px] font-semibold text-nt-solver shrink-0">Solver</span>
+        <span className="flex-1 min-w-0 text-[15px] font-semibold leading-snug line-clamp-2 sm:truncate" title={currentAlg.name}>
           {currentAlg.name}
           <span className="font-normal text-nt-text2"> · {currentAlg.unit.split(':')[0]}</span>
         </span>

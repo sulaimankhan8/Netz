@@ -409,3 +409,26 @@
 .ld-pr-msg:empty {
   display: none;
 }
+
+/* Phones: all three columns of the Compare table fit, so the Pro column is never hidden off to the side */
+@media (max-width: 520px) {
+  .ld-pr-table {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .ld-pr-table th,
+  .ld-pr-table td {
+    padding: 12px 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .ld-pr-table thead th {
+    font-size: 11px;
+  }
+
+  .ld-pr-table thead th:first-child {
+    width: 44%;
+  }
+}

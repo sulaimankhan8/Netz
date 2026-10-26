@@ -223,7 +223,7 @@ const ChiSquareSolver = () => {
           <SetupSteps lines={gridLog} />
 
           <div className="flex items-center justify-between border-b-2 border-black dark:border-neutral-700 pb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setViewTab('all')}
@@ -333,7 +333,8 @@ const ChiSquareSolver = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level):</span>
-                  <BlockMath math={`H_0: \\text{the observed frequencies agree with the expected ones}`} />
+                  {/* Words stay outside the formula so they wrap on phones */}
+                  <p className="text-center"><InlineMath math="H_0" />: the observed frequencies agree with the expected ones</p>
                   <BlockMath math={`\\chi^2_{0.05}(${result.df}) = ${result.critical} \\quad \\text{(table value)}`} />
                   <BlockMath math={`\\chi^2_{\\text{calc}} = ${result.chiSquareSum.toFixed(4)} ${result.reject ? '>' : '<'} ${result.critical} \\;\\Rightarrow\\; \\text{${result.reject ? 'reject' : 'accept'} } H_0`} />
                 </div>
