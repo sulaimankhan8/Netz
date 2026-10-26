@@ -84,6 +84,11 @@ html.dark .ld-root {
 }
 
 /* The original background: one tile is 1920 x 4320 and repeats seamlessly down the page */
+/* Keep content clear of the fixed side bar; the background still runs edge to edge */
+.ld-root {
+  padding-left: var(--app-rail, 0px);
+}
+
 .ld-root::before {
   content: '';
   position: absolute;

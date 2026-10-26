@@ -16,10 +16,13 @@ const Layout = ({ children }) => {
   // A published note (/p/<slug>) is opened from a shared link: it has its own top bar, no app menus
   const isPublicNote = pathname?.startsWith('/p/');
   const showNavBar = isMobile && !isPlayground && !isPublicNote;
+  // The side bar is fixed, so pages leave room for it. data-rail and --app-rail tell them whether it is there.
+  const hasRail = !isMobile && !isPublicNote;
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768 || window.innerHeight <= 500);
+      // Same cut-off as Tailwind's md (768px), which the pages use to leave room for the side bar
+      setIsMobile(window.innerWidth < 768 || window.innerHeight <= 500);
     };
 
     handleResize();
@@ -48,7 +51,8 @@ const Layout = ({ children }) => {
     <div
       ref={shellRef}
       className={`min-h-screen w-full relative flex ${showNavBar ? 'flex-col' : ''}`}
-      style={{ '--app-nav-h': `${navHeight}px` }}
+      data-rail={hasRail ? 'on' : 'off'}
+      style={{ '--app-nav-h': `${navHeight}px`, '--app-rail': hasRail ? '72px' : '0px' }}
     >
       {!isMobile && !isPublicNote && <EditorialSidebar />}
       {/* Phones: the nav bar sits above the page, not beside it */}

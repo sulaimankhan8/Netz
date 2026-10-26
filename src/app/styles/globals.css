@@ -39,6 +39,16 @@ html.netz-focus-mode .lg\:ml-\[72px\],
   margin-left: 0 !important;
 }
 
+/* No side bar (phones, short landscape screens): drop the room pages leave for it */
+[data-rail="off"] .md\:ml-\[80px\],
+[data-rail="off"] .md\:ml-\[72px\],
+[data-rail="off"] .lg\:ml-\[72px\] {
+  margin-left: 0 !important;
+}
+[data-rail="off"] .md\:pl-\[78px\] {
+  padding-left: 0 !important;
+}
+
 /* ================= THEME TOGGLE ANIMATIONS ================= */
 @keyframes twinkle {
   0%, 100% {

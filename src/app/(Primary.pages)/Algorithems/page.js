@@ -81,9 +81,9 @@ export default function AlgorithmsPage() {
         </div>
 
         {/* Search & Filter Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#202020] p-4 rounded-2xl border border-[#2e2e2e]">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-[#202020] p-4 rounded-2xl border border-[#2e2e2e]">
           {/* Search Input */}
-          <div className="relative w-full md:w-80" data-tour="hub-search">
+          <div className="relative w-full lg:w-80 lg:shrink-0" data-tour="hub-search">
             <FaSearch className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
             <input
               type="text"
@@ -95,7 +95,7 @@ export default function AlgorithmsPage() {
           </div>
 
           {/* Unit Filter Tabs */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto custom-notion-scrollbar pb-1 md:pb-0" data-tour="hub-units">
+          <div className="flex items-center gap-1.5 overflow-x-auto md:flex-wrap md:overflow-visible w-full lg:w-auto lg:justify-end custom-notion-scrollbar pb-1 md:pb-0" data-tour="hub-units">
             {units.map((unit) => {
               const count = unit === 'All'
                 ? ALGORITHMS_CATALOG.length
