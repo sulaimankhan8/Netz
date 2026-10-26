@@ -295,7 +295,7 @@ export default function NotesPage() {
 
   if (!isLoaded) {
     return (
-      <div className={`${NT_FONT} flex h-[calc(100dvh-var(--app-nav-h,0px))] w-full bg-nt-paper pl-0 md:pl-[78px]`} aria-busy="true" aria-label="Loading notes">
+      <div className={`${NT_FONT} flex h-[calc(100dvh-var(--app-nav-h,0px)-var(--app-tab-h,0px))] w-full bg-nt-paper pl-0 md:pl-[78px]`} aria-busy="true" aria-label="Loading notes">
         <div className="hidden md:flex flex-col gap-3 w-[300px] p-5 bg-nt-surface border-r border-nt-line">
           <div className="h-6 w-24 rounded-lg bg-nt-tray" />
           <div className="h-10 rounded-xl bg-nt-tray" />
@@ -318,7 +318,7 @@ export default function NotesPage() {
   const showEditor = isPhone ? phoneView === 'note' : true;
 
   return (
-    <div className={`${NT_FONT} relative flex h-[calc(100dvh-var(--app-nav-h,0px))] w-full bg-nt-paper text-nt-ink overflow-hidden pl-0 md:pl-[78px]`}>
+    <div className={`${NT_FONT} relative flex h-[calc(100dvh-var(--app-nav-h,0px)-var(--app-tab-h,0px))] w-full bg-nt-paper text-nt-ink overflow-hidden pl-0 md:pl-[78px]`}>
       <Tour ids={['notes', 'blocks']} />
       {showList && (
         <NoteSidebar

@@ -34,7 +34,7 @@ export default function ProgressChip({ variant = 'row' }) {
       <Link
         href="/Profile"
         aria-label={label}
-        className="flex min-h-[44px] items-center gap-2 rounded-full bg-white/10 px-3 text-[14px] font-bold tabular-nums text-white"
+        className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-neutral-300 bg-white px-3 font-mono text-[13px] font-bold tabular-nums text-neutral-900 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:text-white"
       >
         <span className="flex items-center gap-1"><FlameIcon size={16} />{streak}</span>
         <span className="flex items-center gap-1"><GemIcon size={16} />{gems}</span>

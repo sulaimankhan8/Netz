@@ -729,7 +729,10 @@ export default function PlaygroundDock(props) {
         maxWidth: `calc(100vw - ${sidebarRight + 16}px)`,
         // Pop-ups above the dock are centred on it, so this width keeps them clear of the sidebar too
         '--dock-panel-max': `calc(100vw - ${sidebarRight + 16}px)`,
-        bottom: isMobile ? 'max(12px, env(safe-area-inset-bottom, 12px))' : 'max(16px, env(safe-area-inset-bottom, 16px))',
+        // On phones the app's bottom buttons sit below the dock (--app-tab-h is their height, 0 elsewhere)
+        bottom: isMobile
+          ? 'calc(var(--app-tab-h, 0px) + max(12px, env(safe-area-inset-bottom, 12px)))'
+          : 'calc(var(--app-tab-h, 0px) + max(16px, env(safe-area-inset-bottom, 16px)))',
       }}
     >
       {/* Insert > Shapes gallery (WPS / Word categories) */}

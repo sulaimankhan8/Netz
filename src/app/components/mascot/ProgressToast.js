@@ -135,7 +135,7 @@ export default function ProgressToast() {
       role="status"
       aria-live="polite"
       className="pointer-events-none fixed inset-x-0 z-[55] flex justify-center px-4"
-      style={{ bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}
+      style={{ bottom: 'calc(16px + max(var(--app-tab-h, 0px), env(safe-area-inset-bottom, 0px)))' }}
     >
       {toast && (
         <div

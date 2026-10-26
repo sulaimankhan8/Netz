@@ -719,12 +719,12 @@ export default function NoteEditor({
       {/* Phones: one button for every kind of block */}
       {isPhone && (
         <>
-          <div aria-hidden="true" className="pointer-events-none fixed left-0 right-0 bottom-0 h-24 bg-gradient-to-t from-nt-surface to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none fixed left-0 right-0 bottom-[var(--app-tab-h,0px)] h-24 bg-gradient-to-t from-nt-surface to-transparent" />
           <button
             type="button"
             onClick={() => setAddSheetOpen(true)}
             data-tour="notes-add-block"
-            className="fixed left-1/2 -translate-x-1/2 bottom-6 z-20 inline-flex items-center gap-2 h-[52px] pl-[18px] pr-[22px] rounded-full bg-nt-ink text-nt-on-ink text-base font-semibold shadow-nt-bar"
+            className="fixed left-1/2 -translate-x-1/2 bottom-[calc(var(--app-tab-h,0px)+24px)] z-20 inline-flex items-center gap-2 h-[52px] pl-[18px] pr-[22px] rounded-full bg-nt-ink text-nt-on-ink text-base font-semibold shadow-nt-bar"
           >
             <LuPlus className="w-5 h-5" aria-hidden="true" />
             Add block
