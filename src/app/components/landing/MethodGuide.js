@@ -52,8 +52,14 @@ const STEPS = [
   },
 ];
 
-function pinsFor(step) {
-  return (SHOTS[step.id]?.pins || [])
+// Phones show the method page as a phone shows it (capture-guide.mjs with PHONE=1), when those shots exist
+function shotFor(step, phone) {
+  const shots = SHOTS[step.id];
+  return phone && shots?.phone ? shots.phone : shots;
+}
+
+function pinsFor(step, phone) {
+  return (shotFor(step, phone)?.pins || [])
     .filter((pin) => !pin.missing && step.pins[pin.id] && pin.x >= 0 && pin.x <= 100 && pin.y >= 0 && pin.y <= 100)
     .map((pin, index) => ({ ...pin, n: index + 1, label: step.pins[pin.id] }));
 }
@@ -65,7 +71,16 @@ export default function MethodGuide() {
   const [visible, setVisible] = useState(false);
   const [spot, setSpot] = useState(0);
   const [motion, setMotion] = useState(true);
+  const [phone, setPhone] = useState(false);
   const rootRef = useRef(null);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 600px)');
+    const update = () => setPhone(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -100,10 +115,10 @@ export default function MethodGuide() {
 
   // Fetch the next screenshot early so the change is instant
   useEffect(() => {
-    const next = SHOTS[STEPS[(active + 1) % STEPS.length].id];
+    const next = shotFor(STEPS[(active + 1) % STEPS.length], phone);
     const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     if (next?.[theme]) new window.Image().src = next[theme].src;
-  }, [active]);
+  }, [active, phone]);
 
   const pick = useCallback((index) => {
     setAuto(false);
@@ -111,8 +126,8 @@ export default function MethodGuide() {
   }, []);
 
   const step = STEPS[active];
-  const shot = SHOTS[step.id];
-  const pins = pinsFor(step);
+  const shot = shotFor(step, phone);
+  const pins = pinsFor(step, phone);
   const spotIndex = pins.length ? spot % pins.length : -1;
 
   return (
@@ -196,8 +211,18 @@ export default function MethodGuide() {
             </div>
           </div>
           <figcaption className="ld-guide-caption">
+            {/* Phones: where you are in the six steps */}
+            <span className="ld-guide-progress" aria-hidden="true">
+              {STEPS.map((s, index) => (
+                <span key={s.id} className={index <= active ? 'is-on' : ''} />
+              ))}
+            </span>
+            <span className="ld-guide-caption-kicker ld-mono">
+              Step {active + 1} of {STEPS.length}
+            </span>
             <span className="ld-guide-caption-title">
-              {active + 1}. {step.title}
+              <span className="ld-guide-caption-n">{active + 1}. </span>
+              {step.title}
             </span>
             <span className="ld-guide-caption-text">{step.text}</span>
             <ol className="ld-guide-legend">

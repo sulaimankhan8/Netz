@@ -68,7 +68,7 @@ export default function Home() {
                 Open the Playground
                 <IconArrow />
               </Link>
-              <a href="#tours" className="ld-btn ld-btn-secondary">Take a 1-minute tour</a>
+              <a href="#tours" className="ld-btn ld-btn-secondary ld-hero-tour">Take a 1-minute tour</a>
             </div>
             <div className="ld-hero-notes">
               <span>Finger, pen or mouse</span>
@@ -173,10 +173,11 @@ export default function Home() {
           <footer className="ld-footer">
             <span>NETZ · 2026</span>
             <nav aria-label="Footer">
-              <Link href="/Playground">Playground</Link>
-              <Link href="/Notes">Notes</Link>
-              <Link href="/Algorithems">Algorithms</Link>
-              <Link href="/Setting">Settings</Link>
+              {/* Phones hide these four: the bottom buttons already go there */}
+              <Link href="/Playground" className="ld-foot-app">Playground</Link>
+              <Link href="/Notes" className="ld-foot-app">Notes</Link>
+              <Link href="/Algorithems" className="ld-foot-app">Algorithms</Link>
+              <Link href="/Setting" className="ld-foot-app">Settings</Link>
               <Link href="/Pricing">Pricing</Link>
               <Link href="/Privacy">Privacy</Link>
               <Link href="/Terms">Terms</Link>

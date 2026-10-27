@@ -2290,3 +2290,523 @@ html.dark .ld-root .ld-pin-dot {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Phone layout (board "NETZ landing on a phone"). Same words, colours, fonts and parts;
+   only the layout changes under 600 px: the demo joins the first screen, the tours become one
+   swipe row, the method cards a 2x2 grid, the step guide shows the page as a phone shows it,
+   and the study points one compact card. Tablets and laptops are not affected.
+   ========================================================================== */
+
+/* Parts that only phones show */
+.ld-tour-meter,
+.ld-tour-dots,
+.ld-guide-progress,
+.ld-guide-caption-kicker {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  /* Text panels sit inside the page edges instead of bleeding past them */
+  html.dark .ld-root .ld-on-bg {
+    margin: 0;
+    padding: 16px 18px;
+    border-radius: 20px;
+  }
+
+  .ld-section {
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .ld-h2 {
+    font-size: 26px;
+    line-height: 1.12;
+  }
+
+  .ld-sec-lead {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .ld-sec-head {
+    margin-bottom: 14px;
+  }
+
+  .ld-sec-head-text {
+    gap: 8px;
+  }
+
+  /* ---- First screen: hero text, then the live demo ---- */
+  .ld-hero {
+    gap: 12px;
+    padding: 8px 0 12px;
+  }
+
+  .ld-hero-text {
+    gap: 12px;
+  }
+
+  .ld-pill {
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .ld-h1 {
+    font-size: 32px;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+  }
+
+  .ld-lead {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .ld-actions {
+    gap: 4px;
+  }
+
+  /* The tour is a quiet link under the main button */
+  .ld-hero-tour.ld-btn {
+    height: 40px;
+    background: transparent;
+    border-color: transparent;
+    color: var(--ld-accent-on-tint);
+    font-size: 15px;
+  }
+
+  /* The three hero notes: three even chips */
+  .ld-hero-notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ld-hero-notes span {
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--ld-surface);
+    border: 1px solid var(--ld-line);
+    font-size: 12px;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--ld-text2);
+  }
+
+  .ld-demo {
+    border-radius: 20px;
+  }
+
+  .ld-demo-bar {
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  .ld-demo-tab {
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .ld-demo-body {
+    min-height: 0;
+    padding: 12px 16px 14px;
+    gap: 10px;
+  }
+
+  .ld-ink {
+    font-size: 38px;
+  }
+
+  .ld-typed {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .ld-eqbtn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .ld-demo-result {
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .ld-answer {
+    padding: 8px 12px;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .ld-demo-plot {
+    width: 96px;
+    height: 48px;
+    top: -4px;
+  }
+
+  /* ---- Tours: one swipe row ---- */
+  .ld-count {
+    display: none;
+  }
+
+  .ld-tour-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--ld-text2);
+  }
+
+  .ld-tour-progress {
+    flex-grow: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--ld-tray);
+    overflow: hidden;
+  }
+
+  .ld-tour-progress span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ld-ok);
+  }
+
+  .ld-tour-grid {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    margin: 0 calc(-1 * clamp(16px, 5vw, 64px));
+    padding: 2px clamp(16px, 5vw, 64px) 4px;
+    scroll-padding: 0 clamp(16px, 5vw, 64px);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .ld-tour-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ld-tour-grid .ld-card {
+    flex: 0 0 228px;
+    flex-direction: column;
+    align-items: stretch;
+    scroll-snap-align: start;
+    border-radius: 18px;
+  }
+
+  .ld-tour-grid .ld-card.is-soon {
+    display: none;
+  }
+
+  .ld-tour-grid .ld-card-icon {
+    margin: 14px 0 0 14px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .ld-tour-grid .ld-card-body {
+    padding: 8px 14px 14px;
+    gap: 6px;
+  }
+
+  .ld-tour-grid .ld-card-foot {
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+
+  .ld-tour-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .ld-tour-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--ld-line);
+    transition: width 160ms var(--ld-ease), background-color 160ms var(--ld-ease);
+  }
+
+  .ld-tour-dots span.is-on {
+    width: 18px;
+    background: var(--ld-ink);
+  }
+
+  /* ---- Everything a method gives you: a 2x2 grid that holds still ---- */
+  .ld-float {
+    gap: 14px;
+  }
+
+  .ld-float-text {
+    gap: 10px;
+  }
+
+  .ld-stage {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    height: auto;
+  }
+
+  .ld-fc,
+  .ld-root .ld-fc,
+  html.dark .ld-root .ld-fc {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    flex: none;
+    transform: none;
+    animation: none;
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .ld-fc-head {
+    min-height: 0;
+    padding: 10px 12px 4px;
+    gap: 8px;
+  }
+
+  .ld-fc-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
+  .ld-fc-label {
+    font-size: 13px;
+  }
+
+  .ld-fc-meta,
+  .ld-fc-eq,
+  .ld-fc-note,
+  .ld-fc-files {
+    display: none;
+  }
+
+  .ld-fc-body {
+    padding: 4px 12px 12px;
+    gap: 6px;
+  }
+
+  .ld-fc-plot {
+    width: 100%;
+    height: auto;
+  }
+
+  .ld-fc-steplist {
+    font-size: 11px;
+    line-height: 1.5;
+    gap: 2px;
+  }
+
+  .ld-fc-steplist li:nth-child(n + 4) {
+    display: none;
+  }
+
+  .ld-fc-grid-table {
+    font-size: 11px;
+  }
+
+  .ld-fc-chips {
+    flex-wrap: wrap;
+  }
+
+  /* ---- Every step, shown: the page as a phone shows it ---- */
+  .ld-guide-steps,
+  .ld-browser-bar {
+    display: none;
+  }
+
+  .ld-guide-main {
+    gap: 12px;
+  }
+
+  .ld-browser {
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 20px;
+  }
+
+  .ld-guide-caption {
+    order: -1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0;
+  }
+
+  .ld-guide-progress {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .ld-guide-progress span {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ld-line);
+  }
+
+  .ld-guide-progress span.is-on {
+    background: var(--ld-teal);
+  }
+
+  .ld-guide-caption-kicker {
+    display: block;
+    font-size: 12px;
+    color: var(--ld-teal);
+  }
+
+  .ld-guide-caption-n {
+    display: none;
+  }
+
+  .ld-guide-caption-title {
+    font-size: 18px;
+  }
+
+  .ld-browser-view {
+    /* A size container would collapse once its height is auto */
+    container-type: normal;
+    display: block;
+    aspect-ratio: auto;
+    height: auto;
+    padding: 0;
+    border-radius: 14px;
+    border: 1px solid var(--ld-line);
+    overflow: hidden;
+    align-items: flex-start;
+  }
+
+  .ld-shot {
+    width: 100%;
+  }
+
+  .ld-guide-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ld-guide-count {
+    display: none;
+  }
+
+  .ld-guide-nav .ld-btn-sm {
+    height: 46px;
+  }
+
+  .ld-guide-open {
+    grid-column: 1 / -1;
+  }
+
+  /* ---- Made for the way you study: one card, three rows (only inside .ld-facts: the legal pages use .ld-fact too) ---- */
+  .ld-facts {
+    gap: 0;
+    background: var(--ld-surface);
+    border: 1px solid var(--ld-line);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .ld-facts .ld-fact,
+  .ld-facts .ld-fact:hover {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 3px;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ld-facts .ld-fact + .ld-fact {
+    border-top: 1px solid var(--ld-tray);
+  }
+
+  .ld-facts .ld-fact-top {
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+
+  .ld-facts .ld-fact-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .ld-facts .ld-fact-devices,
+  .ld-facts .ld-fact-tags {
+    display: none;
+  }
+
+  .ld-facts .ld-fact h3 {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .ld-facts .ld-fact p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  /* ---- Closing card: two matching full-width buttons ---- */
+  .ld-cta {
+    margin-bottom: 24px;
+    padding: 20px 18px;
+    border-radius: 22px;
+    gap: 14px;
+  }
+
+  .ld-cta h2 {
+    font-size: 24px;
+  }
+
+  .ld-cta p {
+    font-size: 14px;
+  }
+
+  .ld-cta .ld-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ld-cta .ld-actions > *,
+  .ld-cta .ld-actions .ld-btn {
+    width: 100%;
+    /* An older phone rule gives these flex: 1 1 100%, which squashes them in a column */
+    flex: none;
+  }
+
+  .ld-cta .ld-actions .ld-btn {
+    height: 50px;
+  }
+
+  /* ---- Footer: the links the bottom buttons do not cover ---- */
+  .ld-foot-app {
+    display: none !important;
+  }
+
+  .ld-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

@@ -8,6 +8,7 @@ import { launch, sleep, BASE } from './lib.mjs';
  * real Gauss–Seidel page, light and dark, and measures where each numbered pin goes.
  *
  *   NETZ_URL=http://localhost:3213 node capture-guide.mjs
+ *   PHONE=1 NETZ_URL=http://localhost:3213 node capture-guide.mjs   (phone-width shots for the phone landing page)
  *
  * Writes public/landing/guide-<step>-<theme>.webp and src/app/components/landing/guideShots.json
  * (each image's size and its pins as percentages). Run it again whenever the method page changes.
@@ -19,9 +20,11 @@ const OUT_IMG = path.join(ROOT, 'public', 'landing');
 const OUT_JSON = path.join(ROOT, 'src', 'app', 'components', 'landing', 'guideShots.json');
 fs.mkdirSync(OUT_IMG, { recursive: true });
 
-const WIDTH = 960; // narrow enough that the page content is large in the landing frame
+// PHONE=1: the page as a phone shows it (390 px), saved as guide-<step>-<theme>-phone.webp under each step's "phone" key
+const PHONE = process.env.PHONE === '1';
+const WIDTH = PHONE ? 390 : 960; // narrow enough that the page content is large in the landing frame
 const SCALE = 2;
-const MAX_RATIO = 0.66; // crops are at most this tall for their width, so every frame has a similar shape
+const MAX_RATIO = PHONE ? 1.1 : 0.66; // crops are at most this tall for their width, so every frame has a similar shape
 
 // Each step: the area to crop, and the parts to pin (CSS selector or { text } inside the area)
 const STEPS = [
@@ -94,8 +97,20 @@ const STEPS = [
   },
 ];
 
-const manifest = {};
+// Phone shots are added to the existing manifest; laptop shots rebuild it (keeping any phone entries)
+const manifest = fs.existsSync(OUT_JSON) ? JSON.parse(fs.readFileSync(OUT_JSON, 'utf8')) : {};
 const { browser, page, errors } = await launch({ width: WIDTH, height: 900, deviceScaleFactor: SCALE });
+if (PHONE) {
+  await page.setViewport({ width: WIDTH, height: 900, deviceScaleFactor: SCALE, isMobile: true, hasTouch: true });
+  // The app's phone bars and pop-ups are not part of the page being shown
+  await page.evaluateOnNewDocument(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const s = document.createElement('style');
+      s.textContent = '[data-app-nav],nav[data-app-tabs],nextjs-portal,[role="status"]{display:none!important}';
+      document.head.appendChild(s);
+    });
+  });
+}
 try {
   for (const theme of ['light', 'dark']) {
     await page.evaluateOnNewDocument((t) => localStorage.setItem('theme', t), theme);
@@ -151,12 +166,14 @@ try {
         MAX_RATIO
       );
       const png = await page.screenshot({ clip: box.clip, type: 'png', captureBeyondViewport: true });
-      const file = `guide-${step.id}-${theme}.webp`;
-      const out = sharp(png).resize({ width: 1400, withoutEnlargement: true }).webp({ quality: 78 });
+      const file = `guide-${step.id}-${theme}${PHONE ? '-phone' : ''}.webp`;
+      const out = sharp(png).resize({ width: PHONE ? 780 : 1400, withoutEnlargement: true }).webp({ quality: 78 });
       const info = await out.toFile(path.join(OUT_IMG, file));
+      const entry = { src: `/landing/${file}`, width: info.width, height: info.height, kb: Math.round(info.size / 1024) };
       manifest[step.id] = manifest[step.id] || { pins: box.pins };
-      manifest[step.id][theme] = { src: `/landing/${file}`, width: info.width, height: info.height, kb: Math.round(info.size / 1024) };
-      if (theme === 'light') manifest[step.id].pins = box.pins;
+      const target = PHONE ? (manifest[step.id].phone = manifest[step.id].phone || {}) : manifest[step.id];
+      target[theme] = entry;
+      if (theme === 'light') target.pins = box.pins;
       console.log(`${theme} ${step.id}: ${info.width}×${info.height}, ${Math.round(info.size / 1024)} KB, pins ${box.pins.map((p) => (p.missing ? `${p.id}?` : p.id)).join(' ')}`);
     }
   }

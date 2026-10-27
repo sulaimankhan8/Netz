@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useInstall } from './install';
 import { readDoneTours } from '../tour/tours';
 import {
@@ -206,6 +206,18 @@ export default function TourCards() {
 
   const doneCount = TOURS.filter((tour) => done[tour.id]).length;
 
+  // Phones show the cards as one swipe row; the dots under it follow the card in view
+  const rowRef = useRef(null);
+  const [inView, setInView] = useState(0);
+  const cardCount = TOURS.length + 1; // the tours and the Install card (the "Soon" card is hidden on phones)
+  const onRowScroll = () => {
+    const row = rowRef.current;
+    const first = row?.firstElementChild;
+    if (!first) return;
+    const step = first.getBoundingClientRect().width + 10;
+    setInView(Math.min(cardCount - 1, Math.round(row.scrollLeft / step)));
+  };
+
   return (
     <section id="tours" className="ld-section">
       <div className="ld-sec-head" data-reveal="">
@@ -215,13 +227,18 @@ export default function TourCards() {
             Each card opens that part of NETZ and walks you through it, one step at a time. Skip whenever you like;
             finished tours get a tick.
           </p>
+          {/* Phones: how many tours are done, as a bar */}
+          <span className="ld-tour-meter" aria-hidden="true">
+            <span className="ld-tour-progress"><span style={{ width: `${(doneCount / TOURS.length) * 100}%` }} /></span>
+            <span className="ld-mono">{doneCount} of {TOURS.length} done</span>
+          </span>
         </div>
         <span className="ld-count ld-on-bg" aria-live="polite">
           {doneCount} of {TOURS.length} tours done
         </span>
       </div>
 
-      <div className="ld-tour-grid">
+      <div className="ld-tour-grid" ref={rowRef} onScroll={onRowScroll}>
         {TOURS.map((tour) => {
           const isDone = Boolean(done[tour.id]);
           return (
@@ -255,6 +272,11 @@ export default function TourCards() {
             cta="Coming with accounts"
           />
         </div>
+      </div>
+      <div className="ld-tour-dots" aria-hidden="true">
+        {Array.from({ length: cardCount }, (_, i) => (
+          <span key={i} className={i === inView ? 'is-on' : ''} />
+        ))}
       </div>
     </section>
   );

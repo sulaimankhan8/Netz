@@ -23,6 +23,32 @@
       "width": 1400,
       "height": 469,
       "kb": 41
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-idea-light-phone.webp",
+        "width": 780,
+        "height": 746,
+        "kb": 36
+      },
+      "pins": [
+        {
+          "id": "title",
+          "x": 50,
+          "y": 34.43
+        },
+        {
+          "id": "idea",
+          "x": 50,
+          "y": 74.77
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-idea-dark-phone.webp",
+        "width": 780,
+        "height": 746,
+        "kb": 35
+      }
     }
   },
   "formula": {
@@ -54,6 +80,37 @@
       "width": 1400,
       "height": 659,
       "kb": 57
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-formula-light-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 32
+      },
+      "pins": [
+        {
+          "id": "system",
+          "x": 50,
+          "y": 37.19
+        },
+        {
+          "id": "condition",
+          "x": 71.44,
+          "y": 12.12
+        },
+        {
+          "id": "rules",
+          "x": 50,
+          "y": 85.76
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-formula-dark-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 30
+      }
     }
   },
   "procedure": {
@@ -80,6 +137,32 @@
       "width": 1400,
       "height": 925,
       "kb": 32
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-procedure-light-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 24
+      },
+      "pins": [
+        {
+          "id": "heading",
+          "x": 35.44,
+          "y": 11.19
+        },
+        {
+          "id": "example",
+          "x": 50,
+          "y": 54.71
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-procedure-dark-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 24
+      }
     }
   },
   "calculator": {
@@ -116,6 +199,42 @@
       "width": 1400,
       "height": 925,
       "kb": 19
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-calculator-light-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 12
+      },
+      "pins": [
+        {
+          "id": "demo",
+          "x": 24.87,
+          "y": -45.85
+        },
+        {
+          "id": "inputs",
+          "x": 38.59,
+          "y": -16.85
+        },
+        {
+          "id": "solve",
+          "x": 50,
+          "y": 100.63
+        },
+        {
+          "id": "answer",
+          "x": 50,
+          "y": 145.85
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-calculator-dark-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 10
+      }
     }
   },
   "table": {
@@ -147,6 +266,37 @@
       "width": 1400,
       "height": 925,
       "kb": 33
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-table-light-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 23
+      },
+      "pins": [
+        {
+          "id": "tabs",
+          "x": 43.18,
+          "y": -11.63
+        },
+        {
+          "id": "rows",
+          "x": 50,
+          "y": 44.84
+        },
+        {
+          "id": "last",
+          "x": 50,
+          "y": 111.63
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-table-dark-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 21
+      }
     }
   },
   "graph": {
@@ -173,6 +323,32 @@
       "width": 1400,
       "height": 925,
       "kb": 29
+    },
+    "phone": {
+      "light": {
+        "src": "/landing/guide-graph-light-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 23
+      },
+      "pins": [
+        {
+          "id": "plot",
+          "x": 50,
+          "y": 76.92
+        },
+        {
+          "id": "export",
+          "x": 26.95,
+          "y": 23.08
+        }
+      ],
+      "dark": {
+        "src": "/landing/guide-graph-dark-phone.webp",
+        "width": 780,
+        "height": 858,
+        "kb": 23
+      }
     }
   }
 }
