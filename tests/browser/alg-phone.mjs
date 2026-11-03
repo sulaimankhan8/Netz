@@ -10,13 +10,9 @@ const W = Number(process.env.W || 375), H = Number(process.env.H || 812);
 const OUT = path.resolve('shots/alg-phone');
 fs.mkdirSync(OUT, { recursive: true });
 
-const ROUTES = (process.env.ONLY ? process.env.ONLY.split(',') : [
-  'bisection-method', 'false-position-method', 'Gauss-seidal', 'iteration-method', 'newton-raphson-method', 'secant-method',
-  'gauss-backward', 'gauss-forward', 'newton-backward', 'newton-forward', 'lagrange-interpolation', 'newton-divided',
-  'boole-Rule', 'simpson-1-3-Rule', 'simpson-3-8-Rule', 'trapezoidal-Rule', 'weddle-Rule', 'gauss-quadrature', 'numerical-differentiation',
-  'euler-s-method', 'gauss-elimination', 'gauss-jordan', 'jacobi-method', 'lu-decomposition', 'modified-euler-s-method', 'runge-kutta-method', 'taylor-s-series-method',
-  'chi-square', 'f-test', 't-test', 'test-significance', 'fitting-parabola', 'fitting-straight-lines', 'least-squares',
-]);
+// Every live method page, from the one methods list (src/app/data/methods.js)
+const { LIVE_METHODS } = await import('../../src/app/data/methods.js');
+const ROUTES = process.env.ONLY ? process.env.ONLY.split(',') : LIVE_METHODS.map((m) => m.route.slice(1));
 
 const { browser, page, errors } = await launch({ width: W, height: H, deviceScaleFactor: 1 });
 await page.emulate({ viewport: { width: W, height: H, deviceScaleFactor: 1, isMobile: true, hasTouch: true }, userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Mobile Safari/537.36' });

@@ -12,13 +12,15 @@ import TimedAds from '../components/ads/TimedAds';
 import FitMath from '../components/FitMath';
 import LongTables from '../components/LongTables';
 import WorstCaseToggle from '../components/dev/WorstCaseToggle';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../utils/seo/site';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
-const APP_TITLE_TEMPLATE = "%s - PWA App";
-const APP_DESCRIPTION = "Best PWA app in the world!";
+const APP_TITLE_TEMPLATE = `%s — ${SITE_NAME}`;
+const APP_DESCRIPTION = SITE_DESCRIPTION;
 
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   applicationName: APP_NAME,
   title: {
     default: APP_DEFAULT_TITLE,
@@ -53,7 +55,7 @@ export const metadata = {
     },
     description: APP_DESCRIPTION,
   },
-  description: "current objective: survive", // Moved here for clarity
+  description: APP_DESCRIPTION,
   icons: {
     icon: [
       { url: '/favicon.ico?v=6', sizes: 'any' },

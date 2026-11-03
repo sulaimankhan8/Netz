@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Head from 'next/head';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FullscreenToggle from '@/app/components/FullscreenToggle';
@@ -13,11 +12,6 @@ import Tour from '@/app/components/tour/Tour';
 const GaussSeidelPage = () => {
   return (
     <>
-      <Head>
-        <title>Gauss-Seidel Method | Netz</title>
-        <meta name="description" content="Master the Gauss-Seidel Method for solving linear systems with step-by-step guidance, matrix iterations, and interactive tour." />
-      </Head>
-
       {/* The tour from the landing page's "Learn a method" card (?tour=true) */}
       <Tour ids={['gauss-seidel']} aliases={{ true: 'gauss-seidel' }} />
 

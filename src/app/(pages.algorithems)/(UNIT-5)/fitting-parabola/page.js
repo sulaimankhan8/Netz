@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Head from 'next/head';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FullscreenToggle from '@/app/components/FullscreenToggle';
@@ -21,11 +20,6 @@ export default function FittingParabolaPage() {
 
   return (
     <>
-      <Head>
-        <title>Fitting a Parabola | Netz</title>
-        <meta name="description" content="Master Quadratic Parabola Fitting with friendly step-by-step guidance, 3x3 normal systems, and an interactive visualizer." />
-      </Head>
-
       <FullscreenToggle className="w-full min-h-screen">
         <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">
           <div className="md:ml-[80px]">

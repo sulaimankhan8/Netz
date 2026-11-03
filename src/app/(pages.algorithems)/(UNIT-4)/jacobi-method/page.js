@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Head from 'next/head';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FullscreenToggle from '@/app/components/FullscreenToggle';
@@ -12,11 +11,6 @@ import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
 export default function JacobiMethodPage() {
   return (
     <>
-      <Head>
-        <title>Jacobi Iterative Method | Netz</title>
-        <meta name="description" content="Master the Jacobi Iterative Method — solve systems of linear equations by repeatedly updating variable estimates until convergence." />
-      </Head>
-
       <FullscreenToggle className="w-full min-h-screen">
         <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">
           <div className="md:ml-[80px]">

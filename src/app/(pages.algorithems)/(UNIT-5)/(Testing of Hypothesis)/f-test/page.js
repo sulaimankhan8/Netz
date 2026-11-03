@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Head from 'next/head';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FullscreenToggle from '@/app/components/FullscreenToggle';
@@ -16,11 +15,6 @@ export default function FTestPage() {
 
   return (
     <>
-      <Head>
-        <title>F-Test Variance Ratio Test | Netz</title>
-        <meta name="description" content="Master F-Test for comparing two sample variances with friendly step-by-step guidance, variance ratio calculation, and an interactive visualizer." />
-      </Head>
-
       <FullscreenToggle className="w-full min-h-screen">
         <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">
           <div className="md:ml-[80px]">

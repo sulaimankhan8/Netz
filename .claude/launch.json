@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "netz-check",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "-p", "3211"],
+      "port": 3211
+    }
+  ]
+}

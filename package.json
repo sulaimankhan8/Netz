@@ -10,7 +10,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "sitemap": "next-sitemap"
+    "sitemap": "next-sitemap",
+    "test:engines": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./tests/engines/register.mjs --test \"tests/engines/**/*.test.mjs\"",
+    "check:methods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./tests/engines/register.mjs --test tests/methods-list.test.mjs",
+    "new-method": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./tests/engines/register.mjs scripts/new-method.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

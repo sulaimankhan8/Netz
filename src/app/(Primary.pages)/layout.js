@@ -9,13 +9,15 @@ import Script from 'next/script';
 import AdsenseScript from '../components/AdsenseScript';
 import { AD_CLIENT } from '../utils/ads/adsenseConfig';
 import TimedAds from '../components/ads/TimedAds';
+import { SITE_DESCRIPTION, SITE_URL } from '../utils/seo/site';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
 const APP_TITLE_TEMPLATE = "%s";
-const APP_DESCRIPTION = "Best PWA app in the world!";
+const APP_DESCRIPTION = SITE_DESCRIPTION;
 
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   applicationName: APP_NAME,
   title: {
     default: APP_DEFAULT_TITLE,

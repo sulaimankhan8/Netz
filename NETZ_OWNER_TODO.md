@@ -155,6 +155,18 @@ NETZ now reads the account from settings, so **no ads, no ad script and no AdSen
 - [ ] Razorpay (Test mode) → API Keys → **Regenerate** the key secret, and in Webhooks set a **new secret**; update
       `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` in `.env.local` and Vercel.
 
+## J. Get found on Google and AI assistants (about 1 hour, free; added 2026-11-03)
+
+Do this after the custom domain is live. The code side is `NETZ_ROADMAP.md` section 4 (F1–F13).
+
+- [ ] Buy the custom domain and point it at the site.
+- [ ] **Google Search Console**: add the domain, verify it, submit the sitemap (`/sitemap.xml`).
+- [ ] **Bing Webmaster Tools**: add the domain (you can import from Search Console), submit the sitemap. ChatGPT search relies mostly on Bing's index.
+- [ ] Turn on **IndexNow** in Bing Webmaster Tools, so new pages get picked up fast.
+- [ ] In Google Analytics, watch for visits from chatgpt.com, gemini.google.com, claude.ai and perplexity.ai.
+- [ ] **Fill the missing keyword volumes** (research could only get US figures). Either sign up for a free seodata.dev key (500 lookups a month) or use Google Keyword Planner with the country set to **India**, then **worldwide**. Run the primary keywords from `reports/NETZ method search volume and SEO.md`.
+- [ ] **Check about 10 ⭐ searches by hand** in a private window on google.co.in and google.com. Note the top 3 results, whether an AI Overview shows, and the "People also ask" questions.
+
 ## I. Saving the work
 
 - [ ] Commit everything to `main` yourself when you are happy (Claude does not commit or push).
