@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, parseNumberList } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -26,7 +27,9 @@ const TTestSolver = () => {
     setError('');
     setResult(null);
 
-    const data = sampleStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const dataList = parseNumberList(sampleStr, 'Sample');
+    if (dataList.error) { setError(dataList.error); return; }
+    const data = dataList.values;
     const mu = parseFloat(muVal);
 
     if (data.length < 2 || isNaN(mu)) {
@@ -138,7 +141,7 @@ const TTestSolver = () => {
                 Sample Values (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="sampleData"
                 value={sampleDataInput}
                 onChange={(e) => setSampleDataInput(e.target.value)}
@@ -181,7 +184,7 @@ const TTestSolver = () => {
                 Calculated t-Statistic Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                t = {result.tCalc.toFixed(4)} (d.f. = {result.df})
+                t = {fixed(result.tCalc, 4)} (d.f. = {result.df})
               </span>
               <span className="text-sm font-mono font-bold block">
                 {result.reject ? 'Reject' : 'Accept'} H₀ at 5% (table value ±{result.critical})
@@ -272,17 +275,17 @@ const TTestSolver = () => {
                     <tr className="bg-white dark:bg-neutral-900 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Sample Mean</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">x&#772;</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.mean.toFixed(4)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.mean, 4)}</td>
                     </tr>
                     <tr className="bg-neutral-50 dark:bg-neutral-800/80 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Sample Variance</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">s^2</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.s2.toFixed(4)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.s2, 4)}</td>
                     </tr>
                     <tr className="bg-white dark:bg-neutral-900 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Sample Standard Deviation</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">s</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.s.toFixed(4)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.s, 4)}</td>
                     </tr>
                     <tr className="bg-emerald-500 text-white font-bold">
                       <td className="p-3 border-t border-r border-emerald-600">Degrees of Freedom</td>

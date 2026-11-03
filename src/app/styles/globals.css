@@ -115,7 +115,7 @@ html.dark .editorial-dots-bg {
     padding: 0.5rem;
     min-height: 400px;
     height: 400px;
-    width: 400px;
+    width: 100%;
   }
 }
 

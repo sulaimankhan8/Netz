@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, parseNumberList } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -71,8 +72,12 @@ const FittingParabolaSolver = () => {
     setResult(null);
     setStepsData([]);
 
-    const xArr = xStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
-    const yArr = yStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const xArrList = parseNumberList(xStr, 'x values');
+    if (xArrList.error) { setError(xArrList.error); return; }
+    const xArr = xArrList.values;
+    const yArrList = parseNumberList(yStr, 'y values');
+    if (yArrList.error) { setError(yArrList.error); return; }
+    const yArr = yArrList.values;
 
     if (xArr.length !== yArr.length || xArr.length < 3) {
       setError('Please enter equal numbers of numeric x and y values (at least 3 points).');
@@ -226,7 +231,7 @@ const FittingParabolaSolver = () => {
                 x Values (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="xValues"
                 value={xValuesInput}
                 onChange={(e) => setXValuesInput(e.target.value)}
@@ -241,7 +246,7 @@ const FittingParabolaSolver = () => {
                 y Values (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="yValues"
                 value={yValuesInput}
                 onChange={(e) => setYValuesInput(e.target.value)}
@@ -258,7 +263,7 @@ const FittingParabolaSolver = () => {
             size="md"
             className="w-full"
           >
-            <FiCheckCircle className="w-4 h-4 mr-2" /> Fit Parabola Y = aX^2 + bX + c
+            <FiCheckCircle className="w-4 h-4 mr-2" /> Fit Parabola Y = a + bX + cX²
           </EditorialButton>
         </form>
 
@@ -269,7 +274,7 @@ const FittingParabolaSolver = () => {
                 Fitted Parabola Equation Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y = {result.c.toFixed(4)} {signedTerm(result.b, 'x')} {signedTerm(result.a, 'x²')}
+                y = {fixed(result.c, 4)} {signedTerm(result.b, 'x')} {signedTerm(result.a, 'x²')}
               </span>
             </div>
 

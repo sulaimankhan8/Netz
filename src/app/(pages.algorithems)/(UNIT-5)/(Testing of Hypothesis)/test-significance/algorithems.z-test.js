@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -209,7 +210,7 @@ const ZTestSolver = () => {
                 Calculated Z-Statistic Result
               </span>
               <span className="text-base md:text-lg font-mono font-black block">
-                Z = {result.zCalc.toFixed(4)}
+                Z = {fixed(result.zCalc, 4)}
               </span>
               <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300">
                 Decision (5% Level): {Math.abs(result.zCalc) > 1.96 ? 'Reject H0 (|Z| > 1.96)' : 'Accept H0 (|Z| <= 1.96)'}
@@ -315,7 +316,7 @@ const ZTestSolver = () => {
                     <tr className="bg-emerald-500 text-white font-bold">
                       <td className="p-3 border-t border-r border-emerald-600">Standard Error</td>
                       <td className="p-3 border-t border-r border-emerald-600">SE = &sigma; / &radic;n</td>
-                      <td className="p-3 border-t border-emerald-600">{result.se.toFixed(6)}</td>
+                      <td className="p-3 border-t border-emerald-600">{fixed(result.se, 6)}</td>
                     </tr>
                   </tbody>
                 </table>

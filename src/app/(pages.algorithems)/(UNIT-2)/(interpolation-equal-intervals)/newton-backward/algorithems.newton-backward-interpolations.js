@@ -6,6 +6,8 @@ import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import DataPointsInput from '@/app/components/DataPointsInput';
+import { fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiPlus, FiTrash2, FiCheckCircle, FiTrendingUp, FiLayers, FiList } from 'react-icons/fi';
 
 export default function NewtonBackwardInterpolations({ theme }) {
@@ -204,54 +206,13 @@ export default function NewtonBackwardInterpolations({ theme }) {
               </EditorialButton>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border-2 border-black/80 dark:border-neutral-700">
-              <table className="w-full text-xs md:text-sm font-mono">
-                <thead>
-                  <tr className="bg-black text-white dark:bg-white dark:text-black font-bold uppercase">
-                    <th className="p-3 text-center border-r border-neutral-700 dark:border-neutral-300">Point #</th>
-                    <th className="p-3 text-center border-r border-neutral-700 dark:border-neutral-300">x_i</th>
-                    <th className="p-3 text-center border-r border-neutral-700 dark:border-neutral-300">y_i</th>
-                    <th className="p-3 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr key={index} className="border-t border-neutral-200 dark:border-neutral-800">
-                      <td className="p-2 text-center font-bold text-neutral-500">{index + 1}</td>
-                      <td className="p-2">
-                        <input
-                          type="number"
-                          step="any"
-                          value={row.x}
-                          onChange={(e) => handleInputChange(index, "x", e.target.value)}
-                          placeholder="e.g. 10"
-                          className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-center font-bold text-black dark:text-white"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="number"
-                          step="any"
-                          value={row.y}
-                          onChange={(e) => handleInputChange(index, "y", e.target.value)}
-                          placeholder="e.g. 0.1736"
-                          className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-center font-bold text-black dark:text-white"
-                        />
-                      </td>
-                      <td className="p-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataPointsInput
+              rows={rows}
+              onChange={handleInputChange}
+              onDelete={handleDeleteRow}
+              xPlaceholder="e.g. 10"
+              yPlaceholder="e.g. 0.1736"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end pt-2">
@@ -388,7 +349,7 @@ export default function NewtonBackwardInterpolations({ theme }) {
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{xValues[rowIndex]}</td>
                         {row.map((val, colIndex) => (
                           <td key={colIndex} className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">
-                            {val !== undefined && val.toFixed(4) !== "0.0000" ? val.toFixed(4) : ""}
+                            {val !== undefined && fixed(val, 4) !== "0.0000" ? fixed(val, 4) : ""}
                           </td>
                         ))}
                       </tr>
@@ -470,6 +431,8 @@ export default function NewtonBackwardInterpolations({ theme }) {
 }
 
 function newtonBackwardInterpolation(points, x) {
+  // Written-out terms cover 11 points; later terms follow the same pattern (no "undefined" in the formula)
+  const termAfterList = (i) => `\\frac{v${Array.from({ length: i - 1 }, (_, k) => `(v+${k + 1})`).join('')}}{${i}!} \\Delta^{${i}} y_{n-${i}}`;
   const tr = [
     `y_{n}`,
     `\\frac{v}{1!} \\Delta^{1} y_{n-1} `,
@@ -526,7 +489,7 @@ function newtonBackwardInterpolation(points, x) {
     interpolatedValue += term;
 
     // Formula steps
-    stepFormulas.push(`${tr[i]}`);
+    stepFormulas.push(`${tr[i] ?? termAfterList(i)}`);
 
     // Substituted steps
     let stepMid = [` `];

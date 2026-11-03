@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, parseNumberList } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -28,8 +29,12 @@ const ChiSquareSolver = () => {
     setResult(null);
     setStepsData([]);
 
-    const O = obsStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
-    const E = expStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const OList = parseNumberList(obsStr, 'Observed');
+    if (OList.error) { setError(OList.error); return; }
+    const O = OList.values;
+    const EList = parseNumberList(expStr, 'Expected');
+    if (EList.error) { setError(EList.error); return; }
+    const E = EList.values;
 
     if (O.length !== E.length || O.length < 2) {
       setError('Please enter equal numbers of observed and expected values (at least 2).');
@@ -157,7 +162,7 @@ const ChiSquareSolver = () => {
                 Observed Frequencies (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="obsValues"
                 value={observedInput}
                 onChange={(e) => setObservedInput(e.target.value)}
@@ -172,7 +177,7 @@ const ChiSquareSolver = () => {
                 Expected Frequencies (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="expValues"
                 value={expectedInput}
                 onChange={(e) => setExpectedInput(e.target.value)}
@@ -300,7 +305,7 @@ const ChiSquareSolver = () => {
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.exp}</td>
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.diff}</td>
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.diffSq}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold text-emerald-600 dark:text-emerald-400">{row.term.toFixed(4)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold text-emerald-600 dark:text-emerald-400">{fixed(row.term, 4)}</td>
                       </tr>
                     ))}
                     {result && (
@@ -310,7 +315,7 @@ const ChiSquareSolver = () => {
                         <td className="p-3 border-t border-r border-emerald-600">-</td>
                         <td className="p-3 border-t border-r border-emerald-600">-</td>
                         <td className="p-3 border-t border-r border-emerald-600">-</td>
-                        <td className="p-3 border-t border-emerald-600">{result.chiSquareSum.toFixed(4)}</td>
+                        <td className="p-3 border-t border-emerald-600">{fixed(result.chiSquareSum, 4)}</td>
                       </tr>
                     )}
                   </tbody>

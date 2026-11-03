@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, sig } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
@@ -56,7 +57,7 @@ const GaussElimination = () => {
           m[r][c] -= factor * m[col][c];
         }
         stepsLog.push({
-          label: `R${r + 1} = R${r + 1} − (${factor.toFixed(4)}) × R${col + 1}`,
+          label: `R${r + 1} = R${r + 1} − (${sig(factor)}) × R${col + 1}`,
           matrix: deepCopy(m),
         });
       }
@@ -69,10 +70,10 @@ const GaussElimination = () => {
       for (let j = i + 1; j < n; j++) x[i] -= m[i][j] * x[j];
       x[i] /= m[i][i];
       const known = [];
-      for (let j = i + 1; j < n; j++) known.push(` - (${m[i][j].toFixed(4)})(${x[j].toFixed(4)})`);
+      for (let j = i + 1; j < n; j++) known.push(` - (${sig(m[i][j])})(${sig(x[j])})`);
       stepsLog.push({
         label: `Back substitution: solve R${i + 1} for x${i + 1}`,
-        math: `x_{${i + 1}} = \\frac{${m[i][n].toFixed(4)}${known.join('')}}{${m[i][i].toFixed(4)}} = ${x[i].toFixed(4)}`,
+        math: `x_{${i + 1}} = \\frac{${sig(m[i][n])}${known.join('')}}{${sig(m[i][i])}} = ${sig(x[i])}`,
       });
     }
 
@@ -166,7 +167,7 @@ const GaussElimination = () => {
             <div className="flex flex-wrap gap-4">
               {solution.map((xi, i) => (
                 <div key={i} className="bg-white dark:bg-neutral-800 border border-emerald-400 dark:border-emerald-700 rounded-xl px-4 py-3 font-mono text-sm font-bold text-black dark:text-white">
-                  x<sub>{i + 1}</sub> = {xi.toFixed(6)}
+                  x<sub>{i + 1}</sub> = {fixed(xi, 6)}
                 </div>
               ))}
             </div>
@@ -198,7 +199,7 @@ const GaussElimination = () => {
                           <td className="pr-2 py-1 text-neutral-500 dark:text-neutral-400 font-bold">R{r + 1}</td>
                           {row.map((val, c) => (
                             <td key={c} className={`px-3 py-1 text-center border border-black/15 dark:border-neutral-700 ${c === n ? 'bg-amber-50 dark:bg-amber-950/30 font-bold text-amber-800 dark:text-amber-300' : ''}`}>
-                              {typeof val === 'number' ? val.toFixed(4) : val}
+                              {typeof val === 'number' ? sig(val) : val}
                             </td>
                           ))}
                         </tr>

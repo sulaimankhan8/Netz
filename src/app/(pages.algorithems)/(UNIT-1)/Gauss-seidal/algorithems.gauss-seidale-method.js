@@ -7,6 +7,8 @@ import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import Plot from './plot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import ConvergenceBanner from '@/app/components/ConvergenceBanner';
+import { fixed, plural } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const GaussSeidel = () => {
@@ -32,6 +34,7 @@ const GaussSeidel = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
   const [error, setError] = useState(0.0001);
   const [results, setResults] = useState([]);
+  const [converged, setConverged] = useState(true);
   useRecordSolve('gauss-seidel', 1, results);
   useCodeExportInputs('gauss-seidel', () => ({ A: equations.map((e) => [e.a, e.b, e.c, e.constant]), tol: error, maxIter: 1000 }));
   
@@ -85,6 +88,7 @@ const GaussSeidel = () => {
     if (!converged) {
       setCheckError('No convergence after 1000 iterations. The values below are the last ones computed.');
     }
+    setConverged(converged);
 
     // Update state with the results
     setResults(iterations);
@@ -112,7 +116,8 @@ const GaussSeidel = () => {
     const { validatedEquations, errorMessage, sequence } = checkEquations(demoEqs);
     if (!errorMessage) {
       setVariableSequence(sequence);
-      const { iterations, iterationsteps, iterationsteps2, iterationsteps3 } = GaussSeidels(validatedEquations, demoErr);
+      const { iterations, iterationsteps, iterationsteps2, iterationsteps3, converged: demoConverged } = GaussSeidels(validatedEquations, demoErr);
+      setConverged(demoConverged);
       setResults(iterations);
       setIterationDetails(iterationsteps);
       setIterationDetails2(iterationsteps2);
@@ -264,24 +269,22 @@ const GaussSeidel = () => {
         )}
 
         {results.length > 0 && (
-          <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4 shadow-[2px_2px_0px_0px_rgba(16,185,129,0.3)]">
-            <div>
-              <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-                Convergence Reached ({results.length - 1} iterations)
-              </span>
-              <span className="text-base md:text-lg font-mono font-black">
-                x = {results[results.length - 1].x.toFixed(4)}, y = {results[results.length - 1].y.toFixed(4)}, z = {results[results.length - 1].z.toFixed(4)}
-              </span>
-            </div>
-
-            <EditorialExportButton
-              title="Gauss Seidel Method Report"
-              elementId="gauss-seidel-results-container"
-              exportData={exportData}
-              variant="accent"
-              size="sm"
-            />
-          </div>
+          <ConvergenceBanner
+            converged={converged}
+            count={results.length - 1}
+            action={(
+              <EditorialExportButton
+                title="Gauss Seidel Method Report"
+                elementId="gauss-seidel-results-container"
+                exportData={exportData}
+                variant="accent"
+                size="sm"
+              />
+            )}
+          >
+            {converged ? '' : 'Last values (not a solution): '}
+            x = {fixed(results[results.length - 1].x)}, y = {fixed(results[results.length - 1].y)}, z = {fixed(results[results.length - 1].z)}
+          </ConvergenceBanner>
         )}
       </div>
 
@@ -372,9 +375,9 @@ const GaussSeidel = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{res.iteration}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{res.x.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{res.y.toFixed(4)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{res.z.toFixed(4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(res.x, 4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(res.y, 4)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(res.z, 4)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -387,7 +390,7 @@ const GaussSeidel = () => {
             <div id="gauss-seidel-steps-container" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Component Updates ({iterationDetails.length} Total Iterations)
+                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Component Updates ({plural(iterationDetails.length, 'Total Iteration')})
                 </h4>
                 <div className="flex items-center gap-2">
                   {iterationDetails.length > 5 && (

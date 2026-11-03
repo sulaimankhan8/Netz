@@ -8,6 +8,8 @@ import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { parseUserFunction } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { plural, fixed } from '@/app/utils/numberFormat';
+import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const SecantMethod = () => {
@@ -63,7 +65,7 @@ const SecantMethod = () => {
 
       if (Math.abs(fnext) < tol || Math.abs(nextX - currX) < tol) {
         return {
-          message: `Root found at x = ${nextX.toFixed(8)} after ${i} iterations (tolerance ${tol})`,
+          message: `Root found at x = ${nextX.toFixed(8)} after ${plural(i, "iteration")} (tolerance ${tol})`,
           iterations: iters,
           failed: false,
         };
@@ -74,7 +76,7 @@ const SecantMethod = () => {
     }
 
     return {
-      message: `Max iterations reached. Approximate root at x = ${currX.toFixed(8)}`,
+      message: `Tolerance not met within the iteration limit. Last estimate x = ${currX.toFixed(8)} is not a confirmed root.`,
       iterations: iters,
       failed: false,
     };
@@ -188,7 +190,7 @@ const SecantMethod = () => {
                 Function Expression <InlineMath math="f(x)" />
               </label>
               <input
-                type="text" id="sec-function" value={functionInput}
+                type="text" maxLength={2000} id="sec-function" value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
                 placeholder="e.g., x^3 - 2*x - 5" required
                 className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border-2 border-black/80 dark:border-neutral-700 rounded-xl font-mono text-sm font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
@@ -237,20 +239,20 @@ const SecantMethod = () => {
         </form>
 
         {result && (
-          <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4 shadow-[2px_2px_0px_0px_rgba(16,185,129,0.3)]">
-            <div>
-              <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-                Convergence Reached ({iterations.length} iterations)
-              </span>
-              <span className="text-base md:text-lg font-mono font-black">{result}</span>
-            </div>
-            <EditorialExportButton
-              title="Secant Method Report"
-              elementId="secant-results-container"
-              exportData={exportData}
-              variant="accent" size="sm"
-            />
-          </div>
+          <ConvergenceBanner
+            converged={/^Root found/.test(result)}
+            count={iterations.length}
+            action={(
+              <EditorialExportButton
+                title="Secant Method Report"
+                elementId="secant-results-container"
+                exportData={exportData}
+                variant="accent" size="sm"
+              />
+            )}
+          >
+            {result}
+          </ConvergenceBanner>
         )}
       </div>
 
@@ -307,13 +309,13 @@ const SecantMethod = () => {
                           : 'bg-white dark:bg-neutral-900 text-black dark:text-white'
                       }>
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.iteration}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.x0.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.x1.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{iter.x2.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.fx0.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.fx1.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.fx2.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{iter.ea.toFixed(4)}%</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.x0, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.x1, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(iter.x2, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.fx0, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.fx1, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.fx2, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{fixed(iter.ea, 4)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -327,7 +329,7 @@ const SecantMethod = () => {
             <div id="secant-steps-container" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Secant Derivations ({iterations.length} Steps)
+                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Secant Derivations ({plural(iterations.length, 'Step')})
                 </h4>
                 {iterations.length > 5 && (
                   <button type="button" onClick={() => setShowAllSteps(!showAllSteps)}
@@ -347,7 +349,7 @@ const SecantMethod = () => {
                       <BlockMath math={`x_2 = ${iter.x1.toFixed(6)} - ${iter.fx1.toFixed(6)} \\cdot \\frac{${iter.x1.toFixed(6)} - ${iter.x0.toFixed(6)}}{${iter.fx1.toFixed(6)} - ${iter.fx0.toFixed(6)}} = ${iter.x2.toFixed(6)}`} />
                     </div>
                     <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(x_2) = ${iter.fx2.toFixed(6)}`} /> &rarr; Ea = {iter.ea.toFixed(4)}%
+                      <InlineMath math={`f(x_2) = ${iter.fx2.toFixed(6)}`} /> &rarr; Ea = {fixed(iter.ea, 4)}%
                     </div>
                   </div>
                 ))}

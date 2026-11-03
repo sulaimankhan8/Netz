@@ -49,7 +49,6 @@ const jobs = {
     await save(page, '2-algorithm-hub');
     await go(page, '/Gauss-seidal');
     await save(page, '2-method-learn');
-    await go(page, '/Gauss-seidal?mode=solve');
     await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Quick Demo/i.test(b.textContent))?.click());
     await page.waitForSelector('#gauss-seidel-results-container', { timeout: 60000 }).catch(() => {});
     await sleep(2500);
@@ -102,6 +101,46 @@ const jobs = {
     report.push('playground pill: ' + JSON.stringify(pill));
     await save(page, '3-playground-handwriting');
     await browser.close();
+  },
+  // Part 6: code export dialog (Pro, set on this headless browser only) + phone screens
+  async export() {
+    const { browser, page } = await launch({ width: 1440, height: 900, deviceScaleFactor: 2 });
+    await go(page, '/bisection-method');
+    await page.evaluate(() => {
+      localStorage.setItem('netz_pro_v1', JSON.stringify({ pro: true, lifetime: true, plan: 'lifetime', checkedAt: Date.now() }));
+      window.dispatchEvent(new Event('netz:pro'));
+    });
+    await sleep(300);
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('form button[type="submit"]')].find((x) => x.offsetParent !== null)
+        || [...document.querySelectorAll('button')].find((x) => /^(calculate|solve|find|run|compute)/i.test(x.innerText.trim()) && !/demo/i.test(x.innerText));
+      b?.click();
+    });
+    await sleep(1500);
+    await page.waitForSelector('button[title="Quick Export Options"]', { timeout: 20000 });
+    await page.click('button[title="Quick Export Options"]');
+    await sleep(400);
+    const menu = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('button')].find((x) => x.innerText.includes('Code (Python'));
+      const box = el?.closest('div[class*="absolute"]') || el?.parentElement;
+      if (!box) return null;
+      box.scrollIntoView({ block: 'center' });
+      const r = box.getBoundingClientRect();
+      return { x: r.left - 24, y: r.top - 80 + window.scrollY, width: r.width + 48, height: r.height + 104 };
+    });
+    if (menu) await save(page, '6-export-menu', menu);
+    await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.innerText.includes('Code (Python'))?.click());
+    await page.waitForSelector('.xd', { timeout: 20000 });
+    await sleep(800);
+    await save(page, '6-code-export');
+    await browser.close();
+
+    for (const [route, name] of [['/', '6-phone-landing'], ['/Notes', '6-phone-notes'], ['/Algorithems', '6-phone-explorer']]) {
+      const { browser: b, page: phone } = await launch({ width: 390, height: 844, deviceScaleFactor: 3 });
+      await go(phone, route);
+      await save(phone, name);
+      await b.close();
+    }
   },
   // Part 4: notes
   async notes() {

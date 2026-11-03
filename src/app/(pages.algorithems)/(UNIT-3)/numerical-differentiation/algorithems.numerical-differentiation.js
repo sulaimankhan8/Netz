@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -149,7 +150,7 @@ const NumericalDifferentiationSolver = () => {
                 Function Expression <InlineMath math="f(x)" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
@@ -207,7 +208,7 @@ const NumericalDifferentiationSolver = () => {
                 1st Derivative f&apos;(x_0)
               </span>
               <span className="text-xl md:text-2xl font-mono font-black">
-                {result.firstDerivCentral.toFixed(6)}
+                {fixed(result.firstDerivCentral, 6)}
               </span>
             </div>
 
@@ -216,7 +217,7 @@ const NumericalDifferentiationSolver = () => {
                 2nd Derivative f&apos;&apos;(x_0)
               </span>
               <span className="text-xl md:text-2xl font-mono font-black">
-                {result.secondDerivCentral.toFixed(6)}
+                {fixed(result.secondDerivCentral, 6)}
               </span>
             </div>
           </div>
@@ -300,8 +301,8 @@ const NumericalDifferentiationSolver = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.label}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.xVal.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{row.fVal.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.xVal, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(row.fVal, 6)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, sig } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import "katex/dist/katex.min.css";
@@ -36,7 +37,7 @@ const LUDecomposition = () => {
     const U = Array.from({ length: sz }, () => new Array(sz).fill(0));
 
     // Working lines shown to the student, grouped by phase
-    const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(4));
+    const fmt = (v) => (Number.isInteger(v) ? String(v) : sig(v));
     const paren = (v) => (v < 0 ? `(${fmt(v)})` : fmt(v));
     const products = (pairs) => pairs.map(([p, q]) => ` - ${paren(p)}\\cdot ${paren(q)}`).join('');
     const work = { lu: [], forward: [], back: [] };
@@ -139,7 +140,7 @@ const LUDecomposition = () => {
                     highlight && r === c ? 'bg-amber-100 dark:bg-amber-950/40 font-bold text-amber-800 dark:text-amber-300' :
                     val === 0 ? 'text-neutral-300 dark:text-neutral-600' : 'text-black dark:text-white'
                   }`}>
-                    {typeof val === 'number' ? val.toFixed(4) : val}
+                    {typeof val === 'number' ? sig(val) : val}
                   </td>
                 ))}
               </tr>
@@ -222,7 +223,7 @@ const LUDecomposition = () => {
                 <div className="flex flex-wrap gap-3">
                   {result.y.map((yi, i) => (
                     <div key={i} className="bg-neutral-50 dark:bg-neutral-800 border border-black/20 dark:border-neutral-700 rounded-xl px-4 py-3 font-mono text-sm font-bold text-black dark:text-white">
-                      y<sub>{i + 1}</sub> = {yi.toFixed(6)}
+                      y<sub>{i + 1}</sub> = {fixed(yi, 6)}
                     </div>
                   ))}
                 </div>
@@ -233,7 +234,7 @@ const LUDecomposition = () => {
                 <div className="flex flex-wrap gap-3">
                   {result.x.map((xi, i) => (
                     <div key={i} className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-400 dark:border-emerald-700 rounded-xl px-4 py-3 font-mono text-sm font-bold text-emerald-900 dark:text-emerald-200">
-                      x<sub>{i + 1}</sub> = {xi.toFixed(6)}
+                      x<sub>{i + 1}</sub> = {fixed(xi, 6)}
                     </div>
                   ))}
                 </div>

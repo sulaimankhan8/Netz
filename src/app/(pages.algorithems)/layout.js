@@ -9,6 +9,9 @@ import Laout from '../components/layout'; // Ensure the spelling is correct (Lay
 import AdsenseScript from '../components/AdsenseScript';
 import { AD_CLIENT } from '../utils/ads/adsenseConfig';
 import TimedAds from '../components/ads/TimedAds';
+import FitMath from '../components/FitMath';
+import LongTables from '../components/LongTables';
+import WorstCaseToggle from '../components/dev/WorstCaseToggle';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
@@ -92,10 +95,14 @@ export default function RootLayout({ children }) {
         <meta name="google-site-verification" content="WT9x6ycaN58WMURczi5-6Uk_pqt2_cvxkw2OIYN0ZPU" />
         {AD_CLIENT && <meta name="google-adsense-account" content={AD_CLIENT} />}
         </head>
-      <body>
+      <body className="alg-body">
         {/* Ads load when idle, only where allowed, never for Pro; the full-screen ad waits 15 active minutes */}
         <AdsenseScript />
         <TimedAds />
+        <FitMath />
+        <LongTables />
+        {/* Dev only: ?data=worst test switch for the calculators (renders nothing in production) */}
+        {process.env.NODE_ENV !== 'production' && <WorstCaseToggle />}
         <Laout>
           {children}
         </Laout>

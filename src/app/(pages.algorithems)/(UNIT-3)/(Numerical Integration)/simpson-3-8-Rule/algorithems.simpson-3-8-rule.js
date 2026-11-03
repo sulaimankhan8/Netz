@@ -8,6 +8,7 @@ import 'katex/dist/katex.min.css';
 import { parseUserFunction } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { MAX_STEPS, tooManySteps, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
@@ -29,12 +30,19 @@ const Simpson38RuleSolver = () => {
 
   const calculateSimpson38 = (fExpr, aVal, bVal, nVal) => {
     setError('');
+    setResult(null);
+    setStepsData([]);
+    setGridLog([]);
     const a = parseFloat(aVal);
     const b = parseFloat(bVal);
     const n = parseInt(nVal, 10);
 
     if (isNaN(a) || isNaN(b) || isNaN(n) || n <= 0) {
       setError('Please enter valid numeric limits and a positive integer for subintervals (n).');
+      return;
+    }
+    if (n > MAX_STEPS) {
+      setError(tooManySteps(n, 'Use a smaller number of subintervals (n).'));
       return;
     }
     if (n % 3 !== 0) {
@@ -200,7 +208,7 @@ const Simpson38RuleSolver = () => {
                 Integrand Expression <InlineMath math="f(x)" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
@@ -274,7 +282,7 @@ const Simpson38RuleSolver = () => {
                 Cubic Approximation Integral Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                I ≈ {result.integralValue.toFixed(8)}
+                I ≈ {fixed(result.integralValue, 8)}
               </span>
             </div>
 
@@ -379,10 +387,10 @@ const Simpson38RuleSolver = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.index}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.x.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.y.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.x, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.y, 6)}</td>
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{row.weight}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{row.contribution.toFixed(6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(row.contribution, 6)}</td>
                       </tr>
                     ))}
                   </tbody>

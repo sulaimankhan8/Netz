@@ -8,7 +8,9 @@ import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { parseUserFunction } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { plural, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
+import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const FalsePositionMethod = () => {
@@ -136,7 +138,7 @@ const FalsePositionMethod = () => {
     }
 
     return {
-      message: `Max iterations reached. Approximate root at x = ${c.toFixed(6)}`,
+      message: `Tolerance not met within the iteration limit. Last estimate x = ${c.toFixed(6)} is not a confirmed root.`,
       iterations,
     };
   };
@@ -286,7 +288,7 @@ const FalsePositionMethod = () => {
                 Function Expression <InlineMath math="f(x)" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={handleFunctionChange}
@@ -326,24 +328,21 @@ const FalsePositionMethod = () => {
         </form>
 
         {result && (
-          <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4 shadow-[2px_2px_0px_0px_rgba(16,185,129,0.3)]">
-            <div>
-              <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-                Convergence Reached ({iterationsCount} iterations)
-              </span>
-              <span className="text-base md:text-lg font-mono font-black">
-                {result}
-              </span>
-            </div>
-
-            <EditorialExportButton
-              title="False Position Method Report"
-              elementId="false-position-results-container"
-              exportData={exportData}
-              variant="accent"
-              size="sm"
-            />
-          </div>
+          <ConvergenceBanner
+            converged={/^Root found|is the root/.test(result)}
+            count={iterationsCount}
+            action={(
+              <EditorialExportButton
+                title="False Position Method Report"
+                elementId="false-position-results-container"
+                exportData={exportData}
+                variant="accent"
+                size="sm"
+              />
+            )}
+          >
+            {result}
+          </ConvergenceBanner>
         )}
       </div>
 
@@ -438,12 +437,12 @@ const FalsePositionMethod = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.iteration}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.a.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.b.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{iter.c.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.fa.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{iter.fb.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{iter.fc.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.a, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.b, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(iter.c, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.fa, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(iter.fb, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{fixed(iter.fc, 6)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -456,7 +455,7 @@ const FalsePositionMethod = () => {
             <div id="false-position-steps-container" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Secant Chord Interpolation ({falsePositionIterations.length} Total Steps)
+                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Secant Chord Interpolation ({plural(falsePositionIterations.length, 'Total Step')})
                 </h4>
                 <div className="flex items-center gap-2">
                   {falsePositionIterations.length > 5 && (

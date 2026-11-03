@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed } from '@/app/utils/numberFormat';
 import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from "react";
@@ -7,6 +8,7 @@ import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton, EditorialStepViewer } from '@/app/components/editorial';
+import DataPointsInput from '@/app/components/DataPointsInput';
 import { FiPlus, FiTrash2, FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 export default function GaussForwardInterpolation({ theme }) {
@@ -219,59 +221,13 @@ export default function GaussForwardInterpolation({ theme }) {
               </EditorialButton>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border-2 border-black/80 dark:border-neutral-700">
-              <table className="w-full text-sm font-mono text-left">
-                <thead>
-                  <tr className="bg-black text-white dark:bg-white dark:text-black uppercase font-bold text-xs">
-                    <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">Point #</th>
-                    <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">X Value</th>
-                    <th className="p-3 border-r border-neutral-700 dark:border-neutral-300">Y Value = f(X)</th>
-                    <th className="p-3 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                  {rows.map((row, index) => (
-                    <tr key={index} className="bg-white dark:bg-neutral-900">
-                      <td className="p-3 font-bold text-neutral-500 border-r border-neutral-200 dark:border-neutral-800">
-                        P{index + 1}
-                      </td>
-                      <td className="p-2 border-r border-neutral-200 dark:border-neutral-800">
-                        <input
-                          type="number"
-                          step="any"
-                          placeholder="e.g. 2.5"
-                          className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-black dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                          value={row.x}
-                          onChange={(e) => handleInputChange(index, "x", e.target.value)}
-                          required
-                        />
-                      </td>
-                      <td className="p-2 border-r border-neutral-200 dark:border-neutral-800">
-                        <input
-                          type="number"
-                          step="any"
-                          placeholder="e.g. 24.145"
-                          className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-black dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                          value={row.y}
-                          onChange={(e) => handleInputChange(index, "y", e.target.value)}
-                          required
-                        />
-                      </td>
-                      <td className="p-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(index)}
-                          className="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                          title="Delete Row"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataPointsInput
+              rows={rows}
+              onChange={handleInputChange}
+              onDelete={handleDeleteRow}
+              xPlaceholder="e.g. 2.5"
+              yPlaceholder="e.g. 24.145"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end pt-2">
@@ -310,7 +266,7 @@ export default function GaussForwardInterpolation({ theme }) {
                 Interpolated Result at x = {interpolateX}
               </span>
               <span className="text-xl md:text-2xl font-mono font-black">
-                P({interpolateX}) = {interpolatedValue.toFixed(6)}
+                P({interpolateX}) = {fixed(interpolatedValue, 6)}
               </span>
             </div>
 
@@ -422,7 +378,7 @@ export default function GaussForwardInterpolation({ theme }) {
                           }
                         >
                           <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{xVal}</td>
-                          <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{(xVal - mid).toFixed(2)}</td>
+                          <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(xVal - mid, 2)}</td>
                           {row.map((value, colIndex) => (
                             <td key={colIndex} className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 last:border-r-0">
                               {value !== undefined ? value.toFixed(4) : ''}
@@ -499,6 +455,13 @@ export default function GaussForwardInterpolation({ theme }) {
 }
 
 function gaussianFowardInterpolation(points, x ,mid) {
+    // Written-out terms cover 11 points; later terms follow the same pattern (no "undefined" in the formula)
+    const termAfterList = (i) => {
+        const f = [0];
+        for (let k = 1; f.length < i; k += 1) { f.push(-k); if (f.length < i) f.push(k); }
+        const factors = f.sort((a, b) => b - a).map((d) => (d === 0 ? 'p' : `(p${d > 0 ? '+' : '-'}${Math.abs(d)})`)).join('');
+        return `\\frac{${factors}}{${i}!} \\Delta^{${i}} y_{${-Math.floor(i / 2)}}`;
+    };
     const tr = [
         `y_0`,
         `\\frac{p}{1!} \\Delta y_0`,
@@ -589,7 +552,7 @@ function gaussianFowardInterpolation(points, x ,mid) {
         interpolatedValue += term;
        
         stepCalculated.push(`(${term.toFixed(4)})`);
-        stepFormulas.push(`${tr[i]}`);
+        stepFormulas.push(`${tr[i] ?? termAfterList(i)}`);
 
         let stepMid = [` `];
         let stepMidr = [` `];

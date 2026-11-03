@@ -7,6 +7,7 @@ import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import MatrixInputGrid from '@/app/components/MatrixInputGrid';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiList, FiAlertCircle } from 'react-icons/fi';
 
 function initMatrix(n) {
@@ -183,12 +184,12 @@ const JacobiMethod = () => {
         {solution && (
           <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl space-y-2">
             <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-              {converged ? `Converged in ${iterations.length} iterations` : `Not converged: stopped after ${iterations.length} iterations`}
+              {converged ? `Converged in ${plural(iterations.length, "iteration")}` : `Not converged: stopped after ${plural(iterations.length, "iteration")}`}
             </span>
             <div className="flex flex-wrap gap-4">
               {solution.map((xi, i) => (
                 <div key={i} className="bg-white dark:bg-neutral-800 border border-emerald-400 dark:border-emerald-700 rounded-xl px-4 py-3 font-mono text-sm font-bold text-black dark:text-white">
-                  x<sub>{i + 1}</sub> = {xi.toFixed(6)}
+                  x<sub>{i + 1}</sub> = {fixed(xi, 6)}
                 </div>
               ))}
             </div>
@@ -222,9 +223,9 @@ const JacobiMethod = () => {
                     : idx % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-800/80 text-black dark:text-white' : 'bg-white dark:bg-neutral-900 text-black dark:text-white'}>
                     <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{it.iter}</td>
                     {it.x.map((xi, i) => (
-                      <td key={i} className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{xi.toFixed(6)}</td>
+                      <td key={i} className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(xi, 6)}</td>
                     ))}
-                    <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{it.maxChange.toFixed(8)}</td>
+                    <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{fixed(it.maxChange, 8)}</td>
                   </tr>
                 ))}
               </tbody>

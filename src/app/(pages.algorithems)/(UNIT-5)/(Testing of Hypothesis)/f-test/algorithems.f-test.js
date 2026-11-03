@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, parseNumberList } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -26,8 +27,12 @@ const FTestSolver = () => {
     setError('');
     setResult(null);
 
-    const s1Data = s1Str.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
-    const s2Data = s2Str.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const s1DataList = parseNumberList(s1Str, 'Sample 1');
+    if (s1DataList.error) { setError(s1DataList.error); return; }
+    const s1Data = s1DataList.values;
+    const s2DataList = parseNumberList(s2Str, 'Sample 2');
+    if (s2DataList.error) { setError(s2DataList.error); return; }
+    const s2Data = s2DataList.values;
 
     if (s1Data.length < 2 || s2Data.length < 2) {
       setError('Please enter at least 2 sample values for both Sample 1 and Sample 2.');
@@ -162,7 +167,7 @@ const FTestSolver = () => {
                 Sample 1 Data (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="sample1"
                 value={sample1Input}
                 onChange={(e) => setSample1Input(e.target.value)}
@@ -177,7 +182,7 @@ const FTestSolver = () => {
                 Sample 2 Data (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="sample2"
                 value={sample2Input}
                 onChange={(e) => setSample2Input(e.target.value)}
@@ -205,7 +210,7 @@ const FTestSolver = () => {
                 Calculated F-Statistic Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                F = {result.fRatio.toFixed(4)} (d.f. = {result.df1}, {result.df2})
+                F = {fixed(result.fRatio, 4)} (d.f. = {result.df1}, {result.df2})
               </span>
               <span className="text-sm font-mono font-bold block">
                 {result.reject ? 'Reject' : 'Accept'} H₀ at 5% (table value {result.critical})
@@ -293,15 +298,15 @@ const FTestSolver = () => {
                     <tr className="bg-neutral-50 dark:bg-neutral-800/80 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Sample 1</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.n1}</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.m1.toFixed(4)}</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{result.var1.toFixed(4)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(result.m1, 4)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.var1, 4)}</td>
                       <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{result.n1 - 1}</td>
                     </tr>
                     <tr className="bg-white dark:bg-neutral-900 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Sample 2</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.n2}</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.m2.toFixed(4)}</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{result.var2.toFixed(4)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(result.m2, 4)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.var2, 4)}</td>
                       <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{result.n2 - 1}</td>
                     </tr>
                   </tbody>

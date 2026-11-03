@@ -8,6 +8,8 @@ import { InlineMath, BlockMath } from 'react-katex';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { evaluateMath, getSymbolicDerivative } from '@/app/utils/evaluateMath';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import ConvergenceBanner from '@/app/components/ConvergenceBanner';
+import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const NewtonRaphsonMethod = () => {
@@ -118,6 +120,13 @@ const NewtonRaphsonMethod = () => {
       }
     }
 
+    // The box keeps what was typed; it is read as a number here
+    const tol = Number(tolerance);
+    if (!(tol > 0)) {
+      setError('Tolerance must be a positive number, e.g. 0.0001.');
+      return;
+    }
+
     let currentX = x0;
     const maxIter = 50;
     const iterations = [];
@@ -143,9 +152,9 @@ const NewtonRaphsonMethod = () => {
       iterations.push({ iteration: i, x: currentX, fx, fpx, nextX });
       stepsLog.push({ iteration: i, x: currentX, fx, fpx, nextX });
 
-      if (Math.abs(nextX - currentX) < tolerance || Math.abs(fx) < tolerance) {
+      if (Math.abs(nextX - currentX) < tol || Math.abs(fx) < tol) {
         converged = true;
-        setResult(`Newton-Raphson converged to root x = ${nextX.toFixed(6)} in ${i} iterations`);
+        setResult(`Newton-Raphson converged to root x = ${nextX.toFixed(6)} in ${plural(i, "iteration")}`);
         break;
       }
 
@@ -153,7 +162,7 @@ const NewtonRaphsonMethod = () => {
     }
 
     if (!converged) {
-      setResult(`Max iterations reached. Approximate root at x = ${currentX.toFixed(6)}`);
+      setResult(`Tolerance not met within ${maxIter} iterations. Last estimate x = ${currentX.toFixed(6)} is not a confirmed root.`);
     }
 
     setTableResults(iterations);
@@ -199,14 +208,14 @@ const NewtonRaphsonMethod = () => {
 
       if (Math.abs(nextX - currentX) < demoTol || Math.abs(fx) < demoTol) {
         converged = true;
-        setResult(`Newton-Raphson converged to root x = ${nextX.toFixed(6)} in ${i} iterations`);
+        setResult(`Newton-Raphson converged to root x = ${nextX.toFixed(6)} in ${plural(i, "iteration")}`);
         break;
       }
       currentX = nextX;
     }
 
     if (!converged && iterations.length > 0) {
-      setResult(`Max iterations reached. Approximate root at x = ${currentX.toFixed(6)}`);
+      setResult(`Tolerance not met within ${maxIter} iterations. Last estimate x = ${currentX.toFixed(6)} is not a confirmed root.`);
     }
 
     setTableResults(iterations);
@@ -281,7 +290,7 @@ const NewtonRaphsonMethod = () => {
                 Function Expression <InlineMath math="f(x)" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={expression}
                 onChange={(e) => setExpression(e.target.value)}
@@ -315,7 +324,7 @@ const NewtonRaphsonMethod = () => {
                 id="tolerance"
                 step="0.00001"
                 value={tolerance}
-                onChange={(e) => setTolerance(parseFloat(e.target.value))}
+                onChange={(e) => setTolerance(e.target.value)}
                 placeholder="e.g., 0.0001"
                 required
                 className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border-2 border-black/80 dark:border-neutral-700 rounded-xl font-mono text-sm font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
@@ -343,24 +352,21 @@ const NewtonRaphsonMethod = () => {
         )}
 
         {result && (
-          <div className="p-5 border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4 shadow-[2px_2px_0px_0px_rgba(16,185,129,0.3)]">
-            <div>
-              <span className="text-xs font-mono font-bold uppercase block text-emerald-700 dark:text-emerald-400">
-                Convergence Reached ({tableResults.length} iterations)
-              </span>
-              <span className="text-base md:text-lg font-mono font-black">
-                {result}
-              </span>
-            </div>
-
-            <EditorialExportButton
-              title="Newton Raphson Method Report"
-              elementId="newton-raphson-results-container"
-              exportData={exportData}
-              variant="accent"
-              size="sm"
-            />
-          </div>
+          <ConvergenceBanner
+            converged={/converged to root/.test(result)}
+            count={tableResults.length}
+            action={(
+              <EditorialExportButton
+                title="Newton Raphson Method Report"
+                elementId="newton-raphson-results-container"
+                exportData={exportData}
+                variant="accent"
+                size="sm"
+              />
+            )}
+          >
+            {result}
+          </ConvergenceBanner>
         )}
       </div>
 
@@ -452,10 +458,10 @@ const NewtonRaphsonMethod = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{item.iteration}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{item.x.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{item.fx.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{item.fpx.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{item.nextX.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(item.x, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(item.fx, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(item.fpx, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(item.nextX, 6)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -468,7 +474,7 @@ const NewtonRaphsonMethod = () => {
             <div id="newton-steps-container" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Tangent Slopes ({stepDetails.length} Total Steps)
+                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Tangent Slopes ({plural(stepDetails.length, 'Total Step')})
                 </h4>
                 <div className="flex items-center gap-2">
                   {stepDetails.length > 5 && (

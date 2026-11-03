@@ -8,8 +8,12 @@ import 'katex/dist/katex.min.css';
 import { parseUserFunction } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { MAX_STEPS, tooManySteps, sig, odeStopMessage, ODE_BLOWUP, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+
+// Worked-step cards drawn (each is several equations); the table shows all steps
+const CARD_LIMIT = 20;
 
 const EulerMethodSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -29,6 +33,9 @@ const EulerMethodSolver = () => {
 
   const calculateEuler = (fExpr, xStartVal, yStartVal, hVal, targetVal) => {
     setError('');
+    setResult(null);
+    setStepsData([]);
+    setGridLog([]);
     const xStart = parseFloat(xStartVal);
     const yStart = parseFloat(yStartVal);
     const h = parseFloat(hVal);
@@ -53,6 +60,10 @@ const EulerMethodSolver = () => {
     }
 
     const stepsCount = Math.round((xTarget - xStart) / h);
+    if (stepsCount > MAX_STEPS) {
+      setError(tooManySteps(stepsCount, `Use a larger step size h (at least ${sig((xTarget - xStart) / MAX_STEPS, 3)}).`));
+      return;
+    }
     const log = [];
     log.push(`Solving ODE dy/dx = ${fExpr}`);
     log.push(`Initial Condition: y(${xStart}) = ${yStart}`);
@@ -64,11 +75,19 @@ const EulerMethodSolver = () => {
     const history = [];
 
     for (let step = 0; step <= stepsCount; step++) {
+      if (!Number.isFinite(currentY) || Math.abs(currentY) > ODE_BLOWUP) {
+        setError(odeStopMessage(step, currentX, currentY, xTarget, history.length > 0));
+        setGridLog(log);
+        setStepsData(history);
+        return;
+      }
       let slope = 0;
       try {
         slope = f(currentX, currentY);
       } catch (err) {
-        setError(`Evaluation error at step ${step} (x = ${currentX.toFixed(4)}, y = ${currentY.toFixed(6)}).`);
+        setError(odeStopMessage(step, currentX, currentY, xTarget, history.length > 0));
+        setGridLog(log);
+        setStepsData(history);
         return;
       }
 
@@ -176,7 +195,7 @@ const EulerMethodSolver = () => {
                 Derivative Expression <InlineMath math="f(x, y) = \frac{dy}{dx}" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
@@ -266,7 +285,7 @@ const EulerMethodSolver = () => {
                 Euler Approximate Solution Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y({result.targetX.toFixed(4)}) ≈ {result.finalY.toFixed(6)}
+                y({fixed(result.targetX, 4)}) ≈ {fixed(result.finalY, 6)}
               </span>
             </div>
 
@@ -371,9 +390,9 @@ const EulerMethodSolver = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.step}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.x.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.y.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{row.slope.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.x, 4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.y, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{fixed(row.slope, 6)}</td>
                         <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">
                           {idx < stepsData.length - 1 ? stepsData[idx + 1].y.toFixed(6) : row.y.toFixed(6)}
                         </td>
@@ -392,7 +411,10 @@ const EulerMethodSolver = () => {
               </h4>
 
               <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
-                {stepsData.slice(0, stepsData.length - 1).map((row, idx) => (
+                {(stepsData.length - 1) > CARD_LIMIT && (
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Worked steps 1–{CARD_LIMIT} of {(stepsData.length - 1)} are shown; the rest follow the same pattern. The table above lists every step.</p>
+                )}
+                {stepsData.slice(0, Math.min(stepsData.length - 1, CARD_LIMIT)).map((row, idx) => (
                   <div key={idx} className="p-3 border-b border-neutral-200 dark:border-neutral-700 last:border-none space-y-1">
                     <span className="font-bold text-neutral-500 uppercase block">Iteration Step n = {row.step}:</span>
                     <BlockMath math={`x_{${row.step}} = ${row.x.toFixed(4)}, \\quad y_{${row.step}} = ${row.y.toFixed(6)}`} />

@@ -8,8 +8,12 @@ import 'katex/dist/katex.min.css';
 import { parseUserFunction } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { MAX_STEPS, tooManySteps, sig, odeStopMessage, ODE_BLOWUP, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+
+// Worked-step cards drawn (each is several equations); the table shows all steps
+const CARD_LIMIT = 20;
 
 const ModifiedEulerSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -29,6 +33,9 @@ const ModifiedEulerSolver = () => {
 
   const calculateModifiedEuler = (fExpr, xStartVal, yStartVal, hVal, targetVal) => {
     setError('');
+    setResult(null);
+    setStepsData([]);
+    setGridLog([]);
     const xStart = parseFloat(xStartVal);
     const yStart = parseFloat(yStartVal);
     const h = parseFloat(hVal);
@@ -53,6 +60,10 @@ const ModifiedEulerSolver = () => {
     }
 
     const stepsCount = Math.round((xTarget - xStart) / h);
+    if (stepsCount > MAX_STEPS) {
+      setError(tooManySteps(stepsCount, `Use a larger step size h (at least ${sig((xTarget - xStart) / MAX_STEPS, 3)}).`));
+      return;
+    }
     const log = [];
     log.push(`Solving ODE dy/dx = ${fExpr}`);
     log.push(`Initial Condition: y(${xStart}) = ${yStart}`);
@@ -64,11 +75,19 @@ const ModifiedEulerSolver = () => {
     const history = [];
 
     for (let step = 1; step <= stepsCount; step++) {
+      if (!Number.isFinite(currentY) || Math.abs(currentY) > ODE_BLOWUP) {
+        setError(odeStopMessage(step, currentX, currentY, xTarget, history.length > 0));
+        setGridLog(log);
+        setStepsData(history);
+        return;
+      }
       let slope1 = 0;
       try {
         slope1 = f(currentX, currentY);
       } catch (err) {
-        setError(`Evaluation error at step ${step} (x = ${currentX.toFixed(4)}).`);
+        setError(odeStopMessage(step, currentX, currentY, xTarget, history.length > 0));
+        setGridLog(log);
+        setStepsData(history);
         return;
       }
 
@@ -79,7 +98,9 @@ const ModifiedEulerSolver = () => {
       try {
         slope2 = f(nextX, yPredictor);
       } catch (err) {
-        setError(`Evaluation error at predictor step ${step} (nextX = ${nextX.toFixed(4)}).`);
+        setError(odeStopMessage(step, currentX, currentY, xTarget, history.length > 0));
+        setGridLog(log);
+        setStepsData(history);
         return;
       }
 
@@ -191,7 +212,7 @@ const ModifiedEulerSolver = () => {
                 Derivative Expression <InlineMath math="f(x, y) = \frac{dy}{dx}" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
@@ -281,7 +302,7 @@ const ModifiedEulerSolver = () => {
                 Modified Euler Solution Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y({result.targetX.toFixed(4)}) ≈ {result.finalY.toFixed(6)}
+                y({fixed(result.targetX, 4)}) ≈ {fixed(result.finalY, 6)}
               </span>
             </div>
 
@@ -386,10 +407,10 @@ const ModifiedEulerSolver = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.step}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.x.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.y.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{row.yPredictor.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{row.yCorrector.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.x, 4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.y, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{fixed(row.yPredictor, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(row.yCorrector, 6)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -405,9 +426,12 @@ const ModifiedEulerSolver = () => {
               </h4>
 
               <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-4 font-mono text-xs">
-                {stepsData.map((row) => (
+                {stepsData.length > CARD_LIMIT && (
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Worked steps 1–{CARD_LIMIT} of {stepsData.length} are shown; the rest follow the same pattern. The table above lists every step.</p>
+                )}
+                {stepsData.slice(0, CARD_LIMIT).map((row) => (
                   <div key={row.step} className="p-3 border-b border-neutral-200 dark:border-neutral-700 last:border-none space-y-2">
-                    <span className="font-bold text-neutral-500 uppercase block">Step {row.step}: x_{row.step - 1} = {row.x.toFixed(4)} to x_{row.step} = {row.nextX.toFixed(4)}</span>
+                    <span className="font-bold text-neutral-500 uppercase block">Step {row.step}: x_{row.step - 1} = {fixed(row.x, 4)} to x_{row.step} = {fixed(row.nextX, 4)}</span>
                     <div className="p-3 bg-neutral-100 dark:bg-neutral-900 rounded-lg space-y-1">
                       <span className="font-bold text-neutral-700 dark:text-neutral-300 block">Predictor Step:</span>
                       <BlockMath math={`y_{${row.step}}^{(0)} = ${row.y.toFixed(6)} + (${stepH}) \\times (${row.slope1.toFixed(6)}) = ${row.yPredictor.toFixed(6)}`} />

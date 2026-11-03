@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -164,7 +165,7 @@ const TaylorSeriesSolver = () => {
                 Derivative Expression <InlineMath math="f(x, y) = \frac{dy}{dx}" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
@@ -239,7 +240,7 @@ const TaylorSeriesSolver = () => {
                 Taylor Series Approximation Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y({targetX}) ≈ {result.approxY.toFixed(6)}
+                y({targetX}) ≈ {fixed(result.approxY, 6)}
               </span>
             </div>
 
@@ -324,25 +325,25 @@ const TaylorSeriesSolver = () => {
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Order 0 (y_0)</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">y_0</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{y0}</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.t1.toFixed(6)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.t1, 6)}</td>
                     </tr>
                     <tr className="bg-white dark:bg-neutral-900 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Order 1 (y&apos;)</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">h &middot; y&apos;(x_0)</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.y1_val.toFixed(6)}</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.t2.toFixed(6)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(result.y1_val, 6)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.t2, 6)}</td>
                     </tr>
                     <tr className="bg-neutral-50 dark:bg-neutral-800/80 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Order 2 (y&apos;&apos;)</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">(h^2 / 2!) &middot; y&apos;&apos;(x_0)</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.y2_val.toFixed(6)}</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.t3.toFixed(6)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(result.y2_val, 6)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.t3, 6)}</td>
                     </tr>
                     <tr className="bg-white dark:bg-neutral-900 text-black dark:text-white">
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">Order 3 (y&apos;&apos;&apos;)</td>
                       <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">(h^3 / 3!) &middot; y&apos;&apos;&apos;(x_0)</td>
-                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{result.y3_val.toFixed(6)}</td>
-                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{result.t4.toFixed(6)}</td>
+                      <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(result.y3_val, 6)}</td>
+                      <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(result.t4, 6)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -373,7 +374,7 @@ const TaylorSeriesSolver = () => {
                   })}
                 </div>
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Step 2: Expansion Formula (h = {result.h.toFixed(4)}):</span>
+                  <span className="font-bold text-neutral-500 uppercase block">Step 2: Expansion Formula (h = {fixed(result.h, 4)}):</span>
                   <BlockMath math={`y(x_0 + h) = y(x_0) + h \\cdot y'(x_0) + \\frac{h^2}{2!} y''(x_0) + \\frac{h^3}{3!} y'''(x_0)`} />
                   <BlockMath math={`y(${targetX}) = ${result.t1.toFixed(6)} + ${result.t2.toFixed(6)} + ${result.t3.toFixed(6)} + ${result.t4.toFixed(6)}`} />
                   <BlockMath math={`y(${targetX}) \\approx ${result.approxY.toFixed(6)}`} />

@@ -174,7 +174,7 @@ const GaussQuadrature = () => {
                 Function <InlineMath math="f(x)" />
               </label>
               <input
-                type="text" id="gq-function" value={functionInput}
+                type="text" maxLength={2000} id="gq-function" value={functionInput}
                 onChange={(e) => setFunctionInput(e.target.value)}
                 placeholder="e.g., x^2 + 1 or sin(x)" required
                 className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border-2 border-black/80 dark:border-neutral-700 rounded-xl font-mono text-sm font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"

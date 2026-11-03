@@ -1,5 +1,6 @@
 'use client';
 import { useRecordSolve } from '@/app/utils/activity';
+import { fixed, parseNumberList } from '@/app/utils/numberFormat';
 import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
@@ -31,8 +32,12 @@ const StraightLineSolver = () => {
     setResult(null);
     setStepsData([]);
 
-    const xArr = xStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
-    const yArr = yStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const xArrList = parseNumberList(xStr, 'x values');
+    if (xArrList.error) { setError(xArrList.error); return; }
+    const xArr = xArrList.values;
+    const yArrList = parseNumberList(yStr, 'y values');
+    if (yArrList.error) { setError(yArrList.error); return; }
+    const yArr = yArrList.values;
 
     if (xArr.length !== yArr.length || xArr.length < 2) {
       setError('Please enter equal numbers of numeric x and y values (at least 2 points).');
@@ -167,7 +172,7 @@ const StraightLineSolver = () => {
                 x Values (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="xValues"
                 value={xValuesInput}
                 onChange={(e) => setXValuesInput(e.target.value)}
@@ -182,7 +187,7 @@ const StraightLineSolver = () => {
                 y Values (comma separated)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="yValues"
                 value={yValuesInput}
                 onChange={(e) => setYValuesInput(e.target.value)}
@@ -199,7 +204,7 @@ const StraightLineSolver = () => {
             size="md"
             className="w-full"
           >
-            <FiCheckCircle className="w-4 h-4 mr-2" /> Fit Line Y = aX + b
+            <FiCheckCircle className="w-4 h-4 mr-2" /> Fit Line Y = a + bX
           </EditorialButton>
         </form>
 
@@ -210,7 +215,7 @@ const StraightLineSolver = () => {
                 Fitted Line Equation Result
               </span>
               <span className="text-base md:text-lg font-mono font-black">
-                y = {result.b.toFixed(4)} {signedTerm(result.a, 'x')}
+                y = {fixed(result.b, 4)} {signedTerm(result.a, 'x')}
               </span>
             </div>
 
@@ -313,19 +318,19 @@ const StraightLineSolver = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.index}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.x.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{row.y.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{row.x2.toFixed(4)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{row.xy.toFixed(4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.x, 4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(row.y, 4)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-mono">{fixed(row.x2, 4)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700 font-bold">{fixed(row.xy, 4)}</td>
                       </tr>
                     ))}
                     {result && (
                       <tr className="bg-emerald-500 text-white font-bold">
                         <td className="p-3 border-t border-r border-emerald-600">Sum (&Sigma;)</td>
-                        <td className="p-3 border-t border-r border-emerald-600">{result.sumX.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-emerald-600">{result.sumY.toFixed(4)}</td>
-                        <td className="p-3 border-t border-r border-emerald-600">{result.sumX2.toFixed(4)}</td>
-                        <td className="p-3 border-t border-emerald-600">{result.sumXY.toFixed(4)}</td>
+                        <td className="p-3 border-t border-r border-emerald-600">{fixed(result.sumX, 4)}</td>
+                        <td className="p-3 border-t border-r border-emerald-600">{fixed(result.sumY, 4)}</td>
+                        <td className="p-3 border-t border-r border-emerald-600">{fixed(result.sumX2, 4)}</td>
+                        <td className="p-3 border-t border-emerald-600">{fixed(result.sumXY, 4)}</td>
                       </tr>
                     )}
                   </tbody>

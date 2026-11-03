@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
 import { parseUserFunction, getSymbolicDerivative, evaluateMath, expressionToTex } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
+import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
 
 const FixedPointMethod = () => {
@@ -173,7 +174,7 @@ const FixedPointMethod = () => {
       return;
     }
 
-    setResult(`Fixed-point root converged to x = ${(iterationResult.root !== null && iterationResult.root !== undefined) ? iterationResult.root.toFixed(6) : x0.toFixed(6)} in ${iterationResult.iterations} iterations`);
+    setResult(`Fixed-point root converged to x = ${(iterationResult.root !== null && iterationResult.root !== undefined) ? iterationResult.root.toFixed(6) : x0.toFixed(6)} in ${plural(iterationResult.iterations, "iteration")}`);
     setIterationSteps(iterationResult.steps);
   };
 
@@ -208,7 +209,7 @@ const FixedPointMethod = () => {
       return;
     }
 
-    setResult(`Fixed-point root converged to x = ${(iterationResult.root !== null && iterationResult.root !== undefined) ? iterationResult.root.toFixed(6) : x0.toFixed(6)} in ${iterationResult.iterations} iterations`);
+    setResult(`Fixed-point root converged to x = ${(iterationResult.root !== null && iterationResult.root !== undefined) ? iterationResult.root.toFixed(6) : x0.toFixed(6)} in ${plural(iterationResult.iterations, "iteration")}`);
     setIterationSteps(iterationResult.steps);
     setDemoInProgress(false);
   };
@@ -278,7 +279,7 @@ const FixedPointMethod = () => {
                 Function Expression <InlineMath math="g(x)" />
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="function"
                 value={functionInput}
                 onChange={handleFunctionChange}
@@ -293,7 +294,7 @@ const FixedPointMethod = () => {
                 Initial Guess (<InlineMath math="x_0" />)
               </label>
               <input
-                type="text"
+                type="text" maxLength={2000}
                 id="initial-guess"
                 value={initialGuess}
                 onChange={handleInitialGuessChange}
@@ -441,9 +442,9 @@ const FixedPointMethod = () => {
                         }
                       >
                         <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{step.iter}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{step.x_n.toFixed(6)}</td>
-                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{step.x_next.toFixed(6)}</td>
-                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{step.difference.toFixed(6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700">{fixed(step.x_n, 6)}</td>
+                        <td className="p-3 border-t border-r border-neutral-200 dark:border-neutral-700 font-bold">{fixed(step.x_next, 6)}</td>
+                        <td className="p-3 border-t border-neutral-200 dark:border-neutral-700">{fixed(step.difference, 6)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -456,7 +457,7 @@ const FixedPointMethod = () => {
             <div id="fixed-point-steps-container" className="border-2 border-black/80 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-black uppercase text-black dark:text-white flex items-center gap-2">
-                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Function Substitution ({iterationSteps.length} Total Steps)
+                  <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Function Substitution ({plural(iterationSteps.length, 'Total Step')})
                 </h4>
                 <div className="flex items-center gap-2">
                   {iterationSteps.length > 5 && (
