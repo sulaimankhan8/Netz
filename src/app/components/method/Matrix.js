@@ -4,8 +4,7 @@
 // rectangular matrices, sizes 1–6, fractions like 1/3, and pasting a whole matrix as text.
 import React, { useEffect, useState } from 'react';
 import { BlockMath } from 'react-katex';
-import { sig } from '@/app/utils/numberFormat';
-import { toFraction } from '@/app/utils/numeric/fraction';
+import { texNumber, matrixTex } from '@/app/utils/numeric/latex';
 import { parseMatrixText } from '@/app/utils/numeric/matrix';
 
 const SUB = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
@@ -167,24 +166,8 @@ export function MatrixInput({ label = 'A', value, onChange, square = false, min 
   );
 }
 
-/** A number as LaTeX: a fraction when it is exactly one (and `fractions` is on), else up to 6 significant figures. */
-export function texNumber(v, fractions = true) {
-  if (fractions) {
-    const f = toFraction(v);
-    if (f && f.d !== 1) return `${f.n < 0 ? '-' : ''}\\frac{${Math.abs(f.n)}}{${f.d}}`;
-    if (f) return String(f.n);
-  }
-  return sig(v).replace('e', '\\times10^{').replace(/\{([+-]?\d+)$/, '{$1}');
-}
-
-/** LaTeX for a matrix. bars: '[' brackets or '|' determinant bars. divider: draw a line after this many columns. */
-export function matrixTex(M, { bars = '[', divider = null, fractions = true } = {}) {
-  const cols = M[0]?.length || 0;
-  const spec = Array.from({ length: cols }, (_, j) => (divider && j === divider ? '|c' : 'c')).join('');
-  const body = M.map((row) => row.map((v) => (typeof v === 'number' ? texNumber(v, fractions) : v)).join(' & ')).join(' \\\\ ');
-  const [l, r] = bars === '|' ? ['|', '|'] : ['[', ']'];
-  return `\\left${l}\\begin{array}{${spec}} ${body} \\end{array}\\right${r}`;
-}
+// texNumber and matrixTex live in utils/numeric/latex.js (engines use them too); re-exported here for pages
+export { texNumber, matrixTex };
 
 /** A matrix shown the textbook way, with an optional "A =" in front. */
 export function MatrixView({ matrix, prefix = '', ...opts }) {

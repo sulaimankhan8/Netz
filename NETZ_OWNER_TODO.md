@@ -167,6 +167,23 @@ Do this after the custom domain is live. The code side is `NETZ_ROADMAP.md` sect
 - [ ] **Fill the missing keyword volumes** (research could only get US figures). Either sign up for a free seodata.dev key (500 lookups a month) or use Google Keyword Planner with the country set to **India**, then **worldwide**. Run the primary keywords from `reports/NETZ method search volume and SEO.md`.
 - [ ] **Check about 10 ⭐ searches by hand** in a private window on google.co.in and google.com. Note the top 3 results, whether an AI Overview shows, and the "People also ask" questions.
 
+## K. Check tax rates before the GST and VAT pages go live (about 45 minutes; added 2026-11-04)
+
+The pages `/gst-calculator` and `/vat-calculator` are built but hidden (`building` in `src/app/data/methods.js`).
+Their rates are in `src/app/data/rates/in.js` and `src/app/data/rates/vat.js`; each rate says where it came from
+and has `status: 'secondary'` or `'unverified'`. For each one you check on the official site, change its status to
+`'official'` and its `verifiedOn` to the date you checked. Then ask Claude to publish the pages.
+
+- [ ] **India GST 2.0 slabs** (0, 0.25, 3, 5, 12, 18, 40% from 22 Sep 2025): check against Notification 9/2025-Central Tax
+      (Rate) on cbic-gst.gov.in and the GST Council FAQ. Also confirm the old slabs (with 28%) ended on 21 Sep 2025.
+- [ ] **EU VAT standard rates** (27 countries): check against the European Commission "VAT rates" list
+      (taxation-customs.ec.europa.eu). Romania (21%?) and Slovakia (23%?) are marked unverified: sources disagree.
+- [ ] **Other VAT/GST rates**: UK 20% (GOV.UK), UAE 5% (tax.gov.ae), Saudi Arabia 15% (zatca.gov.sa), Australia 10% (ato.gov.au),
+      New Zealand 15% (ird.govt.nz), Singapore 9% (iras.gov.sg), Japan 10% and 8% reduced (nta.go.jp).
+- [ ] **Review calendar** (put these in your calendar): GST Council meetings (whenever they happen), India Budget (1 Feb),
+      EU VAT changes (check the EC list each January and July), UK Budget (November). After any change, edit the rates file:
+      add a new rule with the new `validFrom` and set `validTo` on the old one, so last year's rates stay selectable.
+
 ## I. Saving the work
 
 - [ ] Commit everything to `main` yourself when you are happy (Claude does not commit or push).

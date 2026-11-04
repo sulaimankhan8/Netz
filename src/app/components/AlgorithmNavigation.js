@@ -4,10 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AdSlot from './ads/AdSlot';
-import { LIVE_METHODS, UNITS } from '../data/methods';
+import { LIVE_METHODS, UNITS, unitMenus } from '../data/methods';
 
-// Previous / next order = menu order, from the one methods list (src/app/data/methods.js)
-export const ALGORITHMS_REGISTRY = LIVE_METHODS.map((m) => ({
+// Previous / next order = exactly the menu order (units, then their groups), from the one methods list (src/app/data/methods.js)
+const menuOrder = unitMenus().flatMap((u) => u.subTopics.flatMap((s) => (s.subTopics ? s.subTopics : [s])).map((leaf) => leaf.link));
+export const ALGORITHMS_REGISTRY = menuOrder.map((route) => LIVE_METHODS.find((m) => m.route === route)).filter(Boolean).map((m) => ({
   title: m.name,
   path: m.route,
   unit: UNITS.find((u) => u.unit === m.unit)?.shortTitle || `Unit ${m.unit}`,

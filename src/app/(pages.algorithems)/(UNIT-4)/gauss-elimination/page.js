@@ -110,7 +110,7 @@ export default function GaussEliminationPage() {
                     <span className="bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md uppercase">FINAL SOLUTION</span>
                     <h3 className="text-xl font-bold">x₁ = 2, x₂ = 3, x₃ = -1</h3>
                     <p className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
-                      The calculator below shows every row reduction step live. Partial pivoting (row swapping) is applied automatically to maximize numerical stability.
+                      The calculator below shows every row reduction step live. It swaps rows when a pivot is 0, as in the textbook; switch on partial pivoting to always bring the largest pivot up, which keeps rounding errors small.
                     </p>
                   </div>
                 </div>

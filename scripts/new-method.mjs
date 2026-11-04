@@ -50,7 +50,8 @@ if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) fail('--id must be lowercase words joi
 if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) fail('--route must be lowercase words joined by hyphens, e.g. /matrix-inverse.');
 if (!['num', 'sym', 'rate'].includes(engine)) fail('--engine must be num, sym or rate.');
 if (!(batch >= 1 && batch <= 4)) fail('--batch must be 1, 2, 3 or 4.');
-if (/['\\`$]/.test(name + (category || ''))) fail('Please keep quotes, backslashes and $ out of --name and --category.');
+// Apostrophes are fine (they are escaped below); double quotes, backslashes, backticks and $ would break the generated code
+if (/[\\`$"]/.test(name + (category || ''))) fail('Please keep double quotes, backslashes, backticks and $ out of --name and --category.');
 
 const { METHODS, UNITS } = await import(pathToFileURL(METHODS_FILE).href);
 const unitInfo = UNITS.find((u) => u.unit === unit);

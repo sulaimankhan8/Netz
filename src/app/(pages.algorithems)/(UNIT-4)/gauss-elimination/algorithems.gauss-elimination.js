@@ -7,6 +7,7 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import MatrixInputGrid from '@/app/components/MatrixInputGrid';
+import { Choice } from '@/app/components/method/Calculator';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiList, FiAlertCircle } from 'react-icons/fi';
 
@@ -27,6 +28,7 @@ const GaussElimination = () => {
   useRecordSolve('gauss-elimination', 4, solution);
   useCodeExportInputs('gauss-elimination', () => ({ A: matrix }));
   const [error, setError] = useState('');
+  const [pivoting, setPivoting] = useState('zero'); // 'zero': swap only for a 0 pivot (textbook); 'partial': largest pivot
 
   const deepCopy = (m) => m.map((r) => [...r]);
 
@@ -36,8 +38,16 @@ const GaussElimination = () => {
     const stepsLog = [];
 
     for (let col = 0; col < n; col++) {
-      // Swap rows only when the pivot is 0 (as in the textbook working)
-      if (Math.abs(m[col][col]) < 1e-12) {
+      if (pivoting === 'partial') {
+        // Partial pivoting: bring up the row with the largest |entry| in this column (less rounding error)
+        let best = col;
+        for (let r = col + 1; r < n; r++) if (Math.abs(m[r][col]) > Math.abs(m[best][col]) + 1e-12) best = r;
+        if (best !== col) {
+          [m[col], m[best]] = [m[best], m[col]];
+          stepsLog.push({ label: `Partial pivoting: Swap R${col + 1} ↔ R${best + 1} (largest |pivot| = ${sig(Math.abs(m[col][col]))})`, matrix: deepCopy(m) });
+        }
+      } else if (Math.abs(m[col][col]) < 1e-12) {
+        // Swap rows only when the pivot is 0 (as in the textbook working)
         const swapRow = m.findIndex((row, r) => r > col && Math.abs(row[col]) > 1e-12);
         if (swapRow !== -1) {
           [m[col], m[swapRow]] = [m[swapRow], m[col]];
@@ -151,6 +161,13 @@ const GaussElimination = () => {
         )}
 
         <MatrixInputGrid n={n} setN={(newN) => { setN(newN); setMatrix(initMatrix(newN)); }} matrix={matrix} setMatrix={setMatrix} augmented />
+
+        <Choice
+          label="Row swaps"
+          value={pivoting}
+          onChange={(v) => { setPivoting(v); setSolution(null); setSteps([]); }}
+          options={[{ value: 'zero', label: 'Only when a pivot is 0' }, { value: 'partial', label: 'Partial pivoting (largest pivot)' }]}
+        />
 
         <div className="pt-2 flex justify-end">
           <EditorialButton variant="primary" size="md" onClick={handleSolve} className="w-full sm:w-auto">

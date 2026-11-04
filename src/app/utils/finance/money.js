@@ -36,6 +36,16 @@ export function texMoney(v, code = 'INR') {
   return `${r < 0 ? '-' : ''}${s.replace(/,/g, '{,}')}`;
 }
 
+/** Any ISO currency ("GBP", "JPY", "AED") with the browser's own symbol and decimals: £1,234.50, ¥1,235. */
+export function formatCurrencyCode(v, iso) {
+  if (!Number.isFinite(v)) return '—';
+  try {
+    return new Intl.NumberFormat('en', { style: 'currency', currency: iso }).format(v);
+  } catch {
+    return `${round2(v)} ${iso}`;
+  }
+}
+
 /** A percentage for display: up to 4 decimals, trailing zeros dropped ("12.68%"). */
 export const formatPct = (v, digits = 4) => `${Number(v.toFixed(digits))}%`;
 /** A percentage for KaTeX. */
