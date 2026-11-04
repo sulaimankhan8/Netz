@@ -5,6 +5,7 @@
 import { simplifyExact, num, sub, add, neg, mul, div, pow, paren, unwrap, tidy, tex, polish, bestForm } from './tree';
 import { polyNode } from './integral';
 import { polynomialCoeffs } from './poly';
+import { toFraction } from '../numeric/fraction';
 
 /** Polynomials inside an expression written in descending powers: x^2 + 2 - 2x → x^2 - 2x + 2. */
 export function orderPolynomials(node, v) {
@@ -128,4 +129,37 @@ export function cleanest(raw, v, accept = () => true) {
     tryForm(() => termwise(pythagoras(simplifyExact(p)), v));
   }
   return forms.filter(accept).sort((p, q) => ugliness(p) - ugliness(q))[0] || null;
+}
+
+/** Well-known constants a definite integral often gives. */
+const CONSTANTS = [
+  ['\\pi', Math.PI], ['\\ln 2', Math.LN2], ['\\ln 3', Math.log(3)], ['\\sqrt{2}', Math.SQRT2], ['\\sqrt{3}', Math.sqrt(3)],
+  ['e', Math.E], ['\\ln 5', Math.log(5)], ['\\sqrt{5}', Math.sqrt(5)], ['\\sqrt{6}', Math.sqrt(6)], ['\\pi^2', Math.PI ** 2], ['\\frac{1}{e}', 1 / Math.E], ['\\pi\\sqrt{3}', Math.PI * Math.sqrt(3)],
+];
+const gcdInt = (x, y) => { while (y) [x, y] = [y, x % y]; return Math.abs(x); };
+
+/** y as exact LaTeX: a simple fraction, or p + q·K for a constant K above (π/4, 2 ln 2 − 1, …); null if neither. */
+export function recognise(y) {
+  if (!Number.isFinite(y)) return null;
+  const frac = (v) => toFraction(v, 12, 1e-10);
+  const fracTex = (f) => (f.d === 1 ? String(f.n) : `${f.n < 0 ? '-' : ''}\\frac{${Math.abs(f.n)}}{${f.d}}`);
+  const plain = frac(y);
+  if (plain) return fracTex(plain);
+  for (let d = 1; d <= 12; d++) {
+    for (let n = 1; n <= 48; n++) {
+      if (gcdInt(n, d) !== 1) continue;
+      for (const sign of [1, -1]) {
+        for (const [K, k] of CONSTANTS) {
+          const pf = frac(y - (sign * n * k) / d);
+          if (!pf) continue;
+          const top = n === 1 ? K : `${n}${K.startsWith('\\frac') ? '\\cdot ' : ''}${K}`;
+          const kTex = d === 1 ? top : `\\frac{${top}}{${d}}`;
+          const lead = `${sign < 0 ? '-' : ''}${kTex}`;
+          if (pf.n === 0) return lead;
+          return `${lead} ${pf.n < 0 ? '-' : '+'} ${fracTex({ n: Math.abs(pf.n), d: pf.d })}`;
+        }
+      }
+    }
+  }
+  return null;
 }

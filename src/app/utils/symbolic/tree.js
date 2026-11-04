@@ -4,6 +4,7 @@
  */
 import { create, all } from 'mathjs';
 import { EngineError } from '../numeric/steps';
+import { rationalParts } from './poly';
 
 export const math = create(all);
 const { ConstantNode, SymbolNode, OperatorNode, FunctionNode, ParenthesisNode } = math;
@@ -151,7 +152,12 @@ export function bestForm(node) {
       if (m.isFunctionNode) f = true;
       if (m.isOperatorNode && m.fn === 'pow' && !(m.args[1].isConstantNode && Math.abs(m.args[1].value) <= 3)) f = true;
     });
-    return f || size > 40;
+    if (f || size > 40) return true;
+    // Powers of powers hide high degrees: ((x + 1)^3)^2 is degree 6. Measure the real degree first.
+    const vars = [...variablesOf(n)];
+    if (vars.length !== 1) return vars.length > 1;
+    const r = rationalParts(n, vars[0]);
+    return !r || r.P.length > 5 || r.Q.length > 5;
   };
   try { if (!hasFunctions(node)) candidates.push(math.rationalize(node)); } catch { /* not a rational expression */ }
   const top = unwrap(base);

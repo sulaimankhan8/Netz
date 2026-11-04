@@ -72,7 +72,7 @@ export default function ProgressionPage() {
         </ExampleStep>
 
         <Conclusion result="a₂₀ = 81, S₂₀ = 860" math={<BlockMath math="a_{20} = 81, \qquad S_{20} = 860" />}>
-          The calculator below opens on this AP. Switch to GP or "AP or GP?" to test a sequence of your own.
+          The calculator below opens on this AP. Switch to GP or &quot;AP or GP?&quot; to test a sequence of your own.
         </Conclusion>
       </WorkedExample>
 

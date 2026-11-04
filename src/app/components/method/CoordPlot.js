@@ -14,8 +14,10 @@ function niceStep(range) {
  * fn: optional y = f(x) drawn across the visible range (e.g. a parabola).
  * view: optional { x0, x1, y0, y1 } to fix the window instead of fitting it to the points.
  * shade: optional { a, b } to fill the area between fn and the x-axis from x = a to x = b (a definite integral).
+ * fn2: optional second curve (dashed, orange), e.g. a Taylor polynomial or g(x); with shade, the area
+ *      between fn and fn2 is filled instead of the area down to the x-axis.
  */
-export default function CoordPlot({ points = [], segments = [], lines = [], fn = null, view = null, shade = null }) {
+export default function CoordPlot({ points = [], segments = [], lines = [], fn = null, view = null, shade = null, fn2 = null }) {
   const xs = [0, ...points.map((p) => p.x)], ys = [0, ...points.map((p) => p.y)];
   let [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
   if (!points.length) [x0, x1, y0, y1] = [-5, 5, -5, 5];
@@ -48,29 +50,36 @@ export default function CoordPlot({ points = [], segments = [], lines = [], fn =
   const colors = ['#2B4570', '#D55E64'];
 
   // Sample the curve; break it where it leaves the box far above or below, so it doesn't draw across the plot
-  const curve = [];
-  if (fn) {
+  const sample = (g) => {
+    const out = [];
+    if (!g) return out;
     let run = [];
     for (let k = 0; k <= 480; k++) {
       const x = x0 + (spanX * k) / 480;
-      const yv = fn(x);
+      const yv = g(x);
       if (Number.isFinite(yv) && yv > y0 - span && yv < y1 + span) run.push(`${X(x).toFixed(1)},${Y(yv).toFixed(1)}`);
-      else if (run.length) { curve.push(run); run = []; }
+      else if (run.length) { out.push(run); run = []; }
     }
-    if (run.length) curve.push(run);
-  }
+    if (run.length) out.push(run);
+    return out;
+  };
+  const curve = sample(fn), curve2 = sample(fn2);
 
   // The shaded area: f from a to b, closed along the x-axis (pieces where f is undefined are skipped)
   let area = null;
   if (fn && shade && Number.isFinite(shade.a) && Number.isFinite(shade.b) && shade.a !== shade.b) {
     const lo = Math.min(shade.a, shade.b), hi = Math.max(shade.a, shade.b);
-    const pts = [];
+    const pts = [], low = [];
+    const clampY = (yv) => Y(Math.max(y0 - span, Math.min(y1 + span, yv))).toFixed(1);
     for (let k = 0; k <= 240; k++) {
       const x = lo + ((hi - lo) * k) / 240;
       const yv = fn(x);
-      if (Number.isFinite(yv)) pts.push(`${X(x).toFixed(1)},${Y(Math.max(y0 - span, Math.min(y1 + span, yv))).toFixed(1)}`);
+      if (!Number.isFinite(yv)) continue;
+      pts.push(`${X(x).toFixed(1)},${clampY(yv)}`);
+      if (fn2) { const g = fn2(x); if (Number.isFinite(g)) low.unshift(`${X(x).toFixed(1)},${clampY(g)}`); }
     }
-    if (pts.length > 1) area = `${X(lo).toFixed(1)},${Y(0).toFixed(1)} ${pts.join(' ')} ${X(hi).toFixed(1)},${Y(0).toFixed(1)}`;
+    if (pts.length > 1 && fn2) area = `${pts.join(' ')} ${low.join(' ')}`;
+    else if (pts.length > 1) area = `${X(lo).toFixed(1)},${Y(0).toFixed(1)} ${pts.join(' ')} ${X(hi).toFixed(1)},${Y(0).toFixed(1)}`;
   }
 
   return (
@@ -86,6 +95,7 @@ export default function CoordPlot({ points = [], segments = [], lines = [], fn =
       {area && <polygon points={area} fill="#3B6FC2" fillOpacity="0.22" stroke="none" clipPath="url(#coordplot-box)" className="dark:fill-[#4F80D4]" />}
       <defs><clipPath id="coordplot-box"><rect x="0" y="0" width={SIZE} height={SIZE} /></clipPath></defs>
       {curve.map((pts, i) => <polyline key={`c${i}`} points={pts.join(' ')} fill="none" stroke="#2B4570" strokeWidth="2.5" clipPath="url(#coordplot-box)" className="dark:stroke-sky-400" />)}
+      {curve2.map((pts, i) => <polyline key={`d${i}`} points={pts.join(' ')} fill="none" stroke="#D9692A" strokeWidth="2.5" strokeDasharray="7 5" clipPath="url(#coordplot-box)" className="dark:stroke-[#DD7135]" />)}
       {segments.map(([p, q], i) => <line key={`s${i}`} x1={X(p.x)} y1={Y(p.y)} x2={X(q.x)} y2={Y(q.y)} stroke="#C2632A" strokeWidth="2.5" />)}
       {points.map((p, i) => (
         <g key={`p${i}`}>

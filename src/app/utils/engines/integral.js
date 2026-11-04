@@ -9,7 +9,10 @@ import { toFraction } from '../numeric/fraction';
 import { readConstant } from './input';
 import { math, parse, variablesOf, tex, text, polish, sub, tidy } from '../symbolic/tree';
 import { integrate } from '../symbolic/integral';
-import { cleanest } from '../symbolic/present';
+import { cleanest, recognise } from '../symbolic/present';
+
+// The exact-value recogniser lives with the other presentation helpers; re-exported for older imports
+export { recognise };
 
 const SAMPLE = [0.37, 0.81, 1.29, 2.13, -0.64, 3.7, -2.2, 0.05];
 
@@ -18,7 +21,7 @@ const valueOf = (node, scope) => {
 };
 
 /** Does F′ (central difference) match f at the sample points where both are defined? */
-function derivativeMatches(F, f, v, others) {
+export function derivativeMatches(F, f, v, others) {
   let compared = 0;
   for (const x of SAMPLE) {
     const h = 1e-5 * Math.max(1, Math.abs(x));
@@ -33,7 +36,7 @@ function derivativeMatches(F, f, v, others) {
 }
 
 /** Adaptive Simpson's rule on [a, b]. */
-function simpson(g, a, b, tol = 1e-10) {
+export function simpson(g, a, b, tol = 1e-10) {
   const S = (l, r, fl, fm, fr) => ((r - l) / 6) * (fl + 4 * fm + fr);
   let evals = 0;
   const rec = (l, r, fl, fm, fr, whole, eps, depth) => {
@@ -55,38 +58,6 @@ function texNumber(y) {
   return String(Number(y.toPrecision(6)));
 }
 
-/** Well-known constants a definite integral often gives. */
-const CONSTANTS = [
-  ['\\pi', Math.PI], ['\\ln 2', Math.LN2], ['\\ln 3', Math.log(3)], ['\\sqrt{2}', Math.SQRT2], ['\\sqrt{3}', Math.sqrt(3)],
-  ['e', Math.E], ['\\ln 5', Math.log(5)], ['\\pi^2', Math.PI ** 2], ['\\frac{1}{e}', 1 / Math.E], ['\\pi\\sqrt{3}', Math.PI * Math.sqrt(3)],
-];
-const gcdInt = (x, y) => { while (y) [x, y] = [y, x % y]; return Math.abs(x); };
-
-/** y as exact LaTeX: a simple fraction, or p + q·K for a constant K above (π/4, 2 ln 2 − 1, …); null if neither. */
-export function recognise(y) {
-  if (!Number.isFinite(y)) return null;
-  const frac = (v) => toFraction(v, 12, 1e-10);
-  const fracTex = (f) => (f.d === 1 ? String(f.n) : `${f.n < 0 ? '-' : ''}\\frac{${Math.abs(f.n)}}{${f.d}}`);
-  const plain = frac(y);
-  if (plain) return fracTex(plain);
-  for (let d = 1; d <= 12; d++) {
-    for (let n = 1; n <= 48; n++) {
-      if (gcdInt(n, d) !== 1) continue;
-      for (const sign of [1, -1]) {
-        for (const [K, k] of CONSTANTS) {
-          const pf = frac(y - (sign * n * k) / d);
-          if (!pf) continue;
-          const top = n === 1 ? K : `${n}${K.startsWith('\\frac') ? '\\cdot ' : ''}${K}`;
-          const kTex = d === 1 ? top : `\\frac{${top}}{${d}}`;
-          const lead = `${sign < 0 ? '-' : ''}${kTex}`;
-          if (pf.n === 0) return lead;
-          return `${lead} ${pf.n < 0 ? '-' : '+'} ${fracTex({ n: Math.abs(pf.n), d: pf.d })}`;
-        }
-      }
-    }
-  }
-  return null;
-}
 
 /** The limit text as a node (so pi stays π), and its value. */
 function readLimit(t, label) {

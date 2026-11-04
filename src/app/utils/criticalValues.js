@@ -4,7 +4,7 @@
  */
 
 // log Γ(x) by the Lanczos approximation (accurate to ~1e-14 for x > 0)
-function logGamma(x) {
+export function logGamma(x) {
   const c = [
     676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059,
     12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
@@ -43,7 +43,7 @@ function betaContinuedFraction(a, b, x) {
 }
 
 // Regularized incomplete beta I_x(a, b)
-function incompleteBeta(x, a, b) {
+export function incompleteBeta(x, a, b) {
   if (x <= 0) return 0;
   if (x >= 1) return 1;
   const front = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
@@ -53,7 +53,7 @@ function incompleteBeta(x, a, b) {
 }
 
 // Regularized lower incomplete gamma P(a, x)
-function incompleteGamma(a, x) {
+export function incompleteGamma(a, x) {
   if (x <= 0) return 0;
   const lead = Math.exp(-x + a * Math.log(x) - logGamma(a));
   if (x < a + 1) {
@@ -86,9 +86,9 @@ function incompleteGamma(a, x) {
 }
 
 // Upper-tail probabilities P(X > x)
-const tUpper = (t, df) => 0.5 * incompleteBeta(df / (df + t * t), df / 2, 0.5);
-const chiSquareUpper = (x, df) => 1 - incompleteGamma(df / 2, x / 2);
-const fUpper = (f, df1, df2) => 1 - incompleteBeta((df1 * f) / (df1 * f + df2), df1 / 2, df2 / 2);
+export const tUpper = (t, df) => 0.5 * incompleteBeta(df / (df + t * t), df / 2, 0.5);
+export const chiSquareUpper = (x, df) => 1 - incompleteGamma(df / 2, x / 2);
+export const fUpper = (f, df1, df2) => 1 - incompleteBeta((df1 * f) / (df1 * f + df2), df1 / 2, df2 / 2);
 
 // Solves upperTail(x) = p for x > 0 by bisection (upperTail decreases as x grows)
 function upperQuantile(upperTail, p) {
