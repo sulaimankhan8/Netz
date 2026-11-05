@@ -55,4 +55,118 @@ export const IN_RULES = [
       defaultRate: 18,
     },
   },
+
+  // PPF interest rate: set by the Finance Ministry every quarter (small savings schemes). 7.1% since 1 Apr 2020.
+  {
+    id: 'in.ppf.rate',
+    validFrom: '2020-04-01',
+    validTo: null,
+    label: 'PPF 7.1% a year',
+    source: {
+      title: 'Ministry of Finance, small savings scheme rates (each quarter); National Savings Institute',
+      url: 'https://www.nsiindia.gov.in/',
+      verifiedOn: '2026-11-04',
+      status: 'secondary',
+    },
+    data: { rate: 7.1, minDeposit: 500, maxDeposit: 150000, lockInYears: 15, extensionYears: 5 },
+  },
+
+  // Income tax for individuals (resident). Slabs: [from, to (null = no top), rate %]. Amounts in rupees.
+  // new: the default regime (section 115BAC, carried into the Income-tax Act 2025). old: the regime with deductions.
+  {
+    id: 'in.incometax',
+    validFrom: '2026-04-01',
+    validTo: null,
+    label: 'Tax year 2026-27 (Income-tax Act 2025)',
+    source: {
+      title: 'Income-tax Act 2025 and Finance Act 2026; incometax.gov.in tax calculator',
+      url: 'https://www.incometax.gov.in/',
+      verifiedOn: '2026-11-04',
+      status: 'secondary',
+    },
+    data: {
+      new: {
+        slabs: [[0, 400000, 0], [400000, 800000, 5], [800000, 1200000, 10], [1200000, 1600000, 15], [1600000, 2000000, 20], [2000000, 2400000, 25], [2400000, null, 30]],
+        standardDeduction: 75000,
+        rebate: { limit: 1200000, max: 60000, marginalRelief: true },
+        surchargeCap: 25,
+      },
+      old: {
+        slabs: {
+          below60: [[0, 250000, 0], [250000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          senior: [[0, 300000, 0], [300000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          superSenior: [[0, 500000, 0], [500000, 1000000, 20], [1000000, null, 30]],
+        },
+        standardDeduction: 50000,
+        rebate: { limit: 500000, max: 12500, marginalRelief: false },
+        caps: { sec80C: 150000, homeLoanInterest: 200000, nps80CCD1B: 50000 },
+      },
+      surcharge: [[5000000, 10], [10000000, 15], [20000000, 25], [50000000, 37]],
+      cess: 4,
+    },
+  },
+  {
+    id: 'in.incometax',
+    validFrom: '2025-04-01',
+    validTo: '2026-04-01',
+    label: 'FY 2025-26 (AY 2026-27)',
+    source: {
+      title: 'Finance Act 2025 (Union Budget 1 Feb 2025); incometax.gov.in',
+      url: 'https://www.incometax.gov.in/',
+      verifiedOn: '2026-11-04',
+      status: 'secondary',
+    },
+    data: {
+      new: {
+        slabs: [[0, 400000, 0], [400000, 800000, 5], [800000, 1200000, 10], [1200000, 1600000, 15], [1600000, 2000000, 20], [2000000, 2400000, 25], [2400000, null, 30]],
+        standardDeduction: 75000,
+        rebate: { limit: 1200000, max: 60000, marginalRelief: true },
+        surchargeCap: 25,
+      },
+      old: {
+        slabs: {
+          below60: [[0, 250000, 0], [250000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          senior: [[0, 300000, 0], [300000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          superSenior: [[0, 500000, 0], [500000, 1000000, 20], [1000000, null, 30]],
+        },
+        standardDeduction: 50000,
+        rebate: { limit: 500000, max: 12500, marginalRelief: false },
+        caps: { sec80C: 150000, homeLoanInterest: 200000, nps80CCD1B: 50000 },
+      },
+      surcharge: [[5000000, 10], [10000000, 15], [20000000, 25], [50000000, 37]],
+      cess: 4,
+    },
+  },
+  {
+    id: 'in.incometax',
+    validFrom: '2024-04-01',
+    validTo: '2025-04-01',
+    label: 'FY 2024-25 (AY 2025-26)',
+    source: {
+      title: 'Finance (No. 2) Act 2024 (Union Budget 23 Jul 2024); incometax.gov.in',
+      url: 'https://www.incometax.gov.in/',
+      verifiedOn: '2026-11-04',
+      status: 'secondary',
+    },
+    data: {
+      new: {
+        slabs: [[0, 300000, 0], [300000, 700000, 5], [700000, 1000000, 10], [1000000, 1200000, 15], [1200000, 1500000, 20], [1500000, null, 30]],
+        standardDeduction: 75000,
+        rebate: { limit: 700000, max: 25000, marginalRelief: true },
+        surchargeCap: 25,
+      },
+      old: {
+        slabs: {
+          below60: [[0, 250000, 0], [250000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          senior: [[0, 300000, 0], [300000, 500000, 5], [500000, 1000000, 20], [1000000, null, 30]],
+          superSenior: [[0, 500000, 0], [500000, 1000000, 20], [1000000, null, 30]],
+        },
+        standardDeduction: 50000,
+        rebate: { limit: 500000, max: 12500, marginalRelief: false },
+        caps: { sec80C: 150000, homeLoanInterest: 200000, nps80CCD1B: 50000 },
+      },
+      surcharge: [[5000000, 10], [10000000, 15], [20000000, 25], [50000000, 37]],
+      cess: 4,
+    },
+  },
 ];

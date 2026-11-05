@@ -180,6 +180,18 @@ and has `status: 'secondary'` or `'unverified'`. For each one you check on the o
       (taxation-customs.ec.europa.eu). Romania (21%?) and Slovakia (23%?) are marked unverified: sources disagree.
 - [ ] **Other VAT/GST rates**: UK 20% (GOV.UK), UAE 5% (tax.gov.ae), Saudi Arabia 15% (zatca.gov.sa), Australia 10% (ato.gov.au),
       New Zealand 15% (ird.govt.nz), Singapore 9% (iras.gov.sg), Japan 10% and 8% reduced (nta.go.jp).
+- [ ] **Added 2026-11-05: Batch 2 tax and savings pages** (`/ppf-calculator`, `/sales-tax-calculator`,
+      `/canada-sales-tax-calculator`, `/income-tax-calculator`, all hidden). Rates in `in.js`, `us.js` and `ca.js`:
+  - [ ] **PPF rate 7.1%**: check the current quarter on nsiindia.gov.in or the Finance Ministry notice. It changes by quarter, so re-check each quarter.
+  - [ ] **India income tax** for tax year 2026-27, FY 2025-26 and FY 2024-25: new-regime slabs, ₹75,000 standard deduction,
+        87A rebate (₹60,000 up to ₹12 lakh; ₹25,000 up to ₹7 lakh in FY 2024-25), old-regime slabs by age, surcharge bands
+        (10/15/25/37%, new regime capped at 25%) and 4% cess, on incometax.gov.in. Confirm that the Finance Act 2026 kept the
+        FY 2025-26 slabs for tax year 2026-27.
+  - [ ] **US state sales tax rates** (50 states + DC): check against each state revenue department or the Tax Foundation
+        list. Watch Louisiana (5% from 2025), South Dakota (4.2%) and New Mexico (4.875%).
+  - [ ] **Canada**: GST 5%; HST 13% ON and 15% NB, NL, PE; Nova Scotia 14% from 1 Apr 2025; PST BC 7%, SK 6%,
+        MB RST 7%, QC QST 9.975%, on the CRA "GST/HST rates" page.
+  - The FD, RD, SIP and lump sum pages need no rate check (people type their own rate); publish them whenever you like.
 - [ ] **Review calendar** (put these in your calendar): GST Council meetings (whenever they happen), India Budget (1 Feb),
       EU VAT changes (check the EC list each January and July), UK Budget (November). After any change, edit the rates file:
       add a new rule with the new `validFrom` and set `validTo` on the old one, so last year's rates stay selectable.
