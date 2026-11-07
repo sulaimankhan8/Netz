@@ -212,8 +212,8 @@ import { test } from 'node:test';
 // import assert from 'node:assert/strict';
 // import { solve } from '../../src/app/utils/engines/${id}.js';
 
-test.todo('${name}: worked example from the textbook (Grewal / NCERT) gives the book answer');
-test.todo('${name}: bad input gives an EngineError with a clear message');
+test.todo(${JSON.stringify(`${name}: worked example from the textbook (Grewal / NCERT) gives the book answer`)});
+test.todo(${JSON.stringify(`${name}: bad input gives an EngineError with a clear message`)});
 `;
 
 // ---------- methods.js ----------

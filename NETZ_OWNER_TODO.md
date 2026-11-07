@@ -192,6 +192,22 @@ and has `status: 'secondary'` or `'unverified'`. For each one you check on the o
   - [ ] **Canada**: GST 5%; HST 13% ON and 15% NB, NL, PE; Nova Scotia 14% from 1 Apr 2025; PST BC 7%, SK 6%,
         MB RST 7%, QC QST 9.975%, on the CRA "GST/HST rates" page.
   - The FD, RD, SIP and lump sum pages need no rate check (people type their own rate); publish them whenever you like.
+- [ ] **Added 2026-11-08: Batch 3 tax pages** (`/capital-gains-tax-india`, `/hra-exemption-calculator`, `/tds-calculator`,
+      `/us-income-tax-calculator`, `/uk-income-tax-calculator`, all hidden). Rates in `in.js`, `us.js` and the new `uk.js`:
+  - [ ] **India capital gains** from 23 Jul 2024: equity STCG 20%, LTCG 12.5% above ₹1.25 lakh; other assets LTCG 12.5% without
+        indexation after 24 months (12 for listed bonds); land/building bought before 23 Jul 2024 may pay 20% with indexation
+        instead; debt funds bought from 1 Apr 2023 always at slab rate. Also the rules before 23 Jul 2024 (15% / 10% above ₹1 lakh,
+        20% with indexation, 36 months for gold and unlisted shares). Confirm the Income-tax Act 2025 kept these from April 2026.
+  - [ ] **Cost Inflation Index** 2001-02 = 100 to 2025-26 = 376 (CBDT notifications). Add 2026-27 when it is notified.
+  - [ ] **HRA**: 50% for Delhi, Mumbai, Kolkata, Chennai, 40% elsewhere, rent − 10% of salary. Check whether the new
+        Income-tax Rules 2026 added more cities to the 50% list (reports mention Bengaluru, Hyderabad, Pune, Ahmedabad).
+  - [ ] **TDS presets** (marked unverified): 194J 10% / 2%, 194C 1% / 2%, 194I 10% / 2%, 194H 2%, 194A 10%, and the limits
+        changed by Budget 2025 (194J ₹50,000, 194C ₹30,000 per payment, 194I ₹50,000 a month, 194H ₹20,000, 194A ₹50,000 /
+        ₹1 lakh for seniors); 20% without PAN. People can always type their own rate.
+  - [ ] **US federal tax 2026 and 2025**: brackets, standard deduction (2026: $16,100 single, $32,200 joint, $24,150 head of
+        household) on irs.gov (Rev. Proc. 2025-32), and the Social Security wage base ($184,500 for 2026, $176,100 for 2025) on ssa.gov.
+  - [ ] **UK 2026/27 and 2025/26** on gov.uk/income-tax-rates: allowance £12,570, bands 20/40/45%, NI 8% and 2%.
+        **Scotland 2026/27 is marked unverified** (starter to £16,537, basic to £29,526): check on gov.scot.
 - [ ] **Review calendar** (put these in your calendar): GST Council meetings (whenever they happen), India Budget (1 Feb),
       EU VAT changes (check the EC list each January and July), UK Budget (November). After any change, edit the rates file:
       add a new rule with the new `validFrom` and set `validTo` on the old one, so last year's rates stay selectable.

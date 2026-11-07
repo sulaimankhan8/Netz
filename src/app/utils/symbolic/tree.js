@@ -45,7 +45,7 @@ export function parse(text, label = 'f(x)') {
 
 // Functions the engine knows (see rules in derivative.js); kept here so parse() can reject others early
 const DERIVATIVE_TABLE_NAMES = Object.fromEntries(
-  ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'exp', 'log', 'log10', 'sqrt', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'abs', 'cbrt'].map((k) => [k, true]),
+  ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'exp', 'log', 'log10', 'sqrt', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'abs', 'cbrt', 'heaviside', 'dirac'].map((k) => [k, true]),
 );
 
 /** The letters that act as variables in a node (not e, pi, …). */
@@ -108,22 +108,38 @@ export function polish(node) {
     if (!(n.isOperatorNode && n.fn === 'multiply')) return n;
     let sign = 1;
     let coef = 1;
+    let coefDen = 1; // whole-number fractions such as (1/2) are kept exact: 2 · (1/2) → 1
     const others = [];
+    const isInt = (x) => x.isConstantNode && typeof x.value === 'number' && Number.isInteger(x.value);
     const collect = (f) => {
       const x = unwrap(f);
       if (x.isOperatorNode && x.fn === 'multiply') { x.args.forEach(collect); return; }
       if (x.isOperatorNode && x.fn === 'unaryMinus') { sign = -sign; collect(x.args[0]); return; }
       if (x.isConstantNode && typeof x.value === 'number') { coef *= x.value; return; }
+      if (x.isOperatorNode && x.fn === 'divide' && isInt(unwrap(x.args[0])) && isInt(unwrap(x.args[1])) && unwrap(x.args[1]).value !== 0) {
+        coef *= unwrap(x.args[0]).value; coefDen *= unwrap(x.args[1]).value; return;
+      }
       others.push(polish(x));
     };
     n.args.forEach(collect);
+    if (coefDen < 0) { coefDen = -coefDen; coef = -coef; }
     if (coef < 0) { sign = -sign; coef = -coef; }
+    if (coefDen !== 1) {
+      if (Number.isInteger(coef)) {
+        const g = (a, b) => (b ? g(b, a % b) : a);
+        const d = g(coef, coefDen) || 1;
+        coef /= d; coefDen /= d;
+      } else { coef /= coefDen; coefDen = 1; }
+    }
     // Letters and their powers before functions, as textbooks write 3x^2 cos(x)
     // Number-only factors such as (2/3) come first, as in (2/3)x^(3/2)
     const numberOnly = (f) => { let s = false; f.traverse((m) => { if (m.isSymbolNode && !m.isFunctionNode) s = true; }); return !s; };
     const rank = (f) => (numberOnly(f) ? 0 : f.isFunctionNode ? 2 : f.isOperatorNode && f.fn !== 'pow' ? 3 : 1);
-    others.sort((p, q) => rank(p) - rank(q));
-    const factors = coef === 1 && others.length ? others : [num(coef), ...others];
+    // Several letters: alphabetical, so y·x² becomes x²y (only among plain letters and their powers)
+    const letter = (f) => (f.isSymbolNode ? f.name : f.isOperatorNode && f.fn === 'pow' && f.args[0].isSymbolNode ? f.args[0].name : null);
+    others.sort((p, q) => rank(p) - rank(q) || (rank(p) === 1 && letter(p) && letter(q) ? letter(p).localeCompare(letter(q)) : 0));
+    const lead = coefDen === 1 ? num(coef) : new ParenthesisNode(new OperatorNode('/', 'divide', [num(coef), num(coefDen)]));
+    const factors = coef === 1 && coefDen === 1 && others.length ? others : [lead, ...others];
     // Sums inside a product need brackets
     const wrap = (f) => (f.isOperatorNode && ['add', 'subtract'].includes(f.fn) ? paren(f) : f);
     const product = factors.map(wrap).reduce((acc, f) => new OperatorNode('*', 'multiply', [acc, f], !(f.isConstantNode)));

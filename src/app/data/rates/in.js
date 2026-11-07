@@ -169,4 +169,110 @@ export const IN_RULES = [
       cess: 4,
     },
   },
+
+  // Capital gains for resident individuals. Holding months: an asset held MORE than this is long-term.
+  // rates in %; 'slab' = taxed at the person's income-tax slab rate. exemption: yearly LTCG exemption (equity only).
+  {
+    id: 'in.capitalgains',
+    validFrom: '2024-07-23',
+    validTo: null,
+    label: 'Capital gains from 23 Jul 2024 (Budget 2024, carried into the Income-tax Act 2025)',
+    source: {
+      title: 'Finance (No. 2) Act 2024, sections 111A, 112, 112A; Income Tax Department tax-rate pages',
+      url: 'https://incometaxindia.gov.in/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: {
+      assets: [
+        { key: 'equity', label: 'Listed shares / equity mutual funds (STT paid)', longAfter: 12, stcg: 20, ltcg: 12.5, exemption: 125000, indexation: false },
+        { key: 'property', label: 'Land or building', longAfter: 24, stcg: 'slab', ltcg: 12.5, indexation: 'option', indexationRate: 20, indexationBefore: '2024-07-23' },
+        { key: 'gold', label: 'Gold, jewellery, unlisted shares and other assets', longAfter: 24, stcg: 'slab', ltcg: 12.5, indexation: false },
+        { key: 'bonds', label: 'Listed bonds and debentures', longAfter: 12, stcg: 'slab', ltcg: 12.5, indexation: false },
+        { key: 'debtmf', label: 'Debt mutual funds bought on or after 1 Apr 2023', longAfter: null, stcg: 'slab', ltcg: 'slab', indexation: false },
+      ],
+      cess: 4,
+      surchargeCapOnEquity: 15,
+    },
+  },
+  {
+    id: 'in.capitalgains',
+    validFrom: '2018-04-01',
+    validTo: '2024-07-23',
+    label: 'Capital gains before 23 Jul 2024',
+    source: {
+      title: 'Income-tax Act 1961, sections 111A, 112, 112A (before the Finance (No. 2) Act 2024)',
+      url: 'https://incometaxindia.gov.in/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: {
+      assets: [
+        { key: 'equity', label: 'Listed shares / equity mutual funds (STT paid)', longAfter: 12, stcg: 15, ltcg: 10, exemption: 100000, indexation: false },
+        { key: 'property', label: 'Land or building', longAfter: 24, stcg: 'slab', ltcg: 20, indexation: true },
+        { key: 'gold', label: 'Gold, jewellery, unlisted shares and other assets', longAfter: 36, stcg: 'slab', ltcg: 20, indexation: true },
+        { key: 'bonds', label: 'Listed bonds and debentures', longAfter: 12, stcg: 'slab', ltcg: 10, indexation: false },
+        { key: 'debtmf', label: 'Debt mutual funds bought on or after 1 Apr 2023', longAfter: null, stcg: 'slab', ltcg: 'slab', indexation: false },
+      ],
+      cess: 4,
+      surchargeCapOnEquity: 15,
+    },
+  },
+  // Cost Inflation Index (base year 2001-02 = 100), notified by CBDT each year. Key: the financial year's first calendar year.
+  {
+    id: 'in.cii',
+    validFrom: '2001-04-01',
+    validTo: null,
+    label: 'Cost Inflation Index 2001-02 to 2025-26',
+    source: {
+      title: 'CBDT Cost Inflation Index notifications (latest: 2025-26 = 376)',
+      url: 'https://incometaxindia.gov.in/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: {
+      index: { 2001: 100, 2002: 105, 2003: 109, 2004: 113, 2005: 117, 2006: 122, 2007: 129, 2008: 137, 2009: 148, 2010: 167, 2011: 184, 2012: 200, 2013: 220, 2014: 240, 2015: 254, 2016: 264, 2017: 272, 2018: 280, 2019: 289, 2020: 301, 2021: 317, 2022: 331, 2023: 348, 2024: 363, 2025: 376 },
+    },
+  },
+  // HRA exemption: the least of actual HRA, rent − 10% of salary, and 50% (metro) or 40% of salary. Old regime only.
+  {
+    id: 'in.hra',
+    validFrom: '2001-04-01',
+    validTo: null,
+    label: 'HRA exemption, section 10(13A) and Rule 2A',
+    source: {
+      title: 'Income-tax Act section 10(13A), Income-tax Rules rule 2A',
+      url: 'https://incometaxindia.gov.in/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: { metroPct: 50, otherPct: 40, rentLessPct: 10, metros: ['Delhi', 'Mumbai', 'Kolkata', 'Chennai'], oldRegimeOnly: true },
+  },
+  // TDS: common sections as presets (the page always lets people type their own rate). threshold: per payment or per year as noted.
+  {
+    id: 'in.tds.sections',
+    validFrom: '2025-04-01',
+    validTo: null,
+    label: 'Common TDS rates and limits from 1 Apr 2025 (Budget 2025)',
+    source: {
+      title: 'Finance Act 2025 TDS changes; Income Tax Department TDS rate chart',
+      url: 'https://incometaxindia.gov.in/',
+      verifiedOn: '2026-11-08',
+      status: 'unverified',
+    },
+    data: {
+      sections: [
+        { key: '194J-prof', label: '194J professional fees', rate: 10, threshold: 50000, per: 'year' },
+        { key: '194J-tech', label: '194J technical services / royalty (some)', rate: 2, threshold: 50000, per: 'year' },
+        { key: '194C-ind', label: '194C contractor (individual / HUF)', rate: 1, threshold: 30000, per: 'payment' },
+        { key: '194C-oth', label: '194C contractor (others)', rate: 2, threshold: 30000, per: 'payment' },
+        { key: '194I-land', label: '194I rent of land / building', rate: 10, threshold: 50000, per: 'month' },
+        { key: '194I-plant', label: '194I rent of plant / machinery', rate: 2, threshold: 50000, per: 'month' },
+        { key: '194H', label: '194H commission or brokerage', rate: 2, threshold: 20000, per: 'year' },
+        { key: '194A-bank', label: '194A bank interest (not senior)', rate: 10, threshold: 50000, per: 'year' },
+        { key: '194A-senior', label: '194A bank interest (senior citizen)', rate: 10, threshold: 100000, per: 'year' },
+      ],
+      noPanRate: 20,
+    },
+  },
 ];

@@ -66,12 +66,12 @@ const fieldClass = 'w-full min-h-[44px] px-3 text-base font-mono font-bold round
 const selectClass = 'w-full min-h-[44px] px-3 bg-neutral-50 dark:bg-neutral-800 border-2 border-black/80 dark:border-neutral-700 rounded-xl font-mono text-base font-bold text-black dark:text-white focus:outline-none';
 
 /** A labelled text box for numbers (16px text, so phones don't zoom). Enter runs onEnter. */
-export function Field({ label, value, onChange, onEnter, placeholder = '', inputMode = 'decimal' }) {
+export function Field({ label, value, onChange, onEnter, placeholder = '', inputMode = 'decimal', type = 'text' }) {
   return (
     <label className="space-y-1 min-w-0 block">
       <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400 block">{label}</span>
       <input
-        type="text"
+        type={type}
         inputMode={inputMode}
         autoComplete="off"
         value={value ?? ''}

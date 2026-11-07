@@ -9,7 +9,7 @@ import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Select, Notes 
 import StepList from '@/app/components/method/StepList';
 
 /**
- * fields: [{ key, label, kind: 'field' | 'choice' | 'select', options, placeholder, show(values), wide }]
+ * fields: [{ key, label, kind: 'field' | 'choice' | 'select' | 'date', options, placeholder, show(values), wide }]
  * examples: [{ label, input }]   solve(values) → engine answer   renderResult(answer, values) → JSX
  */
 export default function SymbolicCalculator({
@@ -40,7 +40,7 @@ export default function SymbolicCalculator({
             <div key={f.key} className={f.wide && inputs.length > 1 ? 'sm:col-span-2' : ''}>
               {f.kind === 'select'
                 ? <Select label={f.label} value={v[f.key]} onChange={(x) => set({ [f.key]: x })} options={f.options} />
-                : <Field label={f.label} value={v[f.key]} inputMode="text" placeholder={f.placeholder} onChange={(x) => set({ [f.key]: x })} onEnter={() => run()} />}
+                : <Field label={f.label} value={v[f.key]} inputMode="text" type={f.kind === 'date' ? 'date' : 'text'} placeholder={f.placeholder} onChange={(x) => set({ [f.key]: x })} onEnter={() => run()} />}
             </div>
           ))}
         </div>

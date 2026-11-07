@@ -40,4 +40,50 @@ export const US_RULES = [
       defaultState: 'CA',
     },
   },
+
+  // Federal income tax. Brackets: [from, to (null = no top), rate %] on taxable income (after the standard deduction).
+  // validFrom/validTo are tax years (1 Jan to 1 Jan). FICA: Social Security up to the wage base, Medicare on all wages
+  // plus the additional 0.9% above the threshold.
+  {
+    id: 'us.incometax',
+    validFrom: '2026-01-01',
+    validTo: '2027-01-01',
+    label: 'Tax year 2026',
+    source: {
+      title: 'IRS Revenue Procedure 2025-32 (2026 inflation adjustments); SSA 2026 wage base',
+      url: 'https://www.irs.gov/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: {
+      standardDeduction: { single: 16100, mfj: 32200, hoh: 24150 },
+      brackets: {
+        single: [[0, 12400, 10], [12400, 50400, 12], [50400, 105700, 22], [105700, 201775, 24], [201775, 256225, 32], [256225, 640600, 35], [640600, null, 37]],
+        mfj: [[0, 24800, 10], [24800, 100800, 12], [100800, 211400, 22], [211400, 403550, 24], [403550, 512450, 32], [512450, 768700, 35], [768700, null, 37]],
+        hoh: [[0, 17700, 10], [17700, 67450, 12], [67450, 105700, 22], [105700, 201750, 24], [201750, 256200, 32], [256200, 640600, 35], [640600, null, 37]],
+      },
+      fica: { ssRate: 6.2, ssWageBase: 184500, medicareRate: 1.45, addlMedicareRate: 0.9, addlMedicareThreshold: { single: 200000, mfj: 250000, hoh: 200000 } },
+    },
+  },
+  {
+    id: 'us.incometax',
+    validFrom: '2025-01-01',
+    validTo: '2026-01-01',
+    label: 'Tax year 2025',
+    source: {
+      title: 'IRS Revenue Procedure 2024-40 and the 2025 standard deduction raised by Public Law 119-21; SSA 2025 wage base',
+      url: 'https://www.irs.gov/',
+      verifiedOn: '2026-11-08',
+      status: 'secondary',
+    },
+    data: {
+      standardDeduction: { single: 15750, mfj: 31500, hoh: 23625 },
+      brackets: {
+        single: [[0, 11925, 10], [11925, 48475, 12], [48475, 103350, 22], [103350, 197300, 24], [197300, 250525, 32], [250525, 626350, 35], [626350, null, 37]],
+        mfj: [[0, 23850, 10], [23850, 96950, 12], [96950, 206700, 22], [206700, 394600, 24], [394600, 501050, 32], [501050, 751600, 35], [751600, null, 37]],
+        hoh: [[0, 17000, 10], [17000, 64850, 12], [64850, 103350, 22], [103350, 197300, 24], [197300, 250500, 32], [250500, 626350, 35], [626350, null, 37]],
+      },
+      fica: { ssRate: 6.2, ssWageBase: 176100, medicareRate: 1.45, addlMedicareRate: 0.9, addlMedicareThreshold: { single: 200000, mfj: 250000, hoh: 200000 } },
+    },
+  },
 ];

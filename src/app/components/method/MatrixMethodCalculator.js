@@ -57,7 +57,7 @@ export default function MatrixMethodCalculator({
           <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> {button}</EditorialButton>
         </div>
         {answer && (
-          <ResultBox label={resultLabel}>
+          <ResultBox label={typeof resultLabel === 'function' ? resultLabel(answer) : resultLabel}>
             {renderResult(answer)}
             {answer.verified === false && <p className="mt-2 text-sm font-semibold text-amber-800 dark:text-amber-300 flex gap-2"><FiAlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> NETZ could not double-check this answer. Treat it with care.</p>}
           </ResultBox>

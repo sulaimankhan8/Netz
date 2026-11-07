@@ -98,7 +98,7 @@ export function solve({ cells }) {
       lines: [
         `A - (${r.tex})I = ${matrixTex(N)} \\ \\to \\ ${matrixTex(R)}`,
         basis.length ? `X = ${basis.map((x, k) => `${basis.length > 1 ? `t_{${k + 1}}` : 't'}${vecTex(x)}`).join(' + ')}` : '\\text{only } X = 0',
-        ...(r.m > basis.length ? [`\\text{λ is repeated ${r.m} times but has only ${basis.length} independent eigenvector${basis.length === 1 ? '' : 's'}.}`] : []),
+        ...(r.m > basis.length ? [`\\lambda \\text{ is repeated ${r.m} times but has only ${basis.length} independent eigenvector${basis.length === 1 ? '' : 's'}.}`] : []),
       ],
     });
   }

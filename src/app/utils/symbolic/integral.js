@@ -70,6 +70,40 @@ function linear(node, v) {
   if (!c || c.length !== 2 || Math.abs(c[1]) < 1e-12) return null;
   return { a: c[1], b: c[0] };
 }
+/**
+ * Like linear(), but the coefficient may also be a letter (n·x, −s·t, (2k + 1)x): { a, aNode, sym }.
+ * a is the number when there is one (sym false), else NaN with aNode the coefficient as a node.
+ */
+function linearAny(node, v) {
+  const l = linear(node, v);
+  if (l) return { ...l, aNode: fracNode(l.a), sym: false };
+  if (isConstantIn(node, v)) return null;
+  let d;
+  try { d = tidy(math.derivative(node, v)); } catch { return null; }
+  if (!isConstantIn(d, v)) return null;
+  const others = [...variablesOf(d)];
+  const probe = Object.fromEntries(others.map((s, i) => [s, 1.37 + 0.71 * i]));
+  let dv;
+  try { dv = d.evaluate(probe); } catch { return null; }
+  if (typeof dv !== 'number' || Math.abs(dv) < 1e-12) return null;
+  let aNode = d;
+  try { aNode = simplifyExact(d); } catch { /* keep d */ }
+  return { a: NaN, b: NaN, aNode, sym: true };
+}
+/** body ÷ (the coefficient of a linear inside), written the textbook way. */
+function overLin(body, l) {
+  if (!l.sym) return overA(body, l.a);
+  const minus = body.isOperatorNode && body.fn === 'unaryMinus';
+  const inner = minus ? body.args[0] : body;
+  const d = div(inner, l.aNode.isSymbolNode || l.aNode.isConstantNode ? l.aNode : paren(l.aNode));
+  return minus ? neg(d) : d;
+}
+const binom = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return Math.round(r); };
+/** f^p, with f^1 = f. */
+/** body ÷ a for a linear inside (numbers as before: body/a). */
+const per = (body, l) => (l.sym ? overLin(body, l) : div(body, fracNode(l.a)));
+const powT = (f, p) => (p === 1 ? f : pow(f, num(p)));
+
 export const polyNode = (c, v) => {
   const terms = [];
   for (let k = c.length - 1; k >= 0; k--) {
@@ -140,6 +174,104 @@ function solveLinear(A, b) {
 }
 const snap = (v) => { const f = toFraction(v, 1000, 1e-7); return f ? f.n / f.d : v; };
 
+// ---------- rewriting an integrand the rules could not take as it was ----------
+/**
+ * One product/quotient written cleanly: every factor as base^power (√u = u^(1/2), sec = cos⁻¹, tan = sin·cos⁻¹ …),
+ * equal bases merged, all e-powers merged into one; then back with sec, csc for lone cos, sin below.
+ * A product of two sines/cosines becomes a sum (sin A cos B = ½[sin(A + B) + sin(A − B)] …), and sinᵏ/cos
+ * becomes (1 − cos²)·sinᵏ⁻²/cos split term by term. Returns { node, title, formula } or null.
+ */
+function rewriteIntegrand(n, w) {
+  const numberOf = (x) => { try { const k = x.evaluate({}); return typeof k === 'number' ? k : NaN; } catch { return NaN; } };
+  const factors = [];
+  let coef = 1;
+  let ePow = null, eCount = 0;
+  const push = (base, k) => {
+    const f = factors.find((q) => str(q.base) === str(base));
+    if (f) f.k += k; else factors.push({ base, k });
+  };
+  const collect = (t, sign) => {
+    const x = unwrap(t);
+    if (x.isOperatorNode && x.fn === 'multiply') { x.args.forEach((y) => collect(y, sign)); return; }
+    if (x.isOperatorNode && x.fn === 'divide') { collect(x.args[0], sign); collect(x.args[1], -sign); return; }
+    if (x.isOperatorNode && x.fn === 'unaryMinus') { coef = -coef; collect(x.args[0], sign); return; }
+    if (x.isConstantNode && typeof x.value === 'number') { coef *= x.value ** sign; return; }
+    if (x.isFunctionNode && x.fn.name === 'exp') { const e = sign > 0 ? x.args[0] : neg(x.args[0]); ePow = ePow ? add(ePow, e) : e; eCount++; return; }
+    if (x.isOperatorNode && x.fn === 'pow' && isSym(unwrap(x.args[0]), 'e')) { const e = sign > 0 ? x.args[1] : neg(x.args[1]); ePow = ePow ? add(ePow, e) : e; eCount++; return; }
+    if (x.isFunctionNode && x.fn.name === 'sqrt') { push(unwrap(x.args[0]), sign / 2); return; }
+    if (x.isOperatorNode && x.fn === 'pow') {
+      const k = numberOf(x.args[1]);
+      if (Number.isFinite(k)) {
+        const b = unwrap(x.args[0]);
+        if (b.isFunctionNode && ['sec', 'csc', 'tan', 'cot'].includes(b.fn.name)) { for (let i = 0; i < Math.abs(k) && Number.isInteger(k); i++) collect(b, sign * Math.sign(k)); if (Number.isInteger(k)) return; }
+        push(b, sign * k); return;
+      }
+    }
+    if (x.isFunctionNode && x.args.length === 1) {
+      const u = x.args[0];
+      const R = { sec: [['cos', -1]], csc: [['sin', -1]], tan: [['sin', 1], ['cos', -1]], cot: [['cos', 1], ['sin', -1]] }[x.fn.name];
+      if (R) { R.forEach(([f, k]) => push(fn(f, u), sign * k)); return; }
+    }
+    push(x, sign);
+  };
+  collect(n, 1);
+  const live = factors.filter((f) => Math.abs(f.k) > 1e-12);
+  const isTrig = (b, name) => b.isFunctionNode && b.fn.name === name;
+  // e-powers merged
+  let eNode = null;
+  if (ePow) { let e = ePow; try { e = simplifyExact(ePow); } catch { /* keep */ } const ev = numberOf(e); if (!(Number.isFinite(ev) && Math.abs(ev) < 1e-12)) eNode = pow(sym('e'), e); }
+  const pw = (b, k) => (Math.abs(k - 1) < 1e-12 ? b : pow(b, fracNode(k)));
+  const up = live.filter((f) => f.k > 0), down = live.filter((f) => f.k < 0);
+  // sinᵏ u / cos u (k ≥ 2): sin² = 1 − cos², then split
+  const s2 = up.find((f) => isTrig(f.base, 'sin') && f.k >= 2 && Number.isInteger(f.k));
+  const c1 = s2 && down.find((f) => isTrig(f.base, 'cos') && str(f.base.args[0]) === str(s2.base.args[0]));
+  if (s2 && c1) {
+    const u = s2.base.args[0];
+    const rest = [...up.filter((f) => f !== s2).map((f) => pw(f.base, f.k)), ...(s2.k > 2 ? [pw(fn('sin', u), s2.k - 2)] : [])];
+    const others = down.filter((f) => f !== c1).map((f) => pw(f.base, -f.k));
+    const build = (top) => {
+      const nume = [...rest, top].reduce((a, b) => mul(a, b));
+      const deno = [pw(fn('cos', u), -c1.k), ...others].reduce((a, b) => mul(a, b));
+      return mul(fracNode(coef), div(nume, deno));
+    };
+    const node = sub(build(num(1)), build(pow(fn('cos', u), num(2))));
+    return { node: tidy(node), title: 'Use sin² = 1 − cos² and split', formula: '\\sin^2 x = 1 - \\cos^2 x' };
+  }
+  // two sines/cosines multiplied: product to sum
+  const trigUp = up.filter((f) => (isTrig(f.base, 'sin') || isTrig(f.base, 'cos')) && f.k === 1);
+  if (trigUp.length === 2 && !down.some((f) => isTrig(f.base, 'sin') || isTrig(f.base, 'cos'))) {
+    const [p, q] = trigUp.sort((a, b) => (a.base.fn.name === 'sin' ? -1 : 1) - (b.base.fn.name === 'sin' ? -1 : 1));
+    const A = p.base.args[0], B = q.base.args[0];
+    const tidyArg = (z) => { try { return polish(simplifyExact(z)); } catch { return z; } };
+    const plus = tidyArg(add(A, B)), minus = tidyArg(sub(A, B));
+    const names = `${p.base.fn.name}${q.base.fn.name}`;
+    const sum = names === 'sincos' ? add(fn('sin', plus), fn('sin', minus)) : names === 'coscos' ? add(fn('cos', minus), fn('cos', plus)) : sub(fn('cos', minus), fn('cos', plus));
+    const formula = names === 'sincos' ? '\\sin A\\cos B = \\tfrac12[\\sin(A + B) + \\sin(A - B)]' : names === 'coscos' ? '\\cos A\\cos B = \\tfrac12[\\cos(A - B) + \\cos(A + B)]' : '\\sin A\\sin B = \\tfrac12[\\cos(A - B) - \\cos(A + B)]';
+    const rest = [...up.filter((f) => f !== p && f !== q).map((f) => pw(f.base, f.k)), ...(eNode ? [eNode] : [])];
+    const deno = down.map((f) => pw(f.base, -f.k));
+    // split the sum so each term is a product the rules know
+    const each = (t) => { let x = mul(fracNode(coef / 2), [...rest, t].reduce((a, b) => mul(a, b))); if (deno.length) x = div(x, deno.reduce((a, b) => mul(a, b))); return x; };
+    const terms = sum.fn === 'add' ? add(each(sum.args[0]), each(sum.args[1])) : sub(each(sum.args[0]), each(sum.args[1]));
+    return { node: tidy(terms), title: 'Product to sum', formula };
+  }
+  // otherwise: rebuild, with sec/csc for a lone cos/sin below
+  const top = [...up.map((f) => pw(f.base, f.k)), ...(eNode ? [eNode] : [])];
+  const bottom = [];
+  for (const f of down) {
+    if (isTrig(f.base, 'cos') && !top.length) { top.push(pw(fn('sec', f.base.args[0]), -f.k)); continue; }
+    if (isTrig(f.base, 'sin') && !top.length) { top.push(pw(fn('csc', f.base.args[0]), -f.k)); continue; }
+    // x^(−1/2) stays a power below when nothing is on top (so 1/√x → x^(−1/2))
+    if (!Number.isInteger(f.k) && !top.length) { top.push(pow(f.base, fracNode(f.k))); continue; }
+    bottom.push(pw(f.base, -f.k));
+  }
+  let node = top.length ? top.reduce((a, b) => mul(a, b)) : num(1);
+  if (bottom.length) node = div(node, bottom.reduce((a, b) => mul(a, b)));
+  if (Math.abs(coef - 1) > 1e-12) node = mul(fracNode(coef), node);
+  return eCount > 1
+    ? { node: tidy(node), title: 'Combine the powers of e', formula: 'e^{a}e^{b} = e^{a + b}' }
+    : { node: tidy(node), title: 'Rewrite the integrand', formula: null };
+}
+
 // ---------- the integrator ----------
 export function integrate(node, v = 'x') {
   const steps = [];
@@ -195,6 +327,13 @@ export function integrate(node, v = 'x') {
     // Standard table, with a linear inside
     const t = table(n, w);
     if (t) return record(t.title, t.result, t.lines || [], t.formula);
+    const tp = trigPower(n, w);
+    if (tp && !tp.rewritten) return record(tp.title, tp.result, tp.lines, tp.formula);
+    if (tp) {
+      const slot = reserve();
+      const r = I(tp.rewritten, w, depth + 1);
+      return fill(slot, tp.title, n, w, r, depth, tp.formula, [`${tex(polish(n))} = ${tex(polish(tp.rewritten))}`]);
+    }
     const id = trigSquare(n, w);
     if (id) {
       const slot = reserve();
@@ -223,9 +362,25 @@ export function integrate(node, v = 'x') {
     const us = uSubstitution(n, w, depth);
     if (us) return us;
 
+    // sin A cos B and the like: as a sum before by parts (which would go round in circles on them)
+    const rw = rewriteIntegrand(n, w);
+    const useRw = rw && str(rw.node) !== str(n);
+    if (useRw && (rw.title === 'Product to sum' || rw.title === 'Combine the powers of e')) {
+      const slot = reserve();
+      const r = I(rw.node, w, depth + 1);
+      return fill(slot, rw.title, n, w, r, depth, rw.formula, [`${tex(polish(n))} = ${tex(polish(rw.node))}`]);
+    }
+
     // Integration by parts
     const bp = byParts(n, w, depth);
     if (bp) return bp;
+
+    // Last try: tidy the integrand (eˣ·eˣ = e²ˣ, 1/√x = x^(−1/2), sec x/cos x = sec²x …)
+    if (useRw) {
+      const slot = reserve();
+      const r = I(rw.node, w, depth + 1);
+      return fill(slot, rw.title, n, w, r, depth, rw.formula, [`${tex(polish(n))} = ${tex(polish(rw.node))}`]);
+    }
 
     throw new EngineError(CANT);
   }
@@ -243,13 +398,16 @@ export function integrate(node, v = 'x') {
     // Power of a linear inside: (ax + b)^k
     if (n.isOperatorNode && n.fn === 'pow') {
       const [base, ex] = n.args.map(unwrap);
-      const lin = linear(base, w);
+      const lin = linearAny(base, w);
       if (lin && isConstantIn(ex, w)) {
         let k = null;
         try { const kv = ex.evaluate({}); if (typeof kv === 'number' && toFraction(kv, 1000, 1e-9)) k = kv; } catch { /* symbolic power */ }
         if (k !== null && Math.abs(k + 1) < 1e-12) return logRule(base, lin);
         let result;
-        if (k === null) {
+        if (lin.sym) {
+          const k1 = k === null ? add(ex, num(1)) : fracNode(k + 1);
+          result = div(pow(base, k1), mul(k1, paren(lin.aNode)));
+        } else if (k === null) {
           const k1 = add(ex, num(1));
           result = div(pow(base, k1), lin.a === 1 ? k1 : mul(k1, fracNode(lin.a)));
         } else if (k + 1 < 0) {
@@ -261,24 +419,24 @@ export function integrate(node, v = 'x') {
         return { title: isSym(base, w) ? 'Power rule' : 'Power rule (linear inside)', result, formula: `\\int x^n\\,dx = \\frac{x^{n+1}}{n+1} \\ (n \\neq -1)` };
       }
       // a^(linear) and e^(linear)
-      const linEx = linear(ex, w);
+      const linEx = linearAny(ex, w);
       if (linEx && isConstantIn(base, w)) {
-        if (isSym(base, 'e')) return { title: 'Exponential rule', result: div(n, fracNode(linEx.a)), formula: `\\int e^{x}\\,dx = e^{x}` };
-        return { title: 'Exponential rule (base a)', result: div(n, mul(fracNode(linEx.a), fn('log', base))), formula: `\\int a^{x}\\,dx = \\frac{a^{x}}{\\ln a}` };
+        if (isSym(base, 'e')) return { title: 'Exponential rule', result: per(n, linEx), formula: `\\int e^{x}\\,dx = e^{x}` };
+        return { title: 'Exponential rule (base a)', result: linEx.sym ? div(n, mul(paren(linEx.aNode), fn('log', base))) : div(n, mul(fracNode(linEx.a), fn('log', base))), formula: `\\int a^{x}\\,dx = \\frac{a^{x}}{\\ln a}` };
       }
       // sec²(lin), csc²(lin)
       if (base.isFunctionNode && ex.isConstantNode && ex.value === 2) {
-        const u = unwrap(base.args[0]); const l = linear(u, w);
-        if (l && base.fn.name === 'sec') return { title: 'Standard integral: sec²', result: div(fn('tan', u), fracNode(l.a)), formula: `\\int \\sec^2 x\\,dx = \\tan x` };
-        if (l && base.fn.name === 'csc') return { title: 'Standard integral: csc²', result: neg(div(fn('cot', u), fracNode(l.a))), formula: `\\int \\csc^2 x\\,dx = -\\cot x` };
+        const u = unwrap(base.args[0]); const l = linearAny(u, w);
+        if (l && base.fn.name === 'sec') return { title: 'Standard integral: sec²', result: per(fn('tan', u), l), formula: `\\int \\sec^2 x\\,dx = \\tan x` };
+        if (l && base.fn.name === 'csc') return { title: 'Standard integral: csc²', result: neg(per(fn('cot', u), l)), formula: `\\int \\csc^2 x\\,dx = -\\cot x` };
       }
     }
     // c / (linear), and 1/(linear)^k written as a fraction
     if (n.isOperatorNode && n.fn === 'divide' && isConstantIn(n.args[0], w)) {
       const den = unwrap(n.args[1]);
-      const lin = linear(den, w);
+      const lin = linearAny(den, w);
       if (lin) { const r = logRule(den, lin); return { ...r, result: mul(n.args[0], r.result) }; }
-      if (den.isOperatorNode && den.fn === 'pow' && linear(unwrap(den.args[0]), w) && isConstantIn(den.args[1], w)) {
+      if (den.isOperatorNode && den.fn === 'pow' && linearAny(unwrap(den.args[0]), w) && isConstantIn(den.args[1], w)) {
         const inner = table(pow(unwrap(den.args[0]), neg(unwrap(den.args[1]))), w);
         if (inner) return { ...inner, result: mul(n.args[0], inner.result) };
       }
@@ -296,6 +454,18 @@ export function integrate(node, v = 'x') {
           const k = Math.sqrt(-qs[2] / qs[0]);
           return { title: 'Standard integral: sin⁻¹', result: mul(div(n.args[0], sqrtNode(-qs[2])), fn('asin', kx(k))), formula: `\\int \\frac{dx}{\\sqrt{a^2 - x^2}} = \\sin^{-1}\\frac{x}{a}` };
         }
+        // c/√(x² ± a²) (after taking out the x² coefficient) → ln|x + √(x² ± a²)|
+        if (qs && qs.length === 3 && Math.abs(qs[1]) < 1e-12 && qs[2] > 0 && Math.abs(qs[0]) > 1e-12) {
+          const A2 = qs[0] / qs[2];
+          const root = fn('sqrt', polyNode([A2, 0, 1], w));
+          const lnPart = absLog(add(W, root));
+          const c = Math.abs(qs[2] - 1) < 1e-12 ? n.args[0] : div(n.args[0], sqrtNode(qs[2]));
+          return {
+            title: `Standard integral: 1/√(x² ${A2 > 0 ? '+' : '−'} a²)`,
+            result: c.isConstantNode && c.value === 1 ? lnPart : mul(c, lnPart),
+            formula: `\\int \\frac{dx}{\\sqrt{x^2 ${A2 > 0 ? '+' : '-'} a^2}} = \\ln\\left|x + \\sqrt{x^2 ${A2 > 0 ? '+' : '-'} a^2}\\right|`,
+          };
+        }
       }
     }
     // sec·tan and csc·cot
@@ -303,15 +473,16 @@ export function integrate(node, v = 'x') {
       const [p, q] = n.args.map(unwrap);
       const pair = (a, b, x, y) => a.isFunctionNode && b.isFunctionNode && a.fn.name === x && b.fn.name === y && str(a.args[0]) === str(b.args[0]);
       for (const [a, b] of [[p, q], [q, p]]) {
-        const u = a.isFunctionNode ? unwrap(a.args[0]) : null; const l = u && linear(u, w);
-        if (l && pair(a, b, 'sec', 'tan')) return { title: 'Standard integral: sec·tan', result: div(fn('sec', u), fracNode(l.a)), formula: `\\int \\sec x\\tan x\\,dx = \\sec x` };
-        if (l && pair(a, b, 'csc', 'cot')) return { title: 'Standard integral: csc·cot', result: neg(div(fn('csc', u), fracNode(l.a))), formula: `\\int \\csc x\\cot x\\,dx = -\\csc x` };
+        const u = a.isFunctionNode ? unwrap(a.args[0]) : null; const l = u && linearAny(u, w);
+        if (l && pair(a, b, 'sec', 'tan')) return { title: 'Standard integral: sec·tan', result: per(fn('sec', u), l), formula: `\\int \\sec x\\tan x\\,dx = \\sec x` };
+        if (l && pair(a, b, 'csc', 'cot')) return { title: 'Standard integral: csc·cot', result: neg(per(fn('csc', u), l)), formula: `\\int \\csc x\\cot x\\,dx = -\\csc x` };
       }
     }
     // f(linear)
     if (n.isFunctionNode && n.args.length === 1) {
       const u = unwrap(n.args[0]);
-      const l = linear(u, w);
+      if (n.fn.name === 'sqrt') { const sq = sqrtQuadratic(n, u, w); if (sq) return sq; }
+      const l = linearAny(u, w);
       if (!l) return null;
       const T = {
         sin: [neg(fn('cos', u)), '\\int \\sin x\\,dx = -\\cos x'],
@@ -327,7 +498,7 @@ export function integrate(node, v = 'x') {
         log: [sub(mul(u, fn('log', u)), u), '\\int \\ln x\\,dx = x\\ln x - x'],
       }[n.fn.name];
       if (!T) return null;
-      return { title: `Standard integral: ${n.fn.name === 'log' ? 'ln' : n.fn.name}${isSym(u, w) ? '' : ' (linear inside)'}`, result: overA(T[0], l.a), formula: T[1] };
+      return { title: `Standard integral: ${n.fn.name === 'log' ? 'ln' : n.fn.name}${isSym(u, w) ? '' : ' (linear inside)'}`, result: overLin(T[0], l), formula: T[1] };
     }
     return null;
   }
@@ -343,6 +514,116 @@ export function integrate(node, v = 'x') {
     }
     const t = table(n, w);
     return t ? t.result : null;
+  }
+
+  /** √(a² − x²), √(x² + a²), √(x² − a²) (times a constant inside): the three standard results. */
+  function sqrtQuadratic(n, u, w) {
+    const q = polyCoeffs(u, w);
+    if (!q || q.length !== 3 || Math.abs(q[1]) > 1e-12 || Math.abs(q[0]) < 1e-12) return null;
+    const W = sym(w);
+    const [c0, , c2] = q;
+    const half = mul(div(W, num(2)), n);
+    const coef = sqrtNode((c0 * c0) / (4 * Math.abs(c2)));
+    const one = (x) => x.isConstantNode && x.value === 1;
+    if (c2 < 0 && c0 > 0) {
+      const A2 = c0 / -c2;
+      const a = sqrtNode(A2);
+      const af = toFraction(Math.sqrt(A2), 1000, 1e-9);
+      // x/(3/2) is written 2x/3
+      const arg = one(a) ? W : af && af.d > 1 ? div(mul(num(af.d), W), num(af.n)) : div(W, a);
+      const ang = fn('asin', arg);
+      return {
+        title: 'Standard integral: √(a² − x²)',
+        result: add(half, one(coef) ? ang : mul(coef, ang)),
+        formula: '\\int \\sqrt{a^2 - x^2}\\,dx = \\frac{x}{2}\\sqrt{a^2 - x^2} + \\frac{a^2}{2}\\sin^{-1}\\frac{x}{a}',
+      };
+    }
+    if (c2 > 0) {
+      const A2 = c0 / c2;
+      const lnPart = absLog(add(W, fn('sqrt', polyNode([A2, 0, 1], w))));
+      const term = one(coef) ? lnPart : mul(coef, lnPart);
+      const s = A2 > 0 ? '+' : '-';
+      return {
+        title: `Standard integral: √(x² ${A2 > 0 ? '+' : '−'} a²)`,
+        result: c0 > 0 ? add(half, term) : sub(half, term),
+        formula: `\\int \\sqrt{x^2 ${s} a^2}\\,dx = \\frac{x}{2}\\sqrt{x^2 ${s} a^2} ${s} \\frac{a^2}{2}\\ln\\left|x + \\sqrt{x^2 ${s} a^2}\\right|`,
+      };
+    }
+    return null;
+  }
+
+  /**
+   * sinᵐu·cosⁿu with u linear (m + n ≥ 3, or both at least 1):
+   *   an odd power: keep one factor for du and turn the rest into the other function (sin² = 1 − cos²), so
+   *   the integral becomes a polynomial in t = cos u (or sin u);
+   *   both even: replace sin² and cos² by half-angle forms and integrate term by term.
+   */
+  function trigPower(n, w) {
+    const part = (f) => {
+      const x = unwrap(f);
+      if (x.isFunctionNode && ['sin', 'cos'].includes(x.fn.name)) return { name: x.fn.name, u: unwrap(x.args[0]), p: 1 };
+      if (x.isOperatorNode && x.fn === 'pow') {
+        const [b, e] = x.args.map(unwrap);
+        if (b.isFunctionNode && ['sin', 'cos'].includes(b.fn.name) && e.isConstantNode && Number.isInteger(e.value) && e.value > 0) return { name: b.fn.name, u: unwrap(b.args[0]), p: e.value };
+      }
+      return null;
+    };
+    let m = 0, k = 0, u = null;
+    const add1 = (q) => { if (!q) return false; if (u && str(q.u) !== str(u)) return false; u = q.u; if (q.name === 'sin') m += q.p; else k += q.p; return true; };
+    if (n.isOperatorNode && n.fn === 'multiply') {
+      const fs = [];
+      const collect = (t) => { const x = unwrap(t); if (x.isOperatorNode && x.fn === 'multiply') x.args.forEach(collect); else fs.push(x); };
+      collect(n);
+      if (!fs.every((f) => add1(part(f)))) return null;
+      if (!(m > 0 && k > 0)) return null;
+    } else if (!add1(part(n)) || m + k < 3) return null;
+    const l = linearAny(u, w);
+    if (!l) return null;
+    const S = fn('sin', u), C = fn('cos', u);
+    const T = sym('t');
+    // One odd power: substitute the other function
+    if (m % 2 === 1 || k % 2 === 1) {
+      const useCos = m % 2 === 1; // sin odd → t = cos u
+      const odd = useCos ? m : k, other = useCos ? k : m;
+      const h = (odd - 1) / 2;
+      // sinⁿx·cos x (and cosⁿx·sin x) is a plain u-substitution: leave it to that rule
+      if (h === 0) return null;
+      // ∫ (1 − t²)^h t^other dt, expanded
+      const terms = [];
+      for (let j = 0; j <= h; j++) terms.push({ c: binom(h, j) * (-1) ** j / (2 * j + other + 1), p: 2 * j + other + 1 });
+      const sign = useCos ? -1 : 1;
+      const tPoly = signedSum(terms.map((t2) => ({ c: t2.c, node: powT(T, t2.p) })));
+      const back = (f) => signedSum(terms.map((t2) => ({ c: t2.c * sign, node: powT(f, t2.p) })));
+      const result = overLin(back(useCos ? C : S), l);
+      const uT = tex(polish(u));
+      const aTex = l.sym ? `(${tex(polish(l.aNode))})` : texN(l.a);
+      const oneA = !l.sym && Math.abs(l.a - 1) < 1e-12;
+      const pw = (base, p) => (p === 0 ? '' : p === 1 ? base : `${base}^{${p}}`);
+      const integrand = `${pw('(1 - t^2)', h)}${other ? ` ${pw('t', other)}` : ''}`;
+      return {
+        title: `Odd power: substitute t = ${useCos ? 'cos' : 'sin'} ${u.toString({ implicit: 'hide' })}`,
+        formula: useCos ? '\\sin^2 x = 1 - \\cos^2 x' : '\\cos^2 x = 1 - \\sin^2 x',
+        result,
+        lines: [
+          `t = ${useCos ? '\\cos' : '\\sin'} ${uT}, \\quad dt = ${useCos ? '-' : ''}${oneA ? '' : aTex}\\,${useCos ? '\\sin' : '\\cos'} ${uT}\\,d${w}, \\quad ${useCos ? `\\sin^2 ${uT} = 1 - t^2` : `\\cos^2 ${uT} = 1 - t^2`}`,
+          `\\int ${tex(polish(n))}\\,d${w} = ${useCos ? '-' : ''}${oneA ? '' : `\\frac{1}{${aTex}}`}\\int ${integrand}\\,dt = ${useCos ? '-' : ''}${oneA ? '' : `\\frac{1}{${aTex}}`}\\left(${tex(polish(tPoly))}\\right)`,
+          `\\text{Put back } t = ${useCos ? '\\cos' : '\\sin'} ${uT}`,
+        ],
+      };
+    }
+    // Both even: half-angle forms, then term by term
+    const c2 = fn('cos', tidy(mul(num(2), u)));
+    // ((1 − c)/2)^(m/2) · ((1 + c)/2)^(k/2) as a polynomial in c
+    let poly = [1];
+    for (let i = 0; i < m / 2; i++) poly = mulPoly(poly, [0.5, -0.5]);
+    for (let i = 0; i < k / 2; i++) poly = mulPoly(poly, [0.5, 0.5]);
+    const rewritten = signedSum(poly.map((c, j) => ({ c, node: j === 0 ? num(1) : powT(c2, j) })).filter((t2) => Math.abs(t2.c) > 1e-12));
+    return {
+      rewritten,
+      title: 'Even powers: use the half-angle forms',
+      formula: '\\sin^2 x = \\frac{1 - \\cos 2x}{2}, \\quad \\cos^2 x = \\frac{1 + \\cos 2x}{2}',
+    };
+    function mulPoly(p, q) { const r = new Array(p.length + q.length - 1).fill(0); p.forEach((a, i) => q.forEach((b, j) => { r[i + j] += a * b; })); return r; }
   }
 
   /** sin²u, cos²u and tan²u (u linear) rewritten with an identity so the table can finish them. */
@@ -376,9 +657,9 @@ export function integrate(node, v = 'x') {
     const positive = q && q.length === 3 && q[2] > 0 && q[1] * q[1] - 4 * q[2] * q[0] < 0;
     const lnBot = positive ? fn('log', bot) : absLog(bot);
     return {
-      title: 'The top is the derivative of the bottom', formula: `\int \frac{f'(x)}{f(x)}\,dx = \ln|f(x)|`,
+      title: 'The top is the derivative of the bottom', formula: `\\int \\frac{f'(x)}{f(x)}\\,dx = \\ln|f(x)|`,
       result: scaled(c, lnBot),
-      lines: [`\frac{d}{d${w}}\left(${tex(polish(bot))}\right) = ${tex(polish(d))}${Math.abs(c - 1) < 1e-12 ? '' : `, \ \text{and the top is } ${texN(c)} \times \text{that}`}`],
+      lines: [`\\frac{d}{d${w}}\\left(${tex(polish(bot))}\\right) = ${tex(polish(d))}${Math.abs(c - 1) < 1e-12 ? '' : `, \\ \\text{and the top is } ${texN(c)} \\times \\text{that}`}`],
     };
   }
 
@@ -389,19 +670,32 @@ export function integrate(node, v = 'x') {
     for (const [E, T] of [n.args.map(unwrap), [...n.args].reverse().map(unwrap)]) {
       const u = exU(E);
       if (!u || !(T.isFunctionNode && ['sin', 'cos'].includes(T.fn.name))) continue;
-      const lu = linear(u, w), v = unwrap(T.args[0]), lv = linear(v, w);
+      const lu = linearAny(u, w), v = unwrap(T.args[0]), lv = linearAny(v, w);
       if (!lu || !lv) continue;
+      if (lu.sym || lv.sym) {
+        // Letters in the coefficients (e^{-st} sin t, e^{ax} cos bx): the same formula, kept symbolic
+        const aN = paren(lu.aNode), bN = paren(lv.aNode);
+        const s2 = add(pow(aN, num(2)), pow(bN, num(2)));
+        const inner = T.fn.name === 'sin' ? sub(mul(aN, fn('sin', v)), mul(bN, fn('cos', v))) : add(mul(aN, fn('cos', v)), mul(bN, fn('sin', v)));
+        return {
+          title: 'Integration by parts twice (the integral comes back)', formula: T.fn.name === 'sin'
+            ? '\\int e^{ax}\\sin bx\\,dx = \\frac{e^{ax}}{a^2 + b^2}(a\\sin bx - b\\cos bx)'
+            : '\\int e^{ax}\\cos bx\\,dx = \\frac{e^{ax}}{a^2 + b^2}(a\\cos bx + b\\sin bx)',
+          result: mul(div(E, paren(s2)), paren(inner)),
+          lines: [`a = ${tex(polish(lu.aNode))}, \\quad b = ${tex(polish(lv.aNode))}`],
+        };
+      }
       const a = lu.a, b = lv.a, s = a * a + b * b;
       const inner = T.fn.name === 'sin'
         ? signedSum([{ c: a, node: fn('sin', v) }, { c: -b, node: fn('cos', v) }])
         : signedSum([{ c: a, node: fn('cos', v) }, { c: b, node: fn('sin', v) }]);
       return {
-        title: 'Integration by parts twice (the integral comes back)', formula: `\int u\,dv = uv - \int v\,du`,
+        title: 'Integration by parts twice (the integral comes back)', formula: `\\int u\\,dv = uv - \\int v\\,du`,
         result: mul(div(E, fracNode(s)), paren(inner)),
         lines: [
-          `I = \int ${tex(polish(n))}\,d${w}`,
-          `\text{Parts twice (} u = \text{the trig part both times) brings back } -${texN(b * b / (a * a))}\,I \text{ on the right}`,
-          `\text{Move it to the left: } ${texN(s / (a * a))}\,I = \ldots, \text{ then divide}`,
+          `I = \\int ${tex(polish(n))}\\,d${w}`,
+          `\\text{Parts twice (} u = \\text{the trig part both times) brings back } -${texN(b * b / (a * a))}\\,I \\text{ on the right}`,
+          `\\text{Move it to the left: } ${texN(s / (a * a))}\\,I = \\ldots, \\text{ then divide}`,
         ],
       };
     }
@@ -409,7 +703,7 @@ export function integrate(node, v = 'x') {
   }
 
   function logRule(den, lin) {
-    return { title: 'Standard integral: 1/x', result: div(absLog(den), fracNode(lin.a)), formula: `\\int \\frac{dx}{x} = \\ln|x|` };
+    return { title: 'Standard integral: 1/x', result: per(absLog(den), lin), formula: `\\int \\frac{dx}{x} = \\ln|x|` };
   }
 
   // ---- partial fractions ----
