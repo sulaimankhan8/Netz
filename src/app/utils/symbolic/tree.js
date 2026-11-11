@@ -1,5 +1,5 @@
 /**
- * Expression trees for the symbolic step engine (NETZ_METHODS_CATALOG.md section 0.1), built on math.js nodes.
+ * Expression trees for the symbolic step engine (docs/methods/NETZ_METHODS_CATALOG.md section 0.1), built on math.js nodes.
  * Parsing what students type, building nodes, tidying them up, and LaTeX for the steps.
  */
 import { create, all } from 'mathjs';
@@ -81,7 +81,18 @@ export const tidy = (node) => math.simplifyCore(node);
  * math.simplify, but ln 2, √3 and similar stay exact instead of becoming 0.693…, 1.732…
  * (they are swapped for placeholder symbols while simplifying).
  */
+// The same expressions are simplified many times over (bestForm, termwise and cleanest all ask): remember the last 400
+const SIMPLIFIED = new Map();
 export function simplifyExact(node) {
+  const key = node.toString();
+  const hit = SIMPLIFIED.get(key);
+  if (hit) return hit;
+  const out = simplifyExactUncached(node);
+  if (SIMPLIFIED.size > 400) SIMPLIFIED.delete(SIMPLIFIED.keys().next().value);
+  SIMPLIFIED.set(key, out);
+  return out;
+}
+function simplifyExactUncached(node) {
   const kept = [];
   const guarded = node.transform((n) => {
     if (n.isFunctionNode && n.args.every((a) => variablesOf(a).size === 0)) {

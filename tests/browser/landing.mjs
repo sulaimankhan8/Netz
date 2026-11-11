@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { launch, sleep, BASE, SHOTS } from './lib.mjs';
 
-// Landing page checks (LANDING_REDESIGN_PLAN.md, "Checks"). Run against a production build:
+// Landing page checks (docs/landing/LANDING_REDESIGN_PLAN.md, "Checks"). Run against a production build:
 //   NETZ_URL=http://localhost:3213 node landing.mjs
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: String(detail) });

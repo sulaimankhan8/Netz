@@ -1,6 +1,6 @@
 /**
  * Which AdSense account NETZ uses. Nothing is hard-coded: the owner sets the publisher id and the ad
- * unit ids in .env.local and Vercel (NETZ_OWNER_TODO.md section H). While NEXT_PUBLIC_ADSENSE_CLIENT is
+ * unit ids in .env.local and Vercel (docs/launch/NETZ_OWNER_TODO.md section H). While NEXT_PUBLIC_ADSENSE_CLIENT is
  * empty there is no AdSense tag, no script, no ad boxes and an empty ads.txt.
  */
 

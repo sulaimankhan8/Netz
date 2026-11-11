@@ -1,5 +1,7 @@
 import { evaluateMath, parseUserFunction, getSymbolicDerivative, sanitizeMathString, simplifyExpression } from '../../../utils/evaluateMath.js';
 import { tCritical, chiSquareCritical, fCritical } from '../../../utils/criticalValues.js';
+import { METHOD_WIDGETS } from '../../../data/methodWidgets.js';
+import { methodById, UNITS } from '../../../data/methods.js';
 
 export function parseNum(val, fallback) {
   if (val === undefined || val === null || val === '') return fallback;
@@ -1695,3 +1697,40 @@ export const ALGORITHMS_CATALOG = [
     }
   }
 ];
+
+// ==========================================
+// Widgets for the pages built on SymbolicCalculator (Batches 2–4), from src/app/data/methodWidgets.js
+// (npm run build:widgets). Only pages that are live appear, so hidden pages stay hidden in Notes and on
+// the Algorithms page. The engine loads when the widget is first used; `solve` then runs it.
+// ==========================================
+const WIDGET_ENGINES = new Map();
+
+/** What a Batch 2–4 engine returns, in the widget's terms: a result line and the engine's own steps. */
+function engineOutput(r) {
+  const pick = (v) => (Array.isArray(v) ? v.join(', ') : v === null || v === undefined || typeof v === 'object' ? null : String(v));
+  const result = pick(r.answer) ?? pick(r.result) ?? '';
+  return { result, resultIsTex: /[\\^_{}]/.test(result), symbolicSteps: Array.isArray(r.steps) ? r.steps : [], notes: r.notes || [], table: r.table && r.table.columns ? r.table : null };
+}
+
+const takenRoutes = new Set(ALGORITHMS_CATALOG.map((a) => a.route));
+for (const w of METHOD_WIDGETS) {
+  const m = methodById(w.id);
+  if (!m || m.status !== 'live' || takenRoutes.has(m.route)) continue;
+  const unit = UNITS.find((u) => u.unit === m.unit);
+  ALGORITHMS_CATALOG.push({
+    id: w.id,
+    name: m.name,
+    unit: unit ? unit.title : `Unit ${m.unit}`,
+    route: m.route,
+    description: m.description || m.title,
+    defaultParams: w.start,
+    fields: w.fields,
+    /** load the engine once (the widget awaits this before solving) */
+    prepare: async () => { if (!WIDGET_ENGINES.has(w.id)) WIDGET_ENGINES.set(w.id, await w.load()); },
+    solve: (params) => {
+      const mod = WIDGET_ENGINES.get(w.id);
+      if (!mod) throw new Error('This solver is still loading; press Calculate again.');
+      return engineOutput(mod.solve({ ...w.start, ...params }));
+    },
+  });
+}

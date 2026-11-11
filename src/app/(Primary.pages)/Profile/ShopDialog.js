@@ -24,7 +24,7 @@ const ERRORS = {
 };
 
 /**
- * The gem shop (NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes, robot skins (artboard 13) and the
+ * The gem shop (docs/launch/NETZ_LAUNCH_PLAN.md 2.5): banners, streak freezes, robot skins (artboard 13) and the
  * year badge (bought with gems, free for everyone).
  * Buying needs an account; browsing does not. onClose()
  */

@@ -42,7 +42,7 @@ const drag = async (page, from, to, steps = 8) => {
   try {
     await openPlayground(page);
     const group = await page.evaluate(() => [...document.querySelector('[role="group"][aria-label="Insert"]').querySelectorAll('button')].map((b) => b.getAttribute('aria-label')));
-    check('the Insert group reads Picture, Screenshot, Shapes, Symbol, Equation', group.join('|') === 'Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
+    check('the Insert group reads Picture, Screenshot, Shapes, Symbol, Equation', group.join('|') === 'Table|Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
 
     // The menu, as in WPS
     await press(page, 'button[aria-label="Symbol"]');
@@ -237,7 +237,7 @@ const drag = async (page, from, to, steps = 8) => {
     await openPlayground(page);
     await clickTitle(page, 'More Tools');
     const row = await page.evaluate(() => [...document.querySelectorAll('button[aria-label^="Insert "]')].map((b) => b.getAttribute('aria-label')));
-    check('phone: the Insert row reads Picture, Screenshot, Shapes, Symbol, Equation', row.join('|') === 'Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation', JSON.stringify(row));
+    check('phone: the Insert row reads Picture, Screenshot, Shapes, Symbol, Equation', row.join('|') === 'Insert Table|Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation', JSON.stringify(row));
     await tapAt('button[aria-label="Insert Symbol"]');
     const sheet = await page.evaluate(() => {
       const m = document.querySelector('[data-symbol-menu]');

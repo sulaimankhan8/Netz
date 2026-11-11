@@ -37,7 +37,9 @@ function SolverExportDialog({ anchor, tab, onClose }) {
     };
   }, []);
 
-  const title = (codeLib && inputs?.method && codeLib.METHOD_NAMES[inputs.method]) || 'Solver';
+  const title = (codeLib && inputs?.method && codeLib.METHOD_NAMES[inputs.method]) || inputs?.title || 'Solver';
+  // pages with no code generator (the step-by-step Batch 2–4 pages) get the LaTeX tab only
+  const hasCode = Boolean(codeLib && inputs?.method && codeLib.EXPORTABLE.has(inputs.method));
   const getCode = useCallback((lang) => {
     if (!codeLib) throw new Error('Getting code export ready…');
     if (!inputs?.method) throw new Error('Enter your numbers in the calculator first.');
@@ -52,7 +54,7 @@ function SolverExportDialog({ anchor, tab, onClose }) {
     <ProExportDialog
       title={title}
       initialTab={tab}
-      getCode={getCode}
+      getCode={hasCode || !codeLib ? getCode : undefined}
       getTex={getTex}
       onClose={onClose}
       note="The code uses the numbers now in the calculator. The LaTeX file has your inputs and this calculator's tables."

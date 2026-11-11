@@ -1,7 +1,7 @@
 /**
  * The NETZ file (.netz): a note or a Playground board, saved so it opens again fully editable,
  * with typed content as typed and handwriting as real pen strokes
- * (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 1).
+ * (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 1).
  *
  *   { netz: 1, kind: 'note' | 'document', createdWith, exportedAt,
  *     note?: { title, subtitle, tags, blocks },

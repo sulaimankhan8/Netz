@@ -150,8 +150,10 @@ function lapTerm(g, steps, depth) {
     const val = limit(anti.F, 'u', Infinity).value;
     if (!Number.isFinite(val)) throw new EngineError('∫ₛ^∞ F(u) du does not converge here, so f(t)/t has no transform by this rule.');
     // π/2 (from tan⁻¹) stays exact
-    const kPi = toFraction(val / Math.PI, 100, 1e-9);
-    const infNode = Math.abs(val) > 1e-12 && kPi && !toFraction(val, 1000, 1e-9) ? mul(numNode(kPi.n / kPi.d), sym('pi')) : numNode(val);
+    // the limit at ∞ is often numeric (1.5707962 for tan⁻¹): a simple multiple of π within 1e-6 is taken as exact
+    const kPi = toFraction(val / Math.PI, 100, 1e-6);
+    const whole = toFraction(val, 1000, 1e-6);
+    const infNode = Math.abs(val) < 1e-9 ? num(0) : kPi && !toFraction(val, 1000, 1e-9) ? mul(numNode(kPi.n / kPi.d), sym('pi')) : whole ? numNode(whole.n / whole.d) : numNode(val);
     const F = neat(sub(infNode, substitute(anti.F, 'u', S)));
     steps.push({ title: 'Division by t', formula: '\\mathcal{L}\\left\\{\\frac{f(t)}{t}\\right\\} = \\int_s^{\\infty} F(u)\\,du', depth, lines: [`\\int_s^{\\infty} ${T(Fu)}\\,du = \\Big[${T(anti.F)}\\Big]_s^{\\infty} = ${T(F)}`] });
     return { F };
@@ -202,10 +204,46 @@ function lapTerm(g, steps, depth) {
   throw new EngineError(`NETZ can't find the Laplace transform of ${T(f)} yet.`);
 }
 
+/** (e^u)^k → e^(ku), 1/e^u → e^(−u) (the simplifier writes e^(−t) as (eᵗ)⁻¹, which the table can't read). */
+function expForms(node) {
+  const isE = (n) => unwrap(n).isSymbolNode && unwrap(n).name === 'e';
+  const expArg = (n) => { const x = unwrap(n); return x.isFunctionNode && x.fn.name === 'exp' ? x.args[0] : x.isOperatorNode && x.fn === 'pow' && isE(x.args[0]) ? x.args[1] : null; };
+  return node.transform((n) => {
+    const x = unwrap(n);
+    if (x.isOperatorNode && x.fn === 'pow') { const a = expArg(x.args[0]); if (a) return pow(sym('e'), mul(x.args[1], paren(a))); }
+    if (x.isOperatorNode && x.fn === 'divide') { const a = expArg(x.args[1]); if (a) return mul(x.args[0], pow(sym('e'), neg(paren(a)))); }
+    return n;
+  });
+}
+/** c·(a ± b) and (a ± b)/c → c·a ± c·b, so a sum hidden in a product becomes separate terms ((1 − cos 2t)/2). */
+function spreadSums(node) {
+  let cur = node;
+  for (let i = 0; i < 6; i++) {
+    let changed = false;
+    cur = cur.transform((n) => {
+      const x = unwrap(n);
+      const isSum = (z) => { const u = unwrap(z); return u.isOperatorNode && (u.fn === 'add' || u.fn === 'subtract'); };
+      const parts = (z) => unwrap(z).args;
+      const op = (z) => unwrap(z);
+      if (x.isOperatorNode && x.fn === 'multiply' && x.args.length === 2) {
+        const [p, q] = x.args;
+        if (isSum(q)) { changed = true; const [a, b] = parts(q); return new math.OperatorNode(op(q).op, op(q).fn, [mul(p, a), mul(p, b)]); }
+        if (isSum(p)) { changed = true; const [a, b] = parts(p); return new math.OperatorNode(op(p).op, op(p).fn, [mul(a, q), mul(b, q)]); }
+      }
+      if (x.isOperatorNode && x.fn === 'divide' && isSum(x.args[0]) && freeOf(x.args[1], 't')) {
+        changed = true; const [a, b] = parts(x.args[0]); return new math.OperatorNode(op(x.args[0]).op, op(x.args[0]).fn, [div(a, x.args[1]), div(b, x.args[1])]);
+      }
+      return n;
+    });
+    if (!changed) break;
+  }
+  return cur;
+}
+
 function lapAll(node, steps, depth = 0) {
-  const prepared = trigToSums(node);
+  const prepared = spreadSums(expForms(trigToSums(node)));
   let expanded = prepared;
-  try { expanded = simplifyExact(prepared); } catch { /* keep */ }
+  try { expanded = spreadSums(expForms(simplifyExact(prepared))); } catch { /* keep */ }
   const terms = termsOf(expanded).length >= termsOf(prepared).length ? termsOf(expanded) : termsOf(prepared);
   const parts = terms.map(({ t, sg }) => {
     const fs = factorsOf(t);
@@ -247,7 +285,14 @@ export function laplace(f) {
   let hasDelta = false;
   f.traverse((n) => { if (n.isFunctionNode && n.fn.name === 'dirac') hasDelta = true; });
   const brk = stepPoints(f);
-  const verified = hasDelta || [1.7, 2.9].every((s) => {
+  // check at s above the growth rate (e^(2t) sin 3t only has a transform for s > 2)
+  let growth = 0;
+  f.traverse((n) => {
+    const ex = n.isFunctionNode && n.fn.name === 'exp' ? n.args[0] : n.isOperatorNode && n.fn === 'pow' && unwrap(n.args[0]).isSymbolNode && unwrap(n.args[0]).name === 'e' ? n.args[1] : n.isFunctionNode && ['sinh', 'cosh'].includes(n.fn.name) ? n.args[0] : null;
+    const l = ex && linearIn(unwrap(ex), 't');
+    if (l) growth = Math.max(growth, n.isFunctionNode && ['sinh', 'cosh'].includes(n.fn.name) ? Math.abs(l.a) : l.a);
+  });
+  const verified = hasDelta || [growth + 1.7, growth + 2.9].every((s) => {
     const num0 = integrateToInfinity((t) => Math.exp(-s * t) * evalAt(f, { t }), brk);
     const val = evalAt(F, { s });
     return !Number.isFinite(num0) || !Number.isFinite(val) || Math.abs(num0 - val) < 1e-5 * Math.max(1, Math.abs(val));
@@ -323,7 +368,8 @@ function inverseRational(G) {
   const Atb = Array.from({ length: m }, (_, i) => A.reduce((acc, row, k) => acc + row[i] * bv[k], 0));
   const c = solveSmall(AtA, Atb);
   if (!c) throw new EngineError('NETZ could not split F(s) into partial fractions.');
-  const coefs = c.map(snap);
+  // least squares leaves ~1e-9 noise: 0.500000003 → 1/2 (a looser snap, then the result is checked anyway)
+  const coefs = c.map((v) => { const s1 = snap(v); if (s1 !== v) return s1; const f = toFraction(v, 1000, 1e-6); return f ? f.n / f.d : v; });
   let g = null;
   const pieces = [];
   basis.forEach((b, i) => {
@@ -444,13 +490,21 @@ export function laplacePeriodic(pieces, period) {
 export function readPieces(text) {
   const parts = String(text ?? '').split(/[;\n]/).map((p) => p.trim()).filter(Boolean);
   if (!parts.length) throw new EngineError('Type the pieces, e.g. t for 0 < t < 1; 1 for t > 1.');
-  return parts.map((p) => {
+  // each piece adds unit steps and the work grows fast (8 pieces ≈ 3 s, 10 ≈ 14 s, 12 ≈ 3 min): at most 8
+  if (parts.length > 8) throw new EngineError(`Use at most 8 pieces (there are ${parts.length}).`);
+  const pieces = parts.map((p) => {
     let m = p.match(/^(.+?)\s+(?:for|if|,)\s*(.+?)\s*<\s*t\s*<\s*(.+)$/);
     if (m) return { g: readLaplace(m[1], 'A piece'), from: math.evaluate(m[2].replace(/π/g, 'pi')), to: /^(inf|∞|infinity)$/i.test(m[3].trim()) ? Infinity : math.evaluate(m[3].replace(/π/g, 'pi')) };
     m = p.match(/^(.+?)\s+(?:for|if|,)\s*t\s*>\s*(.+)$/);
     if (m) return { g: readLaplace(m[1], 'A piece'), from: math.evaluate(m[2].replace(/π/g, 'pi')), to: Infinity };
     throw new EngineError(`Write each piece like "t for 0 < t < 1" or "1 for t > 2" (could not read "${p}").`);
   });
+  // pieces must not overlap (each t belongs to one piece)
+  const sorted = [...pieces].sort((a, b) => a.from - b.from);
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].from < sorted[i - 1].to - 1e-12) throw new EngineError(`The pieces overlap near t = ${Number(sorted[i].from.toPrecision(6))}: each value of t should belong to one piece only.`);
+  }
+  return pieces;
 }
 /** Pieces → one expression with unit steps: Σ gᵢ(t)[u(t − aᵢ) − u(t − bᵢ)]. */
 export function piecesToSteps(pieces) {

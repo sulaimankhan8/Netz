@@ -1,4 +1,4 @@
--- NETZ: cloud copy of notes (NETZ_LAUNCH_PLAN.md 4.4). Matches src/db/schema.js `notes`.
+-- NETZ: cloud copy of notes (docs/launch/NETZ_LAUNCH_PLAN.md 4.4). Matches src/db/schema.js `notes`.
 -- The device stays the main copy; each note keeps the version (changed_at, ms) it was last changed at,
 -- and the newer version wins. Deleted notes stay as tombstones so other devices learn about them.
 -- Row-level security on with no policies: only the server's own connection reads and writes.

@@ -15,7 +15,7 @@ import {
   FaBell
 } from 'react-icons/fa';
 
-/** Task toasts on or off, and starting progress over (NETZ_LAUNCH_PLAN.md 2.8). */
+/** Task toasts on or off, and starting progress over (docs/launch/NETZ_LAUNCH_PLAN.md 2.8). */
 function ProgressSettings() {
   const [toastsOn, setToastsOn] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);

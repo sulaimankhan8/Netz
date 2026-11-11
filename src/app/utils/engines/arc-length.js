@@ -92,10 +92,30 @@ export function solve({ mode = 'cartesian', f = '', xt = '', yt = '', r = '', a,
     value = d.number; valueTex = d.valueTex;
   } catch (e) {
     if (e.name !== 'EngineError') throw e;
-    const { xs, ws } = gaussLegendre(64);
-    const c = (A + B) / 2, h = (B - A) / 2;
+    // Composite Gauss–Legendre, split where the integrand touches 0 (√(2 + 2cos θ) = 2|cos(θ/2)| has a corner at π)
+    const { xs, ws } = gaussLegendre(20);
     const g = integrand.compile();
-    value = xs.reduce((s, x, i) => { let y; try { y = g.evaluate({ [v]: c + h * x }); } catch { y = NaN; } return s + ws[i] * h * y; }, 0);
+    const at = (x) => { try { const y = g.evaluate({ [v]: x }); return typeof y === 'number' ? y : NaN; } catch { return NaN; } };
+    const M = 4000, grid = Array.from({ length: M + 1 }, (_, i) => A + ((B - A) * i) / M), vals = grid.map(at);
+    const top = Math.max(...vals.filter(Number.isFinite).map(Math.abs), 1);
+    const cuts = [A];
+    for (let i = 1; i < M; i++) {
+      if (Math.abs(vals[i]) <= Math.abs(vals[i - 1]) && Math.abs(vals[i]) <= Math.abs(vals[i + 1]) && Math.abs(vals[i]) < 1e-2 * top) {
+        // refine the corner by golden-section on |g|
+        let lo = grid[i - 1], hi = grid[i + 1];
+        for (let k = 0; k < 80; k++) { const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3; if (Math.abs(at(m1)) < Math.abs(at(m2))) hi = m2; else lo = m1; }
+        cuts.push((lo + hi) / 2);
+      }
+    }
+    cuts.push(B);
+    value = 0;
+    for (let p = 0; p + 1 < cuts.length; p++) {
+      const panels = 32, w = (cuts[p + 1] - cuts[p]) / panels;
+      for (let q = 0; q < panels; q++) {
+        const c = cuts[p] + w * (q + 0.5), h = w / 2;
+        value += xs.reduce((s, x, i) => s + ws[i] * h * at(c + h * x), 0);
+      }
+    }
     valueTex = exactTex(value);
     numeric = true;
     steps.push({ title: 'Integrate numerically', depth: 0, lines: [`\\approx ${valueTex}`] });

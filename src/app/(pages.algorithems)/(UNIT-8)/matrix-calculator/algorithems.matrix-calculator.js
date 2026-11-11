@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView } from '@/app/components/method/Matrix';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice } from '@/app/components/method/Calculator';
@@ -24,6 +25,7 @@ export default function MatrixCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('matrix-calculator', 8, answer, () => ({ op }));
+  const exportBar = useExportBar('matrix-calculator', () => ({ op, a, b, k, n }), !!answer);
   const needsB = OPERATIONS.find((o) => o.op === op)?.needsB;
 
   const run = () => {
@@ -41,7 +43,7 @@ export default function MatrixCalculator() {
   const resultTex = answer && (answer.op === 'scale' ? `${answer.k}A` : answer.op === 'power' ? `A^{${answer.n}}` : RESULT_TEX[answer.op]);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-matrix-calculator">
       <CalcCard
         title="Matrix Operations Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -58,6 +60,7 @@ export default function MatrixCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <ResultBox label="Result">
             <MatrixView matrix={answer.result} prefix={`${resultTex} = `} />

@@ -10,5 +10,5 @@ const START = { shape: 'cylinder', values: { r: '7', h: '10' }, pi: '22/7' };
 export default function VolumeSurfaceAreaCalculator() {
   const [answer, setAnswer] = useState(null);
   useRecordSolve('volume-surface-area', 9, answer, () => ({ shape: answer?.shape }));
-  return <ShapeCalculator title="Volume & Surface Area Engine" shapes={SHAPES_3D} solve={solve} start={START} onAnswer={setAnswer} />;
+  return <ShapeCalculator exportId="volume-surface-area" title="Volume & Surface Area Engine" shapes={SHAPES_3D} solve={solve} start={START} onAnswer={setAnswer} />;
 }

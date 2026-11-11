@@ -2,6 +2,7 @@
 
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import { sliceCanvasForPages } from './pdfPages';
 
 /**
  * Universal Export Engine for Netz
@@ -202,22 +203,28 @@ export async function exportAsPDF(elementId, options = {}) {
     const isDark = bgMode === 'dark';
     const backgroundColor = isDark ? '#121212' : '#FFFFFF';
 
-    const dataUrl = await htmlToImage.toPng(element, {
+    const canvas = await htmlToImage.toCanvas(element, {
       pixelRatio: 2,
       backgroundColor,
       cacheBust: true,
       filter: (node) => !node.classList || !node.classList.contains('no-export'),
     });
 
+    // `compress` and the 'FAST' image setting store the pictures packed; without them a long
+    // result made a PDF of tens of megabytes
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
+      compress: true,
     });
 
-    const imgProps = pdf.getImageProperties(dataUrl);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const margin = 10;
+    const headerBottom = 26;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const contentWidth = pageWidth - margin * 2;
+    const pxPerMm = canvas.width / contentWidth;
 
     // Header metadata
     pdf.setFont('helvetica', 'bold');
@@ -227,7 +234,17 @@ export async function exportAsPDF(elementId, options = {}) {
     pdf.setFont('helvetica', 'normal');
     pdf.text(`Generated with Netz Algorithm Lab • ${new Date().toLocaleDateString()}`, 14, 21);
 
-    pdf.addImage(dataUrl, 'PNG', 10, 26, pdfWidth - 20, Math.min(pdfHeight, 255));
+    // The picture keeps its shape: a result longer than one page goes on to more pages, cut
+    // between sections, instead of being pressed into the first one
+    const pieces = sliceCanvasForPages(
+      canvas,
+      (pageHeight - headerBottom - margin) * pxPerMm,
+      (pageHeight - margin * 2) * pxPerMm,
+    );
+    pieces.forEach((piece, index) => {
+      if (index) pdf.addPage();
+      pdf.addImage(piece.toDataURL('image/png'), 'PNG', margin, index ? margin : headerBottom, contentWidth, piece.height / pxPerMm, undefined, 'FAST');
+    });
     pdf.save(fileName);
 
     return { success: true, format: 'pdf' };

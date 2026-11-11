@@ -48,7 +48,7 @@ for (const r of ROUTES) {
     const t0 = Date.now();
     const solveMs = await Promise.race([new Promise((res) => setTimeout(() => res('TIMEOUT>60s'), 60000)), page.evaluate(async (state) => {
       if (state === 'demo') {
-        const b = [...document.querySelectorAll('button')].find((x) => /calculate|solve|compute|run|find root|evaluate|fit|expand|decompose|interpolate|integrate|iterate/i.test(x.textContent) && !/demo|reset|export|random/i.test(x.textContent));
+        const b = document.querySelector('button[data-solve]') || [...document.querySelectorAll('button')].find((x) => /calculate|solve|compute|run|find root|evaluate|fit|expand|decompose|interpolate|integrate|iterate/i.test(x.textContent) && !/demo|reset|export|random/i.test(x.textContent));
         const t = performance.now(); b?.click();
         await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
         return Math.round(performance.now() - t);

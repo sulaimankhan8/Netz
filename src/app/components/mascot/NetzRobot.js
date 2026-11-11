@@ -7,7 +7,7 @@ import { loadProgress, PROGRESS_EVENT } from '@/app/utils/progress/engine';
 import { DEFAULT_SKIN, equippedSkin } from '@/app/utils/progress/shop';
 
 /**
- * The NETZ robot, "Classic Calc" (NETZ_MEDALS_CATALOG.md, Mascot). Drawn as separate parts so it can
+ * The NETZ robot, "Classic Calc" (docs/rewards/NETZ_MEDALS_CATALOG.md, Mascot). Drawn as separate parts so it can
  * move: head with a screen face, arms, keypad and an "=" key.
  *
  * Moods: idle, wave, think, press, cheer, surp, sad, sleep, wake.

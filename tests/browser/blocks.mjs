@@ -64,7 +64,7 @@ try {
   await sleep(900);
   blocks = await blockInfo();
   check('Plot Graph adds a linked graph block', blocks.length === 2, JSON.stringify(blocks.map((b) => b.text)));
-  // The graph is drawn as SVG (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, blocks round): one path per curve
+  // The graph is drawn as SVG (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, blocks round): one path per curve
   const charts = await page.evaluate(() => document.querySelectorAll('[data-block-id] svg[data-graph-plot] path').length);
   check('the graph draws its curve', charts >= 1, charts);
   const links = await page.evaluate(() => document.querySelectorAll('svg.z-30 path').length);

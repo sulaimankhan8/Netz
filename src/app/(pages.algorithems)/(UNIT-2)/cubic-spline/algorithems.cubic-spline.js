@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { n } from '@/app/utils/numeric/geometry';
 import { EditorialButton } from '@/app/components/editorial';
@@ -26,6 +27,7 @@ export default function SplineCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('cubic-spline', 2, answer, () => ({ type: v.type, points: answer?.x?.length }));
+  const exportBar = useExportBar('cubic-spline', () => v, !!answer);
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const run = () => {
     try {
@@ -39,7 +41,7 @@ export default function SplineCalculator() {
   const reset = () => { setV(START); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-cubic-spline">
       <CalcCard
         title="Cubic Spline Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -62,6 +64,7 @@ export default function SplineCalculator() {
             <FiCheckCircle className="w-4 h-4 mr-2" /> Build Spline
           </EditorialButton>
         </div>
+        {answer && exportBar}
         {answer && (
           <ResultBox label={answer.value !== null ? 'Interpolated value' : 'Spline built'}>
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">

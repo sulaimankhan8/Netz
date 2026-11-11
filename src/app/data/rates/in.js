@@ -1,9 +1,9 @@
 /**
- * India tax rates (NETZ_METHODS_CATALOG.md section 0.2). Pages hold formulas only; every rate lives here.
+ * India tax rates (docs/methods/NETZ_METHODS_CATALOG.md section 0.2). Pages hold formulas only; every rate lives here.
  * Each rule: id, validFrom (inclusive), validTo (exclusive, null = still in force), label, source, data.
  * source.status: 'official' (checked on the government site), 'secondary' (tax portals and news), 'unverified'.
- * Research: research_notes/NETZ topics and new units/interest_and_taxes.md. The owner checks these before the
- * pages go live (NETZ_OWNER_TODO.md, section K).
+ * Research: docs/research_notes/NETZ topics and new units/interest_and_taxes.md. The owner checks these before the
+ * pages go live (docs/launch/NETZ_OWNER_TODO.md, section K).
  */
 
 export const IN_RULES = [
@@ -273,6 +273,24 @@ export const IN_RULES = [
         { key: '194A-senior', label: '194A bank interest (senior citizen)', rate: 10, threshold: 100000, per: 'year' },
       ],
       noPanRate: 20,
+    },
+  },
+  {
+    // Domestic company income tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    id: 'in.corporate',
+    validFrom: '2019-04-01',
+    validTo: null,
+    label: 'Domestic companies (Taxation Laws (Amendment) Act 2019 regimes)',
+    source: { title: 'Income-tax Act 1961: s.115BAA, s.115BAB, Finance Act rates; Income Tax Department tax rates page', url: 'https://www.incometaxindia.gov.in/', verifiedOn: '2026-11-08', status: 'unverified' },
+    data: {
+      regimes: {
+        // rate %, surcharge % (flat for the concessional regimes), MAT applies?
+        '115BAA': { label: 'Section 115BAA (no exemptions)', rate: 22, surcharge: [[0, 10]], mat: false },
+        '115BAB': { label: 'Section 115BAB (new manufacturing companies)', rate: 15, surcharge: [[0, 10]], mat: false },
+        normal: { label: 'Normal provisions', rate: 30, smallRate: 25, smallTurnover: 4000000000, surcharge: [[10000000, 7], [100000000, 12]], mat: true },
+      },
+      cess: 4,
+      matRate: 15,
     },
   },
 ];

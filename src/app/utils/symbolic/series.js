@@ -13,12 +13,14 @@ import { math, num, sym, add, div, polish, simplifyExact, variablesOf, unwrap } 
 import { mtex, exactTex, snap, readMulti } from './multi';
 import { substitute } from './iterated';
 import { limit } from './limit';
+import { integrate } from './integral';
 
 const big = create(all, { number: 'BigNumber', precision: 64 });
 
 /** Reads aₙ: n is the index; n! is allowed. */
 export function readTerm(text, label = 'aₙ', extra = []) {
-  const s = String(text ?? '').replace(/(\w|\))!/g, '$1!');
+  // n(n + 1) is a product here, never a function called n
+  const s = String(text ?? '').replace(/(\w|\))!/g, '$1!').replace(/\bn\s*\(/g, 'n*(');
   const node = readMulti(s, label);
   const bad = [...variablesOf(node)].filter((v) => v !== 'n' && !extra.includes(v));
   if (bad.length) throw new EngineError(`${label} may use only n${extra.length ? ` and ${extra.join(', ')}` : ''} (it uses ${bad.join(', ')}).`);
@@ -88,6 +90,11 @@ export function testSeries(a, n0 = 1) {
   const ratioBig = (N) => { const p = bigAt(a, N + 1), q = bigAt(a, N); return p === null || q === null || q.isZero() ? NaN : p.div(q).toNumber(); };
   // 1. nth-term test
   const l0 = limitN(a);
+  // a numeric "limit" of 0.01 can be 1/√n still shrinking: check much further out before calling it non-zero
+  if (l0.numeric && Number.isFinite(l0.L) && Math.abs(l0.L) > 1e-6) {
+    const far = [1e6, 1e10, 1e14].map((N) => Math.abs(toNum(bigAt(a, N))));
+    if (far.every(Number.isFinite) && far[2] < far[0] * 0.5) { l0.L = 0; l0.exact = '0'; }
+  }
   if (Number.isFinite(l0.L) && Math.abs(l0.L) > 1e-6) {
     tests.push({ name: 'nth-term test', result: 'diverges', lines: [`\\lim_{n\\to\\infty} a_n = ${l0.exact} \\neq 0${l0.numeric ? ' \\ (\\text{numerically})' : ''}`] });
     return { verdict: 'diverges', by: 'nth-term test', tests };
@@ -119,7 +126,8 @@ export function testSeries(a, n0 = 1) {
     const conv = p > 1;
     tests.push({ name: 'p-series', result: conv ? 'converges' : 'diverges', lines: [`a_n = \\frac{c}{n^{p}} \\text{ with } p = ${exactTex(p)} ${conv ? '> 1' : '\\le 1'}`] });
     const out = { verdict: conv ? 'converges' : 'diverges', by: 'p-series', tests };
-    if (conv && Math.abs(p - 2) < 1e-12) out.sum = `${exactTex(A(1))}\\cdot\\frac{\\pi^2}{6}`;
+    // Σ c/n² = cπ²/6 (only when the sum starts at n = 1)
+    if (conv && Math.abs(p - 2) < 1e-12 && n0 === 1) { const c = A(1); out.sum = Math.abs(c - 1) < 1e-12 ? '\\frac{\\pi^2}{6}' : `${exactTex(c)}\\cdot\\frac{\\pi^2}{6}`; }
     return out;
   }
   const alternating = signs.every((s, i) => i === 0 || s === -signs[i - 1]);
@@ -133,7 +141,9 @@ export function testSeries(a, n0 = 1) {
   if (!ratio) ratio = numericLimit((N) => Math.abs(ratioBig(N)));
   if (Number.isFinite(ratio.L) || ratio.L === Infinity) {
     const L = ratio.L;
-    const verdict = L < 1 - 1e-9 ? 'converges' : L > 1 + 1e-9 ? 'diverges' : 'inconclusive';
+    // limits are often numeric (0.9999999 for n/(n + 1)): near 1 the test cannot decide
+    const atOne = String(ratio.exact).trim() === '1' || Math.abs(L - 1) < 1e-5;
+    const verdict = atOne ? 'inconclusive' : L < 1 ? 'converges' : 'diverges';
     tests.push({
       name: "Ratio test (d'Alembert)", result: verdict,
       lines: [`\\left|\\frac{a_{n+1}}{a_n}\\right|${ratio.node ? ` = \\left|${mtex(polish(ratio.node))}\\right|` : ''} \\to ${ratio.exact}${ratio.numeric ? ' \\ (\\text{numerically})' : ''} ${verdict === 'converges' ? '< 1' : verdict === 'diverges' ? '> 1' : '= 1 \\ (\\text{no decision})'}`],
@@ -143,10 +153,36 @@ export function testSeries(a, n0 = 1) {
   // 5. Root test
   if (/\^/.test(a.toString())) {
     const root = numericLimit((N) => { const v = bigAt(a, N); return v === null ? NaN : v.abs().pow(big.bignumber(1).div(N)).toNumber(); });
-    if (Number.isFinite(root.L) && Math.abs(root.L - 1) > 1e-6) {
+    // |aₙ|^{1/n} creeps to 1 like 1 − (ln n)/n, so numeric values within 0.01 of 1 decide nothing
+    if (Number.isFinite(root.L) && Math.abs(root.L - 1) > 1e-2) {
       const verdict = root.L < 1 ? 'converges' : 'diverges';
       tests.push({ name: 'Root test (Cauchy)', result: verdict, lines: [`|a_n|^{1/n} \\to ${root.exact} ${root.L < 1 ? '< 1' : '> 1'} \\ (\\text{numerically})`] });
       return { verdict: verdict === 'converges' && alternating ? 'converges absolutely' : verdict, by: 'root test', tests };
+    }
+  }
+  // 5b. Integral test: positive, decreasing terms; ∫ₙ₀^∞ f(x) dx finite ⇔ the series converges (Σ 1/(n ln n))
+  if (!alternating && signs.every((s) => s > 0)) {
+    const mags = [10, 20, 40, 80, 160].map((N) => A(N));
+    if (mags.every((m, i) => i === 0 || m <= mags[i - 1])) {
+      try {
+        const fx = substitute(a, 'n', sym('x'));
+        const F = integrate(fx, 'x').result;
+        // for x ≥ n₀ the terms are positive, so |…| inside logs can go; the limit engine struggles with nested abs
+        const Fp = F.transform((m) => (m.isFunctionNode && m.fn.name === 'abs' ? m.args[0] : m));
+        let atInf = NaN;
+        try { atInf = limit(Fp, 'x', Infinity).value; } catch { /* numeric below */ }
+        if (Number.isNaN(atInf)) {
+          // F at 1e50, 1e150, 1e300: still climbing → ∞; settled → that value
+          const v = [50, 150, 300].map((e) => { try { return Fp.evaluate({ x: 10 ** e }); } catch { return NaN; } });
+          if (v.every(Number.isFinite)) atInf = v[2] - v[1] > 0.3 && v[1] - v[0] > 0.3 ? Infinity : Math.abs(v[2] - v[1]) < 1e-9 ? v[2] : NaN;
+        }
+        const at0 = F.evaluate({ x: n0 });
+        if ((Number.isFinite(atInf) || atInf === Infinity) && Number.isFinite(at0)) {
+          const conv = Number.isFinite(atInf);
+          tests.push({ name: 'Integral test', result: conv ? 'converges' : 'diverges', lines: [`\\int_{${n0}}^{\\infty} ${mtex(polish(fx))}\\,dx = \\Big[${mtex(polish(F))}\\Big]_{${n0}}^{\\infty} ${conv ? `= ${exactTex(atInf - at0)} \\ (\\text{finite})` : '= \\infty'}`] });
+          return { verdict: conv ? 'converges' : 'diverges', by: 'integral test', tests };
+        }
+      } catch { /* no antiderivative: try the next test */ }
     }
   }
   // 6. Limit comparison with 1/nᵖ (p from log|aₙ| / log n)

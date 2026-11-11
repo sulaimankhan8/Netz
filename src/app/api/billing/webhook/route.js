@@ -4,7 +4,7 @@ import { applyBillingEvent } from '@/db/billingStore';
 import { isValidWebhookSignature } from '@/lib/razorpay/server';
 
 /**
- * POST /api/billing/webhook  ← Razorpay (NETZ_LAUNCH_PLAN.md 5.2)
+ * POST /api/billing/webhook  ← Razorpay (docs/launch/NETZ_LAUNCH_PLAN.md 5.2)
  * The only place a payment turns Pro on. The signature is checked against the exact raw body
  * with RAZORPAY_WEBHOOK_SECRET; anything unsigned is refused. Each event id is handled once.
  *

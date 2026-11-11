@@ -1,6 +1,6 @@
 /**
  * Checks notes and blocks that come from outside this device (a .netz file, a share key, the
- * cloud copy) before they are saved or shown (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step B0).
+ * cloud copy) before they are saved or shown (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step B0).
  *
  * Only known block types and fields are kept, text is capped, and pictures must be image data or
  * a web address, so nothing in a note can run as code in the app. Pure: no browser needed.

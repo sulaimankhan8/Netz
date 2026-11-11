@@ -2,12 +2,12 @@
  * Moment generating functions: the maths for /moment-generating-function (Unit 5).
  *   M(t) = E[e^{tX}];  E[Xʳ] = M⁽ʳ⁾(0);  mean = M′(0), variance = M″(0) − M′(0)².
  * Named distributions use their standard M(t); a discrete table gives M(t) = Σ pᵢ e^{t xᵢ}. Derivatives are taken
- * symbolically and the value at t = 0 by the limit engine (the uniform M(t) is 0/0 there).
+ * symbolically; where they are 0/0 at t = 0 (the uniform M(t)) the moments come from central differences of M.
  */
 import { EngineError } from '../numeric/steps';
 import { math } from '../symbolic/tree';
 import { mtex, exactTex, tidyMulti } from '../symbolic/multi';
-import { limit } from '../symbolic/limit';
+import { toFraction } from '../numeric/fraction';
 import { readConstant } from './input';
 
 const DISTS = {
@@ -18,11 +18,6 @@ const DISTS = {
   uniform: { params: ['a', 'b'], M: ({ a, b }) => `(e^(${b}*t) - e^(${a}*t))/(t*(${b} - ${a}))`, name: 'Uniform' },
   normal: { params: ['mu', 'sigma'], M: ({ mu, sigma }) => `e^(${mu}*t + ${sigma}^2*t^2/2)`, name: 'Normal' },
   gamma: { params: ['alpha', 'theta'], M: ({ alpha, theta }) => `(1 - ${theta}*t)^(-${alpha})`, name: 'Gamma' },
-};
-const at0 = (node) => {
-  try { const v = node.evaluate({ t: 0 }); if (Number.isFinite(v)) return v; } catch { /* 0/0 */ }
-  const r = limit(node, 't', 0);
-  return r.value;
 };
 
 export function solve({ dist = 'binomial', n = '', p = '', lambda = '', a = '', b = '', mu = '', sigma = '', alpha = '', theta = '', xs = '', ps = '' }) {
@@ -47,7 +42,16 @@ export function solve({ dist = 'binomial', n = '', p = '', lambda = '', a = '', 
   }
   const M = math.parse(Mtext);
   const M1 = math.derivative(M, 't'), M2 = math.derivative(M1, 't');
-  const m1 = at0(M1), m2 = at0(M2);
+  // Where M′ or M″ is 0/0 at t = 0 (uniform), use fourth-order central differences on M itself (M(0) = 1 always)
+  const Mc = M.compile();
+  const Mv = (t) => Mc.evaluate({ t });
+  const h = 1e-3;
+  const fd1 = () => (-Mv(2 * h) + 8 * Mv(h) - 8 * Mv(-h) + Mv(-2 * h)) / (12 * h);
+  const fd2 = () => (-Mv(2 * h) + 16 * Mv(h) - 30 + 16 * Mv(-h) - Mv(-2 * h)) / (12 * h * h);
+  const direct = (node) => { try { const v = node.evaluate({ t: 0 }); return typeof v === 'number' && Number.isFinite(v) ? v : null; } catch { return null; } };
+  const tidyNum = (v) => { const f = toFraction(v, 1000, 1e-6); return f ? f.n / f.d : v; };
+  const m1 = direct(M1) ?? tidyNum(fd1());
+  const m2 = direct(M2) ?? tidyNum(fd2());
   const variance = m2 - m1 * m1;
   const Mt = tidyMulti(M, ['t']);
   steps.push(

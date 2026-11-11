@@ -32,7 +32,7 @@ async function seed(page, shapes) {
     const sessionObj = { sessionId: 'default_session', pages: [{ id: 'page_1', title: 'Page 1', strokes: [], blocks: [], links: [], shapes }], currentPageIndex: 0, blocks: [], links: [], updatedAt: Date.now() + 1e7 };
     localStorage.removeItem('NETZ_PLAYGROUND_SESSION_BACKUP');
     Storage.prototype.setItem = function () {};
-    const req = indexedDB.open('NETZ_PLAYGROUND_DB', 1);
+    const req = indexedDB.open('NETZ_PLAYGROUND_DB');
     req.onupgradeneeded = () => req.result.createObjectStore('sessions', { keyPath: 'sessionId' });
     req.onsuccess = () => {
       const tx = req.result.transaction('sessions', 'readwrite');

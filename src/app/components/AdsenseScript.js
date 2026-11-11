@@ -9,7 +9,7 @@ const SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?clie
 
 /**
  * Loads the AdSense script when the browser is idle, the first time the student is on a page where
- * ads are allowed (utils/ads/adsPolicy.js), and never for Pro (NETZ_LAUNCH_PLAN.md 6.1: "for Pro
+ * ads are allowed (utils/ads/adsPolicy.js), and never for Pro (docs/launch/NETZ_LAUNCH_PLAN.md 6.1: "for Pro
  * users the ad script is not even loaded"). Renders nothing.
  */
 export default function AdsenseScript() {

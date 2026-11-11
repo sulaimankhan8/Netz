@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Notes } from '@/app/components/method/Calculator';
@@ -18,6 +19,7 @@ export default function SorCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('sor', 1, answer, () => ({ omega: s.omega }));
+  const exportBar = useExportBar('sor', () => s, !!answer);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
   const run = () => {
@@ -35,7 +37,7 @@ export default function SorCalculator() {
   const rows = answer ? answer.rows.map((r) => ({ k: r.k, ...Object.fromEntries(r.x.map((v, i) => [VARS[i], sig(v, 7)])), change: sig(r.change, 4) })) : [];
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-sor">
       <CalcCard
         title="SOR Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -53,6 +55,7 @@ export default function SorCalculator() {
             <FiCheckCircle className="w-4 h-4 mr-2" /> Solve with SOR
           </EditorialButton>
         </div>
+        {answer && exportBar}
         {answer && (
           <ResultBox label={answer.converged ? `Solution (${answer.rows.length} iterations)` : 'Not converged'}>
             <p className="text-xl font-black font-mono break-words">{answer.x.map((v, i) => `${VARS[i]} = ${sig(v, 7)}`).join(', ')}</p>

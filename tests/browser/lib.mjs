@@ -15,6 +15,8 @@ export async function launch({ width = 1280, height = 800, deviceScaleFactor = 1
     defaultViewport: { width, height, deviceScaleFactor },
   });
   const page = await browser.newPage();
+  // The checks expect the light theme, whatever the computer prefers
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
   // The app saves a moment after the last change. Any check that reads the saved session waits for that save first.
   const rawEvaluate = page.evaluate.bind(page);
   page.evaluate = async (fn, ...args) => {
@@ -74,7 +76,7 @@ export async function shot(page, name) {
   return file;
 }
 
-// Controls that moved into a menu (PLAYGROUND_UX_FIX_PLAN.md, then PLAYGROUND_VISUAL_REDESIGN_PLAN.md):
+// Controls that moved into a menu (docs/playground/PLAYGROUND_UX_FIX_PLAN.md, then docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md):
 // the old name, then the steps that reach it now. '@blocks' opens Blocks (laptop, tablet) or the
 // phone's + "Add to page" sheet; '@page' opens the page menu (the ⋯ "Page" button in the top bars,
 // on every screen size); '@toolOptions' opens the active tool's options (the pen chip, or ● on phones).
@@ -251,10 +253,13 @@ export async function seedStrokes(page, count, { hugeBoxes = false } = {}) {
     const sessionObj = { sessionId: 'default_session', pages: [{ id: 'page_1', title: 'Page 1', strokes, blocks: [], links: [] }], currentPageIndex: 0, blocks: [], links: [], updatedAt: Date.now() + 1e7 };
     localStorage.removeItem('NETZ_PLAYGROUND_SESSION_BACKUP');
     Storage.prototype.setItem = function () {}; // this page must not save over the seed on its way out
-    const req = indexedDB.open('NETZ_PLAYGROUND_DB', 1);
+    const req = indexedDB.open('NETZ_PLAYGROUND_DB');
     req.onupgradeneeded = () => req.result.createObjectStore('sessions', { keyPath: 'sessionId' });
     req.onsuccess = () => {
-      const tx = req.result.transaction('sessions', 'readwrite');
+      const names = [...req.result.objectStoreNames];
+      const tx = req.result.transaction(names, 'readwrite');
+      // Any per-page records of an earlier run go, so the seed is what loads
+      if (names.includes('pages')) tx.objectStore('pages').clear();
       tx.objectStore('sessions').put(sessionObj);
       tx.oncomplete = () => { indexedDB.open = () => ({}); resolve(); };
     };

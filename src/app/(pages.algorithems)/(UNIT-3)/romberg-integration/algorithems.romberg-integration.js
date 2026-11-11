@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
@@ -17,6 +18,7 @@ export default function RombergCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('romberg', 3, answer, () => ({ fn: v.f }));
+  const exportBar = useExportBar('romberg', () => v, !!answer);
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const run = () => {
     try {
@@ -30,7 +32,7 @@ export default function RombergCalculator() {
   const reset = () => { setV(START); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-romberg">
       <CalcCard
         title="Romberg Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -48,6 +50,7 @@ export default function RombergCalculator() {
             <FiCheckCircle className="w-4 h-4 mr-2" /> Integrate
           </EditorialButton>
         </div>
+        {answer && exportBar}
         {answer && (
           <ResultBox label="Romberg estimate">
             <p className="text-2xl font-black font-mono break-all">∫ ≈ {sig(answer.best, 10)}</p>

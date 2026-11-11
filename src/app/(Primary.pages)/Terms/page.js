@@ -7,7 +7,7 @@ export const metadata = {
   description: 'The rules for using NETZ, its free features and NETZ Pro.',
 };
 
-/** Terms of use (NETZ_LAUNCH_PLAN.md 5.3). */
+/** Terms of use (docs/launch/NETZ_LAUNCH_PLAN.md 5.3). */
 export default function TermsPage() {
   const by = LEGAL.owner ? `${LEGAL.owner} ("we")` : 'us ("we")';
   return (

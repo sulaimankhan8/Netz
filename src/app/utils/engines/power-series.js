@@ -5,7 +5,8 @@
  * Both end points are then tested as ordinary series with the convergence-test engine.
  */
 import { EngineError } from '../numeric/steps';
-import { math, num, sym, add, mul, div, pow, polish, simplifyExact } from '../symbolic/tree';
+import { toFraction } from '../numeric/fraction';
+import { math, num, sym, add, mul, div, pow, paren, polish, simplifyExact } from '../symbolic/tree';
 import { mtex, exactTex, snap } from '../symbolic/multi';
 import { substitute } from '../symbolic/iterated';
 import { numNode } from '../symbolic/ode';
@@ -35,7 +36,9 @@ export function solve({ c, center = '0', power = '1' }) {
     if (!Number.isFinite(root.L)) throw new EngineError('NETZ could not find the radius: the ratio and root limits don\'t settle.');
     rho = { L: root.L === 0 ? Infinity : 1 / root.L, exact: root.L === 0 ? '\\infty' : exactTex(1 / root.L), numeric: true };
   }
-  const R = rho.L === Infinity ? Infinity : snap(rho.L ** (1 / k));
+  // the limit is numeric (0.9999998 for 1/n²): a simple value within 1e-5 is taken as exact
+  const loose = (v) => { const s = snap(v); if (s !== v) return s; const f = toFraction(v, 100, 1e-5); return f ? f.n / f.d : v; };
+  const R = rho.L === Infinity ? Infinity : loose(rho.L ** (1 / k));
   const RTex = R === Infinity ? '\\infty' : exactTex(R);
   steps.push({
     title: 'Ratio test', formula: '\\lim \\left|\\frac{u_{n+1}}{u_n}\\right| < 1',
@@ -51,7 +54,7 @@ export function solve({ c, center = '0', power = '1' }) {
     for (const sign of [-1, 1]) {
       const x = a + sign * R;
       const base = (sign * R) ** k;
-      const term = mul(cn, pow(numNode(snap(base)), sym('n')));
+      const term = mul(cn, pow(paren(numNode(snap(base))), sym('n')));
       let r;
       try { r = testSeries(term, 1); } catch (e) { r = { verdict: 'inconclusive', tests: [] }; }
       const conv = r.verdict.startsWith('converges');

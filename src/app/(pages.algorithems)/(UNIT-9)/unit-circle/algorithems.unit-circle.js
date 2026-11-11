@@ -6,6 +6,7 @@ import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, StepsCard, Choice } from '@/app/components/method/Calculator';
@@ -31,6 +32,7 @@ export default function UnitCircle() {
   const svgRef = useRef(null);
   const dragging = useRef(false);
   useRecordSolve('unit-circle', 9, answer, () => ({ angle: answer?.deg }));
+  const exportBar = useExportBar('unit-circle', () => ({ angle: String(deg), unit: 'deg' }), true);
 
   const r = at(deg);
   const showDeg = (d) => { setDeg(d); setText(String(Math.round(d * 100) / 100)); setUnit('deg'); setError(''); };
@@ -74,9 +76,10 @@ export default function UnitCircle() {
   const px = r4(r.cos), py = r4(-r.sin); // SVG y points down
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-unit-circle">
       <CalcCard title="Unit Circle Explorer">
         <ErrorBox>{error}</ErrorBox>
+        {exportBar}
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-6 items-start">
           <svg
             ref={svgRef}

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes } from '@/app/components/method/Calculator';
@@ -18,6 +19,7 @@ export default function PowerMethodCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('power-method', 4, answer, () => ({ mode: s.mode, size: s.cells.length }));
+  const exportBar = useExportBar('power-method', () => s, !!answer);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const run = () => {
     try {
@@ -35,7 +37,7 @@ export default function PowerMethodCalculator() {
   ];
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-power-method">
       <CalcCard
         title="Power Method Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -53,6 +55,7 @@ export default function PowerMethodCalculator() {
             <FiCheckCircle className="w-4 h-4 mr-2" /> Find Eigenvalue
           </EditorialButton>
         </div>
+        {answer && exportBar}
         {answer && (
           <ResultBox label={`${answer.mode === 'smallest' ? 'Smallest' : 'Dominant'} eigenvalue${answer.converged ? ` (${answer.rows.length} iterations)` : ' (not settled)'}`}>
             <p className="text-2xl font-black font-mono break-all">λ ≈ {sig(answer.eigenvalue, 8)}</p>

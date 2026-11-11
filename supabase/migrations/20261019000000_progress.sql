@@ -1,4 +1,4 @@
--- NETZ: accounts and progress (NETZ_LAUNCH_PLAN.md 4.3). Matches src/db/schema.js.
+-- NETZ: accounts and progress (docs/launch/NETZ_LAUNCH_PLAN.md 4.3). Matches src/db/schema.js.
 -- Row-level security is on with NO policies: the browser (anon / publishable key) can neither read nor
 -- write these tables. Only the server's own database connection (src/db) touches them.
 

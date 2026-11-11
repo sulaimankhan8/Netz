@@ -1,5 +1,5 @@
 /**
- * What Free and Pro may store on the server (NETZ_LAUNCH_PLAN.md 5.1). The server routes use these
+ * What Free and Pro may store on the server (docs/launch/NETZ_LAUNCH_PLAN.md 5.1). The server routes use these
  * with the student's real Pro status (db/billingStore.js); a null limit means unlimited.
  */
 

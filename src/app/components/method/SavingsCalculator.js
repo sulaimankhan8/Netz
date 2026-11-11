@@ -11,6 +11,7 @@ import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from './Calculator';
 import { StepTable } from './StepTable';
 import StackedBars from './StackedBars';
+import { useExportBar } from './ExportBar';
 import { CURRENCIES, formatMoney, formatPct } from '@/app/utils/finance/money';
 
 /** Short axis labels: ₹12k, ₹1.2L, ₹3.4Cr for rupees; $12k, $1.2M otherwise. */
@@ -45,6 +46,7 @@ export default function SavingsCalculator({
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve(id, unit, answer, () => ({}));
+  const exportBar = useExportBar(id, () => s, !!answer, title);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const money = (v) => formatMoney(v, cur);
 
@@ -66,7 +68,7 @@ export default function SavingsCalculator({
   const cell = (c, v) => (c.kind === 'year' ? String(Number(v.toFixed(2))) : money(v));
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id={`netz-solve-${id}`}>
       <CalcCard
         title={title}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -97,6 +99,7 @@ export default function SavingsCalculator({
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {answer.stats.map((st) => <Stat key={st.label} label={st.label} value={fmt(st)} strong={st.strong} />)}

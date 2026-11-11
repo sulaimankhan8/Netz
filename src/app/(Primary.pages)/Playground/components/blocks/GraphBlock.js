@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, memo } from 'react';
-import { LuEye, LuEyeOff, LuX, LuPlus } from 'react-icons/lu';
+import React, { useState, useMemo, useRef, useEffect, memo } from 'react';
+import { LuEye, LuEyeOff, LuX, LuPlus, LuRotateCcw } from 'react-icons/lu';
 import { FiAlertCircle } from 'react-icons/fi';
 import { generateGraphDatasetFromLatex, CURVE_COLORS } from '../../utils/equationToGraph';
 import { TOUCH_TARGET } from '../ui/Dialog';
@@ -61,6 +61,19 @@ function yRangeOf(datasets) {
   return [lo - pad, hi + pad];
 }
 
+/**
+ * The part of the plane on show: { x0, x1, y0, y1 }, with y0 and y1 null while y follows the curves.
+ * Saved in the block (content.view) so the graph opens where it was left (handoff C3).
+ */
+const defaultView = (range) => ({ x0: -range, x1: range, y0: null, y1: null });
+function readView(v) {
+  if (!v || !(v.x1 > v.x0)) return null;
+  const hasY = Number.isFinite(v.y0) && Number.isFinite(v.y1) && v.y1 > v.y0;
+  return { x0: v.x0, x1: v.x1, y0: hasY ? v.y0 : null, y1: hasY ? v.y1 : null };
+}
+// Zoom limits: from about 1e-4 to 1e5 units across
+const clampSpan = (s) => Math.min(1e5, Math.max(1e-4, s));
+
 /** One curve as an SVG path, broken where the function is undefined or jumps. */
 function curvePath(data, [x0, x1], [y0, y1]) {
   let d = '';
@@ -87,13 +100,17 @@ function curvePath(data, [x0, x1], [y0, y1]) {
  * Memoized: panning and zooming the page do not draw it again.
  */
 function GraphBlock({ block, onUpdateContent, isEditing: propIsEditing }) {
-  const [range, setRange] = useState(10);
+  const saved = readView(block.content?.view);
+  const [range, setRange] = useState(() => (saved && Math.abs(saved.x0 + saved.x1) < 1e-9 && RANGES.some((r) => r.value === saved.x1) ? saved.x1 : 10));
+  // A view being dragged or pinched; saved to the block when the gesture ends
+  const [draft, setDraft] = useState(null);
+  const view = draft || saved || defaultView(range);
   const [input, setInput] = useState('');
   const [colour, setColour] = useState(null);
   const [formError, setFormError] = useState(null);
   const [hover, setHover] = useState(null); // index of the sample under the mouse
   const isEditing = Boolean(propIsEditing);
-  const domain = useMemo(() => [-range, range], [range]);
+  const domain = useMemo(() => [view.x0, view.x1], [view.x0, view.x1]);
 
   // The curves as stored, or a first example
   const rawDatasets = useMemo(() => {
@@ -123,7 +140,8 @@ function GraphBlock({ block, onUpdateContent, isEditing: propIsEditing }) {
     [rawDatasets, domain]
   );
 
-  const yRange = useMemo(() => yRangeOf(curves), [curves]);
+  const autoY = useMemo(() => yRangeOf(curves), [curves]);
+  const yRange = useMemo(() => (view.y0 !== null ? [view.y0, view.y1] : autoY), [view.y0, view.y1, autoY]);
   const paths = useMemo(() => curves.map((c) => (c.hidden ? '' : curvePath(c.data || [], domain, yRange))), [curves, domain, yRange]);
   const xTicks = useMemo(() => niceTicks(domain[0], domain[1], 6), [domain]);
   const yTicks = useMemo(() => niceTicks(yRange[0], yRange[1], 4), [yRange]);
@@ -131,6 +149,115 @@ function GraphBlock({ block, onUpdateContent, isEditing: propIsEditing }) {
   const py = (y) => ((yRange[1] - y) / (yRange[1] - yRange[0])) * 100;
 
   const save = (datasets) => onUpdateContent?.(block.blockId, { graphData: { datasets } });
+  const saveView = (v) => onUpdateContent?.(block.blockId, { view: v });
+  const pickRange = (r) => {
+    setRange(r);
+    setDraft(null);
+    saveView(defaultView(r));
+  };
+  const isDefaultView = view.y0 === null && view.x0 === -range && view.x1 === range;
+
+  /* Pan and zoom while editing: one pointer drags, two pinch, the wheel zooms about the pointer */
+  const plotRef = useRef(null);
+  const pointers = useRef(new Map());
+  const gesture = useRef(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const yRangeRef = useRef(yRange);
+  yRangeRef.current = yRange;
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const commitRef = useRef(null);
+  commitRef.current = (v) => {
+    setDraft(null);
+    saveView(v);
+  };
+
+  // The view with y fixed at what is on screen, so dragging moves both axes together
+  const solid = () => {
+    const v = viewRef.current;
+    const [y0, y1] = yRangeRef.current;
+    return { x0: v.x0, x1: v.x1, y0, y1 };
+  };
+  const zoomAbout = (v, fx, fy, k) => {
+    const sx = clampSpan((v.x1 - v.x0) * k) / (v.x1 - v.x0);
+    const sy = clampSpan((v.y1 - v.y0) * k) / (v.y1 - v.y0);
+    const cx = v.x0 + fx * (v.x1 - v.x0);
+    const cy = v.y1 - fy * (v.y1 - v.y0);
+    return { x0: cx - (cx - v.x0) * sx, x1: cx + (v.x1 - cx) * sx, y0: cy - (cy - v.y0) * sy, y1: cy + (v.y1 - cy) * sy };
+  };
+
+  const onPlotDown = (e) => {
+    if (!isEditing) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    gesture.current = { start: solid(), at: new Map(pointers.current) };
+  };
+  const onPlotDrag = (e) => {
+    if (!isEditing || !pointers.current.has(e.pointerId) || !gesture.current) return;
+    e.stopPropagation();
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const r = plotRef.current.getBoundingClientRect();
+    const g = gesture.current;
+    const v = g.start;
+    const now = [...pointers.current.values()];
+    const was = [...g.at.values()];
+    if (now.length >= 2 && was.length >= 2) {
+      // Pinch: zoom about where the fingers started, then follow their midpoint
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const k = dist(was[0], was[1]) / dist(now[0], now[1]);
+      const mid = { x: (now[0].x + now[1].x) / 2, y: (now[0].y + now[1].y) / 2 };
+      const mid0 = { x: (was[0].x + was[1].x) / 2, y: (was[0].y + was[1].y) / 2 };
+      const z = zoomAbout(v, (mid0.x - r.left) / r.width, (mid0.y - r.top) / r.height, k);
+      const dx = ((mid.x - mid0.x) / r.width) * (z.x1 - z.x0);
+      const dy = ((mid.y - mid0.y) / r.height) * (z.y1 - z.y0);
+      setDraft({ x0: z.x0 - dx, x1: z.x1 - dx, y0: z.y0 + dy, y1: z.y1 + dy });
+      return;
+    }
+    const dx = ((now[0].x - was[0].x) / r.width) * (v.x1 - v.x0);
+    const dy = ((now[0].y - was[0].y) / r.height) * (v.y1 - v.y0);
+    setDraft({ x0: v.x0 - dx, x1: v.x1 - dx, y0: v.y0 + dy, y1: v.y1 + dy });
+  };
+  const onPlotUp = (e) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size) {
+      // One finger left after a pinch: carry on dragging from here
+      gesture.current = { start: solid(), at: new Map(pointers.current) };
+      return;
+    }
+    gesture.current = null;
+    if (draftRef.current) commitRef.current(draftRef.current);
+  };
+
+  // The wheel needs a non-passive listener so it zooms the graph and not the page
+  useEffect(() => {
+    const el = plotRef.current;
+    if (!el || !isEditing) return undefined;
+    let timer = null;
+    let latest = null;
+    const onWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const r = el.getBoundingClientRect();
+      const base = latest || solid();
+      latest = zoomAbout(base, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.exp(e.deltaY * 0.0015));
+      setDraft(latest);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        commitRef.current(latest);
+        latest = null;
+      }, 250);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      clearTimeout(timer);
+    };
+    // solid and zoomAbout only read refs, so one listener serves the whole edit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
 
   const addCurve = (e, preset) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -172,8 +299,15 @@ function GraphBlock({ block, onUpdateContent, isEditing: propIsEditing }) {
         <div className="flex-shrink-0 flex flex-col gap-2" onPointerDown={stop}>
           <div className="flex items-center justify-between gap-3">
             <span className="text-pg-cap font-semibold text-pg-text2">x from</span>
-            <Segmented label="Range of x" value={range} onChange={setRange} options={RANGES} className="flex-1 max-w-[260px]" />
+            <Segmented label="Range of x" value={isDefaultView ? range : null} onChange={pickRange} options={RANGES} className="flex-1 max-w-[260px]" />
+            {!isDefaultView && (
+              <button type="button" onClick={() => pickRange(range)} title="Back to the chosen range" className={`${chip} gap-1 bg-pg-tray text-pg-ink hover:bg-pg-line`} data-graph-reset>
+                <LuRotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                Reset
+              </button>
+            )}
           </div>
+          <p className="text-pg-cap text-pg-text2 -mt-1">Drag the plot to move it; pinch or scroll to zoom.</p>
 
           <form onSubmit={addCurve} className="flex items-center gap-1.5">
             <div className="relative flex-1 min-w-0">
@@ -230,7 +364,19 @@ function GraphBlock({ block, onUpdateContent, isEditing: propIsEditing }) {
 
       {/* The plot: y values on the left, x values underneath */}
       <div className="relative flex-1 min-h-[120px] pl-9 pb-5">
-        <div className="absolute left-9 right-0 top-0 bottom-5 rounded-lg bg-pg-plot-tint/40 overflow-hidden" onPointerMove={onPlotMove} onPointerLeave={() => setHover(null)}>
+        <div
+          ref={plotRef}
+          className={`absolute left-9 right-0 top-0 bottom-5 rounded-lg bg-pg-plot-tint/40 overflow-hidden ${isEditing ? 'touch-none cursor-grab active:cursor-grabbing' : ''}`}
+          onPointerDown={onPlotDown}
+          onPointerMove={(e) => {
+            onPlotDrag(e);
+            onPlotMove(e);
+          }}
+          onPointerUp={onPlotUp}
+          onPointerCancel={onPlotUp}
+          onPointerLeave={() => setHover(null)}
+          data-graph-view={`${view.x0},${view.x1},${yRange[0]},${yRange[1]}`}
+        >
           <svg viewBox={`0 0 ${SIZE} ${SIZE}`} preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden="true" data-graph-plot>
             <g stroke="rgb(var(--pg-line))" strokeWidth="1" vectorEffect="non-scaling-stroke">
               {xTicks.map((t) => (

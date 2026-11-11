@@ -5,7 +5,7 @@ import useAccount from '@/app/utils/progress/useAccount';
 import { refreshPro } from '@/app/utils/proClient';
 
 /**
- * Buying Pro from the Pricing page (NETZ_LAUNCH_PLAN.md 5.4 step 3):
+ * Buying Pro from the Pricing page (docs/launch/NETZ_LAUNCH_PLAN.md 5.4 step 3):
  * sign in → api/billing/start → Razorpay Checkout → wait until the webhook has turned Pro on.
  * The browser never decides that a payment worked; it only asks the server (api/billing/status).
  */

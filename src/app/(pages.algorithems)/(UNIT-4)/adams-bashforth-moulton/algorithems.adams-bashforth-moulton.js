@@ -16,6 +16,7 @@ export default function AdamsCalculator() {
   useRecordSolve('adams', 4, answer, () => ({ fn: answer?.fn }));
   return (
     <OdeCalculator
+      exportId="adams"
       onAnswer={(r, v) => setAnswer(r && { ...r, fn: v.f })} title="Adams-Bashforth-Moulton Engine" solve={solve} start={START} columns={COLUMNS}
       toRow={(r) => ({ n: r.n, x: r.x, how: r.how === 'P-C' ? 'predict + correct' : r.how, yp: r.yp, y: r.y, f: r.f, passes: r.passes })}
     />

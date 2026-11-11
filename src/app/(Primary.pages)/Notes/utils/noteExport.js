@@ -2,7 +2,7 @@
 
 /**
  * Exporting a whole note: typed content as typed, pictures as pictures
- * (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2).
+ * (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2).
  *
  *   Markdown  text, $$maths$$ and tables; sketches, boards, images and file previews as images
  *             inside the file (data URLs)

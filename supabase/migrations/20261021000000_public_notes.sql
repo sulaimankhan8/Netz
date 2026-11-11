@@ -1,4 +1,4 @@
--- NETZ: notes published to the web at /p/<slug> (NETZ_LAUNCH_PLAN.md 4.4). Matches src/db/schema.js.
+-- NETZ: notes published to the web at /p/<slug> (docs/launch/NETZ_LAUNCH_PLAN.md 4.4). Matches src/db/schema.js.
 -- A published note is a snapshot: later edits stay private until the author updates the public copy.
 -- Row-level security on with no policies: pages and routes read it through the server connection only.
 

@@ -1,5 +1,5 @@
 /**
- * NETZ Pro prices (NETZ_LAUNCH_PLAN.md 5.1). One place for the Pricing page and, later, the Razorpay
+ * NETZ Pro prices (docs/launch/NETZ_LAUNCH_PLAN.md 5.1). One place for the Pricing page and, later, the Razorpay
  * routes: the server must charge from these numbers, never from a price the browser sends.
  * Amounts are in the smallest unit (paise / cents), as Razorpay expects.
  */

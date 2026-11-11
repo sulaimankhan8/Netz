@@ -113,5 +113,5 @@ export function solve({ objective, constraints, mode = 'simplex' }) {
     { title: 'Standard form', depth: 0, lines: [`\\text{${rows.some((r) => r.op !== '<=') ? 'Slack, surplus and artificial (Big-M) variables added' : 'Slack variables added'}; } ${sense === 'min' ? '\\min z = -\\max(-z)' : ''}`] },
     { title: `${tableaux.length} tableau${tableaux.length > 1 ? 'x' : ''}`, formula: '\\text{enter: most negative } z_j - c_j; \\ \\text{leave: smallest ratio } b_i/a_{ij}', depth: 0, lines: [`\\text{Optimal: } ${vars.map((v, j) => `${v} = ${tex(x[j])}`).join(', \\ ')}, \\quad z = ${tex(zOpt)}`] },
   ];
-  return { mode, answer: `${vars.map((v, j) => `${v} = ${tex(x[j])}`).join(', \\ ')}, \\quad z_{\text{${sense}}} = ${tex(zOpt)}`, tableaux, steps, notes: ['The arrow marks the leaving row; the highlighted column is the entering variable.'], verified: true };
+  return { mode, answer: `${vars.map((v, j) => `${v} = ${tex(x[j])}`).join(', \\ ')}, \\quad z_{\\text{${sense}}} = ${tex(zOpt)}`, tableaux, steps, notes: ['The arrow marks the leaving row; the highlighted column is the entering variable.'], verified: true };
 }

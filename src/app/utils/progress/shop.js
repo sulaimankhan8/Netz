@@ -1,5 +1,5 @@
 /**
- * The gem shop (NETZ_LAUNCH_PLAN.md 2.5; banners from board artboard 7, robot skins from
+ * The gem shop (docs/launch/NETZ_LAUNCH_PLAN.md 2.5; banners from board artboard 7, robot skins from
  * artboard 13). Pure: the server runs buyItem / equipItem on its own copy of the progress state, so
  * prices and balances cannot be changed from the browser.
  */

@@ -1,6 +1,6 @@
 import { launch, openPlayground, drawStroke, sleep, clickTitle, shot, settle, BASE } from './lib.mjs';
 
-// The behaviour added by PLAYGROUND_UX_FIX_PLAN.md: leaving without needless prompts, an honest
+// The behaviour added by docs/playground/PLAYGROUND_UX_FIX_PLAN.md: leaving without needless prompts, an honest
 // save status, undo per page, Undo after deleting, the page sheet, Send to Notes that reports
 // failure, the music player kept off the page, Fit to content, models loaded only when needed and
 // a model that fails without breaking the page; and on a phone, two- and three-finger taps, the

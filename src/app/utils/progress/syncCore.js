@@ -1,5 +1,5 @@
 /**
- * How the server counts a device's activities (NETZ_LAUNCH_PLAN.md 4.2). Pure: no database and no
+ * How the server counts a device's activities (docs/launch/NETZ_LAUNCH_PLAN.md 4.2). Pure: no database and no
  * network, so it can be tested on its own (test_progress_sync.mjs). The route handler
  * (api/progress/sync) loads the stored state, calls syncProgress, and saves what it returns.
  *
@@ -98,7 +98,7 @@ export function syncProgress({ stored, activities = [], device = null, profile =
   if (profile && typeof profile === 'object') {
     if (typeof profile.robotName === 'string') state.robotName = profile.robotName.slice(0, 24);
     if (typeof profile.displayName === 'string') state.displayName = profile.displayName.slice(0, 40);
-    if (Array.isArray(profile.units)) state.units = profile.units.filter((u) => [1, 2, 3, 4, 5].includes(u));
+    if (Array.isArray(profile.units)) state.units = profile.units.filter((u) => Number.isInteger(u) && u >= 1 && u <= 15);
     if (profile.onboardingSeen) state.onboardingSeen = true;
   }
 

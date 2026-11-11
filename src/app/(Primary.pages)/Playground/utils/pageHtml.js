@@ -1,5 +1,5 @@
 /**
- * A Playground page as one web page (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2): the page
+ * A Playground page as one web page (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2): the page
  * itself as a picture (ink as vectors, from pageSvg.js), then its typed text, maths and tables as
  * real text in reading order, so they can be searched and copied.
  */

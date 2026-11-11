@@ -27,7 +27,7 @@ import EquationMenu from './equation/EquationMenu';
 import InsertLatexDialog from './equation/InsertLatexDialog';
 import ScreenshotMenu from './screenshot/ScreenshotMenu';
 import { Popover, TOUCH_TARGET, PLACE_ABOVE } from './ui/Dialog';
-import { BAR_SHELL, Divider, toolButton, Segmented, SwatchButton, MENU_ROW, SECTION_LABEL } from './ui/parts';
+import { BAR_SHELL, Divider, toolButton, Segmented, SwatchButton, MENU_ROW, SECTION_LABEL, SwitchRow } from './ui/parts';
 import useSidebarRight from './ui/useSidebarRight';
 import { UI } from '../utils/uiText';
 import { PEN_TYPES } from '../utils/penTypes';
@@ -217,13 +217,23 @@ function ToolOptions(props) {
           <StrokePreview wide colour={colour} width={previewWidth} opacity={opacity} />
         </div>
       )}
+      {highlighter && props.setHighlighterStraight && (
+        <div className="-mx-3 -mb-2">
+          <SwitchRow
+            checked={props.highlighterStraight !== false}
+            onChange={props.setHighlighterStraight}
+            label="Straight lines"
+            detail="A roughly straight stroke snaps into a straight band"
+          />
+        </div>
+      )}
       {lasso && <p className="text-pg-cap text-pg-text2">The lasso&apos;s colour button paints the selection in this colour.</p>}
     </div>
   );
 }
 
 /**
- * The tool dock at the bottom of the screen (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, 4.1 and 4.2).
+ * The tool dock at the bottom of the screen (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, 4.1 and 4.2).
  *   Laptop: Undo · Redo | Pen · Highlighter · Eraser · Lasso · Move · [pen chip] | [Insert] | Blocks ▾
  *   Tablet: the same with the Insert group folded into one Insert ▾ menu.
  *   Phone:  Undo · Pen · Highlighter · Eraser · Lasso · ● · +  (+ opens "Add to page")

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The device side of the notes cloud copy (NETZ_LAUNCH_PLAN.md 4.4). Notes stay in localStorage as
+ * The device side of the notes cloud copy (docs/launch/NETZ_LAUNCH_PLAN.md 4.4). Notes stay in localStorage as
  * before; when the student is signed in, changed notes are sent a moment after they are saved, and
  * notes changed on their other devices come back. The newest version of a note wins.
  *

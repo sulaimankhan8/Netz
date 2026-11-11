@@ -1,5 +1,5 @@
 /**
- * Tables for Notes and the Playground (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 5 and 6).
+ * Tables for Notes and the Playground (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 5 and 6).
  * One data shape for both, so a table moves between them unchanged:
  *   { rows: string[][], header: boolean, align: ('left'|'center'|'right')[] }
  * Cells are text; `$…$` in a cell is maths. Pure: test_tables.mjs runs it in Node.

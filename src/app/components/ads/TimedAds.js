@@ -9,7 +9,7 @@ import { INTERSTITIAL_UNIT, armInterstitial } from '@/app/utils/ads/gpt';
 const CHECK_MS = 30 * 1000;
 
 /**
- * The "about every 15 minutes" ad (NETZ_LAUNCH_PLAN.md 6.3). Counts active minutes on pages where
+ * The "about every 15 minutes" ad (docs/launch/NETZ_LAUNCH_PLAN.md 6.3). Counts active minutes on pages where
  * ads are allowed; once enough have passed it arms Google's full-screen ad, which Google shows at
  * the next page change. Off until the owner sets NEXT_PUBLIC_GAM_INTERSTITIAL_UNIT. Renders nothing.
  */

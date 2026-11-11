@@ -1,6 +1,6 @@
 /**
  * The owner's details shown on the Terms, Refund, Contact and Privacy pages. Razorpay checks these
- * pages before it turns payments on, so they must be real (NETZ_LAUNCH_PLAN.md 5.3).
+ * pages before it turns payments on, so they must be real (docs/launch/NETZ_LAUNCH_PLAN.md 5.3).
  * Empty fields are left off the pages.
  */
 export const LEGAL = {

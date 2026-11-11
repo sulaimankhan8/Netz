@@ -3,7 +3,7 @@
  * Tax years run 6 April to 5 April; validFrom/validTo use those dates.
  * Bands are on income above the personal allowance for England, Wales and Northern Ireland: [from, to (null = no top), rate %]
  * measured from £0 of TAXABLE income (after the allowance). Scotland has its own bands for non-savings income.
- * Status 'secondary' until the owner checks them on GOV.UK (NETZ_OWNER_TODO.md, section K).
+ * Status 'secondary' until the owner checks them on GOV.UK (docs/launch/NETZ_OWNER_TODO.md, section K).
  */
 
 export const UK_RULES = [
@@ -44,5 +44,15 @@ export const UK_RULES = [
       scotlandGross: [[12570, 15397, 19], [15397, 27491, 20], [27491, 43662, 21], [43662, 75000, 42], [75000, 125140, 45], [125140, null, 48]],
       ni: { primaryThreshold: 12570, upperEarningsLimit: 50270, mainRate: 8, upperRate: 2 },
     },
+  },
+  {
+    // Corporation tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    id: 'uk.corporation',
+    validFrom: '2023-04-01',
+    validTo: null,
+    label: 'Corporation tax from 1 April 2023',
+    source: { title: 'HMRC: Corporation Tax rates and reliefs; marginal relief', url: 'https://www.gov.uk/corporation-tax-rates', verifiedOn: '2026-11-08', status: 'unverified' },
+    // limits are for a 12-month period with no associated companies (divided by 1 + associates)
+    data: { smallRate: 19, mainRate: 25, lower: 50000, upper: 250000, fraction: [3, 200] },
   },
 ];

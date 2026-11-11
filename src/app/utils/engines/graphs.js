@@ -10,11 +10,12 @@ export function readGraph(text, { weighted = true } = {}) {
   const parts = String(text ?? '').split(/[;\n]/).map((p) => p.trim()).filter(Boolean);
   if (!parts.length) throw new EngineError('Type the edges, e.g. A B 4; A C 2; B C 1.');
   const edges = parts.map((p) => {
-    const t = p.replace(/[-–>→,]/g, ' ').split(/\s+/).filter(Boolean);
+    // "A-C 2" and "A → C" join nodes; a minus in front of a number is a sign ("A B -1")
+    const t = p.replace(/[–>→,]/g, ' ').replace(/-(?!\d)/g, ' ').split(/\s+/).filter(Boolean);
     if (t.length < 2 || t.length > 3) throw new EngineError(`Write each edge as "A B 4" (could not read "${p}").`);
     const w = t.length === 3 ? Number(t[2]) : 1;
     if (weighted && t.length === 3 && !Number.isFinite(w)) throw new EngineError(`The weight in "${p}" is not a number.`);
-    if (w < 0) throw new EngineError('Weights must not be negative here (Dijkstra needs that).');
+    // negative weights are fine for spanning trees; Dijkstra refuses them itself
     return { u: t[0], v: t[1], w };
   });
   const nodes = [...new Set(edges.flatMap((e) => [e.u, e.v]))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -33,6 +34,9 @@ export function dijkstra({ edges, source, directed = 'no', target = '' }) {
   const g = readGraph(edges);
   const dir = directed === 'yes';
   if (!g.nodes.includes(source)) throw new EngineError(`The source "${source}" is not in the graph (nodes: ${g.nodes.join(', ')}).`);
+  // Dijkstra is only correct for weights ≥ 0 (a negative edge can make a "finished" node shorter later)
+  const negative = g.edges.find((e) => e.w < 0);
+  if (negative) throw new EngineError(`Dijkstra's algorithm needs weights ≥ 0, but ${negative.u}–${negative.v} has weight ${negative.w}. Graphs with negative weights need the Bellman–Ford algorithm.`);
   const adj = adjacency(g, dir);
   const dist = Object.fromEntries(g.nodes.map((n) => [n, Infinity])), prev = {};
   dist[source] = 0;

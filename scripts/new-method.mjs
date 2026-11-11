@@ -1,5 +1,5 @@
 /**
- * Sets up a new method page (METHODS_IMPLEMENTATION_PLAN.md, step A5).
+ * Sets up a new method page (docs/methods/METHODS_IMPLEMENTATION_PLAN.md, step A5).
  *
  *   npm run new-method -- --id determinant --route /determinant --unit 8 --name "Determinant" [--category "Matrix Basics"] [--engine num] [--batch 1]
  *

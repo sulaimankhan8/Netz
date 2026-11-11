@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
 import { StepTable } from '@/app/components/method';
@@ -57,6 +58,7 @@ export default function EmiCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('emi', 10, answer, () => ({ method: s.method, months: answer?.N }));
+  const exportBar = useExportBar('emi', () => ({ ...s, prepayAmount: s.method === 'reducing' ? s.prepayAmount : '', currency: cur }), !!answer);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const money = (v) => formatMoney(v, cur);
 
@@ -85,7 +87,7 @@ export default function EmiCalculator() {
   const fmtRow = (r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, k === 'month' || k === 'year' ? v : (k === 'prepay' && !v ? '—' : money(v))]));
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-emi">
       <CalcCard
         title="EMI Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -114,6 +116,7 @@ export default function EmiCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

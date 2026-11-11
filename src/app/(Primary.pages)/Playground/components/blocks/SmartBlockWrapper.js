@@ -22,7 +22,7 @@ export default function SmartBlockWrapper({
   onDeleteBlock,
   onSelectAiAction,
   actions = [],
-  // Ink over blocks (PLAYGROUND_HANDOFF.md C2): drawOver = the block's "Draw on it" switch;
+  // Ink over blocks (docs/playground/PLAYGROUND_HANDOFF.md C2): drawOver = the block's "Draw on it" switch;
   // underInk = it sits under the ink right now (it comes up while picked with the Select tool)
   drawOver = false,
   underInk = false,

@@ -157,7 +157,7 @@ function BoardPages({ id, width, page, setPage, setCount }) {
 }
 
 /**
- * Full-screen viewer for a board, picture or file (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b):
+ * Full-screen viewer for a board, picture or file (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b):
  * pictures zoom, PDFs scroll through their pages, boards turn their pages (buttons or a swipe).
  * `asset` is a library record or the reference a note block keeps.
  */

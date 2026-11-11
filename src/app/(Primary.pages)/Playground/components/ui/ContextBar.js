@@ -12,7 +12,7 @@ export function CtxDivider() {
 }
 
 /**
- * The one floating bar for whatever is selected on the page (PLAYGROUND_VISUAL_REDESIGN_PLAN.md,
+ * The one floating bar for whatever is selected on the page (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md,
  * step 6.2): lassoed ink, a block, a shape. It sits above the selection with an 8 px gap, never
  * over it; with no room under the top bars it goes below; it stays 12 px inside the screen and
  * clear of the top bars (top) and the dock (bottom).

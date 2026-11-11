@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
@@ -27,6 +28,7 @@ export default function QuadraticSolver() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('quadratic', 7, answer, () => ({ fn: answer ? `${answer.a}x^2+${answer.b}x+${answer.c}` : '' }));
+  const exportBar = useExportBar('quadratic', () => v, !!answer);
   const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setAnswer(null); setError(''); };
 
   const run = () => {
@@ -49,7 +51,7 @@ export default function QuadraticSolver() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-quadratic">
       <CalcCard
         title="Quadratic Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -67,6 +69,7 @@ export default function QuadraticSolver() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <ResultBox label="Roots">
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">

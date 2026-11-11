@@ -7,7 +7,7 @@ export const metadata = {
   description: 'NETZ is free to learn with. Pro removes ads and adds unlimited cloud notes, more public links and clean exports.',
 };
 
-/** The Pricing page (NETZ_LAUNCH_PLAN.md 5.4 step 2; board artboards 14 and 15). */
+/** The Pricing page (docs/launch/NETZ_LAUNCH_PLAN.md 5.4 step 2; board artboards 14 and 15). */
 export default function PricingPage() {
   return <PricingView />;
 }

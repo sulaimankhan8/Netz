@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field } from '@/app/components/method/Calculator';
@@ -33,6 +34,7 @@ export default function ProgressionCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('progressions', 7, answer, () => ({ mode: s.mode }));
+  const exportBar = useExportBar('progressions', () => s, !!answer);
   const info = MODES.find((m) => m.value === s.mode);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
@@ -48,7 +50,7 @@ export default function ProgressionCalculator() {
   const reset = () => { setS(START); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-progressions">
       <CalcCard
         title="Progressions Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -65,6 +67,7 @@ export default function ProgressionCalculator() {
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>
+        {answer && exportBar}
         {answer && (
           <ResultBox label={info.label}>
             <p className="text-xl font-black font-mono break-words">{headline(answer)}</p>

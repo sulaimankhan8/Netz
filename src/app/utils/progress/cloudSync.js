@@ -2,7 +2,7 @@
 
 /**
  * Sends a signed-in student's activities to the server and takes the server's progress as the truth
- * (NETZ_LAUNCH_PLAN.md 4.2). Signed out, nothing here runs and progress stays on the device.
+ * (docs/launch/NETZ_LAUNCH_PLAN.md 4.2). Signed out, nothing here runs and progress stays on the device.
  *
  * - Every recorded activity waits in an outbox until the next sync (a moment later, or when back online).
  * - The first sync on an account also uploads this device's activity log, which the server re-counts.

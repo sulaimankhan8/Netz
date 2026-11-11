@@ -1,4 +1,4 @@
--- NETZ: NETZ Pro bought through Razorpay (NETZ_LAUNCH_PLAN.md 5.2). Matches src/db/schema.js.
+-- NETZ: NETZ Pro bought through Razorpay (docs/launch/NETZ_LAUNCH_PLAN.md 5.2). Matches src/db/schema.js.
 -- Only the Razorpay webhook (signature checked on the server) marks a purchase paid.
 -- Row-level security on with no policies: only the server connection reads or writes these.
 

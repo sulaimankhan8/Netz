@@ -1,5 +1,5 @@
 /**
- * Differentiation, rule by rule, with the working recorded (NETZ_METHODS_CATALOG.md section 0.1).
+ * Differentiation, rule by rule, with the working recorded (docs/methods/NETZ_METHODS_CATALOG.md section 0.1).
  * Each step: { rule, formula, line, depth } where `line` reads  d/dx[part] = …  for that part of the expression.
  * Steps are listed outermost first, the way a textbook writes them.
  */

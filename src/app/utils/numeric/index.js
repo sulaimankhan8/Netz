@@ -1,4 +1,4 @@
-// Shared maths for method pages and Notes widgets. Plain functions, no React (METHODS_IMPLEMENTATION_PLAN.md, step A4).
+// Shared maths for method pages and Notes widgets. Plain functions, no React (docs/methods/METHODS_IMPLEMENTATION_PLAN.md, step A4).
 export * from './steps';
 export * from './fraction';
 export * as matrix from './matrix';

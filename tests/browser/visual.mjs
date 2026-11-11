@@ -1,6 +1,6 @@
 import { launch, openPlayground, drawStroke, sleep, clickTitle, setPenWidth, shot, addEquationBlock, BASE } from './lib.mjs';
 
-// The look built by PLAYGROUND_VISUAL_REDESIGN_PLAN.md (section 9): one active look for every
+// The look built by docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md (section 9): one active look for every
 // tool, none of the old accent colours in the chrome, DM Sans everywhere (portalled sheets too),
 // nothing under 12 px, the two top bars and the dock where they belong at every screen size, one
 // context bar for a selection, the selection colour, pen types that keep their width, the empty
@@ -178,7 +178,7 @@ for (const size of [{ width: 1366, height: 768 }, { width: 1280, height: 800 }])
     await checkLayout(page, label, { phone: false });
 
     const controls = await page.evaluate(() => [...document.querySelectorAll('[data-dock] button')].filter((b) => b.getBoundingClientRect().width && !/ menu$/.test(b.getAttribute('aria-label') || '')).map((b) => b.getAttribute('aria-label')));
-    const expected = ['Undo', 'Redo', 'Pen', 'Highlighter', 'Eraser', 'Lasso Select', 'Move page', 'Pen options', 'Insert Picture', 'Screenshot', 'Shapes', 'Symbol', 'Equation', 'Blocks'];
+    const expected = ['Undo', 'Redo', 'Pen', 'Highlighter', 'Eraser', 'Lasso Select', 'Move page', 'Pen options', 'Table', 'Insert Picture', 'Screenshot', 'Shapes', 'Symbol', 'Equation', 'Blocks'];
     check(`${label}: the dock holds the 14 controls of the plan, in order`, controls.join('|') === expected.join('|'), controls.join('|'));
     check(`${label}: zoom and the page menu are not in the dock`, !controls.some((c) => ['Zoom', 'Zoom In', 'Zoom Out', 'Page'].includes(c)), controls.join('|'));
 
@@ -403,7 +403,7 @@ for (const size of [{ width: 1366, height: 768 }, { width: 1280, height: 800 }])
 }
 
 // ───────────────────────────── Blocks (laptop, mouse) ─────────────────────────────
-// The blocks round (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, section 10): the formula alone at rest
+// The blocks round (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, section 10): the formula alone at rest
 // with Plot in the bar, an SVG graph, a Text block a click selects, the one-row voice memo, a
 // little colour per type, and nothing inside a block redrawn while the page pans.
 {
@@ -577,7 +577,7 @@ for (const screen of [
         check(`phone, ${name}: no text under 12 px`, scan.small.length === 0, scan.small.join('; '));
         if (name === '+ sheet') {
           const tiles = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].map((b) => b.getAttribute('aria-label')).filter((l) => /^(Insert |Add |Record )/.test(l || '')));
-          check('phone, + sheet: the five Insert tiles in WPS order, then Graph, Text, Voice memo', tiles.join('|') === 'Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation|Add Graph Block|Add Text Block|Record a voice memo', tiles.join('|'));
+          check('phone, + sheet: the five Insert tiles in WPS order, then Graph, Text, Voice memo', tiles.join('|') === 'Insert Table|Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation|Add Graph Block|Add Text Block|Record a voice memo', tiles.join('|'));
         }
         await shot(page, `visual-phone-${name.replace(/[^a-z]+/g, '-')}`);
         await closePanels(page);

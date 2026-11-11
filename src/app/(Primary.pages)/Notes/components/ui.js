@@ -1,7 +1,7 @@
 'use client';
 
 /*
- * The Notes shared looks (NOTES_VISUAL_REDESIGN_PLAN.md, section 1). Every bar, menu, dialog and
+ * The Notes shared looks (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 1). Every bar, menu, dialog and
  * block uses these, so a look changes in one place. Colours are the nt-* tokens from ../notes.css.
  */
 

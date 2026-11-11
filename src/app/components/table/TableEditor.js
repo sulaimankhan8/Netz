@@ -8,7 +8,7 @@ import { colCount, insertCol, insertRow, removeCol, removeRow, setAlign, setCell
 
 /**
  * The table editor shared by the Notes Table block and the Playground Table block
- * (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 5 and 6).
+ * (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 5 and 6).
  *
  * Tap a cell to type. Tab and Enter move on (a new row appears after the last one); Shift+Enter
  * starts a new line in the cell. `$…$` in a cell shows as maths when the cell is not being edited.

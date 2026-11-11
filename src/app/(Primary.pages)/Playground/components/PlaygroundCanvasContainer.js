@@ -33,7 +33,7 @@ import { modelManager } from '../utils/recognition/modelManager';
 import { recordUserCorrection } from '../utils/recognition/telemetryStore';
 import { initAutocompleteTrie } from '../utils/autocompleteTrie';
 import { generateGraphDatasetFromLatex, upsertCurveForSource } from '../utils/equationToGraph';
-import { exportPage, pageToSvgString, renderInkOnly, renderPagePreview, renderView } from '../utils/exportEngine';
+import { exportPage, capturePage, savePdf, pageToSvgString, renderInkOnly, renderPagePreview, renderView } from '../utils/exportEngine';
 import { boardTitle, freshPages, noteBlocksToCanvas, offsetPage, pageBottom, pageTopLeft } from '../utils/boardStudio';
 import { Dialog } from './ui/Dialog';
 import {
@@ -143,6 +143,9 @@ function scrollsItself(el, stop) {
 // Single-key tool shortcuts (shown in the dock tooltips)
 const TOOL_SHORTCUTS = { p: 'pen', h: 'highlighter', e: 'eraser', l: 'lasso', s: 'shape', m: 'pan' };
 
+// Off-screen blocks sit at the board's origin
+const NO_PAN = { x: 0, y: 0 };
+
 export default function PlaygroundCanvasContainer() {
   const router = useRouter();
 
@@ -159,7 +162,7 @@ export default function PlaygroundCanvasContainer() {
   const [activeTool, setActiveTool] = useState('pen');
   // The gallery shape armed for drawing with the Shapes tool (null: freehand shapes snap)
   const [armedShape, setArmedShape] = useState(null);
-  // Graphite is the default ink (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, decision R1)
+  // Graphite is the default ink (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, decision R1)
   const [strokeColor, setStrokeColor] = useState(DEFAULT_INK);
   // The pen type is a real setting: each type keeps its own width (the width slider changes the
   // current type's) and sets the opacity. Colour, type and widths are remembered on this device.
@@ -184,6 +187,22 @@ export default function PlaygroundCanvasContainer() {
   // The highlighter has its own colour and width (painted 4x wider and see-through)
   const [highlighterColor, setHighlighterColor] = useState('#FACC15');
   const [highlighterWidth, setHighlighterWidth] = useState(4);
+  // Multi-page PDF: the blocks of the page being captured off screen, and where they are drawn
+  const [exportBlocks, setExportBlocks] = useState(null);
+  const exportAreaRef = useRef(null);
+  // Highlighter straight-line assist (on by default), remembered on this device
+  const [highlighterStraight, setHighlighterStraightState] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('netz_playground_highlighter_straight') === 'false') setHighlighterStraightState(false);
+    } catch (e) {}
+  }, []);
+  const setHighlighterStraight = useCallback((on) => {
+    setHighlighterStraightState(on);
+    try {
+      localStorage.setItem('netz_playground_highlighter_straight', on ? 'true' : 'false');
+    } catch (e) {}
+  }, []);
   const [gridStyle, setGridStyle] = useState('dots');
 
   // Eraser: 'stroke' removes whole strokes, 'partial' rubs out only what it passes over.
@@ -938,7 +957,7 @@ export default function PlaygroundCanvasContainer() {
     setSelectedClusterId(null);
   }, [notesMode]);
 
-  // ── Writing mode, "As I write" (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 4) ──────────
+  // ── Writing mode, "As I write" (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 4) ──────────
   // Writing is grouped by the 32 px ruled line it sits on. A line is read by the text model
   // alone when you move down to another line, or after a one-second pause. Its reading shows as
   // a pill; nothing is converted until you tap it (owner decision D2). Writing more on a line
@@ -1895,7 +1914,7 @@ export default function PlaygroundCanvasContainer() {
   // Exports the whole current page from its data (not a screenshot of the screen)
   const handleExportCanvas = async (format) => {
     if (!containerRef.current) return;
-    // SVG is a Pro export; Free PDFs carry a small NETZ mark (NETZ_LAUNCH_PLAN.md 5.1)
+    // SVG is a Pro export; Free PDFs carry a small NETZ mark (docs/launch/NETZ_LAUNCH_PLAN.md 5.1)
     const pro = isProOnDevice();
     if ((format === 'SVG' || format === 'TEX') && !pro) {
       showNotice(`${format === 'TEX' ? 'LaTeX' : 'SVG'} export comes with NETZ Pro. PNG and PDF are free.`);
@@ -1961,6 +1980,39 @@ export default function PlaygroundCanvasContainer() {
       recordActivity('page.exported', { format });
       return;
     }
+    if (format === 'PDF_ALL') {
+      // Every page in one PDF (handoff C7). Blocks are pictures of the drawn blocks: the current
+      // page's from the board, each other page's drawn for a moment in the hidden export area.
+      const pagesNow = getSyncedPagesState();
+      const isDarkAll = document.documentElement.classList.contains('dark');
+      const sheets = [];
+      for (let idx = 0; idx < pagesNow.length; idx++) {
+        showNotice(`Preparing PDF: page ${idx + 1} of ${pagesNow.length}...`, 60000);
+        const pg = pagesNow[idx];
+        const pageBlocks = pg.blocks || [];
+        let host = containerRef.current;
+        if (idx !== currentPageIndexRef.current && pageBlocks.length) {
+          setExportBlocks(pageBlocks);
+          // Two frames for React to draw, then a moment for maths fonts and pictures
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+          await new Promise((r) => setTimeout(r, 250));
+          host = exportAreaRef.current || containerRef.current;
+        }
+        sheets.push(await capturePage({ strokes: pg.strokes || [], blocks: pageBlocks, shapes: pg.shapes || [], darkPage: isDarkAll, containerElement: host, background: isDarkAll ? '#09090B' : '#FFFFFF' }));
+        setExportBlocks(null);
+      }
+      const title = boardTitle(pagesNow);
+      const result = await savePdf(sheets, { fileBaseName: `netz-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'board'}`, mark: !pro });
+      if (result.ok) {
+        showNotice(`Saved ${result.fileName} (${result.pages} page${result.pages === 1 ? '' : 's'})`);
+        recordActivity('page.exported', { format: 'PDF' });
+      } else if (result.reason === 'empty') {
+        showNotice('There is nothing on these pages to export yet.');
+      } else {
+        showNotice('The export failed. Please try again.');
+      }
+      return;
+    }
     const isDark = document.documentElement.classList.contains('dark');
     showNotice(`Preparing ${format}...`, 60000);
     const result = await exportPage(format, {
@@ -1983,7 +2035,7 @@ export default function PlaygroundCanvasContainer() {
     }
   };
 
-  // ── Notes Studio (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3) ──────────────
+  // ── Notes Studio (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3) ──────────────
   // Each page remembers the library board it belongs to (page.boardId). Save to Notes Studio
   // saves the open page's board: every page with the same boardId (pages with none form the
   // notebook's own board, which gets an id on its first save).
@@ -2197,7 +2249,7 @@ export default function PlaygroundCanvasContainer() {
     setEditingShapeId(id);
   }, [applyShapes]);
 
-  // ── Ink over blocks (PLAYGROUND_HANDOFF.md C2) ──
+  // ── Ink over blocks (docs/playground/PLAYGROUND_HANDOFF.md C2) ──
   // A block with "Draw on it" sits under the ink, so the pen writes over it. Pictures and graphs start
   // with it on. With the Select tool, a press on such a block picks it up (above the ink) to move or
   // edit it; when it is let go it goes back under the ink.
@@ -2829,6 +2881,7 @@ export default function PlaygroundCanvasContainer() {
     setActiveTool,
     onOpenSyncModal: () => setIsSyncModalOpen(true),
     onExportCanvas: handleExportCanvas,
+    pageCount: pages.length,
     onSaveToStudio: () => handleSaveToStudio(),
     onSaveToStudioAsNew: pages[currentPageIndex]?.boardId ? () => handleSaveToStudio({ asNew: true }) : null,
     boardSaved: Boolean(pages[currentPageIndex]?.boardId),
@@ -2847,6 +2900,95 @@ export default function PlaygroundCanvasContainer() {
     onResetZoom: handleResetZoom,
     onFitToContent: handleFitToContent,
   };
+
+  // One block in its frame. offscreen: drawn flat at 100% in the hidden export area (multi-page PDF)
+  const renderBlockFrame = (block, offscreen = false) => (
+      <SmartBlockWrapper
+        key={block.blockId}
+        block={block}
+        autoEdit={!offscreen && block.blockId === autoEditBlockId}
+        zoomLevel={offscreen ? 1 : zoomLevel}
+        panOffset={offscreen ? NO_PAN : panOffset}
+        onUpdatePosition={(blockId, pos) => dispatch({ type: 'UPDATE_BLOCK_POSITION', payload: { blockId, position: pos } })}
+        onUpdateSize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
+        onDeleteBlock={handleDeleteBlock}
+        onSelectAiAction={handleSelectAiAction}
+        drawOver={inkGoesOver(block)}
+        underInk={inkGoesOver(block) && liftedBlockId !== block.blockId}
+        onToggleDrawOver={handleToggleDrawOver}
+        selectSignal={liftedBlockId === block.blockId ? liftSignal : 0}
+        onDeselect={handleBlockLetGo}
+        actions={
+          block.type === 'equation'
+            ? [{ key: 'plot', label: 'Plot', title: 'Plot this equation on a graph', icon: <LuLineChart className="w-4 h-4 pointer-events-none" aria-hidden="true" />, onClick: () => plotGraphStable(block, block.content?.latex || '') }]
+            : undefined
+        }
+      >
+        {block.type === 'equation' && (
+          <EquationBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+            onPlotGraph={plotGraphStable}
+          />
+        )}
+
+        {block.type === 'graph' && (
+          <GraphBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+          />
+        )}
+
+        {block.type === 'theory' && (
+          <TheoryBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+          />
+        )}
+
+        {block.type === 'sketch' && (
+          <SketchBlock
+            block={block}
+            onConvertSketchToEquation={(sketchBlock, latexStr) => {
+              const eqId = `block_eq_${Date.now()}`;
+              const newEqBlock = {
+                blockId: eqId,
+                type: 'equation',
+                content: { latex: latexStr },
+                linkedBlockIds: [],
+                position: { x: sketchBlock.position.x + 400, y: sketchBlock.position.y },
+                size: { width: 360, height: 140 },
+                status: 'active',
+                isMinimal: false,
+              };
+              dispatch({ type: 'ADD_BLOCK', payload: newEqBlock });
+            }}
+          />
+        )}
+
+        {block.type === 'audio' && (
+          <AudioMemoBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+          />
+        )}
+
+        {block.type === 'image' && (
+          <ImageBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+            onResize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
+          />
+        )}
+
+        {block.type === 'table' && (
+          <TableBlock
+            block={block}
+            onUpdateContent={handleUpdateBlockContent}
+          />
+        )}
+      </SmartBlockWrapper>
+  );
 
   return (
     <div
@@ -2891,6 +3033,7 @@ export default function PlaygroundCanvasContainer() {
         activeTool={activeTool}
         strokeColor={activeTool === 'highlighter' ? highlighterColor : strokeColor}
         strokeWidth={activeTool === 'highlighter' ? highlighterWidth : strokeWidth}
+        highlighterStraight={highlighterStraight}
         strokeOpacity={strokeOpacity}
         zoomLevel={zoomLevel}
         panOffset={panOffset}
@@ -2931,92 +3074,14 @@ export default function PlaygroundCanvasContainer() {
       />
 
       {/* Layer 5: Smart Blocks Suite */}
-      {blockState.blocks.map((block) => (
-        <SmartBlockWrapper
-          key={block.blockId}
-          block={block}
-          autoEdit={block.blockId === autoEditBlockId}
-          zoomLevel={zoomLevel}
-          panOffset={panOffset}
-          onUpdatePosition={(blockId, pos) => dispatch({ type: 'UPDATE_BLOCK_POSITION', payload: { blockId, position: pos } })}
-          onUpdateSize={(blockId, size) => dispatch({ type: 'UPDATE_BLOCK_SIZE', payload: { blockId, size } })}
-          onDeleteBlock={handleDeleteBlock}
-          onSelectAiAction={handleSelectAiAction}
-          drawOver={inkGoesOver(block)}
-          underInk={inkGoesOver(block) && liftedBlockId !== block.blockId}
-          onToggleDrawOver={handleToggleDrawOver}
-          selectSignal={liftedBlockId === block.blockId ? liftSignal : 0}
-          onDeselect={handleBlockLetGo}
-          actions={
-            block.type === 'equation'
-              ? [{ key: 'plot', label: 'Plot', title: 'Plot this equation on a graph', icon: <LuLineChart className="w-4 h-4 pointer-events-none" aria-hidden="true" />, onClick: () => plotGraphStable(block, block.content?.latex || '') }]
-              : undefined
-          }
-        >
-          {block.type === 'equation' && (
-            <EquationBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-              onPlotGraph={plotGraphStable}
-            />
-          )}
+      {blockState.blocks.map((block) => renderBlockFrame(block))}
 
-          {block.type === 'graph' && (
-            <GraphBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-            />
-          )}
-
-          {block.type === 'theory' && (
-            <TheoryBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-            />
-          )}
-
-          {block.type === 'sketch' && (
-            <SketchBlock
-              block={block}
-              onConvertSketchToEquation={(sketchBlock, latexStr) => {
-                const eqId = `block_eq_${Date.now()}`;
-                const newEqBlock = {
-                  blockId: eqId,
-                  type: 'equation',
-                  content: { latex: latexStr },
-                  linkedBlockIds: [],
-                  position: { x: sketchBlock.position.x + 400, y: sketchBlock.position.y },
-                  size: { width: 360, height: 140 },
-                  status: 'active',
-                  isMinimal: false,
-                };
-                dispatch({ type: 'ADD_BLOCK', payload: newEqBlock });
-              }}
-            />
-          )}
-
-          {block.type === 'audio' && (
-            <AudioMemoBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-            />
-          )}
-
-          {block.type === 'image' && (
-            <ImageBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-            />
-          )}
-
-          {block.type === 'table' && (
-            <TableBlock
-              block={block}
-              onUpdateContent={handleUpdateBlockContent}
-            />
-          )}
-        </SmartBlockWrapper>
-      ))}
+      {/* Multi-page PDF: another page's blocks, drawn out of sight so they can be captured */}
+      {exportBlocks && (
+        <div ref={exportAreaRef} aria-hidden="true" className="fixed top-0 pointer-events-none" style={{ left: -100000, width: 4000, height: 4000 }} data-export-area>
+          {exportBlocks.map((block) => renderBlockFrame(block, true))}
+        </div>
+      )}
 
       {/* The top bars. Laptops and tablets: the page bar top-left (16 px from the app sidebar) and
           the document bar top-right. Phones: one bar across the top, 12 px from each edge. */}
@@ -3443,6 +3508,8 @@ export default function PlaygroundCanvasContainer() {
         setHighlighterColor={setHighlighterColor}
         highlighterWidth={highlighterWidth}
         setHighlighterWidth={setHighlighterWidth}
+        highlighterStraight={highlighterStraight}
+        setHighlighterStraight={setHighlighterStraight}
         onMoveFolded={setMoveFolded}
         eraserMode={eraserMode}
         setEraserMode={setEraserMode}

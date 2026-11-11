@@ -5,7 +5,7 @@ import { applyActivity, PROGRESS_EVENT } from './progress/engine';
 import { queueActivity } from './progress/cloudSync';
 
 /**
- * Tells NETZ that the student did something that may finish a task (NETZ_LAUNCH_PLAN.md 2.6).
+ * Tells NETZ that the student did something that may finish a task (docs/launch/NETZ_LAUNCH_PLAN.md 2.6).
  * Safe to call anywhere on the client; the progress toast and the robot listen for the result.
  *
  *   recordActivity('solver.run', { method: 'bisection', unit: 1, fn: 'x^3-4x-9' })

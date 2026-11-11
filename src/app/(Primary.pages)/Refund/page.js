@@ -5,7 +5,7 @@ export const metadata = {
   description: 'NETZ Pro is not refunded; you can cancel any time and keep Pro until the paid period ends.',
 };
 
-/** Refund and cancellation policy (NETZ_LAUNCH_PLAN.md 5.3). Owner's choice, 2026-10-21: no refunds, cancel any time. */
+/** Refund and cancellation policy (docs/launch/NETZ_LAUNCH_PLAN.md 5.3). Owner's choice, 2026-10-21: no refunds, cancel any time. */
 export default function RefundPage() {
   return (
     <LegalPage title="Refunds and cancelling">

@@ -1,5 +1,5 @@
 /**
- * Limits, step by step (NETZ_METHODS_CATALOG.md 6A), tried in the order a student would:
+ * Limits, step by step (docs/methods/NETZ_METHODS_CATALOG.md 6A), tried in the order a student would:
  *   1. direct substitution
  *   2. 0/0 with polynomials: factor out (x − a) from top and bottom, cancel, substitute again
  *   3. x → ±∞ with polynomials: divide by the highest power (compare degrees)

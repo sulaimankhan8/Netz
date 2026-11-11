@@ -7,7 +7,7 @@ import { GROUPS, PRO_TASKS, STREAK_MEDALS, TASK_BY_ID } from '@/app/utils/progre
 import { BANNER_BY_ID, SKIN_BY_ID } from '@/app/utils/progress/shop';
 import { MedalBadge } from './medals';
 
-// Settings can switch these toasts off (NETZ_LAUNCH_PLAN.md 2.8)
+// Settings can switch these toasts off (docs/launch/NETZ_LAUNCH_PLAN.md 2.8)
 export const TOASTS_OFF_KEY = 'netz_progress_toasts_off';
 const SHOW_MS = 3600;
 
@@ -19,7 +19,7 @@ function medalOf(event) {
   switch (event.type) {
     case 'taskFirst': {
       const g = GROUPS[TASK_BY_ID[event.taskId]?.group];
-      return g ? { family: 'task', id: event.taskId, fill: g.fill, rim: g.rim } : null;
+      return g ? { family: 'task', id: event.taskId, fill: g.fill, fill2: g.fill2, rim: g.rim } : null;
     }
     case 'onboarding':
       return { family: 'onboarding', id: event.taskId };

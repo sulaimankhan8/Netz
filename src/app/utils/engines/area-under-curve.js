@@ -4,6 +4,7 @@
  *                                 positive above the axis and negative below; area = sum of the sizes
  *   between y = f(x) and y = g(x): the same with h = f − g; with no limits, the curves' meeting
  *                                 points are used (first to last)
+ *   average value of f on [a, b]:  f̄ = (1/(b − a))∫_a^b f dx (the signed integral, nothing split)
  * Each piece uses the step-by-step antiderivative when NETZ has one (checked by differentiating it),
  * else adaptive Simpson's rule. Values are exact (π, √2, ln 2 …) when recognised.
  */
@@ -15,13 +16,14 @@ import { cleanest } from '../symbolic/present';
 import { zerosOf, texOf } from '../symbolic/roots';
 import { rationalParts } from '../symbolic/poly';
 import { derivativeMatches, simpson } from './integral';
+import { recognise } from '../symbolic/vectorint';
 
 const valueAt = (node, v, x) => { try { const y = node.evaluate({ [v]: x }); return typeof y === 'number' ? y : NaN; } catch { return NaN; } };
 const limitTex = (t, value) => { try { return tex(polish(math.parse(String(t).trim().replace(/π/g, 'pi')))).trim(); } catch { return texOf(value); } };
 const abs = (t) => (t.startsWith('-') ? t.slice(1).trim() : t);
 
 export function solve({ mode = 'under', f: tf, g: tg = '', a: ta = '', b: tb = '' }) {
-  if (!['under', 'between'].includes(mode)) throw new EngineError('Choose the area under a curve or between two curves.');
+  if (!['under', 'between', 'average'].includes(mode)) throw new EngineError('Choose the area under a curve, between two curves, or the average value.');
   const f = parse(tf, 'f(x)');
   const g = mode === 'between' ? parse(tg, 'g(x)') : null;
   const vars = [...new Set([...variablesOf(f), ...(g ? variablesOf(g) : [])])];
@@ -85,6 +87,18 @@ export function solve({ mode = 'under', f: tf, g: tg = '', a: ta = '', b: tb = '
     title: 'Integrate each piece',
     lines: pieces.map((p) => `\\int_{${p.lo.tex}}^{${p.hi.tex}} \\left(${g ? 'f - g' : 'f'}\\right) d${v} = ${p.valueTex}${p.exact ? '' : ' \\ \\text{(numerical)}'}`),
   });
+  if (mode === 'average') {
+    // f̄ = (1/(b − a)) × the signed integral
+    const signed = pieces.reduce((s, p) => s + p.value, 0);
+    const mean = signed / (b - a);
+    const intTex = texOf(signed), meanTex = /\d\.\d/.test(texOf(mean)) ? recognise(mean) : texOf(mean), wTex = texOf(b - a);
+    steps.push({ title: 'Average value', formula: '\\bar{f} = \\frac{1}{b - a}\\int_a^b f(x)\\,dx', lines: [`\\int_{${aTex}}^{${bTex}} f\\,d${v} = ${intTex}`, `\\bar{f} = \\frac{${intTex}}{${wTex}} = ${meanTex}${/[a-z\\]/.test(meanTex) ? ` \\approx ${Number(mean.toPrecision(6))}` : ''}`] });
+    return {
+      mode, variable: v, f: tex(polish(f)).trim(), g: null, a, b, aTex, bTex, crossings: [], pieces, area: mean, areaTex: meanTex, average: mean, averageTex: meanTex, exact: pieces.every((p) => p.exact),
+      steps, verified: true, fAt: (x) => valueAt(f, v, x), gAt: (x) => mean + 0 * x, result: mean,
+      notes: ['The average is the height of the rectangle on [a, b] with the same signed area as the curve (the dashed line).'], plot: null,
+    };
+  }
   const area = pieces.reduce((s, p) => s + Math.abs(p.value), 0);
   const areaTex = texOf(area);
   steps.push({

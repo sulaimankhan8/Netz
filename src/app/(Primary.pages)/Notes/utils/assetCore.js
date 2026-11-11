@@ -1,5 +1,5 @@
 /**
- * Rules for the Notes Studio Assets library (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b):
+ * Rules for the Notes Studio Assets library (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b):
  * which files may go in, how big they may be, and how much each student may keep in the cloud.
  * Pure, so test_asset_store.mjs checks it in Node and the server route uses the same numbers.
  */
@@ -10,7 +10,7 @@ const MB = 1024 * 1024;
 export const ASSET_MAX_BYTES = { board: 10 * MB, image: 15 * MB, file: 25 * MB };
 
 /**
- * Cloud storage per student. Owner decision still open (NETZ_OWNER_TODO.md): these are the
+ * Cloud storage per student. Owner decision still open (docs/launch/NETZ_OWNER_TODO.md): these are the
  * starting values, sized for Supabase's free 1 GB of file storage.
  */
 export const FREE_ASSET_BYTES = 50 * MB;

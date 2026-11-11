@@ -20,6 +20,64 @@ if (typeof ort !== 'undefined' && ort?.env) {
   }
 }
 
+/* ---------------- Recognition off the main thread (handoff C11) ---------------- */
+
+// One worker holds the model sessions; each page-side session forwards run() to it
+let inferenceWorker = null;
+let workerBroken = false;
+let nextRequest = 1;
+const pendingRequests = new Map();
+
+const workersAvailable = () =>
+  typeof window !== 'undefined' && typeof Worker !== 'undefined' && !workerBroken && !window.__NETZ_RECOGNITION_IN_PAGE__;
+
+function getWorker() {
+  if (inferenceWorker) return inferenceWorker;
+  inferenceWorker = new Worker(new URL('./inferenceWorker.js', import.meta.url), { type: 'module', name: 'netz-recognition' });
+  inferenceWorker.onmessage = (event) => {
+    const { id, ok, result, error } = event.data || {};
+    const request = pendingRequests.get(id);
+    if (!request) return;
+    pendingRequests.delete(id);
+    if (ok) request.resolve(result);
+    else request.reject(new Error(error));
+  };
+  inferenceWorker.onerror = (event) => {
+    // The worker could not start (or crashed): everything waiting fails, and later sessions run in the page
+    workerBroken = true;
+    pendingRequests.forEach((r) => r.reject(new Error(event?.message || 'The recognition worker stopped')));
+    pendingRequests.clear();
+    inferenceWorker = null;
+  };
+  return inferenceWorker;
+}
+
+function ask(message, transfer = []) {
+  return new Promise((resolve, reject) => {
+    const id = nextRequest++;
+    pendingRequests.set(id, { resolve, reject });
+    getWorker().postMessage({ ...message, id }, transfer);
+  });
+}
+
+/** A model session that lives in the worker. Same run() as ort.InferenceSession: tensors in, tensors out. */
+class WorkerSession {
+  constructor(key) {
+    this.key = key;
+  }
+
+  async run(feeds) {
+    const plain = {};
+    for (const [name, t] of Object.entries(feeds)) plain[name] = { type: t.type, data: t.data, dims: t.dims };
+    const result = await ask({ kind: 'run', key: this.key, feeds: plain });
+    const out = {};
+    for (const [name, t] of Object.entries(result)) out[name] = new ort.Tensor(t.type, t.data, t.dims);
+    return out;
+  }
+}
+
+let nextSessionKey = 1;
+
 const CACHE_NAME = 'netz-models-cache-v1';
 
 export const MODEL_PATHS = {
@@ -218,6 +276,20 @@ class ModelManager {
       graphOptimizationLevel: 'basic',
       logSeverityLevel: 4, // 4 = Fatal only
     };
+
+    // Off the main thread when the browser can: drawing stays smooth while a model runs.
+    // Same model, same WebAssembly settings, so the same results. Falls back to the page.
+    if (workersAvailable()) {
+      try {
+        const key = `session_${nextSessionKey++}`;
+        const copy = modelBuffer.slice(0);
+        await ask({ kind: 'create', key, buffer: copy, options: { ...sessionOptions, executionProviders: ['wasm'] } }, [copy]);
+        return { session: new WorkerSession(key), provider: 'wasm-worker' };
+      } catch (workerErr) {
+        console.warn('[ModelManager] Recognition worker unavailable, running in the page:', workerErr);
+        workerBroken = true;
+      }
+    }
 
     // Primary: WebAssembly SIMD session (instant startup, sub-100ms inference)
     try {

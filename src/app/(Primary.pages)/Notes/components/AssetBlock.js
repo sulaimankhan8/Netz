@@ -12,7 +12,7 @@ export const KIND_ICON = { board: LuLayoutDashboard, image: LuImage, file: LuFil
 const KIND_NAME = { board: 'Board', image: 'Image', file: 'File' };
 
 /**
- * A board, picture or file from the Assets library, inside a note (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
+ * A board, picture or file from the Assets library, inside a note (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
  * It shows a preview, Large (note width) or as a small Card; a tap opens the full-screen viewer.
  * The block keeps the item's id and a small copy of its preview, so the note still shows something
  * on devices (or published pages) that do not have the item.

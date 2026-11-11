@@ -9,6 +9,8 @@ import { readMulti, partial, lettersOf, mtex, evalAt } from '../symbolic/multi';
 import { readConstant } from './input';
 
 const r6 = (v) => Number(v.toPrecision(6));
+// in maths, 1.09951e-8 must read 1.09951 × 10⁻⁸ (KaTeX would show an italic e)
+const tx = (v) => { const m = String(v).match(/^(-?[\d.]+)e([+-]\d+)$/); return m ? `${m[1]} \\times 10^{${Number(m[2])}}` : String(v); };
 
 export function solve({ f, x0, y0 = '', alpha = '0.1', steps: nsteps = '20', tol = '0.0001' }) {
   const node = readMulti(f, 'f');
@@ -39,14 +41,18 @@ export function solve({ f, x0, y0 = '', alpha = '0.1', steps: nsteps = '20', tol
     p = p.map((v, i) => v - a * grad[i]);
   }
   const last = rows.at(-1);
+  // Not blown up yet, but f and |∇f| keep growing: α is too large and the steps overshoot
+  const growing = stop === 'steps' && rows.length > 3 && last.f > rows[0].f && last.n > rows[rows.length - 2].n;
   const steps = [
     { title: 'The gradient', formula: '\\mathbf{x}_{k+1} = \\mathbf{x}_k - \\alpha\\nabla f(\\mathbf{x}_k)', depth: 0, lines: [`\\nabla f = \\left(${g.map((d) => mtex(d)).join(',\\ ')}\\right), \\qquad \\alpha = ${a}`] },
-    { title: stop === 'converged' ? 'Converged' : stop === 'diverged' ? 'Diverged' : 'Stopped', depth: 0, lines: [stop === 'diverged' ? '\\text{The values blew up: try a smaller } \\alpha' : `\\text{After ${last.k} steps: } (${two ? `${last.x}, ${last.y}` : last.x}), \\ f = ${last.f}, \\ |\\nabla f| = ${last.n}`] },
+    { title: stop === 'converged' ? 'Converged' : stop === 'diverged' ? 'Diverged' : growing ? 'Diverging' : 'Stopped', depth: 0, lines: [stop === 'diverged' ? '\\text{The values blew up: try a smaller } \\alpha' : `\\text{After ${last.k} steps: } (${two ? `${tx(last.x)}, ${tx(last.y)}` : tx(last.x)}), \\ f = ${tx(last.f)}, \\ |\\nabla f| = ${tx(last.n)}`, ...(growing ? [`\\text{f has grown from } ${rows[0].f} \\text{ to } ${last.f}: \\ \\alpha = ${a} \\text{ is too large}`] : [])] },
   ];
+  const notes = ['Gradient descent finds a local minimum. A small α is slow; a large one can overshoot and diverge.'];
+  if (growing) notes.unshift(`α = ${a} is too large here: each step overshoots the minimum, so f grows instead of shrinking. Try a smaller α.`);
   return {
-    f: mtex(polish(node)), two, point: two ? `(${last.x}, ${last.y})` : `${last.x}`, fx: last.f, stop, steps, rows, path,
+    f: mtex(polish(node)), two, point: two ? `(${tx(last.x)}, ${tx(last.y)})` : tx(last.x), fx: tx(last.f), stop, steps, rows, path,
     columns: [{ key: 'k', label: 'k', bold: true }, { key: 'x', label: 'x' }, ...(two ? [{ key: 'y', label: 'y' }] : []), { key: 'g', label: '∇f' }, { key: 'n', label: '|∇f|' }, { key: 'f', label: 'f', highlight: true }],
-    notes: ['Gradient descent finds a local minimum. A small α is slow; a large one can overshoot and diverge.'], verified: stop !== 'diverged',
+    notes, verified: stop !== 'diverged', growing,
     fAt: two ? (x, y) => evalAt(node, { x, y }) : null,
   };
 }

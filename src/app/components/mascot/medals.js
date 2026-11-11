@@ -2,9 +2,10 @@
 
 import { STREAK_MEDALS } from '@/app/utils/progress/catalog';
 import { TASK_EMBLEMS } from './taskEmblems';
+import { UNIT_EMBLEMS } from './unitEmblems';
 
 /**
- * Every NETZ medal (NETZ_MEDALS_CATALOG.md), in the bg1 sunset palette:
+ * Every NETZ medal (docs/rewards/NETZ_MEDALS_CATALOG.md), in the bg1 sunset palette:
  * - task: a hexagon in its group's colour with a picture of the method (taskEmblems.js)
  * - onboarding: an amber coin with the robot, its screen showing the step
  * - streak: a shield in its tier's colour with a flame, the day count and 1–3 stars
@@ -15,6 +16,8 @@ import { TASK_EMBLEMS } from './taskEmblems';
 const HEX_OUTER = '60,4 108.5,32 108.5,88 60,116 11.5,88 11.5,32';
 const HEX_INNER = '60,14 99.8,37 99.8,83 60,106 20.2,83 20.2,37';
 const HEX_SHINE = '60,14 99.8,37 99.8,60 20.2,60 20.2,37';
+// Units 6–15 split the hexagon: `fill` on top, `fill2` below (docs/rewards/NETZ_MEDALS_CATALOG.md section 2b)
+const HEX_LOWER = '20.2,60 99.8,60 99.8,83 60,106 20.2,83';
 const SHIELD_OUTER = 'M60 6 L104 21 V60 C104 88 85 108 60 122 C35 108 16 88 16 60 V21 Z';
 const SHIELD_INNER = 'M60 15 L95 27 V60 C95 83 80 100 60 112 C40 100 25 83 25 60 V27 Z';
 const FLAME = 'M60 26 C69 37 76 45 73 56 C71 64 66 68 60 68 C54 68 48 64 47 56 C46 49 51 42 55 38 C56 44 58 47 60 48 C62 40 59 33 60 26 Z';
@@ -43,18 +46,30 @@ const GROUP_INK = {
   notes: { ink: '#4D345E', acc: '#D55E64', soft: '#FFFFFF' },
   playground: { ink: '#4D345E', acc: '#FFF4E0', soft: '#FFFFFF' },
   sharing: { ink: '#FFFFFF', acc: '#FBAE3D', soft: '#FFFFFF' },
+  // Split hexagons: both colours have to read on both halves
+  unit6: { ink: '#FFFFFF', acc: '#132034', soft: '#FFFFFF' },
+  unit7: { ink: '#FFFFFF', acc: '#132034', soft: '#FFFFFF' },
+  unit8: { ink: '#FFFFFF', acc: '#FBAE3D', soft: '#FFFFFF' },
+  unit9: { ink: '#FFFFFF', acc: '#132034', soft: '#FFFFFF' },
+  unit10: { ink: '#F4F4F2', acc: '#D55E64', soft: '#FFFFFF' },
+  unit11: { ink: '#D55E64', acc: '#F88F4A', soft: '#FFFFFF' },
+  unit12: { ink: '#FFFFFF', acc: '#FBAE3D', soft: '#FFFFFF' },
+  unit13: { ink: '#FFFFFF', acc: '#FBAE3D', soft: '#FFFFFF' },
+  unit14: { ink: '#FFFFFF', acc: '#D55E64', soft: '#FFFFFF' },
+  unit15: { ink: '#F4F4F2', acc: '#FBAE3D', soft: '#FFFFFF' },
 };
 
 /* ---------------- task hexagons ---------------- */
 
-function TaskMedal({ id, earned, fill, rim }) {
+function TaskMedal({ id, earned, fill, fill2, rim }) {
   const group = id ? id.split('.')[0] : '';
-  const Emblem = id ? TASK_EMBLEMS[id] : null;
+  const Emblem = id ? TASK_EMBLEMS[id] || UNIT_EMBLEMS[id] : null;
   const colours = earned ? { ...(GROUP_INK[group] || GROUP_INK.unit1), rim } : LOCKED_INK;
   return (
     <>
       <polygon points={HEX_OUTER} fill={earned ? rim : LOCKED.rim} />
       <polygon points={HEX_INNER} fill={earned ? fill : LOCKED.fill} />
+      {earned && fill2 && <polygon points={HEX_LOWER} fill={fill2} />}
       {earned && <polygon points={HEX_SHINE} fill="#FFFFFF" opacity="0.1" />}
       {Emblem ? (
         <g transform="translate(60 60) scale(0.84) translate(-60 -60)" opacity={earned ? 1 : 0.85}>
@@ -290,7 +305,7 @@ function SeasonMedal({ id = '', earned }) {
  * a task id ('unit1.bisection' or 'task.unit1.bisection'), an onboarding id, or 'month.2026-10',
  * 'year.2026' or 'pro.2026'.
  */
-export function MedalBadge({ family = 'task', id, earned = false, fill, rim, tier = 'coral', days, label, size = 56 }) {
+export function MedalBadge({ family = 'task', id, earned = false, fill, fill2, rim, tier = 'coral', days, label, size = 56 }) {
   const common = { width: size, height: size, role: label ? 'img' : undefined, 'aria-label': label || undefined, 'aria-hidden': label ? undefined : 'true' };
   const key = family === 'task' && id?.startsWith('task.') ? id.slice(5) : id;
 
@@ -303,5 +318,5 @@ export function MedalBadge({ family = 'task', id, earned = false, fill, rim, tie
   if (family === 'season') {
     return <svg {...common} viewBox="0 0 120 120"><SeasonMedal id={key} earned={earned} /></svg>;
   }
-  return <svg {...common} viewBox="0 0 120 120"><TaskMedal id={key} earned={earned} fill={fill} rim={rim} /></svg>;
+  return <svg {...common} viewBox="0 0 120 120"><TaskMedal id={key} earned={earned} fill={fill} fill2={fill2} rim={rim} /></svg>;
 }

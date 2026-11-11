@@ -1,13 +1,14 @@
 'use client';
 // A shared shell for matrix calculators: a matrix input, example matrices, the answer box, the row
 // operations (when the engine records them) and the steps.
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps } from '@/app/components/method/Matrix';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Field, Choice } from '@/app/components/method/Calculator';
 import StepList from '@/app/components/method/StepList';
+import { useExportBar } from './ExportBar';
 
 /**
  * start: string[][]; examples: [{ label, cells, extra? }]; solve({ cells, ...extra }) → answer with steps
@@ -25,15 +26,27 @@ export default function MatrixMethodCalculator({
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve(id, unit, answer, () => ({ rows: cells.length, cols: cells[0].length }));
+  const exportBar = useExportBar(id, () => ({ cells, ...extra }), !!answer, title);
   const run = (c = cells, x = extra) => {
     try { setError(''); setAnswer(solve({ cells: c, ...x })); } catch (e) { setAnswer(null); setError(e.name === 'EngineError' ? e.message : 'Something went wrong. Please check the numbers.'); }
   };
   const reset = () => { setCells(start); setExtra(extraStart); setAnswer(null); setError(''); };
   const setX = (patch) => { setExtra((o) => ({ ...o, ...patch })); setAnswer(null); };
+  // DEV ONLY: lets the break-ui check type whole matrices in (see SymbolicCalculator)
+  const runRef = useRef(run);
+  runRef.current = run;
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return undefined;
+    window.__netzCalc = {
+      kind: 'matrix', start, examples, square, min, max, extraStart,
+      apply: ({ cells: c, ...x }) => { const cc = (c || start).map((r) => r.map(String)); const xx = { ...extraStart, ...x }; setCells(cc); setExtra(xx); setAnswer(null); runRef.current(cc, xx); },
+    };
+    return () => { if (window.__netzCalc?.start === start) delete window.__netzCalc; };
+  }, [start, examples, square, min, max, extraStart]);
   const div = divider && answer ? answer.n ?? (cells[0].length - 1) : null;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id={`netz-solve-${id}`}>
       <CalcCard title={title} actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
         <ErrorBox>{error}</ErrorBox>
         <MatrixInput label={label} value={cells} onChange={(v) => { setCells(v); setAnswer(null); }} square={square} min={min} max={max} />
@@ -54,10 +67,11 @@ export default function MatrixMethodCalculator({
         )}
         {hint && <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">{hint}</p>}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> {button}</EditorialButton>
+          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto" data-solve=""><FiCheckCircle className="w-4 h-4 mr-2" /> {button}</EditorialButton>
         </div>
         {answer && (
           <ResultBox label={typeof resultLabel === 'function' ? resultLabel(answer) : resultLabel}>
+            {exportBar}
             {renderResult(answer)}
             {answer.verified === false && <p className="mt-2 text-sm font-semibold text-amber-800 dark:text-amber-300 flex gap-2"><FiAlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> NETZ could not double-check this answer. Treat it with care.</p>}
           </ResultBox>

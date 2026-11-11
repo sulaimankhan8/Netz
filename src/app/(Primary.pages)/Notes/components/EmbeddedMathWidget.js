@@ -5,6 +5,10 @@ import { ALGORITHMS_CATALOG } from '../utils/algorithmRegistry';
 import { LuAlertTriangle, LuArrowLeftRight, LuCalculator, LuCheckCircle, LuExternalLink } from 'react-icons/lu';
 import { BTN_MAIN, FIELD, FIELD_INPUT, ICON_BTN, LABEL } from './ui';
 import { recordActivity } from '@/app/utils/activity';
+import { InlineMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
+import StepList from '@/app/components/method/StepList';
+import { StepTable } from '@/app/components/method/StepTable';
 
 // Sentence-case labels for the solvers' inputs (the rest are spelled out from their names)
 const PARAM_LABELS = {
@@ -93,6 +97,11 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
     }
   }, [config?.algorithmId]);
 
+  // Load a Batch 2–4 engine as soon as its block is shown, so exporting the note (which solves at once) has it
+  useEffect(() => {
+    if (currentAlg.prepare) currentAlg.prepare().catch(() => {});
+  }, [currentAlg]);
+
   const handleParamChange = (key, value) => {
     const updated = { ...params, [key]: value };
     setParams(updated);
@@ -101,12 +110,14 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
     }
   };
 
-  const handleSolve = () => {
+  const handleSolve = async () => {
     setIsSolving(true);
     setErrorMsg(null);
     setSolverOutput(null);
 
     try {
+      // Batch 2–4 solvers load their engine on first use
+      if (currentAlg.prepare) await currentAlg.prepare();
       const output = currentAlg.solve(params);
       setSolverOutput(output);
       recordActivity('solver.run', solveDetails(currentAlg, params));
@@ -148,7 +159,27 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
       <div className="px-4 pb-4 flex flex-col gap-4">
         {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Object.keys(currentAlg.defaultParams).map((key) => (
+          {currentAlg.fields ? currentAlg.fields.filter((f) => !f.show || f.show({ ...currentAlg.defaultParams, ...params })).map((f) => (
+            <label key={f.key} className={`flex flex-col gap-1.5 ${f.wide ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+              <span className={LABEL}>{f.label}</span>
+              <span className={FIELD}>
+                {f.options ? (
+                  <select value={params[f.key] ?? currentAlg.defaultParams[f.key] ?? ''} onChange={(e) => handleParamChange(f.key, e.target.value)} className={FIELD_INPUT}>
+                    {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    type={f.kind === 'date' ? 'date' : 'text'}
+                    value={params[f.key] ?? currentAlg.defaultParams[f.key] ?? ''}
+                    placeholder={f.placeholder}
+                    onChange={(e) => handleParamChange(f.key, e.target.value)}
+                    className={`${FIELD_INPUT} font-nt-mono`}
+                    spellCheck={false}
+                  />
+                )}
+              </span>
+            </label>
+          )) : Object.keys(currentAlg.defaultParams).map((key) => (
             <label key={key} className={`flex flex-col gap-1.5 ${wideKeys.includes(key) ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
               <span className={LABEL}>{paramLabel(key)}</span>
               <span className={FIELD}>
@@ -173,8 +204,8 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
           {solverOutput?.result && (
             <div className="flex-1 min-w-[200px] flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-nt-ok-tint text-nt-ok" role="status">
               <LuCheckCircle className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
-              <span className="text-[15px] font-semibold font-nt-mono">{solverOutput.result}</span>
-              {solverOutput.steps?.length > 0 && <span className="ml-auto text-[13px] tabular-nums">{solverOutput.steps.length} steps</span>}
+              <span className="text-[15px] font-semibold font-nt-mono min-w-0 overflow-x-auto">{solverOutput.resultIsTex ? <InlineMath math={solverOutput.result} renderError={() => <span>{solverOutput.result}</span>} /> : solverOutput.result}</span>
+              {(solverOutput.steps || solverOutput.symbolicSteps)?.length > 0 && <span className="ml-auto text-[13px] tabular-nums">{(solverOutput.steps || solverOutput.symbolicSteps).length} steps</span>}
             </div>
           )}
         </div>
@@ -183,6 +214,15 @@ export default function EmbeddedMathWidget({ config, onChange, onOpenPicker, men
           <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-nt-danger-tint text-nt-danger text-sm" role="alert">
             <LuAlertTriangle className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
             <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Step by step: the engine's own steps (Batch 2–4 solvers), with its table if it has one */}
+        {solverOutput?.symbolicSteps && solverOutput.symbolicSteps.length > 0 && (
+          <div className="flex flex-col gap-2 min-w-0">
+            <span className={LABEL}>Step by step</span>
+            <StepList steps={solverOutput.symbolicSteps} />
+            {solverOutput.table && <StepTable columns={solverOutput.table.columns} rows={solverOutput.table.rows} />}
           </div>
         )}
 

@@ -1,5 +1,5 @@
 /**
- * Pen types (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 5.1). A pen type is a real setting: it keeps
+ * Pen types (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 5.1). A pen type is a real setting: it keeps
  * its own width (changed with the width slider) and sets the opacity. Ballpoint is the default,
  * at today's default thickness of 3 px.
  */

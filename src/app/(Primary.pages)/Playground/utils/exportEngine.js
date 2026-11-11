@@ -182,6 +182,47 @@ export async function pageToSvgString({ strokes = [], blocks = [], shapes = [], 
 }
 
 /**
+ * One page ready for a multi-page PDF: its picture and size, or null when the page is empty.
+ * The page's blocks must be drawn inside containerElement (on the board, or in the hidden export area).
+ */
+export async function capturePage({ strokes = [], blocks = [], shapes = [], darkPage = false, containerElement, background = '#FFFFFF' }) {
+  const blockImages = await captureBlockImages(blocks, containerElement);
+  const bounds = getPageBounds(strokes, [...blockImages, ...shapeRects(shapes)]);
+  if (!bounds) return null;
+  const canvas = await renderPageToCanvas({ strokes, shapes, darkPage, blockImages, bounds, background });
+  return { dataUrl: canvas.toDataURL('image/png'), width: bounds.width, height: bounds.height };
+}
+
+/**
+ * Saves pages (from capturePage) as one PDF, each PDF page the size of its board page; empty pages
+ * are left out. mark: the Free plan's small "Made with NETZ" in each page's corner.
+ * @returns {Promise<{ ok: boolean, reason?: string, fileName?: string, pages?: number }>}
+ */
+export async function savePdf(sheets, { fileBaseName = 'netz-board', mark = false } = {}) {
+  try {
+    const pages = sheets.filter(Boolean);
+    if (!pages.length) return { ok: false, reason: 'empty' };
+    let pdf = null;
+    for (const p of pages) {
+      const orientation = p.width >= p.height ? 'landscape' : 'portrait';
+      if (!pdf) pdf = new jsPDF({ orientation, unit: 'px', format: [p.width, p.height] });
+      else pdf.addPage([p.width, p.height], orientation);
+      pdf.addImage(p.dataUrl, 'PNG', 0, 0, p.width, p.height);
+      if (mark) {
+        pdf.setFontSize(10);
+        pdf.setTextColor(140, 140, 140);
+        pdf.text('Made with NETZ', p.width - 10, p.height - 10, { align: 'right' });
+      }
+    }
+    pdf.save(`${fileBaseName}.pdf`);
+    return { ok: true, fileName: `${fileBaseName}.pdf`, pages: pages.length };
+  } catch (err) {
+    console.error('Failed to export the PDF:', err);
+    return { ok: false, reason: 'error' };
+  }
+}
+
+/**
  * Exports the whole page.
  *
  * @param {'PNG'|'SVG'|'PDF'} format

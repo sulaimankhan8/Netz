@@ -7,7 +7,7 @@ import { getProStatus } from '@/db/billingStore';
 import { ASSET_ID_RE, ASSET_KINDS, ASSET_MAX_BYTES, assetQuota, assetStoragePath } from '@/app/(Primary.pages)/Notes/utils/assetCore';
 
 /**
- * The cloud copy of the Notes Studio Assets library (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
+ * The cloud copy of the Notes Studio Assets library (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
  * The files never pass through here: Vercel takes ~4.5 MB a request at most. This route checks
  * the student and their storage limit, and keeps the list; the browser uploads the files straight
  * to the private Storage bucket, which only accepts them into a folder reserved here.

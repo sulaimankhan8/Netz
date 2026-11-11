@@ -5,7 +5,7 @@ import useProgress from '@/app/utils/progress/useProgress';
 import { FlameIcon, GemIcon } from './art';
 
 /**
- * Streak, gems and today's tasks in one small link to the Profile page (NETZ_LAUNCH_PLAN.md 2.8).
+ * Streak, gems and today's tasks in one small link to the Profile page (docs/launch/NETZ_LAUNCH_PLAN.md 2.8).
  * variant: 'rail' (collapsed side rail), 'row' (open sidebar), 'phone' (top bar on phones).
  */
 export default function ProgressChip({ variant = 'row' }) {

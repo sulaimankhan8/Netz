@@ -1,4 +1,4 @@
-// Parts the ⭐ pages need for Google and AI assistants (NETZ_METHODS_CATALOG.md, items 5–8 and F13).
+// Parts the ⭐ pages need for Google and AI assistants (docs/methods/NETZ_METHODS_CATALOG.md, items 5–8 and F13).
 // Same card style as the rest of the method page.
 import Link from 'next/link';
 import { methodById } from '@/app/data/methods';

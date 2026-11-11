@@ -9,7 +9,7 @@ import AdSlot from '@/app/components/ads/AdSlot';
 import { usePublishedIds } from '../utils/publishClient';
 
 /**
- * The list of notes (NOTES_VISUAL_REDESIGN_PLAN.md, section 2). On laptops and tablets it sits
+ * The list of notes (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 2). On laptops and tablets it sits
  * beside the note; on phones it is the whole first screen.
  */
 export default function NoteSidebar({

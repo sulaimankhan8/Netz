@@ -10,7 +10,7 @@ const GRID_ROWS = 8;
 const GRID_COLS = 10;
 
 /**
- * Insert > Table, as in WPS Office (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 6): a grid to
+ * Insert > Table, as in WPS Office (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 6): a grid to
  * point at (or tap) the size, the size shown above it as "3 × 4 Table", then Insert Table… for an
  * exact number of rows and columns.
  */

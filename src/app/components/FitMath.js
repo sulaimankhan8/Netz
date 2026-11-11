@@ -73,7 +73,16 @@ export default function FitMath() {
       if (ready && !frame) frame = requestAnimationFrame(run);
     };
     const start = () => {
-      const go = () => { ready = true; schedule(); };
+      // Pages built on MethodPage say when they are hydrated; wait for that (up to 15 s) before touching them
+      let waited = 0;
+      const go = () => {
+        if (document.querySelector('[data-method-page]') && !document.body.dataset.pageHydrated && waited < 15000) {
+          waited += 250;
+          idle = window.setTimeout(go, 250);
+          return;
+        }
+        ready = true; schedule();
+      };
       idle = window.requestIdleCallback ? window.requestIdleCallback(go, { timeout: 1500 }) : window.setTimeout(go, 300);
     };
 

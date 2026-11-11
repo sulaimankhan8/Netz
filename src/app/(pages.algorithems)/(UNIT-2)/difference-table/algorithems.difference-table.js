@@ -10,5 +10,5 @@ const START = { x: '1, 2, 3, 4, 5', y: '1, 8, 27, 64, 125', notation: 'forward' 
 export default function DifferenceTableCalculator() {
   const [answer, setAnswer] = useState(null);
   useRecordSolve('difference-table', 2, answer, () => ({ points: answer?.x?.length }));
-  return <InterpolationCalculator title="Difference Table Engine" mode="table" button="Build Table" solve={solve} start={START} onAnswer={setAnswer} />;
+  return <InterpolationCalculator exportId="difference-table" title="Difference Table Engine" mode="table" button="Build Table" solve={solve} start={START} onAnswer={setAnswer} />;
 }

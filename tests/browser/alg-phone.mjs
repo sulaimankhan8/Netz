@@ -23,7 +23,7 @@ for (const r of ROUTES) {
   await page.goto(`${BASE}/${r}`, { waitUntil: 'load', timeout: 180000 });
   await sleep(2500);
   const clicked = await page.evaluate(() => {
-    const b = [...document.querySelectorAll('button')].find((x) => /calculate|solve|compute|run|find|evaluate|fit|expand|decompose|interpolat|integrat|iterate/i.test(x.textContent) && !/demo|reset|export|random/i.test(x.textContent));
+    const b = document.querySelector('button[data-solve]') || [...document.querySelectorAll('button')].find((x) => /calculate|solve|compute|run|find|evaluate|fit|expand|decompose|interpolat|integrat|iterate/i.test(x.textContent) && !/demo|reset|export|random/i.test(x.textContent));
     if (!b) return null;
     b.click();
     return b.textContent.trim().slice(0, 40);

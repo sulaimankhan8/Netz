@@ -47,7 +47,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
       const group = document.querySelector('[role="group"][aria-label="Insert"]');
       return group ? [...group.querySelectorAll('button')].map((b) => b.getAttribute('aria-label')) : null;
     });
-    check('laptop dock has an Insert group: Picture, Screenshot, Shapes, Symbol, Equation', insert && insert.join('|') === 'Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(insert));
+    check('laptop dock has an Insert group: Picture, Screenshot, Shapes, Symbol, Equation', insert && insert.join('|') === 'Table|Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(insert));
 
     await clickTitle(page, 'Shapes (');
     const gallery = await page.evaluate(() => {
@@ -244,7 +244,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
     await openPlayground(page);
     await clickTitle(page, 'More Tools');
     const row = await page.evaluate(() => [...document.querySelectorAll('button[aria-label^="Insert "]')].map((b) => b.getAttribute('aria-label')));
-    check('phone: More Tools starts with an Insert row (Picture, Screenshot, Shapes, Symbol, Equation)', row.join('|') === 'Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation', JSON.stringify(row));
+    check('phone: More Tools starts with an Insert row (Picture, Screenshot, Shapes, Symbol, Equation)', row.join('|') === 'Insert Table|Insert Picture|Insert Screenshot|Insert Shapes|Insert Symbol|Insert Equation', JSON.stringify(row));
     await page.evaluate(() => document.querySelector('button[aria-label="Insert Shapes"]').click());
     await sleep(300);
     const sheet = await page.evaluate(() => {
@@ -342,7 +342,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
     await openPlayground(page);
     await clickTitle(page, 'Insert (');
     const items = await page.evaluate(() => [...document.querySelectorAll('[role="menu"][aria-label="Insert"] [role="menuitem"]')].map((b) => b.innerText.trim().split(/\n/).pop()));
-    check('tablet: Insert opens a menu with Picture, Screenshot, Shapes, Symbol and Equation', items.join('|') === 'Picture|Screenshot|Shapes|Symbol|Equation', JSON.stringify(items));
+    check('tablet: Insert opens a menu with Picture, Screenshot, Shapes, Symbol and Equation', items.join('|') === 'Table|Picture|Screenshot|Shapes|Symbol|Equation', JSON.stringify(items));
     await page.evaluate(() => [...document.querySelectorAll('[role="menuitem"]')].find((b) => b.innerText.trim() === 'Shapes').click());
     await sleep(300);
     const open = await page.evaluate(() => {

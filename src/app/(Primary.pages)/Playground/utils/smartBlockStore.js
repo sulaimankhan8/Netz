@@ -6,51 +6,92 @@
 
 const INDEXEDDB_DB_NAME = 'NETZ_PLAYGROUND_DB';
 const INDEXEDDB_STORE_NAME = 'sessions';
+// Version 2 (handoff C4): each page is its own record, so a save writes only the pages that changed
+const PAGES_STORE_NAME = 'pages';
+const DB_VERSION = 2;
 const SESSION_BACKUP_KEY = 'NETZ_PLAYGROUND_SESSION_BACKUP';
 
-// IndexedDB Helper
-/**
- * @returns {Promise<void>} Resolves once the write is committed; rejects if the database cannot
- * be opened (blocked, switched off) or the write fails (full, aborted). Rejects at once where
- * there is no IndexedDB.
- */
-export function saveSessionToIndexedDB(sessionId, sessionData) {
+function openDb() {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
       reject(new Error('IndexedDB is not available'));
       return;
     }
-
     let request;
     try {
-      request = window.indexedDB.open(INDEXEDDB_DB_NAME, 1);
+      request = window.indexedDB.open(INDEXEDDB_DB_NAME, DB_VERSION);
     } catch (err) {
       reject(err);
       return;
     }
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
-        db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'sessionId' });
-      }
+      if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'sessionId' });
+      if (!db.objectStoreNames.contains(PAGES_STORE_NAME)) db.createObjectStore(PAGES_STORE_NAME, { keyPath: 'key' });
     };
     request.onerror = () => reject(request.error || new Error('IndexedDB could not be opened'));
     request.onblocked = () => reject(new Error('IndexedDB is blocked by another tab'));
-
-    request.onsuccess = (e) => {
-      const db = e.target.result;
-      try {
-        const tx = db.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error || new Error('The save failed'));
-        tx.onabort = () => reject(tx.error || new Error('The save was aborted'));
-        const store = tx.objectStore(INDEXEDDB_STORE_NAME);
-        store.put({ sessionId, ...sessionData, updatedAt: sessionData.updatedAt || Date.now() });
-      } catch (err) {
-        reject(err);
-      }
-    };
+    request.onsuccess = (e) => resolve(e.target.result);
   });
+}
+
+const pageKey = (sessionId, pageId) => `${sessionId}:${pageId}`;
+
+/**
+ * What was last written for each page, per session: its title and a shallow copy of each of its lists.
+ * Strokes, blocks and shapes are never changed in place (a change makes a new object), but a list can
+ * grow in place (the canvas appends new ink to its own array), so the lists are compared item by item.
+ * That finds the changed pages without reading points or serialising anything.
+ */
+const written = new Map();
+const LISTS = ['strokes', 'blocks', 'links', 'shapes'];
+const pageSignature = (page) => ({ title: page.title, boardId: page.boardId, ...Object.fromEntries(LISTS.map((k) => [k, Array.isArray(page[k]) ? page[k].slice() : page[k]])) });
+const sameList = (a, b) => (Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((v, i) => v === b[i]) : a === b);
+const sameSignature = (a, b) => Boolean(a && b) && a.title === b.title && a.boardId === b.boardId && LISTS.every((k) => sameList(a[k], b[k]));
+
+/**
+ * Splits a session into its index (everything but the pages, plus the page order) and its pages,
+ * and saves the index with only the pages that changed, in one transaction (all or nothing).
+ * Pages that are gone are deleted. An old single-record save is replaced by the index.
+ *
+ * @returns {Promise<void>} Resolves once the write is committed; rejects if the database cannot
+ * be opened (blocked, switched off) or the write fails (full, aborted). Rejects at once where
+ * there is no IndexedDB.
+ */
+export async function saveSessionToIndexedDB(sessionId, sessionData) {
+  const db = await openDb();
+  const updatedAt = sessionData.updatedAt || Date.now();
+  const pages = Array.isArray(sessionData.pages) ? sessionData.pages : [];
+  const pageIds = pages.map((p, i) => String(p.id || `page_${i + 1}`));
+  const before = written.get(sessionId) || new Map();
+  const current = Number.isInteger(sessionData.currentPageIndex) ? sessionData.currentPageIndex : -1;
+  // The page being worked on is always written; the others only when they changed
+  const changed = pages.map((p, i) => [pageIds[i], p, i]).filter(([id, p, i]) => i === current || !sameSignature(before.get(id), pageSignature(p)));
+  const removed = [...before.keys()].filter((id) => !pageIds.includes(id));
+  const { pages: _omit, ...rest } = sessionData;
+
+  await new Promise((resolve, reject) => {
+    try {
+      const tx = db.transaction([INDEXEDDB_STORE_NAME, PAGES_STORE_NAME], 'readwrite');
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('The save failed'));
+      tx.onabort = () => reject(tx.error || new Error('The save was aborted'));
+      const pagesStore = tx.objectStore(PAGES_STORE_NAME);
+      changed.forEach(([id, page]) => pagesStore.put({ key: pageKey(sessionId, id), sessionId, pageId: id, page, updatedAt }));
+      removed.forEach((id) => pagesStore.delete(pageKey(sessionId, id)));
+      tx.objectStore(INDEXEDDB_STORE_NAME).put({ sessionId, ...rest, version: DB_VERSION, pageIds, updatedAt });
+    } catch (err) {
+      reject(err);
+    }
+  });
+  // Only now, with the write committed, do these pages count as saved
+  written.set(sessionId, new Map(pages.map((p, i) => [pageIds[i], pageSignature(p)])));
+}
+
+/** Forget what was written (tests, and after the stored copy may have been replaced elsewhere). */
+export function forgetWrittenPages(sessionId) {
+  if (sessionId) written.delete(sessionId);
+  else written.clear();
 }
 
 /**
@@ -178,38 +219,55 @@ export function pickNewerSession(first, second) {
 /**
  * Loads a saved session. The callback is always called exactly once: with the session,
  * or with null when there is none (first visit) or storage is unavailable. Callers rely on
- * that to know loading has finished.
+ * that to know loading has finished. Reads both the per-page saves and an old single record.
  */
 export function loadSessionFromIndexedDB(sessionId, callback) {
-  if (typeof window === 'undefined' || !window.indexedDB) {
-    if (callback) callback(null);
-    return;
-  }
-
-  const request = window.indexedDB.open(INDEXEDDB_DB_NAME, 1);
-  request.onerror = () => {
-    if (callback) callback(null);
+  let called = false;
+  const done = (value) => {
+    if (called) return;
+    called = true;
+    if (callback) callback(value);
   };
-  request.onupgradeneeded = (e) => {
-    const db = e.target.result;
-    if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
-      db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'sessionId' });
+  openDb().then((db) => {
+    try {
+      const tx = db.transaction([INDEXEDDB_STORE_NAME, PAGES_STORE_NAME], 'readonly');
+      const getReq = tx.objectStore(INDEXEDDB_STORE_NAME).get(sessionId);
+      getReq.onerror = () => done(null);
+      getReq.onsuccess = () => {
+        const record = getReq.result || null;
+        // An old save keeps its pages inside the record; the next save converts it
+        if (!record || Array.isArray(record.pages) || !Array.isArray(record.pageIds)) {
+          done(record);
+          return;
+        }
+        const ids = record.pageIds;
+        const pages = new Array(ids.length).fill(null);
+        let left = ids.length;
+        if (!left) {
+          done(null);
+          return;
+        }
+        const pagesStore = tx.objectStore(PAGES_STORE_NAME);
+        ids.forEach((id, i) => {
+          const r = pagesStore.get(pageKey(sessionId, id));
+          r.onsuccess = () => {
+            pages[i] = r.result ? r.result.page : null;
+            left -= 1;
+            if (left === 0) {
+              const { pageIds: _ids, version: _v, ...rest } = record;
+              const found = pages.filter(Boolean);
+              // These pages are what is stored now
+              written.set(sessionId, new Map(found.map((p) => [String(p.id), pageSignature(p)])));
+              done(found.length ? { ...rest, pages: found } : null);
+            }
+          };
+          r.onerror = () => done(null);
+        });
+      };
+    } catch (err) {
+      done(null);
     }
-  };
-
-  request.onsuccess = (e) => {
-    const db = e.target.result;
-    const tx = db.transaction(INDEXEDDB_STORE_NAME, 'readonly');
-    const store = tx.objectStore(INDEXEDDB_STORE_NAME);
-    const getReq = store.get(sessionId);
-
-    getReq.onsuccess = () => {
-      if (callback) callback(getReq.result || null);
-    };
-    getReq.onerror = () => {
-      if (callback) callback(null);
-    };
-  };
+  }, () => done(null));
 }
 
 export const INITIAL_SMART_BLOCK_STATE = {

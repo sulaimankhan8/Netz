@@ -1,10 +1,11 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { NT_FONT } from './fonts';
+import { sliceCanvasForPages } from '@/app/utils/pdfPages';
 
 /**
  * Exports a NETZ note to a high-resolution Academic PDF Report. Free PDFs say "Made with NETZ" in
- * the footer; Pro PDFs (`clean`) only carry the page number (NETZ_LAUNCH_PLAN.md 5.1).
+ * the footer; Pro PDFs (`clean`) only carry the page number (docs/launch/NETZ_LAUNCH_PLAN.md 5.1).
  * Uses html2canvas for sharp LaTeX KaTeX rendering and jsPDF for multi-page A4 layout.
  * 
  * @param {object} note - The active note data object
@@ -150,52 +151,29 @@ export async function exportNoteToPdf(note, elementOrId = 'note-printable-area',
     }
 
     // Initialize jsPDF A4 document (210mm x 297mm)
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    // `compress` and the 'FAST' image setting store the pictures packed (a two-page note was 11 MB without)
+    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
     const pdfWidth = 210;
     const pdfHeight = 297;
     const margin = 10;
     const contentWidth = pdfWidth - margin * 2;
-    const contentHeight = (canvas.height * contentWidth) / canvas.width;
+    const pxPerMm = canvas.width / contentWidth;
+    const pagePixels = (pdfHeight - margin * 2) * pxPerMm;
 
-    const imgData = canvas.toDataURL('image/png');
-
-    let heightLeft = contentHeight;
-    let position = margin;
-    let pageNumber = 1;
-
-    // First page header
-    pdf.addImage(imgData, 'PNG', margin, position, contentWidth, contentHeight);
-    
-    // Add page footer
-    pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
-    pdf.text(
-      footer(pageNumber),
-      pdfWidth / 2,
-      pdfHeight - 6,
-      { align: 'center' }
-    );
-
-    heightLeft -= (pdfHeight - margin * 2);
-
-    // Multi-page loop if note content exceeds one A4 page
-    while (heightLeft > 0) {
-      position = heightLeft - contentHeight + margin;
-      pageNumber++;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', margin, position, contentWidth, contentHeight);
+    // One piece of the note per page, cut between blocks so no card or line is split across pages
+    sliceCanvasForPages(canvas, pagePixels, pagePixels).forEach((piece, index) => {
+      if (index) pdf.addPage();
+      pdf.addImage(piece.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, piece.height / pxPerMm, undefined, 'FAST');
 
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
       pdf.text(
-        footer(pageNumber),
+        footer(index + 1),
         pdfWidth / 2,
         pdfHeight - 6,
         { align: 'center' }
       );
-
-      heightLeft -= (pdfHeight - margin * 2);
-    }
+    });
 
     const cleanFilename = (note?.title || 'NETZ-Note')
       .toLowerCase()

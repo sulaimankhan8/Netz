@@ -9,15 +9,17 @@ import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes } from './Calculator';
 import DifferenceTable from './DifferenceTable';
+import { useExportBar } from './ExportBar';
 
 /**
  * mode: 'table' (difference table only, with a Δ/∇/δ picker) or 'interpolate' (Stirling, Bessel).
  * onAnswer(answer): each page records its own solve.
  */
-export default function InterpolationCalculator({ title, solve, start, mode = 'interpolate', onAnswer, button = 'Interpolate' }) {
+export default function InterpolationCalculator({ title, solve, start, mode = 'interpolate', onAnswer, button = 'Interpolate', exportId }) {
   const [v, setV] = useState(start);
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
+  const exportBar = useExportBar(exportId, () => v, !!answer, title);
   const show = (r) => { setAnswer(r); onAnswer?.(r); };
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); show(null); setError(''); };
 
@@ -37,7 +39,7 @@ export default function InterpolationCalculator({ title, solve, start, mode = 'i
   answer?.used?.forEach((t) => t.idx.forEach(([k, i]) => highlight.add(`${2 * i + k},${k + 1}`)));
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id={`netz-solve-${exportId}`}>
       <CalcCard
         title={title}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -57,12 +59,14 @@ export default function InterpolationCalculator({ title, solve, start, mode = 'i
         </div>
         {answer && mode === 'interpolate' && (
           <ResultBox label="Interpolated value">
+            {exportBar}
             <p className="text-2xl font-black font-mono break-all">y({sig(answer.X, 8)}) ≈ {sig(answer.result, 10)}</p>
             <p className="text-sm font-mono">h = {sig(answer.h, 6)}, x₀ = {sig(answer.x[answer.o], 6)}, p = {sig(answer.p, 6)} · used differences up to order {answer.order}</p>
           </ResultBox>
         )}
         {answer && mode === 'table' && (
           <ResultBox label="Polynomial degree">
+            {exportBar}
             <p className="text-xl font-black font-mono">{answer.notes[0]}</p>
           </ResultBox>
         )}

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Turning things into note blocks (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3):
+ * Turning things into note blocks (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3):
  * an item from the Assets library, or the content of a .netz file someone gave you. Inserted
  * blocks are normal blocks: you can write between them, move them and delete them.
  */

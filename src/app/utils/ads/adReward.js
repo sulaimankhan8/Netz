@@ -1,5 +1,5 @@
 /**
- * Gems for a watched rewarded ad (NETZ_LAUNCH_PLAN.md 6.4), applied on the server's copy of the
+ * Gems for a watched rewarded ad (docs/launch/NETZ_LAUNCH_PLAN.md 6.4), applied on the server's copy of the
  * student's progress. Pure, like shop.js: changes `state` and returns { ok, error?, ledger? }.
  * The ledger reason is unique per day and ad, so the same reward can never be written twice.
  */

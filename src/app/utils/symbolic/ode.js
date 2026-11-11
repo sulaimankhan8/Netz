@@ -52,7 +52,20 @@ export function numNode(v) {
   }
   return num(Number(v.toPrecision(12)));
 }
-const T = (node) => mtex(polish(node));
+// 1/eᵃ → e^(−a) (with −(−y) → y), so ∫ dy/e^(−y) reads eʸ
+const recipE = (node) => node.transform((n) => {
+  const z = unwrap(n);
+  if (!(z.isOperatorNode && z.fn === 'divide')) return n;
+  const top = unwrap(z.args[0]), bot = unwrap(z.args[1]);
+  if (!(top.isConstantNode && top.value === 1)) return n;
+  const ex = bot.isFunctionNode && bot.fn.name === 'exp' ? bot.args[0] : bot.isOperatorNode && bot.fn === 'pow' && unwrap(bot.args[0]).isSymbolNode && unwrap(bot.args[0]).name === 'e' ? bot.args[1] : null;
+  if (!ex) return n;
+  const u = unwrap(ex);
+  return pow(sym('e'), u.isOperatorNode && u.fn === 'unaryMinus' ? u.args[0] : neg(ex));
+});
+// C1 → C_1, and "+ \frac{-u}{v}" → "- \frac{u}{v}"
+const T = (node) => mtex(polish(recipE(node)))
+  .replace(/(^|[^\\a-zA-Z])C(\d)(?!\d)/g, '$1C_{$2}');
 const C = (i) => sym(`C${i}`);
 
 /** e^{a ln|u| + b ln u + rest} → |u|^a … written u^a (taking u > 0, as textbooks do), times e^{rest}. */
@@ -268,8 +281,34 @@ function solveSeparable(F) {
   const pick = [[1, 1], [0, 1], [1, 0], [2, 1], [1, 2], [0.5, 1]].find(([x, y]) => { const v = f(x, y); return Number.isFinite(v) && Math.abs(v) > 1e-9; });
   if (!pick) throw new EngineError('F(x, y) is zero or undefined at the test points.');
   const [x0, y0] = pick;
-  const h = tidyMulti(substitute(F, 'x', numNode(x0)), ['y']);
-  const g = tidyMulti(div(substitute(F, 'y', numNode(y0)), numNode(f(x0, y0))), ['x']);
+  // Split by factors when every factor has only x or only y (e^(x − y) = eˣ · e^(−y)); else by sampling
+  const byFactors = (() => {
+    const xs = [], ys = [];
+    let ok = true;
+    const visit = (t, inv) => {
+      const z = unwrap(t);
+      if (z.isOperatorNode && z.fn === 'multiply') { z.args.forEach((a) => visit(a, inv)); return; }
+      if (z.isOperatorNode && z.fn === 'divide') { visit(z.args[0], inv); visit(z.args[1], !inv); return; }
+      if (z.isOperatorNode && z.fn === 'unaryMinus') { xs.push({ n: num(-1), inv: false }); visit(z.args[0], inv); return; }
+      // e^(a ± b) → e^a · e^(±b)
+      const ex = z.isFunctionNode && z.fn.name === 'exp' ? z.args[0] : z.isOperatorNode && z.fn === 'pow' && unwrap(z.args[0]).isSymbolNode && unwrap(z.args[0]).name === 'e' ? z.args[1] : null;
+      const ue = ex && unwrap(ex);
+      if (ue && ue.isOperatorNode && (ue.fn === 'add' || ue.fn === 'subtract')) {
+        visit(fn('exp', ue.args[0]), inv);
+        visit(fn('exp', ue.fn === 'subtract' ? neg(ue.args[1]) : ue.args[1]), inv);
+        return;
+      }
+      const v = variablesOf(z);
+      if (v.has('x') && v.has('y')) { ok = false; return; }
+      (v.has('y') ? ys : xs).push({ n: z, inv });
+    };
+    visit(F, false);
+    if (!ok || !xs.length || !ys.length) return null;
+    const build = (list) => list.reduce((acc, { n, inv }) => (inv ? div(acc, n) : mul(acc, n)), num(1));
+    return { g: tidyMulti(build(xs), ['x']), h: tidyMulti(build(ys), ['y']) };
+  })();
+  const h = byFactors ? byFactors.h : tidyMulti(substitute(F, 'x', numNode(x0)), ['y']);
+  const g = byFactors ? byFactors.g : tidyMulti(div(substitute(F, 'y', numNode(y0)), numNode(f(x0, y0))), ['x']);
   const Hy = antiderivative(div(num(1), paren(h)), 'y', ['y']);
   const Gx = antiderivative(g, 'x', ['x']);
   const steps = [
@@ -422,13 +461,29 @@ export function polyRootsComplex(c) {
     });
     if (moved < 1e-15) break;
   }
-  // Group (repeated roots converge slowly: cluster within 1e-4) and snap
+  // Group (repeated roots converge slowly, a triple root spreads to about 1e-3: cluster within 2e-3) and snap
   const groups = [];
   for (const r of z) {
-    const g = groups.find((q) => Math.hypot(q.re - r.re, q.im - r.im) < 1e-4);
+    const g = groups.find((q) => Math.hypot(q.sre / q.m - r.re, q.sim / q.m - r.im) < 2e-3);
     if (g) { g.m++; g.sre += r.re; g.sim += r.im; } else groups.push({ re: r.re, im: r.im, sre: r.re, sim: r.im, m: 1 });
   }
-  return groups.map((g) => ({ re: snap(g.sre / g.m), im: Math.abs(g.sim / g.m) < 1e-7 ? 0 : snap(g.sim / g.m), m: g.m }))
+  // a cluster's tiny imaginary part is noise when its snapped real part is an exact root
+  const realP = (x) => a.reduce((acc, k) => acc * x + k, 0);
+  // an m-fold real root is a simple root of the (m − 1)th derivative: Newton there pins it down (0.999998 → 1)
+  const derivDesc = (c, times) => { let d = c; for (let t = 0; t < times; t++) { const deg = d.length - 1; d = d.slice(0, -1).map((v, i) => v * (deg - i)); } return d; };
+  const refine = (x0, m) => {
+    const p = derivDesc(a, m - 1), dp = derivDesc(a, m);
+    const ev = (c, x) => c.reduce((acc, k) => acc * x + k, 0);
+    let x = x0;
+    for (let i = 0; i < 60; i++) { const d = ev(dp, x); if (!d) break; const step = ev(p, x) / d; x -= step; if (Math.abs(step) < 1e-15) break; }
+    return Number.isFinite(x) && Math.abs(x - x0) < 1e-2 ? x : x0;
+  };
+  return groups.map((g) => {
+    const im = g.sim / g.m;
+    const re = snap(g.m > 1 && Math.abs(im) < 1e-3 ? refine(g.sre / g.m, g.m) : g.sre / g.m);
+    const noise = Math.abs(im) < 1e-7 || (Math.abs(im) < 1e-3 && Math.abs(realP(re)) < 1e-9 * Math.max(1, ...a.map(Math.abs)));
+    return { re, im: noise ? 0 : snap(im), m: g.m };
+  })
     .filter((r) => r.im >= 0)
     .sort((p, q) => p.re - q.re || p.im - q.im);
 }
@@ -480,7 +535,7 @@ const applyL = (coeffs, node, v) => {
 
 /** The kinds of terms in R: [{ a, b, k }] for xᵏ e^{ax} (cos, sin)(bx). */
 /** Multiply products of sums out: 6(eᵗ − 1.5) → 6eᵗ − 9 (one level at a time, until nothing changes). */
-function distribute(node) {
+export function distribute(node) {
   let cur = node;
   for (let i = 0; i < 6; i++) {
     let changed = false;
@@ -508,7 +563,9 @@ function termTypes(R, v) {
     if (free(t, [v])) { types.push({ a: 0, b: 0, k: 0 }); continue; }
     let a = 0, b = 0, trig = 0;
     const factors = [];
-    const fl = (z) => { const x = unwrap(z); if (x.isOperatorNode && x.fn === 'multiply') x.args.forEach(fl); else if (x.isOperatorNode && x.fn === 'divide' && free(x.args[1], [v])) fl(x.args[0]); else if (x.isOperatorNode && x.fn === 'unaryMinus') fl(x.args[0]); else factors.push(x); };
+    // 1/e^u (how simplify writes e^(−u)) counts as e^(−u)
+    const expArg = (z) => { const y = unwrap(z); return y.isFunctionNode && y.fn.name === 'exp' ? y.args[0] : y.isOperatorNode && y.fn === 'pow' && unwrap(y.args[0]).isSymbolNode && unwrap(y.args[0]).name === 'e' ? y.args[1] : null; };
+    const fl = (z) => { const x = unwrap(z); if (x.isOperatorNode && x.fn === 'multiply') x.args.forEach(fl); else if (x.isOperatorNode && x.fn === 'divide' && free(x.args[1], [v])) fl(x.args[0]); else if (x.isOperatorNode && x.fn === 'divide' && expArg(x.args[1])) { fl(x.args[0]); factors.push(fn('exp', neg(paren(expArg(x.args[1]))))); } else if (x.isOperatorNode && x.fn === 'unaryMinus') fl(x.args[0]); else factors.push(x); };
     fl(t);
     const poly = [];
     const slope = (u) => { const c = polynomialCoeffs(u, v); return c && c.length === 2 ? Number(c[1]) : c && c.length === 1 ? 0 : NaN; };
@@ -842,7 +899,14 @@ export function solveODE(text, { method = 'auto', ics = '' } = {}) {
   }
   // Higher order
   const lc = linearCoeffs(ode);
-  const eq = ode.op ? `\\left(${fTex(ode.op.coeffs, 'D')}\\right)y = ${T(ode.op.R)}` : `${lc.coeffs.map((c, k) => ({ c, k })).reverse().filter(({ c }) => !isZeroNode(c, ['x'])).map(({ c, k }) => `\\left(${T(c)}\\right)${PRIME[k]}`).join(' + ')} = ${T(lc.R)}`;
+  const eq = ode.op ? `\\left(${fTex(ode.op.coeffs, 'D')}\\right)y = ${T(ode.op.R)}` : `${lc.coeffs.map((c, k) => ({ c, k })).reverse().filter(({ c }) => !isZeroNode(c, ['x'])).map(({ c, k }, i) => {
+      // y'' − 3y' + 2y, not (1)y'' + (−3)y' + (2)y
+      let v = NaN;
+      try { const e = c.evaluate({}); if (typeof e === 'number') v = e; } catch { /* has x */ }
+      if (!Number.isFinite(v)) return `${i ? ' + ' : ''}\\left(${T(c)}\\right)${PRIME[k]}`;
+      const mag = Math.abs(v) === 1 ? '' : exactTex(Math.abs(v));
+      return `${v < 0 ? (i ? ' - ' : '-') : i ? ' + ' : ''}${mag}${PRIME[k]}`;
+    }).join('')} = ${T(lc.R)}`;
   const isCE = !lc.numeric && (() => { try { const cn = polynomialCoeffs(lc.coeffs.at(-1), 'x'); return cn && cn.length === lc.coeffs.length; } catch { return false; } })();
   const want = method === 'auto' ? (lc.numeric ? 'constant' : isCE ? 'cauchy-euler' : null) : method;
   if (!want) throw new EngineError('NETZ solves linear equations with constant coefficients, or with xᵏ coefficients (Cauchy–Euler). This one has other variable coefficients.');

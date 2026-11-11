@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The cloud copy of the Assets library for signed-in students (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
+ * The cloud copy of the Assets library for signed-in students (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b).
  *
  * Items are saved on the device first. A moment later each new or changed item is reserved with
  * /api/notes/assets (which checks the storage limit), its two files are uploaded straight to the

@@ -9,7 +9,7 @@ import { getProStatus } from '@/db/billingStore';
 const MAX_BODY_BYTES = 256 * 1024;
 
 /**
- * POST /api/progress/sync (NETZ_LAUNCH_PLAN.md 4.4)
+ * POST /api/progress/sync (docs/launch/NETZ_LAUNCH_PLAN.md 4.4)
  * Body: { activities: [{ kind, details, at }], tz, profile, device? }
  * The server re-counts the activities with the shared engine and returns the true progress state.
  */

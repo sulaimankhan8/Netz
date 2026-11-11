@@ -5,7 +5,7 @@ import AdUnit from './AdUnit';
 import { adSlotFor } from '@/app/utils/ads/adsenseConfig';
 
 /**
- * A labelled ad place for the app's pages (NETZ_LAUNCH_PLAN.md 6.2): algorithm pages, the
+ * A labelled ad place for the app's pages (docs/launch/NETZ_LAUNCH_PLAN.md 6.2): algorithm pages, the
  * Algorithms hub, the Notes list and Profile. Shows nothing for Pro, offline, or where ads are not
  * allowed. `place` picks this place's AdSense ad unit (utils/ads/adsenseConfig.js); no unit, no box.
  */

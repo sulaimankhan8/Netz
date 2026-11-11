@@ -1,7 +1,7 @@
 import { Caveat, DM_Mono, DM_Sans } from 'next/font/google';
 
 /**
- * Landing page fonts (LANDING_REDESIGN_PLAN.md, build step 2): DM Sans and DM Mono as in the
+ * Landing page fonts (docs/landing/LANDING_REDESIGN_PLAN.md, build step 2): DM Sans and DM Mono as in the
  * Playground and Notes, and Caveat for the handwriting in the hero demo. next/font serves the files
  * from this app, so nothing is fetched from Google at run time.
  */

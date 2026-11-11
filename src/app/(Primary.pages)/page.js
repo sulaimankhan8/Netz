@@ -34,7 +34,7 @@ export const metadata = {
 };
 
 /**
- * The landing page (LANDING_REDESIGN_PLAN.md; board "Netz Landing Redesign", artboard 4).
+ * The landing page (docs/landing/LANDING_REDESIGN_PLAN.md; board "Netz Landing Redesign", artboard 4).
  * A server page: the text renders without waiting for JavaScript. The small interactive parts
  * (hero demo, tour cards, floating cards, method table, install, ad, reveal) are client components.
  */

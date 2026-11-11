@@ -1,5 +1,5 @@
 /**
- * Indefinite integrals, step by step (NETZ_METHODS_CATALOG.md 6E). Methods, in the order they are tried:
+ * Indefinite integrals, step by step (docs/methods/NETZ_METHODS_CATALOG.md 6E). Methods, in the order they are tried:
  *   linearity (constants out, sum term by term) → standard table (with a linear inside, e.g. sin(3x + 1))
  *   → expand polynomial products → partial fractions → u-substitution → integration by parts (ILATE).
  * Each step: { title, lines: [LaTeX], depth }. Returns a math.js node (no + C; the page adds it).

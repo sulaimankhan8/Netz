@@ -37,7 +37,7 @@ try {
   await openPlayground(page);
   await sleep(2000);
   out.strokesOnPage = await page.evaluate(() => new Promise((resolve) => {
-    const req = indexedDB.open('NETZ_PLAYGROUND_DB', 1);
+    const req = indexedDB.open('NETZ_PLAYGROUND_DB');
     req.onsuccess = () => { const g = req.result.transaction('sessions').objectStore('sessions').get('default_session'); g.onsuccess = () => resolve(g.result ? g.result.pages[0].strokes.length : 0); };
   }));
   const reset = () => page.evaluate(() => { const t = window.__t; for (const k of Object.keys(t)) t[k] = Array.isArray(t[k]) ? [] : 0; });

@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
 import { StepTable } from '@/app/components/method';
@@ -39,6 +40,7 @@ export default function InterestCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('compound-interest', 10, answer, () => ({ kind: s.kind, frequency: s.frequency }));
+  const exportBar = useExportBar('compound-interest', () => ({ ...s, currency: cur }), !!answer);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const money = (v) => formatMoney(v, cur);
 
@@ -61,7 +63,7 @@ export default function InterestCalculator() {
     : [{ key: 'year', label: 'Year', bold: true }, { key: 'opening', label: 'Opening amount' }, { key: 'interest', label: 'Interest this year' }, { key: 'amount', label: 'Closing amount', highlight: true }];
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-compound-interest">
       <CalcCard
         title="Interest Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -84,6 +86,7 @@ export default function InterestCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Stat label="Amount A" value={money(answer.amount)} strong />

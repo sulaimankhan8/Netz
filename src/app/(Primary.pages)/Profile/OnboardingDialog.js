@@ -3,21 +3,26 @@
 import { useEffect, useRef, useState } from 'react';
 import NetzRobot from '@/app/components/mascot/NetzRobot';
 import { completeOnboarding } from '@/app/utils/progress/useProgress';
-import { DEFAULT_ROBOT_NAME } from '@/app/utils/progress/catalog';
+import { DEFAULT_ROBOT_NAME, TASKS } from '@/app/utils/progress/catalog';
+import { UNITS as ALL_UNITS } from '@/app/data/methods';
 
+// Units 6–15 join the list once they have a live page (and so a task)
+const UNITS_WITH_TASKS = new Set(TASKS.map((t) => t.group));
 const UNITS = [
   { n: 1, name: 'Roots and systems' },
   { n: 2, name: 'Interpolation' },
   { n: 3, name: 'Integration' },
   { n: 4, name: 'ODEs and matrices' },
   { n: 5, name: 'Statistics' },
+  ...ALL_UNITS.filter((u) => u.unit >= 6 && UNITS_WITH_TASKS.has(`unit${u.unit}`))
+    .map((u) => ({ n: u.unit, name: u.title.split(': ')[1] || u.shortTitle })),
 ];
 
 const FIELD = 'w-full min-h-[48px] rounded-xl border border-[var(--pf-line)] bg-[var(--pf-tray)] px-4 text-[16px] text-[var(--pf-ink)] placeholder:text-[var(--pf-text2)]';
 const BTN = 'inline-flex min-h-[48px] items-center justify-center rounded-xl px-5 text-[15px] font-bold';
 
 /**
- * Onboarding step 1 (NETZ_LAUNCH_PLAN.md 2.3): meet the robot, name it, and pick your units.
+ * Onboarding step 1 (docs/launch/NETZ_LAUNCH_PLAN.md 2.3): meet the robot, name it, and pick your units.
  * Two short screens; it can be skipped at any time. onClose(finished)
  */
 export default function OnboardingDialog({ initial = {}, onClose }) {

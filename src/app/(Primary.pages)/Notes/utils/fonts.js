@@ -1,7 +1,7 @@
 import { DM_Mono, DM_Sans } from 'next/font/google';
 
 /**
- * The Notes interface fonts (NOTES_VISUAL_REDESIGN_PLAN.md, section 1): DM Sans, as in the
+ * The Notes interface fonts (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 1): DM Sans, as in the
  * Playground, and DM Mono for LaTeX source and access keys. next/font serves the files from this
  * app, so Notes keeps its fonts offline.
  *

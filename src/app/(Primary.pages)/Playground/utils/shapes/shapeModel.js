@@ -3,7 +3,7 @@
  * (move, resize from any handle, rotate, flip, adjustment handles, line end points), plus
  * hit testing and bounds.
  *
- * A shape is a plain object (see PLAYGROUND_INSERT_TOOLS_PLAN.md, section 4.1):
+ * A shape is a plain object (see docs/playground/PLAYGROUND_INSERT_TOOLS_PLAN.md, section 4.1):
  *   { id, preset, x, y, w, h, rot, flipH, flipV, adj, fill, line, text, lockRatio }
  * (x, y, w, h) is the box before rotation, in canvas (world) coordinates; rot is in degrees,
  * clockwise about the box centre. Like strokes, shapes are never changed in place: every

@@ -186,7 +186,9 @@ function emitOperator(n, ctx, want, E, T) {
     const tb = T(b);
     const w = ta === 'int' || tb === 'int' ? (ta === 'num' || tb === 'num' ? 'num' : 'int') : 'num';
     const op = lang === 'matlab' && n.fn === 'unequal' ? '~=' : CMP[n.fn];
-    return `${E(a, w)} ${op} ${E(b, w)}`;
+    // A whole number compared with a real one is converted first (Go, Rust and C++ need matching types)
+    const side = (child, t) => (w === 'num' && t === 'int' ? castToNum(E(child, 'int'), child, ctx) : E(child, w));
+    return `${side(a, ta)} ${op} ${side(b, tb)}`;
   }
   if (n.fn === 'pow') return power(a, b, ctx, E, T);
   if (n.fn === 'mod') {
@@ -298,6 +300,24 @@ function callMath(name, args, ctx, E, T) {
   return `${fn}(${num(args[0])})`;
 }
 
+// Program-only two-number helpers: name → [python, matlab, cpp, javascript, rust method, go]
+const TWO_ARG = {
+  min: ['min', 'min', 'std::fmin', 'Math.min', 'min', 'math.Min'],
+  max: ['max', 'max', 'std::fmax', 'Math.max', 'max', 'math.Max'],
+  atan2: ['math.atan2', 'atan2', 'std::atan2', 'Math.atan2', 'atan2', 'math.Atan2'],
+};
+
+function twoArg(name, args, ctx, E, T) {
+  const { lang } = ctx;
+  if (args.length !== 2) throw new ExportError(`"${name}" takes two values.`);
+  const num = (child) => (T(child) === 'int' ? castToNum(E(child, 'int'), child, ctx) : E(child, 'num'));
+  const fn = TWO_ARG[name][LANG_COL[lang]];
+  if (lang === 'rust') return `${rustReceiver(args[0], ctx, E, T)}.${fn}(${num(args[1])})`;
+  if (lang === 'python' && fn.startsWith('math.')) ctx.uses.math = true;
+  if (lang === 'go') ctx.uses.math = true;
+  return `${fn}(${num(args[0])}, ${num(args[1])})`;
+}
+
 function emitFunction(n, ctx, E, T) {
   const { lang } = ctx;
   const name = n.fn.name;
@@ -326,6 +346,13 @@ function emitFunction(n, ctx, E, T) {
     return `${v}.len()`;
   }
   if (name === 'pow') return power(args[0], args[1], ctx, E, T);
+  if (TWO_ARG[name]) return twoArg(name, args, ctx, E, T);
+  if (name === 'round') {
+    // Halves round up in every language (Python's round() would round them to even)
+    const half = new math.OperatorNode('+', 'add', [args[0], new math.ConstantNode(0.5)]);
+    const floor = callMath('floor', [half], ctx, E, T);
+    return lang === 'python' ? `float(${floor})` : floor;
+  }
   if (MATH_FUNCS.has(name)) return callMath(name, args, ctx, E, T);
   throw new ExportError(`Code export cannot write the function "${name}" yet.`);
 }
@@ -403,7 +430,8 @@ function initCode(st, ctx) {
   }
   if (init.zeros !== undefined) {
     const n = typedExpr(String(init.zeros), ctx, 'int');
-    if (lang === 'python') return `[0.0] * ${n}`;
+    // Brackets: [0.0] * n + 1 would be a list plus a number in Python
+    if (lang === 'python') return `[0.0] * ${/^\w+$/.test(n) ? n : `(${n})`}`;
     if (lang === 'matlab') return `zeros(1, ${n})`;
     if (lang === 'cpp') return `std::vector<double>(${n}, 0.0)`;
     if (lang === 'javascript') return `new Array(${n}).fill(0)`;
@@ -412,7 +440,7 @@ function initCode(st, ctx) {
   }
   if (init.zeros2) {
     const [r, c] = init.zeros2.map((v) => typedExpr(String(v), ctx, 'int'));
-    if (lang === 'python') return `[[0.0] * ${c} for _ in range(${r})]`;
+    if (lang === 'python') return `[[0.0] * ${/^\w+$/.test(c) ? c : `(${c})`} for _ in range(${r})]`;
     if (lang === 'matlab') return `zeros(${r}, ${c})`;
     if (lang === 'cpp') return `std::vector<std::vector<double>>(${r}, std::vector<double>(${c}, 0.0))`;
     if (lang === 'javascript') return `Array.from({ length: ${r} }, () => new Array(${c}).fill(0))`;
@@ -461,7 +489,8 @@ function printCode(parts, ctx) {
     const prec = p.p ?? 6;
     if (lang === 'python') fmt += isInt ? `{${code}${w ? `:${w}d` : ''}}` : `{${code}:${w}.${prec}f}`;
     else if (lang === 'javascript') {
-      const body = isInt ? `${code}` : `${isAtom(node) ? code : `(${code})`}.toFixed(${prec})`;
+      // A bare number needs brackets too: 0.toFixed(4) is a syntax error
+      const body = isInt ? `${code}` : `${isAtom(node) && node.type !== 'ConstantNode' ? code : `(${code})`}.toFixed(${prec})`;
       fmt += w ? `\${String(${body}).padStart(${w})}` : `\${${body}}`;
     } else if (lang === 'rust') fmt += isInt ? `{${w ? `:${w}` : ''}}` : `{:${w}.${prec}}`;
     else fmt += isInt ? `%${w}d` : `%${w}.${prec}f`;

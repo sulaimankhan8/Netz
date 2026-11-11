@@ -27,6 +27,8 @@ export function readMulti(text, label = 'f', extra = []) {
   const s = raw
     .replace(/θ/g, 'theta').replace(/[φϕ]/g, 'varphi').replace(/ρ/g, 'rho').replace(/λ/g, 'lambda')
     .replace(/²/g, '^2').replace(/³/g, '^3')
+    // x(π − x), 3y(1 − y): a variable before a bracket is a product (x, y, z, t are never function names here)
+    .replace(/(?<![a-zA-Z])([xyzt])\s*\(/g, '$1*(')
     // xy, 3axy, xyz → x*y, 3*a*x*y …: any word that is not a function or a known name is a product of letters
     .replace(/[a-zA-Z]+/g, (w, at, str) => {
       if (KNOWN_WORDS.has(w) || extra.includes(w) || w.length === 1) return w;
@@ -74,8 +76,11 @@ export function tidyMulti(raw, vars, reference = raw) {
   const all = lettersOf(raw, reference).concat(vars).filter((v, i, a) => a.indexOf(v) === i);
   const accept = (g) => equalAt(g, reference, all);
   // Also try with sin² written as 1 − cos² (and the other way): r²(cos²θ sin θ + sin³θ) becomes r² sin θ
+  // (only for small expressions: each variant is a full cleanest() run, seconds on big ones; decided by size, not time)
   const forms = [raw];
-  if (hasTrigPower(raw)) for (const from of ['sin', 'cos']) { try { forms.push(simplifyExact(squareSwap(raw, from))); } catch { /* skip */ } }
+  let size = 0;
+  raw.traverse(() => { size++; });
+  if (hasTrigPower(raw) && size <= 60) for (const from of ['sin', 'cos']) { try { forms.push(simplifyExact(squareSwap(raw, from))); } catch { /* skip */ } }
   const best = forms.map((f) => cleanest(f, all[0] || 'x', accept)).filter(Boolean).sort((p, q) => ugliness(p) - ugliness(q))[0];
   if (best) return best;
   try { return polish(tidy(simplifyExact(raw))); } catch { return polish(tidy(raw)); }
@@ -98,7 +103,8 @@ export function squareSwap(node, from) {
 export function partial(node, v, vars = lettersOf(node)) {
   const r = differentiate(node, v);
   let check;
-  try { check = math.derivative(node, v); } catch { check = r.result; }
+  // the check only compares values at sample points, so math.js need not simplify it (that took seconds on big u)
+  try { check = math.derivative(node, v, { simplify: false }); } catch { check = r.result; }
   const all = lettersOf(node, r.result).concat(vars).filter((x, i, a) => a.indexOf(x) === i);
   if (!equalAt(r.result, check, all) && !isZero(check, all)) throw new EngineError(`NETZ could not check ∂/∂${v} of this function.`);
   // The derivative engine records { rule, line }; step lists here use { title, lines }. Partials are written ∂/∂v.
@@ -190,16 +196,35 @@ export function exactTex(y, deep = true) {
       return `${f.n < 0 ? '-' : ''}${f.d === 1 ? top : `\\frac{${top}}{${f.d}}`}`;
     }
   }
-  // A simple number times e, e², π or πe (e cos(π/4) = √2 e/2)
+  // A simple number times e, e², π or πe (e cos(π/4) = √2 e/2), π², π³, or divided by e or e² (8/(3e²))
   if (deep) {
-    for (const [K, k] of [['e', Math.E], ['e^{2}', Math.E ** 2], ['\\pi', Math.PI], ['\\pi e', Math.PI * Math.E]]) {
+    const KS = [['e', Math.E], ['e^{2}', Math.E ** 2], ['\\pi', Math.PI], ['\\pi e', Math.PI * Math.E], ['\\pi^{2}', Math.PI ** 2], ['\\pi^{3}', Math.PI ** 3]];
+    // first a plain number times one constant (−π³, not −π²·π), then anything recognisable times a constant
+    for (const [K, k] of KS) {
+      const f = toFraction(y / k, 24, 1e-9);
+      if (!f || f.n === 0) continue;
+      const a = Math.abs(f.n);
+      return `${f.n < 0 ? '-' : ''}${f.d === 1 ? `${a === 1 ? '' : a}${K}` : `\\frac{${a === 1 ? '' : a}${K}}{${f.d}}`}`;
+    }
+    for (const [K, k] of KS) {
       const t = exactTex(y / k, false);
       if (/\d\.\d/.test(t) || t === '0') continue;
       if (t === '1') return K;
       if (t === '-1') return `-${K}`;
-      const m = t.match(/^(-?)\\frac\{(.+)\}\{(\d+)\}$/);
+      // a sum such as 5√5/6 − 1/6: bracket it, (5√5/6 − 1/6)π (the fraction merge below is for one fraction only)
+      if (/.\s[+-]\s/.test(t)) return `\\left(${t}\\right)${K}`;
+      const m = t.match(/^(-?)\\frac\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}\{(\d+)\}$/);
       if (m) return `${m[1]}\\frac{${m[2] === '1' ? '' : m[2]}${m[2] === '1' ? '' : '\\,'}${K}}{${m[3]}}`;
       return `${t}\\,${K}`;
+    }
+    // divided by e, e² or e³ (and possibly times π): 8π/(3e²)
+    for (const [K, k] of [['e', Math.E], ['e^{2}', Math.E ** 2], ['e^{3}', Math.E ** 3]]) {
+      for (const [P, p] of [['', 1], ['\\pi', Math.PI]]) {
+        const f = toFraction((y * k) / p, 24, 1e-9);
+        if (!f || f.n === 0) continue;
+        const top = Math.abs(f.n) === 1 && P ? P : `${Math.abs(f.n)}${P}`;
+        return `${f.n < 0 ? '-' : ''}\\frac{${top}}{${f.d === 1 ? '' : f.d}${K}}`;
+      }
     }
   }
   return String(Number(y.toPrecision(6)));
@@ -225,7 +250,36 @@ function snapLoose(y) {
 
 /** LaTeX for a node without the brackets math.js puts round a negated product: −(r sin θ) → −r sin θ. */
 export function mtex(node) {
-  return constantFirst(expAsPower(dropMinusBrackets(tex(node))));
+  return textbookNames(constantFirst(expAsPower(dropMinusBrackets(tex(node)))));
+}
+
+/** heaviside → u, dirac → δ, and "+ \frac{-u}{v}" → "- \frac{u}{v}" (only when the top is one term). */
+function textbookNames(t) {
+  const named = t.replace(/\\mathrm\{heaviside\}/g, 'u').replace(/\\mathrm\{dirac\}/g, '\\delta')
+    // atan2(y, x) is written tan⁻¹(y/x) in textbooks (the quadrant is said in the steps)
+    .replace(/\\mathrm\{atan2\}\\left\(([^,(){}]+), ([^,(){}]+)\\right\)/g, '\\tan^{-1}\\left(\\frac{$1}{$2}\\right)');
+  // a whole expression that is one fraction with a lone negative top: \frac{-y}{…} → -\frac{y}{…}
+  const lead = named.match(/^\\frac\{-\s*([^{}+-]+)\}/);
+  return minusOutOfFraction(lead ? `-\\frac{${lead[1]}}${named.slice(lead[0].length)}` : named);
+}
+export function minusOutOfFraction(t) {
+  let out = t;
+  for (let from = 0; ;) {
+    const m = /\+\s*\\frac\{-\s*/.exec(out.slice(from));
+    if (!m) return out;
+    const start = from + m.index, body = start + m[0].length;
+    // scan the top to its closing brace; a + or − at depth 0 means more than one term
+    let depth = 1, j = body, single = true;
+    for (; j < out.length && depth > 0; j++) {
+      const c = out[j];
+      if (c === '{') depth++;
+      else if (c === '}') depth--;
+      else if (depth === 1 && (c === '+' || c === '-') && j > body) single = false;
+      if (out.startsWith('\\left', j)) depth++;
+      if (out.startsWith('\\right', j)) depth--;
+    }
+    if (single) { out = `${out.slice(0, start)}-\\frac{${out.slice(body)}`; from = start + 1; } else from = body;
+  }
 }
 
 /** "-y+2" → "2-y" and "-{x}^{2}+4" → "4-{x}^{2}" (a lone negative term then a positive number). */

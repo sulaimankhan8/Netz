@@ -31,9 +31,10 @@ function family(T, r, rootTex, wTex) {
   const a = T === 'sin' ? Math.asin(rr) : T === 'cos' ? Math.acos(rr) : Math.atan(r);
   const nice = angleTex(a);
   const aTex = /pi|^0$/.test(nice) ? nice : `\\${T}^{-1}\\left(${rTex}\\right)`;
-  const general = T === 'sin' ? `${wTex} = n\\pi + (-1)^{n}${/^-/.test(aTex) ? `\\left(${aTex}\\right)` : aTex}` : T === 'cos' ? `${wTex} = 2n\\pi \\pm ${aTex}` : `${wTex} = n\\pi ${/^-/.test(aTex) ? '' : '+ '}${aTex}`;
+  const rhs = T === 'sin' ? `n\\pi + (-1)^{n}${/^-/.test(aTex) ? `\\left(${aTex}\\right)` : aTex}` : T === 'cos' ? `2n\\pi \\pm ${aTex}` : `n\\pi ${/^-/.test(aTex) ? '' : '+ '}${aTex}`;
+  const general = `${wTex} = ${rhs}`;
   const values = (n) => (T === 'sin' ? [n * Math.PI + (n % 2 === 0 ? a : -a)] : T === 'cos' ? [2 * n * Math.PI + a, 2 * n * Math.PI - a] : [n * Math.PI + a]);
-  return { T, r, rTex, alpha: a, aTex, general, values, line: `\\${T} ${wTex} = ${rTex} \\ \\Rightarrow \\ \\alpha = ${aTex}${/pi|^0$/.test(nice) ? '' : ` \\approx ${Number(a.toFixed(4))}`}` };
+  return { T, r, rTex, alpha: a, aTex, rhs, general, values, line: `\\${T} ${wTex} = ${rTex} \\ \\Rightarrow \\ \\alpha = ${aTex}${/pi|^0$/.test(nice) ? '' : ` \\approx ${Number(a.toFixed(4))}`}` };
 }
 
 export function solve({ equation }) {
@@ -60,7 +61,8 @@ export function solve({ equation }) {
     const w0 = evalAt(wn, { x: 0 }), w1 = evalAt(wn, { x: 1 }), w2 = evalAt(wn, { x: 2.5 });
     if ([w0, w1, w2].every(Number.isFinite) && Math.abs(w0 + 2.5 * (w1 - w0) - w2) < 1e-9 && Math.abs(w1 - w0) > 1e-12) { k = w1 - w0; b = w0; }
   }
-  const wTex = w ? (w === 'x' ? 'x' : `(${tex(parse(w))})`) : 'x';
+  // 3x needs no brackets on its own; 2x − π/4 keeps them where it sits inside sin( )
+  const wTex = w ? (w === 'x' ? 'x' : /[+-]/.test(w) ? `(${tex(parse(w))})` : tex(parse(w))) : 'x';
   const families = [];
   let method = null;
   if (w && k !== null) {
@@ -129,7 +131,12 @@ export function solve({ equation }) {
       const good = xs.filter((x) => Math.abs(f(x)) < 1e-7);
       if (!good.length) { steps.push({ title: 'Rejected', depth: 1, lines: [`${fam.line} \\ \\text{(makes the equation undefined, so rejected)}`] }); continue; }
       fam.ok = true;
-      steps.push({ title: `General solution`, depth: 1, lines: [fam.line, fam.general, ...(w === 'x' ? [] : [`\\text{Solve for } x: \\quad x = \\frac{1}{${valueTex(k)}}\\left(\\text{each value}${b > 0 ? ` - ${angleTex(b)}` : b < 0 ? ` + ${angleTex(-b)}` : ''}\\right)`])] });
+      // w = kx + b, so x = (rhs − b)/k (only the linear-combination family already has x on its own)
+      if (w !== 'x' && fam.rhs) {
+        const shift = b > 0 ? ` - ${angleTex(b)}` : b < 0 ? ` + ${angleTex(-b)}` : '';
+        fam.xGeneral = Math.abs(k - 1) < 1e-12 ? `x = ${fam.rhs}${shift}` : `x = \\frac{1}{${valueTex(k)}}\\left(${fam.rhs}${shift}\\right)`;
+      }
+      steps.push({ title: `General solution`, depth: 1, lines: [fam.line, fam.general, ...(fam.xGeneral ? [fam.xGeneral] : [])] });
       good.forEach((x) => candidates.push(x));
     }
   }
@@ -156,7 +163,7 @@ export function solve({ equation }) {
   inRange.sort((p, q) => p - q);
   if (inRange.length > 24) inRange.length = 24;
   steps.push({ title: 'Solutions in [0, 2π)', depth: 0, lines: [inRange.length ? `x = ${inRange.map(angleTex).join(', \\ ')}` : '\\text{none}', ...(inRange.length ? [`\\text{In degrees: } ${inRange.map(degText).join(', ').replace(/°/g, '^\\circ')}`] : [])] });
-  const generals = families.filter((x) => x.ok).map((x) => x.general);
+  const generals = families.filter((x) => x.ok).map((x) => x.xGeneral || x.general);
   const verified = inRange.every((x) => Math.abs(f(x)) < 1e-7);
   return {
     generals, inRange: inRange.map(angleTex), degrees: inRange.map(degText), numeric, steps, verified,

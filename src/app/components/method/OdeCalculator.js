@@ -8,16 +8,18 @@ import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes } from './Calculator';
 import { StepTable } from './StepTable';
 import CoordPlot from './CoordPlot';
+import { useExportBar } from './ExportBar';
 
 /**
  * onAnswer(answer): the page records the solve (useRecordSolve lives in each page's folder). solve(values) → { result, points, rows }.
  * columns: StepTable columns; toRow(row) → cells (numbers are formatted here).
  * variants: optional [{ value, label }] picker passed to solve as `variant`.
  */
-export default function OdeCalculator({ title, solve, start, columns, toRow, variants = null, onAnswer }) {
+export default function OdeCalculator({ title, solve, start, columns, toRow, variants = null, onAnswer, exportId }) {
   const [v, setV] = useState(start);
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
+  const exportBar = useExportBar(exportId, () => v, !!answer, title);
 
   const show = (r) => { setAnswer(r); onAnswer?.(r, v); };
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); show(null); setError(''); };
@@ -35,7 +37,7 @@ export default function OdeCalculator({ title, solve, start, columns, toRow, var
   const fmt = (x) => (typeof x === 'number' ? sig(x, 7) : x ?? '—');
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id={`netz-solve-${exportId}`}>
       <CalcCard
         title={title}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -58,6 +60,7 @@ export default function OdeCalculator({ title, solve, start, columns, toRow, var
         </div>
         {answer && (
           <ResultBox label="Solution">
+            {exportBar}
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">
               <p className="text-2xl font-black font-mono break-all">y({fmt(answer.points.at(-1).x)}) ≈ {fmt(answer.result)}</p>
               <div className="flex justify-center">

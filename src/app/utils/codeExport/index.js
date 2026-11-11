@@ -5,7 +5,18 @@
  */
 
 import { compile, ExportError, LANGS } from './compile.js';
-import PROGRAMS from './programs.js';
+import BASE_PROGRAMS from './programs.js';
+import { EXPORTS as BATCH1_NUMERIC } from './programs2.js';
+import { EXPORTS as LATER_NUMERIC } from './programs3.js';
+import { EXPORTS as STATISTICS } from './programs4.js';
+import { EXPORTS as MATRICES } from './programs5.js';
+import { EXPORTS as GEOMETRY } from './programs6.js';
+import { EXPORTS as FINANCE_ALGEBRA } from './programs7.js';
+import { EXPORTS as ALGORITHMS } from './programs8.js';
+
+// Methods added with Batches 1–4: { id: { name, clean, program } } (see kit.js)
+const MORE = { ...BATCH1_NUMERIC, ...LATER_NUMERIC, ...STATISTICS, ...MATRICES, ...GEOMETRY, ...FINANCE_ALGEBRA, ...ALGORITHMS };
+const PROGRAMS = { ...BASE_PROGRAMS, ...Object.fromEntries(Object.entries(MORE).map(([id, e]) => [id, e.program])) };
 
 export { LANGS, ExportError };
 export const LANG_ORDER = ['python', 'matlab', 'cpp', 'javascript', 'rust', 'go'];
@@ -109,6 +120,8 @@ function bracket(raw) {
 }
 
 /** Methods that can be exported (the same ids the solver pages report with useRecordSolve). */
+Object.entries(MORE).forEach(([id, e]) => { CLEAN[id] = e.clean; });
+
 export const EXPORTABLE = new Set(Object.keys(CLEAN));
 
 /** A file name for a method, e.g. "netz_newton_raphson" ("netz_ttest": Go treats *_test.go as tests). */
@@ -182,4 +195,5 @@ export const METHOD_NAMES = {
   lu: 'LU decomposition', euler: "Euler's method", 'modified-euler': "Modified Euler's method", 'runge-kutta': 'Runge-Kutta method',
   taylor: "Taylor series method", 'straight-line': 'Fitting a straight line', parabola: 'Fitting a parabola', 'least-squares': 'Least squares fit',
   'z-test': 'Test of significance (Z test)', 't-test': 't-test', 'chi-square': 'Chi-square test', 'f-test': 'F-test',
+  ...Object.fromEntries(Object.entries(MORE).map(([id, e]) => [id, e.name])),
 };

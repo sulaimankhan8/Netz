@@ -16,6 +16,7 @@ export default function Rk2Calculator() {
   useRecordSolve('rk2', 4, answer, () => ({ fn: answer?.fn }));
   return (
     <OdeCalculator
+      exportId="rk2"
       onAnswer={(r, v) => setAnswer(r && { ...r, fn: v.f })} title="RK2 Engine" solve={solve} start={START} columns={COLUMNS}
       toRow={(r) => ({ n: r.n, x: r.x, y: r.y, k1: r.k1, k2: r.k2, yNext: r.yNext })}
       variants={[{ value: 'heun', label: 'Heun (improved Euler)' }, { value: 'midpoint', label: 'Midpoint' }]}

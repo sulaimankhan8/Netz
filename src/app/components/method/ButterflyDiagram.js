@@ -6,13 +6,13 @@ import { InlineMath } from 'react-katex';
 export default function ButterflyDiagram({ fft }) {
   const { N, order, stages, butterflies } = fft;
   const cols = stages.length;
-  const rowH = 34, colW = 110, padL = 70, padR = 30, padT = 20;
+  const rowH = 34, colW = 110, padL = 70, padR = 36, padT = 20;
   const W = padL + (cols - 1) * colW + padR, H = padT * 2 + (N - 1) * rowH;
   const X = (c) => padL + c * colW, Y = (r) => padT + r * rowH;
   return (
     <figure className="space-y-2">
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Butterfly diagram of a ${N}-point FFT with ${cols - 1} stages`} className="min-w-[320px] w-full max-w-[640px] h-auto text-black dark:text-white">
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Butterfly diagram of a ${N}-point FFT with ${cols - 1} stages`} className={`${N >= 8 ? 'min-w-[420px]' : ''} w-full max-w-[640px] h-auto text-black dark:text-white`}>
           {butterflies.map((stage, s) => stage.map(({ top, bottom, k }) => (
             <g key={`${s}-${top}`}>
               <line x1={X(s)} y1={Y(top)} x2={X(s + 1)} y2={Y(top)} stroke="#3B6FC2" strokeWidth="1.6" />

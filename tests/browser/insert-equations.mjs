@@ -26,19 +26,21 @@ const closeEditors = (page) => page.evaluate(() => [...document.querySelectorAll
   try {
     await openPlayground(page);
     await sleep(1000);
-    check('the page loads without the equation editor (it is fetched on first use)', mathlive.length === 0, mathlive.slice(0, 2).join(' '));
+    // A production build hashes file names, so look for the editor's element rather than "mathlive" in a URL
+    const editorLoaded = () => page.evaluate(() => Boolean(window.customElements && window.customElements.get('math-field')));
+    check('the page loads without the equation editor (it is fetched on first use)', !(await editorLoaded()), mathlive.slice(0, 2).join(' '));
 
     const group = await page.evaluate(() => [...document.querySelector('[role="group"][aria-label="Insert"]').querySelectorAll('button')].map((b) => b.getAttribute('aria-label')));
-    check('Equation is in the Insert group, with its menu arrow', group.join('|') === 'Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
+    check('Equation is in the Insert group, with its menu arrow', group.join('|') === 'Table|Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
 
     // Insert New Equation: the visual editor, ready to type
     await clickTitle(page, 'Equation: Insert New Equation');
     await page.waitForSelector('[data-block-id] math-field', { timeout: 30000 });
     await sleep(400);
     check('Insert New Equation opens the visual editor with the cursor in it', (await page.evaluate(() => document.activeElement.tagName)) === 'MATH-FIELD');
-    check('and the editor was fetched now', mathlive.length > 0, mathlive.length);
+    check('and the editor was fetched now', await editorLoaded(), mathlive.length);
     const tools = await page.evaluate(() => [...document.querySelectorAll('[data-equation-ribbon] [data-equation-tool]')].map((b) => b.getAttribute('data-equation-tool')));
-    check('the ribbon has Symbols and the 11 structures (Word / WPS Equation Tools)', tools.join(',') === 'symbols,fraction,script,radical,integral,largeOperator,bracket,function,accent,limitLog,operator,matrix', tools.join(','));
+    check('the ribbon has Equation, Symbols and the 11 structures (Word / WPS Equation Tools)', tools.join(',') === 'equations,symbols,fraction,script,radical,integral,largeOperator,bracket,function,accent,limitLog,operator,matrix', tools.join(','));
 
     await page.keyboard.type('y=');
     await clickIn(page, '[data-equation-tool="fraction"]');
@@ -109,7 +111,8 @@ const closeEditors = (page) => page.evaluate(() => [...document.querySelectorAll
     await clickIn(page, '[data-equation-subject="math"]');
     await sleep(300);
     const math = await page.evaluate(() => [...document.querySelectorAll('[data-common-equation]')].map((b) => ({ name: b.getAttribute('data-common-equation'), drawn: Boolean(b.querySelector('.katex-display')) })));
-    check('Common Equations > Math lists WPS\'s equations, drawn', math.length === 12 && math[0].name === 'Quadratic Formula' && math.every((m) => m.drawn), JSON.stringify(math.slice(0, 2)));
+    // WPS's 12 come first (Quadratic Formula … Taylor Expansion), then NETZ's topic groups
+    check('Common Equations > Math starts with WPS\'s 12 equations, all drawn', math.length >= 12 && math[0].name === 'Quadratic Formula' && math[11].name === 'Taylor Expansion' && math.every((m) => m.drawn), JSON.stringify(math.slice(0, 2)));
     await shot(page, 'equation-menu-laptop');
     const before = (await savedBlocks(page)).length;
     await clickIn(page, '[data-common-equation="Quadratic Formula"]');

@@ -70,7 +70,7 @@ export default function PowerMethodPage() {
         </ExampleStep>
 
         <Conclusion result="λ = 4, eigenvector [1, 0.5, 0]" math={<BlockMath math="\lambda_{\max} = 4, \qquad x = [1,\ 0.5,\ 0]^T" />}>
-          The calculator below opens on this matrix. Switch to "smallest" for the inverse power method.
+          The calculator below opens on this matrix. Switch to &ldquo;smallest&rdquo; for the inverse power method.
         </Conclusion>
       </WorkedExample>
 

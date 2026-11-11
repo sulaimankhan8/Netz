@@ -1,5 +1,5 @@
 /**
- * The Playground and Notes Studio (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3):
+ * The Playground and Notes Studio (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, steps 2b and 3):
  * which library board this notebook was saved as, turning note blocks into Playground blocks
  * (Insert from file), and placing inserted pages below what is already on a page.
  */

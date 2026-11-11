@@ -179,6 +179,38 @@ function isNearAxis(a, b) {
 }
 
 /**
+ * Highlighter straight-line assist (handoff C6): a highlighter stroke that is roughly straight becomes
+ * a straight band from its first to its last point, level when within a few degrees. Looser than
+ * the pen's line snapping, because a hand highlighting along a line of text wobbles.
+ * Returns the new points, or null to keep the stroke as drawn.
+ */
+export function straightenHighlight(points) {
+  if (!points || points.length < 3) return null;
+  const start = points[0];
+  const end = points[points.length - 1];
+  const directDist = dist(start, end);
+  if (directDist < 20) return null;
+  if (pathLength(points) / directDist > 1.25) return null;
+  let maxDeviation = 0;
+  for (let i = 1; i < points.length - 1; i++) maxDeviation = Math.max(maxDeviation, distanceToSegment(points[i], start, end));
+  if (maxDeviation > Math.max(6, 0.12 * directDist)) return null;
+  const finalEnd = { x: end.x, y: end.y };
+  const angle = Math.abs((Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI);
+  if (angle <= 8 || angle >= 172) finalEnd.y = start.y;
+  else if (Math.abs(angle - 90) <= 8) finalEnd.x = start.x;
+  const t = start.timestamp || Date.now();
+  // A few points along the line, so the eraser and lasso can still hit the middle of it
+  const steps = Math.max(2, Math.ceil(directDist / 24));
+  return Array.from({ length: steps + 1 }, (_, i) => ({
+    x: start.x + ((finalEnd.x - start.x) * i) / steps,
+    y: start.y + ((finalEnd.y - start.y) * i) / steps,
+    pressure: 0.5,
+    timestamp: t + i,
+    pointerType: start.pointerType,
+  }));
+}
+
+/**
  * Main shape snapping function.
  * Given raw stroke points and bounding box, detects if it matches a geometric primitive.
  *

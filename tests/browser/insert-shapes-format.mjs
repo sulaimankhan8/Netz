@@ -291,7 +291,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
       const r = el.getBoundingClientRect();
       return { buttons: [...el.querySelectorAll('button')].map((b) => b.getAttribute('aria-label')), fits: r.left >= 0 && r.right <= innerWidth };
     });
-    check('phone: the format bar has five buttons and fits', bar.buttons.join('|') === 'Shape Styles|Fill|Outline|Text|More' && bar.fits, JSON.stringify(bar));
+    check('phone: the format bar has six buttons and fits', bar.buttons.join('|') === 'Shape Styles|Fill|Outline|Text|Rotate|More' && bar.fits, JSON.stringify(bar));
 
     // Double tap: type
     await tap(190, 320, 80);

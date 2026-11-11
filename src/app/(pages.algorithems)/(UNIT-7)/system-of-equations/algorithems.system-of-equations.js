@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Notes } from '@/app/components/method/Calculator';
 import { RowOps, MatrixView } from '@/app/components/method/Matrix';
@@ -25,6 +26,7 @@ export default function SystemSolver() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('system-of-equations', 7, answer, () => ({ size, method }));
+  const exportBar = useExportBar('system-of-equations', () => ({ cells, method }), !!answer);
 
   const clear = () => { setAnswer(null); setError(''); };
   const setCell = (i, j, v) => { setCells((m) => m.map((r, a) => (a === i ? r.map((x, b) => (b === j ? v : x)) : r))); clear(); };
@@ -47,7 +49,7 @@ export default function SystemSolver() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-system-of-equations">
       <CalcCard
         title="Simultaneous Equations Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -86,6 +88,7 @@ export default function SystemSolver() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <ResultBox label={answer.kind === 'unique' ? 'Solution' : answer.kind === 'none' ? 'No solution' : 'Infinitely many solutions'}>
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">

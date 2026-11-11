@@ -1,4 +1,4 @@
-// "Rates as of …" box for tax pages (NETZ_METHODS_CATALOG.md section 0.2): where the rate comes from,
+// "Rates as of …" box for tax pages (docs/methods/NETZ_METHODS_CATALOG.md section 0.2): where the rate comes from,
 // when it was checked, a warning when it isn't confirmed on the official site, and "not tax advice".
 import { FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 import { STATUS_TEXT } from '@/app/utils/rates/getRule';

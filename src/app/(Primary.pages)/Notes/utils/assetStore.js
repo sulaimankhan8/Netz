@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The Notes Studio Assets library on this device (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b),
+ * The Notes Studio Assets library on this device (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b),
  * and the Training data folder (step 4).
  *
  * IndexedDB `NETZ_NOTES_ASSETS`:

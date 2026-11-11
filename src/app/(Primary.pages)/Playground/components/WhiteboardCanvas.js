@@ -7,7 +7,7 @@ import { orderStrokesForPainting, paintedWidth } from '../utils/pageSvg';
 import { drawSmoothStroke, calculateBoundingBox, strokeHasPressure } from '../utils/strokeSmoother';
 import { SpatialStrokeIndex, intersectsBBox } from '../utils/spatialIndexRTree';
 import { detectScratchOutGesture } from '../utils/spatialClusterer';
-import { recognizeAndSnapShape } from '../utils/shapeRecognizer';
+import { recognizeAndSnapShape, straightenHighlight } from '../utils/shapeRecognizer';
 import { eraseFromStroke, strokeTouchesCircle } from '../utils/strokeEraser';
 import { bboxOfStrokes, translateStroke, scaleStroke, duplicateStroke, recolorStroke } from '../utils/strokeTransform';
 import { createShape, boxFromDrag, LINE_PRESETS } from '../utils/shapes/shapeModel';
@@ -73,6 +73,7 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
     width,
     height,
     snapShapes = false,
+    highlighterStraight = true,
     shapeItem = null, // a gallery shape armed for drawing (Shapes tool), or null for freehand snapping
     shapeDefaults = null, // the user's default shape style
     onShapeDrawn,
@@ -793,6 +794,14 @@ const WhiteboardCanvas = forwardRef(function WhiteboardCanvas(
           finalPoints = snapResult.points;
           strokeBbox = calculateBoundingBox(finalPoints);
           snappedShape = snapResult.shape;
+        }
+      }
+      // Highlighter: a roughly straight stroke becomes a straight band
+      if (activeTool === 'highlighter' && highlighterStraight) {
+        const straight = straightenHighlight(finalPoints);
+        if (straight) {
+          finalPoints = straight;
+          strokeBbox = calculateBoundingBox(finalPoints);
         }
       }
 

@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice } from '@/app/components/method/Calculator';
@@ -21,6 +22,7 @@ export default function TriangleSolverCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('triangle-solver', 9, answer, () => ({ mode }));
+  const exportBar = useExportBar('triangle-solver', () => ({ mode, values }), !!answer);
   const info = MODES.find((m) => m.id === mode);
 
   const run = () => {
@@ -35,7 +37,7 @@ export default function TriangleSolverCalculator() {
   const reset = () => { setMode(START.mode); setValues(START.values); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-triangle-solver">
       <CalcCard
         title="Triangle Solver Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -57,6 +59,7 @@ export default function TriangleSolverCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && answer.triangles.length === 0 && (
           <ResultBox label="No triangle"><p className="font-semibold">{answer.note}</p></ResultBox>
         )}

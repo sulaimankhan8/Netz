@@ -1,6 +1,6 @@
 /**
  * The words the Playground shows people, in one place: one name for each thing, in plain
- * language (no "OCR", "neural", "hypotheses"). See PLAYGROUND_UX_FIX_PLAN.md step 0.3.
+ * language (no "OCR", "neural", "hypotheses"). See docs/playground/PLAYGROUND_UX_FIX_PLAN.md step 0.3.
  *
  * Stored names do not change: a Text block is still saved with type 'theory', so sessions
  * saved before the rename load as they did.

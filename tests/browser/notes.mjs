@@ -1,4 +1,4 @@
-// Checks for the Notes redesign (NOTES_VISUAL_REDESIGN_PLAN.md, section 6).
+// Checks for the Notes redesign (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 6).
 // Run against a server, e.g. NETZ_URL=http://localhost:3211 node notes.mjs
 import { launch, sleep, shot, BASE } from './lib.mjs';
 

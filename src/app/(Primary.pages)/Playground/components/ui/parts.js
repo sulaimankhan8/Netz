@@ -37,7 +37,7 @@ export function MenuHeader({ title, onClose, isMobile, closeLabel, children = nu
 }
 
 /*
- * The Playground's shared looks (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 0.3). Every bar, menu
+ * The Playground's shared looks (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 0.3). Every bar, menu
  * and sheet uses these, so a look changes in one place. Colours are the pg-* tokens from
  * ../../playground.css.
  */

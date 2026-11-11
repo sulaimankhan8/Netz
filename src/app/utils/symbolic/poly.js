@@ -31,6 +31,34 @@ const hasSymbol = (node, v) => { let f = false; node.traverse((m) => { if (m.isS
  * { P, Q } with node = P(v) / Q(v), or null when node is not a rational function of v
  * (other letters, functions of v, non-integer powers…). Q is not reduced: common factors may remain.
  */
+// ---- division and gcd (ascending float coefficients, used to cancel common factors in fractions) ----
+const trimF = (p) => { const q = [...p]; while (q.length > 1 && Math.abs(q[q.length - 1]) < 1e-9) q.pop(); return q; };
+/** p ÷ d when d divides p exactly: the quotient (whole numbers snapped). */
+export function polyDiv(p, d) {
+  const r = [...trimF(p)], D = trimF(d);
+  const out = new Array(Math.max(1, r.length - D.length + 1)).fill(0);
+  for (let i = r.length - D.length; i >= 0; i--) {
+    const k = r[i + D.length - 1] / D[D.length - 1];
+    out[i] = k;
+    for (let j = 0; j < D.length; j++) r[i + j] -= k * D[j];
+  }
+  return out.map((v) => (Math.abs(v - Math.round(v)) < 1e-9 ? Math.round(v) : v));
+}
+/** Greatest common divisor by Euclid's algorithm (monic), or [1] when there is none. */
+export function polyGcd(a, b) {
+  let p = trimF(a), q = trimF(b);
+  const scale = Math.max(1, ...p.map(Math.abs), ...q.map(Math.abs));
+  for (let guard = 0; guard < 20 && !(q.length === 1 && Math.abs(q[0]) < 1e-9 * scale); guard++) {
+    if (q.length === 1) return [1];
+    const r = [...p];
+    for (let i = r.length - q.length; i >= 0; i--) { const k = r[i + q.length - 1] / q[q.length - 1]; for (let j = 0; j < q.length; j++) r[i + j] -= k * q[j]; }
+    const rem = trimF(r.slice(0, q.length - 1).map((v) => (Math.abs(v) < 1e-9 * scale ? 0 : v)));
+    p = q; q = rem.length ? rem : [0];
+  }
+  const lead = p[p.length - 1];
+  return p.map((v) => v / lead);
+}
+
 export function rationalParts(node, v = 'x') {
   const R = (n) => {
     if (n.isParenthesisNode) return R(n.content);

@@ -1,4 +1,4 @@
-# Keeps the free Supabase project from pausing in a quiet week (NETZ_LAUNCH_PLAN.md 4.1).
+# Keeps the free Supabase project from pausing in a quiet week (docs/launch/NETZ_LAUNCH_PLAN.md 4.1).
 # Once a day it calls the site's /api/health, which runs one tiny database query.
 # Needs one repository secret: NETZ_SITE_URL, e.g. https://netz.example.com (no trailing slash).
 # Free: GitHub Actions minutes for a public repo, or the free monthly minutes for a private one.

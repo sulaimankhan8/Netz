@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: netz-ruby.vercel.app
-
-# Sitemaps
-Sitemap: https://netz-ruby.vercel.app/sitemap.xml

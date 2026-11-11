@@ -28,7 +28,7 @@ export default function CanvasGridBackground({
 
     if (gridStyle === 'none') return;
 
-    // Quieter than thin ink (PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 6.5)
+    // Quieter than thin ink (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md, step 6.5)
     const { dot: dotColor, line: strokeColor } = gridColours(isDarkPage());
 
     // Dynamic grid spacing scaled by zoom

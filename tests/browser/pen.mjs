@@ -71,7 +71,7 @@ try {
   await drawStroke(page, [[300, 500], [700, 500]], { steps: 20 });
   await sleep(150);
   s = await saved();
-  // Each pen type keeps its own width (PLAYGROUND_VISUAL_REDESIGN_PLAN.md 5.1): Ballpoint was set to 8 px at the start
+  // Each pen type keeps its own width (docs/playground/PLAYGROUND_VISUAL_REDESIGN_PLAN.md 5.1): Ballpoint was set to 8 px at the start
   check('Ballpoint keeps its own width (8 px) and is fully opaque', s[4].width === 8 && s[4].opacity === undefined, JSON.stringify(s[4]));
 
   // Colours: black swatch and the custom picker

@@ -93,7 +93,7 @@ export default function RootLayout({ children }) {
         <Analytics />
         <SpeedInsights />
         {/* Ads and Google Analytics load while the browser is idle, after the page itself
-            (LANDING_REDESIGN_PLAN.md, build step 7) */}
+            (docs/landing/LANDING_REDESIGN_PLAN.md, build step 7) */}
         <Script id="netz-gtag-src" strategy="lazyOnload" src="https://www.googletagmanager.com/gtag/js?id=G-MH5QX2N0Q0" />
         <Script id="netz" strategy="lazyOnload">{`
   window.dataLayer = window.dataLayer || [];

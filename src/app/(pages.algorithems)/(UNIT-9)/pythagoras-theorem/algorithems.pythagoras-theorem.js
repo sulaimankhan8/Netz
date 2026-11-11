@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
 import { CalcCard, ErrorBox, ResultBox, StepsCard } from '@/app/components/method/Calculator';
@@ -24,6 +25,7 @@ export default function PythagorasCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('pythagoras', 9, answer, () => ({ find: answer?.unknown || 'check' }));
+  const exportBar = useExportBar('pythagoras', () => values, !!answer);
 
   const run = () => {
     try {
@@ -38,7 +40,7 @@ export default function PythagorasCalculator() {
   const set = (k, v) => { setValues((old) => ({ ...old, [k]: v })); setAnswer(null); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-pythagoras">
       <CalcCard
         title="Pythagoras Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -59,6 +61,7 @@ export default function PythagorasCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer?.mode === 'find' && (
           <ResultBox label={`Missing side ${answer.unknown}`}>
             <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">

@@ -44,10 +44,23 @@ const handleCentre = (index, selector) => page.evaluate(({ index, selector }) =>
 const backup = () => page.evaluate(() => JSON.parse(localStorage.getItem('NETZ_PLAYGROUND_SESSION_BACKUP') || 'null'));
 const idbSession = async () => { await settle(page); return idbRead(); };
 const idbRead = () => page.evaluate(() => new Promise((resolve) => {
-  const req = indexedDB.open('NETZ_PLAYGROUND_DB', 1);
+  const req = indexedDB.open('NETZ_PLAYGROUND_DB');
   req.onsuccess = () => {
-    const get = req.result.transaction('sessions', 'readonly').objectStore('sessions').get('default_session');
-    get.onsuccess = () => resolve(get.result || null);
+    const db = req.result;
+    const names = [...db.objectStoreNames];
+    const tx = db.transaction(names, 'readonly');
+    const get = tx.objectStore('sessions').get('default_session');
+    get.onsuccess = () => {
+      const s = get.result || null;
+      // Saved per page (handoff C4): the record lists the page ids, each page is its own record
+      if (!s || !Array.isArray(s.pageIds) || !names.includes('pages')) return resolve(s);
+      const all = tx.objectStore('pages').getAll();
+      all.onsuccess = () => {
+        const byKey = Object.fromEntries((all.result || []).map((r) => [r.key, r.page]));
+        resolve({ ...s, pages: s.pageIds.map((id) => byKey[`default_session:${id}`]).filter(Boolean) });
+      };
+      all.onerror = () => resolve(null);
+    };
     get.onerror = () => resolve(null);
   };
   req.onerror = () => resolve(null);

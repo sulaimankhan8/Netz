@@ -10,5 +10,5 @@ const START = { x: '1, 2, 3, 4, 5', y: '1, 8, 27, 64, 125', at: '3.5' };
 export default function BesselCalculator() {
   const [answer, setAnswer] = useState(null);
   useRecordSolve('bessel', 2, answer, () => ({ points: answer?.x?.length }));
-  return <InterpolationCalculator title="Bessel Engine" mode="interpolate" button="Interpolate" solve={solve} start={START} onAnswer={setAnswer} />;
+  return <InterpolationCalculator exportId="bessel" title="Bessel Engine" mode="interpolate" button="Interpolate" solve={solve} start={START} onAnswer={setAnswer} />;
 }

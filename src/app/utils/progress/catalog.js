@@ -1,8 +1,11 @@
 /**
- * Everything NETZ counts as progress: the 50 tasks, 5 onboarding tasks, 20 streak medals and the gem
- * amounts (NETZ_TASK_SHEET.md, NETZ_LAUNCH_PLAN.md section 2). The engine (engine.js) only reads this
+ * Everything NETZ counts as progress: the 50 Unit 1–5 and app tasks, one task per live Unit 6–15 page
+ * (unitTasks.js), 5 onboarding tasks, 20 streak medals and the gem
+ * amounts (docs/rewards/NETZ_TASK_SHEET.md, docs/launch/NETZ_LAUNCH_PLAN.md section 2). The engine (engine.js) only reads this
  * file, so adding or renaming a task is a change here and nowhere else.
  */
+
+import { UNIT_GROUPS, UNIT_TASKS } from './unitTasks';
 
 export const GEMS = {
   firstTime: 20,
@@ -21,7 +24,7 @@ export const DAILY_GOAL_TASKS = 3;
 export const MONTH_MEDAL_DAYS = 20;
 export const MAX_FREEZES = 2;
 
-// Colours come from the bg1 sunset palette (NETZ_MEDALS_CATALOG.md section 1)
+// Colours come from the bg1 sunset palette (docs/rewards/NETZ_MEDALS_CATALOG.md section 1)
 export const GROUPS = {
   unit1: { name: 'Unit 1', fill: '#D55E64', rim: '#A63E48' },
   unit2: { name: 'Unit 2', fill: '#FBAE3D', rim: '#C98318' },
@@ -31,6 +34,8 @@ export const GROUPS = {
   notes: { name: 'Notes', fill: '#F4F4F2', rim: '#96456E' },
   playground: { name: 'Playground', fill: '#F88F4A', rim: '#C2632A' },
   sharing: { name: 'Sharing', fill: '#D55E64', rim: '#FBAE3D' },
+  // Units 6–15: split hexagons (fill on top, fill2 below)
+  ...UNIT_GROUPS,
 };
 
 /** A task finished by one solver run of `method`. */
@@ -120,6 +125,9 @@ export const TASKS = [
   solve('unit5.parabola', 'unit5', 'parabola', 'Fit a Parabola', 'Curve Fitter', '/fitting-parabola'),
   solve('unit5.least-squares', 'unit5', 'least-squares', 'Least Squares', 'Square Keeper', '/least-squares'),
 
+  // Units 6–15: one task per live page
+  ...UNIT_TASKS,
+
   // Notes
   on('notes.three-blocks', 'notes', 'note.saved', 'Write a note with 3 or more blocks', 'Note Builder', '/Notes', (d) => Number(d.blocks) >= 3),
   on('notes.widget', 'notes', 'note.saved', 'Put a solver widget in a note', 'Live Page', '/Notes', (d) => !!d.hasWidget),
@@ -171,7 +179,7 @@ export const STREAK_MEDALS = [
 
 export const TASK_BY_ID = Object.fromEntries([...TASKS, ...ONBOARDING].map((t) => [t.id, t]));
 
-/* ---------------- Pro tasks (NETZ_LAUNCH_PLAN.md 2.7) ---------------- */
+/* ---------------- Pro tasks (docs/launch/NETZ_LAUNCH_PLAN.md 2.7) ---------------- */
 
 // Each year's Pro season: what 3, 6 and 10 Pro tasks give. Kept forever, even after Pro ends.
 export const PRO_SEASONS = {
@@ -242,7 +250,7 @@ export const PRO_TASKS = [
     },
   },
   {
-    id: 'pro.2026.five-units', name: 'Do a task from every unit in one day', href: '/Algorithems',
+    id: 'pro.2026.five-units', name: 'Do a task from each of Units 1–5 in one day', href: '/Algorithems',
     check: ({ state, today }) => {
       const done = state.daysDone[today] || [];
       return UNITS.every((u) => done.some((id) => id.startsWith(`${u}.`)));

@@ -1,5 +1,5 @@
 /**
- * The device's copy of "is this student Pro?" (NETZ_LAUNCH_PLAN.md 5.4 step 4). The server decides
+ * The device's copy of "is this student Pro?" (docs/launch/NETZ_LAUNCH_PLAN.md 5.4 step 4). The server decides
  * (api/billing/status, from the Razorpay webhook); this is only a cached answer so ads, exports and
  * the progress toast can ask without waiting for the network. Every server limit checks Pro itself.
  *

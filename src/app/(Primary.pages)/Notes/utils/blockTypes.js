@@ -1,7 +1,7 @@
 import { LuCalculator, LuFile, LuFileInput, LuHeading1, LuHeading2, LuHeading3, LuHelpCircle, LuImage, LuLayoutDashboard, LuLibrary, LuLightbulb, LuMinus, LuPenLine, LuSigma, LuTable, LuType } from 'react-icons/lu';
 
 /**
- * Every kind of block, in one place (NOTES_VISUAL_REDESIGN_PLAN.md, section 1). The Add block
+ * Every kind of block, in one place (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 1). The Add block
  * grid, the phone's Add block sheet, the / menu and the block labels all read this list, so a
  * block has the same name, icon and colour everywhere.
  *

@@ -70,7 +70,7 @@ const imagePixel = (page, fx, fy) => page.evaluate(async ([x, y]) => {
   try {
     await openPlayground(page);
     const group = await page.evaluate(() => [...document.querySelector('[role="group"][aria-label="Insert"]').querySelectorAll('button')].map((b) => b.getAttribute('aria-label')));
-    check('Insert group in WPS order: Picture, Screenshot, Shapes, Symbol, Equation', group.join('|') === 'Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
+    check('Insert group in WPS order: Picture, Screenshot, Shapes, Symbol, Equation', group.join('|') === 'Table|Insert Picture|Screenshot|Screenshot menu|Shapes|Symbol|Equation|Equation menu', JSON.stringify(group));
 
     await clickTitle(page, 'Screenshot menu');
     const menu = await page.evaluate(() => [...document.querySelectorAll('[data-screenshot-menu] [data-screenshot-item]')].map((b) => ({ id: b.getAttribute('data-screenshot-item'), text: b.innerText.replace(/\s+/g, ' ').trim(), checked: b.getAttribute('aria-checked') })));
@@ -267,7 +267,7 @@ const imagePixel = (page, fx, fy) => page.evaluate(async ([x, y]) => {
       const tiles = ['Insert Picture', 'Insert Screenshot', 'Insert Shapes', 'Insert Symbol', 'Insert Equation'].map((l) => document.querySelector(`button[aria-label="${l}"]`));
       return {
         all: tiles.every(Boolean),
-        order: tiles.every((t, i) => !i || (t && tiles[i - 1] && t.getBoundingClientRect().left > tiles[i - 1].getBoundingClientRect().left)),
+        order: tiles.every((t, i) => !i || (t && tiles[i - 1] && Boolean(tiles[i - 1].compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING))),
         fits: tiles.every((t) => t && t.getBoundingClientRect().right <= innerWidth && t.scrollWidth <= t.clientWidth + 1),
         smallest: Math.round(Math.min(...tiles.filter(Boolean).map((t) => Math.min(t.getBoundingClientRect().width, t.getBoundingClientRect().height)))),
       };

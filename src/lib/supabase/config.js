@@ -1,5 +1,5 @@
 /**
- * Supabase settings from the environment (NETZ_LAUNCH_PLAN.md 4.1). Both are public: the URL and
+ * Supabase settings from the environment (docs/launch/NETZ_LAUNCH_PLAN.md 4.1). Both are public: the URL and
  * the publishable (or older "anon") key are meant for the browser. Secrets never go here.
  */
 

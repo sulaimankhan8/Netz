@@ -7,7 +7,7 @@ import { grantAdReward } from '@/app/utils/ads/adReward';
 import { dayAt } from '@/app/utils/progress/syncCore';
 
 /**
- * POST /api/ads/reward  { tz }  → { state } after a rewarded ad was watched (NETZ_LAUNCH_PLAN.md 6.4).
+ * POST /api/ads/reward  { tz }  → { state } after a rewarded ad was watched (docs/launch/NETZ_LAUNCH_PLAN.md 6.4).
  * Google's web rewarded ads cannot be confirmed from the server, so the limit is what protects it:
  * at most 3 rewards (30 gems) a day per account, each written once to gem_ledger.
  */

@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps, matrixTex, texNumber } from '@/app/components/method/Matrix';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice } from '@/app/components/method/Calculator';
@@ -18,6 +19,7 @@ export default function DeterminantCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('determinant', 8, answer, () => ({ size: cells.length, method }));
+  const exportBar = useExportBar('determinant', () => ({ cells, method }), !!answer);
 
   // Cofactor expansion is offered up to 5×5; a 6×6 matrix always uses row reduction
   const tooBigForCofactors = cells.length > 5;
@@ -35,7 +37,7 @@ export default function DeterminantCalculator() {
   const reset = () => { setCells(START); setMethod('cofactor'); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-determinant">
       <CalcCard
         title="Determinant Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -57,6 +59,7 @@ export default function DeterminantCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <ResultBox label="Determinant |A|">
             <BlockMath math={`|A| = ${texNumber(answer.result)}`} />

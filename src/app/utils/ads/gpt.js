@@ -1,5 +1,5 @@
 /**
- * Google Ad Manager (GPT) for the two ad formats AdSense units cannot do (NETZ_LAUNCH_PLAN.md 6.3,
+ * Google Ad Manager (GPT) for the two ad formats AdSense units cannot do (docs/launch/NETZ_LAUNCH_PLAN.md 6.3,
  * 6.4): the full-screen "web interstitial" and "rewarded" ads. Both are Google's own formats, so
  * NETZ never puts an ad in a pop-up of its own. Nothing loads until the owner sets the ad unit paths.
  */

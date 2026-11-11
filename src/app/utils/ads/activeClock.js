@@ -1,5 +1,5 @@
 /**
- * Counts the student's active minutes for the full-screen ad (NETZ_LAUNCH_PLAN.md 6.3): a minute
+ * Counts the student's active minutes for the full-screen ad (docs/launch/NETZ_LAUNCH_PLAN.md 6.3): a minute
  * only counts while the tab is visible and they touched, typed or scrolled in the last minute.
  * After TIMED_AD.activeMinutes, one full-screen ad may show at the next page change; then the clock
  * starts again. At most TIMED_AD.perDay a day. Kept in localStorage, so it carries across pages.

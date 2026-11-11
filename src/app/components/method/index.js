@@ -1,4 +1,4 @@
-// Building blocks for method pages. See METHODS_IMPLEMENTATION_PLAN.md, step A3.
+// Building blocks for method pages. See docs/methods/METHODS_IMPLEMENTATION_PLAN.md, step A3.
 //
 // <MethodPage>
 //   <MethodHeader badge="UNIT 1 • FINDING ROOTS OF EQUATIONS" title="Newton-Raphson" subtitle="Tangent Line Method">

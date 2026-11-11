@@ -3,7 +3,7 @@
  * Local (county and city) rates are added on top; the page has a box for them. Same rule shape as in.js.
  * Rates are state base rates as published by each state's revenue department, collected from tax aggregators
  * (Tax Foundation, Avalara, Sales Tax Institute): status 'secondary' until the owner checks them
- * (NETZ_OWNER_TODO.md, section K).
+ * (docs/launch/NETZ_OWNER_TODO.md, section K).
  */
 
 export const US_RULES = [
@@ -85,5 +85,14 @@ export const US_RULES = [
       },
       fica: { ssRate: 6.2, ssWageBase: 176100, medicareRate: 1.45, addlMedicareRate: 0.9, addlMedicareThreshold: { single: 200000, mfj: 250000, hoh: 200000 } },
     },
+  },
+  {
+    // Federal corporate income tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    id: 'us.corporate',
+    validFrom: '2018-01-01',
+    validTo: null,
+    label: 'Federal corporate tax (Tax Cuts and Jobs Act, flat rate)',
+    source: { title: 'IRC §11(b) as amended by the Tax Cuts and Jobs Act 2017', url: 'https://www.irs.gov/', verifiedOn: '2026-11-08', status: 'unverified' },
+    data: { federalRate: 21 },
   },
 ];

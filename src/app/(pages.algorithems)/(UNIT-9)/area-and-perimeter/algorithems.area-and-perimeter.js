@@ -10,5 +10,5 @@ const START = { shape: 'triangle-sss', values: { a: '13', b: '14', c: '15' } };
 export default function AreaPerimeterCalculator() {
   const [answer, setAnswer] = useState(null);
   useRecordSolve('area-perimeter', 9, answer, () => ({ shape: answer?.shape }));
-  return <ShapeCalculator title="Area & Perimeter Engine" shapes={SHAPES_2D} solve={solve} start={START} onAnswer={setAnswer} />;
+  return <ShapeCalculator exportId="area-perimeter" title="Area & Perimeter Engine" shapes={SHAPES_2D} solve={solve} start={START} onAnswer={setAnswer} />;
 }

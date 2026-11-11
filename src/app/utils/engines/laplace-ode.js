@@ -10,6 +10,9 @@ import { mtex, exactTex, tidyMulti } from '../symbolic/multi';
 import { substitute } from '../symbolic/iterated';
 import { readODE, readICs, linearCoeffs, numNode } from '../symbolic/ode';
 import { laplace, inverseLaplace, byShift, readLaplace } from '../symbolic/laplace';
+import { rationalParts } from '../symbolic/poly';
+import { polyTex, factorPolynomial } from '../symbolic/algebra';
+import { polyGcd, polyDiv } from '../symbolic/poly';
 
 const S = sym('s');
 const PR = ['y', "y'", "y''", "y'''", 'y^{(4)}'];
@@ -72,7 +75,23 @@ export function solve({ eq, ics = '' }) {
     Y = Y ? add(Y, withShift) : withShift;
   }
   if (!Y) return { Y: '0', y: 'y(t) = 0', steps, verified: true, notes: ['With zero initial values and no forcing, y = 0.'] };
-  steps.push({ title: 'Solve for Y(s)', depth: 0, lines: [`Y(s) = ${mtex(polish(Y))}`] });
+  // One fraction with the bottom factored, (2s − 5)/(s − 1)³, when there is no e^(−as) shift; else term by term
+  const Ytex = (() => {
+    const rp = rationalParts(Y, 's');
+    if (!rp) return mtex(polish(Y));
+    try {
+      let P = rp.P.map(Number), Q = rp.Q.map(Number);
+      // cancel common factors: (s + 1)²(s + 2)² … over (s + 1)(s + 2) …
+      const g = polyGcd(P, Q);
+      if (g.length > 1) { P = polyDiv(P, g); Q = polyDiv(Q, g); }
+      const lead = Q[Q.length - 1];
+      const Pn = P.map((v) => v / lead), Qn = Q.map((v) => v / lead);
+      const top = polyTex(Pn, 's');
+      const bottom = factorPolynomial(Qn, 's').tex;
+      return /^-?\d+(\.\d+)?$/.test(bottom) ? `${top}` : `\\frac{${top}}{${bottom}}`;
+    } catch { return mtex(polish(Y)); }
+  })();
+  steps.push({ title: 'Solve for Y(s)', depth: 0, lines: [`Y(s) = ${Ytex}`] });
   const inv = inverseLaplace(Y);
   inv.steps.forEach((s) => steps.push({ ...s }));
   const y = inv.f;
@@ -85,12 +104,12 @@ export function solve({ eq, ics = '' }) {
     a.forEach((ak, k) => { if (k > 0) d = math.derivative(d, 'x'); if (Math.abs(ak) < 1e-14) return; const t = mul(numNode(ak), d); L = L ? add(L, t) : t; });
   } catch {
     // y contains unit steps, which math.js can't differentiate: rely on the transform-back check
-    return { Y: mtex(polish(Y)), y: `y(t) = ${mtex(y)}`, steps, verified: inv.verified, notes: ['The initial conditions are built into Y(s), so no constants are left to find.'] };
+    return { Y: Ytex, y: `y(t) = ${mtex(y)}`, steps, verified: inv.verified, notes: ['The initial conditions are built into Y(s), so no constants are left to find.'] };
   }
   const ok = [0.37, 0.83, 1.61, 2.47].every((x) => {
     let v, rv;
     try { v = L.evaluate({ x }); rv = r.evaluate({ t: x }); } catch { return true; }
     return !Number.isFinite(v) || Math.abs(v - rv) < 1e-6 * Math.max(1, Math.abs(rv));
   });
-  return { Y: mtex(polish(Y)), y: `y(t) = ${mtex(y)}`, steps, verified: ok && inv.verified, notes: ['The initial conditions are built into Y(s), so no constants are left to find.'] };
+  return { Y: Ytex, y: `y(t) = ${mtex(y)}`, steps, verified: ok && inv.verified, notes: ['The initial conditions are built into Y(s), so no constants are left to find.'] };
 }

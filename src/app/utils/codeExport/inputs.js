@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react';
 export const EXPORT_INPUTS_EVENT = 'netz:export-inputs';
 let latest = { method: null, raw: null };
 
-export function useCodeExportInputs(method, getRaw) {
+export function useCodeExportInputs(method, getRaw, title = null) {
   const getter = useRef(getRaw);
   getter.current = getRaw;
   const last = useRef('');
@@ -29,7 +29,8 @@ export function useCodeExportInputs(method, getRaw) {
     const key = JSON.stringify(raw);
     if (key === last.current && latest.method === method) return;
     last.current = key;
-    latest = { method, raw };
+    // title: the page's name, for the export dialog when the method has no code generator (Batch 2–4 pages)
+    latest = { method, raw, title };
     window.dispatchEvent(new CustomEvent(EXPORT_INPUTS_EVENT, { detail: latest }));
   });
 

@@ -102,10 +102,62 @@ export const SCENARIOS = {
   },
 };
 
-/** Route key for the current page, or null when it has no scenarios. */
+/**
+ * Route key for the current page, or null. Pages without hand-written scenarios still get one when their calculator
+ * shell (SymbolicCalculator, MatrixMethodCalculator) registers itself as window.__netzCalc (see autoScenario).
+ */
 export function scenarioKey(pathname) {
   const key = (pathname || '').replace(/^\/+|\/+$/g, '');
-  return SCENARIOS[key] ? key : null;
+  if (SCENARIOS[key]) return key;
+  return key ? key : null;
+}
+
+/**
+ * Scenarios made from a calculator's own start values and examples (DEV ONLY):
+ *   empty  every typed input cleared (choices kept)
+ *   one    lists cut to their first item; a 2×2 identity for matrices
+ *   worst  the longest example (usually the hardest); for matrices the largest size filled with awkward numbers
+ *   huge   lists of about 60 items, expressions six times as long, numbers in the hundreds of millions
+ */
+export function autoScenario(info, state) {
+  if (!info) return null;
+  if (info.kind === 'matrix') {
+    const n = state === 'one' ? Math.max(info.min || 1, 2) : info.max || 4;
+    const fill = (f) => Array.from({ length: n }, (_, i) => Array.from({ length: info.square ? n : n + (info.start[0].length - info.start.length) }, (_, j) => f(i, j)));
+    if (state === 'empty') return { cells: info.start.map((r) => r.map(() => '')) };
+    if (state === 'one') return { cells: fill((i, j) => (i === j ? '1' : '0')) };
+    if (state === 'worst') return { cells: fill((i, j) => ['-1/3', '2.75', '0', '-17', '5/7', '123.456'][(i * 7 + j * 3) % 6]) };
+    return { cells: fill((i, j) => String((i + 1) * 98765432 - j * 12345678)) };
+  }
+  const start = info.start || {};
+  const typed = (k) => {
+    const f = (info.fields || []).find((x) => x.key === k);
+    return !f || f.kind === 'field' || f.kind === 'date' || !f.kind;
+  };
+  const isNum = (s) => /^-?\d+(\.\d+)?$/.test(String(s).trim());
+  const isList = (s) => /[,;]/.test(String(s));
+  const out = {};
+  if (state === 'worst') {
+    const ex = [...(info.examples || [])].map((e) => e.input || (e.cells ? { cells: e.cells } : {})).sort((a, b) => JSON.stringify(b).length - JSON.stringify(a).length)[0];
+    return ex || null;
+  }
+  for (const [k, v] of Object.entries(start)) {
+    if (!typed(k) || typeof v !== 'string' || /^\d{4}-\d{2}-\d{2}$/.test(v)) continue;
+    // optional fields left empty stay empty in One and Huge (repeating "" only made "() + () + …")
+    if (!v.trim() && state !== 'empty') continue;
+    if (state === 'empty') out[k] = '';
+    else if (state === 'one') out[k] = isList(v) ? v.split(/[;,]/)[0].trim() : v;
+    else if (state === 'huge') {
+      if (isList(v)) {
+        const sep = v.includes(';') ? '; ' : ', ';
+        const items = v.split(/[;,]/).map((x) => x.trim()).filter(Boolean);
+        out[k] = Array.from({ length: 60 }, (_, i) => { const it = items[i % items.length]; return isNum(it) ? String(Number(it) + i) : it; }).join(sep);
+      } else if (isNum(v)) out[k] = String(Number(v) >= 0 ? 987654321 : -987654321);
+      else if (!/[=<>]/.test(v)) out[k] = Array.from({ length: 6 }, () => `(${v})`).join(' + ');
+      else out[k] = v;
+    }
+  }
+  return out;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -124,7 +176,16 @@ const NOT_SOLVE = /demo|reset|export|random/i;
 /** Types one scenario into the page's form and presses its solve button. Returns ms from click to idle. */
 export async function applyScenario(key, state) {
   const s = SCENARIOS[key]?.[state];
-  if (!s) return null;
+  if (!s) {
+    // No hand-written scenario: build one from the calculator shell's own start values and examples
+    const calc = typeof window !== 'undefined' ? window.__netzCalc : null;
+    const input = calc && autoScenario(calc, state);
+    if (!input) return null;
+    const t0 = performance.now();
+    calc.apply(input);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return Math.round(performance.now() - t0);
+  }
   const inputs = () => [...document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea')];
 
   if (s.size) {
@@ -152,7 +213,7 @@ export async function applyScenario(key, state) {
     s.fields.forEach((v, i) => list[i] && setValue(list[i], v));
   }
   await sleep(200);
-  const button = [...document.querySelectorAll('button')].find((b) => SOLVE.test(b.textContent) && !NOT_SOLVE.test(b.textContent));
+  const button = document.querySelector('button[data-solve]') || [...document.querySelectorAll('button')].find((b) => SOLVE.test(b.textContent) && !NOT_SOLVE.test(b.textContent));
   const t0 = performance.now();
   button?.click();
   // Wait for React to draw the result

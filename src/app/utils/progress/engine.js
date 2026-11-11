@@ -1,6 +1,6 @@
 /**
  * Progress engine on the device: tasks, gems, the daily goal, streaks with freezes and monthly
- * medals (NETZ_LAUNCH_PLAN.md section 2). Everything lives in one localStorage record until the
+ * medals (docs/launch/NETZ_LAUNCH_PLAN.md section 2). Everything lives in one localStorage record until the
  * backend exists; then the server re-counts the activity log (plan section 4.2).
  *
  * Pages never call this file directly: they call recordActivity() in ../activity.js.
@@ -128,7 +128,7 @@ function advanceStreak(state, today, events) {
   });
 }
 
-/* ---------- Pro (NETZ_LAUNCH_PLAN.md 2.7 and 5.1) ---------- */
+/* ---------- Pro (docs/launch/NETZ_LAUNCH_PLAN.md 2.7 and 5.1) ---------- */
 
 /** Pro members get one free streak freeze each calendar month, given with their first activity. */
 function giveProFreeze(state, today, events) {
@@ -341,7 +341,7 @@ export function saveProfile({ robotName, displayName, units } = {}) {
   if (robotName !== undefined) state.robotName = String(robotName || '').trim().slice(0, 24);
   if (displayName !== undefined) state.displayName = String(displayName || '').trim().slice(0, 40);
   if (Array.isArray(units)) {
-    state.units = units.filter((u) => [1, 2, 3, 4, 5].includes(u));
+    state.units = units.filter((u) => Number.isInteger(u) && u >= 1 && u <= 15);
     state.daily = { date: null, ids: [] };
   }
   state.onboardingSeen = true;

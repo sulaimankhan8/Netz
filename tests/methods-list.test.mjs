@@ -92,8 +92,28 @@ test('pages record solves under their own id', () => {
   }
 });
 
+test('every Unit 6–15 page has a medal name and an emblem; names are unique', async () => {
+  const { ALL_UNIT_TASKS, UNIT_MEDALS, UNIT_GROUPS } = await import('../src/app/utils/progress/unitTasks.js');
+  const emblems = read('components/mascot/unitEmblems.js');
+  for (const t of ALL_UNIT_TASKS) {
+    assert.ok(UNIT_MEDALS[t.method], `${t.method}: no medal name in progress/unitTasks.js`);
+    assert.ok(emblems.includes(`'${t.id}':`), `${t.id}: no emblem in components/mascot/unitEmblems.js`);
+    assert.ok(UNIT_GROUPS[t.group], `${t.group}: no colours in progress/unitTasks.js`);
+  }
+  for (const k of Object.keys(UNIT_MEDALS)) assert.ok(ids.has(k), `medal for unknown method "${k}"`);
+  const names = [...TASKS.map((t) => t.medal), ...ALL_UNIT_TASKS.filter((t) => !t.live).map((t) => t.medal)];
+  const dupes = names.filter((n, i) => names.indexOf(n) !== i);
+  assert.deepEqual(dupes, [], `medal names used twice: ${dupes.join(', ')}`);
+  assert.ok(TASKS.every((t) => !t.group.match(/^unit(\d+)$/) || Number(t.group.slice(4)) <= 5 || t.live), 'a hidden page has a task');
+});
+
 test('rewards use known method ids', () => {
   for (const t of [...TASKS, ...PRO_TASKS]) if (t.method) assert.ok(ids.has(t.method), `task ${t.id}: unknown method "${t.method}"`);
+});
+
+test('every numeric page has code export (Code tab in the Export menu)', () => {
+  const missing = METHODS.filter((m) => m.engine === 'num' && m.status !== 'planned' && !EXPORTABLE.has(m.id)).map((m) => m.id);
+  assert.deepEqual(missing, [], 'add a generator in src/app/utils/codeExport/programs*.js and a case in tests/engines/code-export-cases.mjs');
 });
 
 test('code export uses known method ids', () => {

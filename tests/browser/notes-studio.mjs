@@ -1,4 +1,4 @@
-// Notes Studio (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md): Save to Notes Studio, the Assets
+// Notes Studio (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md): Save to Notes Studio, the Assets
 // library, inserting a board into a note, opening a board in the Playground, Writing mode reading
 // each line (and saving it to Training data), Insert from file, and Insert > Table.
 // Run against a server, e.g. NETZ_URL=http://localhost:3211 node notes-studio.mjs

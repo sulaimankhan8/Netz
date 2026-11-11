@@ -17,6 +17,8 @@ const EXAMPLES = [
   { label: 'sin x, 0 to 2π', input: { mode: 'under', f: 'sin(x)', g: '', a: '0', b: '2pi' } },
   { label: 'x² − 4, 0 to 3', input: { mode: 'under', f: 'x^2 - 4', g: '', a: '0', b: '3' } },
   { label: 'between x and x²', input: { mode: 'between', f: 'x', g: 'x^2', a: '', b: '' } },
+  { label: 'average of x² on [0, 3]', input: { mode: 'average', f: 'x^2', g: '', a: '0', b: '3' } },
+  { label: 'average of sin x on [0, π]', input: { mode: 'average', f: 'sin(x)', g: '', a: '0', b: 'pi' } },
   { label: 'between 4 − x² and x + 2', input: { mode: 'between', f: '4 - x^2', g: 'x + 2', a: '', b: '' } },
   { label: 'between x³ and x', input: { mode: 'between', f: 'x^3', g: 'x', a: '', b: '' } },
 ];
@@ -39,7 +41,7 @@ export default function AreaCalculator() {
     <div className="w-full space-y-6">
       <CalcCard title="Area Engine" actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="Area" value={v.mode} onChange={(mode) => set({ mode })} options={[{ value: 'under', label: 'Under y = f(x)' }, { value: 'between', label: 'Between two curves' }]} />
+        <Choice label="Area" value={v.mode} onChange={(mode) => set({ mode })} options={[{ value: 'under', label: 'Under y = f(x)' }, { value: 'between', label: 'Between two curves' }, { value: 'average', label: 'Average value' }]} />
         <div className={`grid grid-cols-1 ${between ? 'sm:grid-cols-2' : ''} gap-4`}>
           <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} />
           {between && <Field label="g(x) =" value={v.g} inputMode="text" placeholder="e.g. x" onChange={(g) => set({ g })} onEnter={() => run()} />}
@@ -56,15 +58,15 @@ export default function AreaCalculator() {
         </div>
         {between && <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Leave the limits empty to use where the curves meet.</p>}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> Find Area</EditorialButton>
+          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> {v.mode === 'average' ? 'Find Average' : 'Find Area'}</EditorialButton>
         </div>
 
         {answer && (
-          <ResultBox label="Area">
+          <ResultBox label={answer.mode === 'average' ? 'Average value' : 'Area'}>
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">
               <div className="space-y-2 min-w-0">
                 <div className="overflow-x-auto"><BlockMath math={answer.g ? `f(${x}) = ${answer.f}, \\quad g(${x}) = ${answer.g}` : `f(${x}) = ${answer.f}`} /></div>
-                <div className="overflow-x-auto text-lg"><BlockMath math={`\\text{Area from } ${answer.aTex} \\text{ to } ${answer.bTex} = ${answer.areaTex}${/^-?(\d+|\\frac\{\d+\}\{\d+\})$/.test(answer.areaTex) || !/[a-z\\]/.test(answer.areaTex) ? '' : ` \\approx ${Number(answer.area.toPrecision(6))}`}`} /></div>
+                <div className="overflow-x-auto text-lg"><BlockMath math={answer.mode === 'average' ? `\\bar{f} = ${answer.averageTex}${/[a-z\\]/.test(answer.averageTex) ? ` \\approx ${Number(answer.average.toPrecision(6))}` : ''}` : `\\text{Area from } ${answer.aTex} \\text{ to } ${answer.bTex} = ${answer.areaTex}${/^-?(\d+|\\frac\{\d+\}\{\d+\})$/.test(answer.areaTex) || !/[a-z\\]/.test(answer.areaTex) ? '' : ` \\approx ${Number(answer.area.toPrecision(6))}`}`} /></div>
                 {answer.crossings.length > 0 && <p className="text-sm">The {answer.g ? 'curves cross' : 'curve crosses the x-axis'} inside the interval, so the area was found piece by piece (a plain integral would let pieces cancel).</p>}
               </div>
               <div className="flex justify-center">

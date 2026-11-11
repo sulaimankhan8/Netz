@@ -10,6 +10,7 @@ import { sig } from '@/app/utils/numberFormat';
 import { n, PI_CHOICES } from '@/app/utils/numeric/geometry';
 import { CalcCard, ErrorBox, StepsCard, Choice } from './Calculator';
 import ShapeDiagram from './ShapeDiagrams';
+import { useExportBar } from './ExportBar';
 
 const UNITS = ['cm', 'm', 'mm', 'km', 'in', 'ft', 'units'];
 const POWER = { 0: '°', 1: '', 2: '²', 3: '³' };
@@ -28,7 +29,7 @@ const unitText = (unit, power) => {
  * shapes: [{ id, name, inputs, usesPi }]   solve({ shape, values, pi }) → { outputs, note }
  * start: { shape, values } for the first load (the page's worked example).
  */
-export default function ShapeCalculator({ title, shapes, solve, start, onAnswer }) {
+export default function ShapeCalculator({ title, shapes, solve, start, onAnswer, exportId }) {
   const [shapeId, setShapeId] = useState(start.shape);
   const [values, setValues] = useState(start.values);
   const [pi, setPi] = useState(start.pi || 'exact');
@@ -36,6 +37,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer 
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   const shape = shapes.find((s) => s.id === shapeId);
+  const exportBar = useExportBar(exportId, () => ({ shape: shapeId, values, pi }), !!answer, title);
 
   const change = (fn) => (...args) => { fn(...args); setAnswer(null); setError(''); onAnswer?.(null); };
   const pickShape = change((id) => {
@@ -59,7 +61,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer 
   const reset = () => { setShapeId(start.shape); setValues(start.values); setPi(start.pi || 'exact'); setAnswer(null); setError(''); onAnswer?.(null); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id={`netz-solve-${exportId}`}>
       <CalcCard
         title={title}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -116,6 +118,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer 
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {answer.outputs.map((o) => (

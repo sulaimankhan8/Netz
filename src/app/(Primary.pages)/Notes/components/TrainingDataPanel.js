@@ -42,7 +42,7 @@ function InkThumb({ strokes }) {
 }
 
 /**
- * The Training data folder (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 4, owner decision D5):
+ * The Training data folder (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 4, owner decision D5):
  * every line read in Writing mode, with what the model read and what the writer accepted. It stays
  * on this device; Export JSONL gives the file the next text model is trained and measured on.
  */

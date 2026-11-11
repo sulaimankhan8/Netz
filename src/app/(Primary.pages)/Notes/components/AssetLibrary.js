@@ -110,7 +110,7 @@ function AssetCard({ asset, pick, onOpen, onAction, isPhone }) {
 }
 
 /**
- * The Notes Studio Assets library (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b): boards saved from
+ * The Notes Studio Assets library (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, 2b): boards saved from
  * the Playground, pictures and files, as a grid of preview cards with All · Boards · Images · Files,
  * search and Upload. mode 'pick' turns it into the "From Assets" picker of the note editor.
  */

@@ -1,16 +1,23 @@
 // Page frame for every method page. The markup and classes are the ones the 34 hand-written pages use,
-// moved here so new pages share them (METHODS_IMPLEMENTATION_PLAN.md, step A3).
+// moved here so new pages share them (docs/methods/METHODS_IMPLEMENTATION_PLAN.md, step A3).
+import { useEffect } from 'react';
 import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
 
 /** Background, width, side-bar gap and the previous/next links under the content. */
 export function MethodPage({ children }) {
+  // Tell FitMath (in the layout) when this page's own HTML is hydrated: it must not resize equations before
+  // React owns them, or React reports a hydration mismatch (the layout can hydrate well before the page)
+  useEffect(() => {
+    document.body.dataset.pageHydrated = '1';
+    return () => { delete document.body.dataset.pageHydrated; };
+  }, []);
   return (
     <FullscreenToggle className="w-full min-h-screen">
       <div className="w-full min-h-screen bg-[#FAF8F5] dark:bg-[#111111] text-black dark:text-white transition-colors editorial-grid-bg">
         <div className="md:ml-[80px]">
-          <section className="container mx-auto px-4 md:px-8 py-10 space-y-10 max-w-6xl">
+          <section data-method-page="" className="container mx-auto px-4 md:px-8 py-10 space-y-10 max-w-6xl">
             {children}
             <AlgorithmNavigation />
           </section>

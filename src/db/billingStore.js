@@ -71,7 +71,7 @@ export async function applyBillingEvent(eventId, event, db = getDb()) {
       if (!payment) return { applied: false, reason: 'unknown_payment' };
       const refunded = Math.max(payment.refunded, read.refund.refunded);
       await tx.update(payments).set({ refunded }).where(eq(payments.id, payment.id));
-      // A full refund ends the Pro it paid for (NETZ_LAUNCH_PLAN.md 5.3; Refund page)
+      // A full refund ends the Pro it paid for (docs/launch/NETZ_LAUNCH_PLAN.md 5.3; Refund page)
       if (refunded >= payment.amount) {
         await tx.update(purchases).set({ status: 'refunded', cancelAtEnd: true, updatedAt: sql`now()` })
           .where(eq(purchases.id, payment.purchaseId));

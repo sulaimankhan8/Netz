@@ -1,5 +1,5 @@
 /*
- * The onboarding tours started from the landing page's tour cards (LANDING_REDESIGN_PLAN.md, build
+ * The onboarding tours started from the landing page's tour cards (docs/landing/LANDING_REDESIGN_PLAN.md, build
  * step 5; board artboard 9). A page runs a tour when its address has ?tour=<id>.
  *
  * Each step points at the first visible element matching one of its `target` selectors. The lists

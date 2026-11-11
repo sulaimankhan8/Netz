@@ -1,4 +1,4 @@
--- NETZ: the Notes Studio Assets library in the cloud (NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b).
+-- NETZ: the Notes Studio Assets library in the cloud (docs/notes/NOTES_HANDWRITING_EXPORT_TABLES_PLAN.md, step 2b).
 -- Matches src/db/schema.js `noteAssets`. Run once in Supabase → SQL editor (safe to run again).
 --
 -- Each asset is two files in the private Storage bucket `note-assets`:

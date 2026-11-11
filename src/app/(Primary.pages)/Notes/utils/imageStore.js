@@ -2,7 +2,7 @@
  * Banner images a student uploads. Since the Assets library (assetStore.js) they are kept there,
  * tagged 'banner'; this file still reads pictures saved in the old store before they are moved.
  * Originally: banner images kept on this device until accounts and file storage arrive
- * (NOTES_VISUAL_REDESIGN_PLAN.md, "Banner art, uploads and badges"). They live in IndexedDB,
+ * (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, "Banner art, uploads and badges"). They live in IndexedDB,
  * not localStorage, so a few photos do not fill the notes' 5 MB. A note only keeps the image's
  * id (note.look.cover = { kind: 'image', value: id }).
  */

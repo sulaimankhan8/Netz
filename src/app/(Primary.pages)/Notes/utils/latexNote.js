@@ -28,6 +28,16 @@ function solverTex(block) {
   } catch {
     return `\\subsubsection*{${name}}\nInputs: ${inputs}.\n\nThese inputs do not solve; open the note in NETZ to check them.\n`;
   }
+  // Batch 2–4 solvers: the answer is LaTeX, and the steps are titled groups of LaTeX lines
+  if (out.symbolicSteps) {
+    const parts = [`\\subsubsection*{${name}}`, `Inputs: ${inputs}.`, '', out.resultIsTex ? displayMath(out.result) : `\\textbf{${cell(out.result)}}`];
+    for (const s of out.symbolicSteps.slice(0, 60)) {
+      parts.push('', `\\paragraph{${escapeTex(s.title || '')}}`);
+      if (s.formula) parts.push(displayMath(s.formula));
+      for (const l of s.lines || []) parts.push(displayMath(l));
+    }
+    return parts.join('\n');
+  }
   const lines = [`\\subsubsection*{${name}}`, `Inputs: ${inputs}.`, '', `\\textbf{${cell(out.result)}}`];
   const headers = out.headers || [];
   const rows = (out.steps || []).map((s) => Object.values(s));

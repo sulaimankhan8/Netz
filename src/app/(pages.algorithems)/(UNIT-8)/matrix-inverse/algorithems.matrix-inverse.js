@@ -5,6 +5,7 @@ import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
+import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps, matrixTex, texNumber } from '@/app/components/method/Matrix';
 import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice } from '@/app/components/method/Calculator';
@@ -23,6 +24,7 @@ export default function MatrixInverseCalculator() {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('matrix-inverse', 8, answer, () => ({ size: cells.length, method }));
+  const exportBar = useExportBar('matrix-inverse', () => ({ cells, method }), !!answer);
 
   // The adjoint method is offered up to 4×4; bigger matrices use Gauss-Jordan
   const adjointAllowed = cells.length <= 4;
@@ -40,7 +42,7 @@ export default function MatrixInverseCalculator() {
   const reset = () => { setCells(START); setMethod('adjoint'); setAnswer(null); setError(''); };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" id="netz-solve-matrix-inverse">
       <CalcCard
         title="Matrix Inverse Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
@@ -62,6 +64,7 @@ export default function MatrixInverseCalculator() {
           </EditorialButton>
         </div>
 
+        {answer && exportBar}
         {answer && (
           <ResultBox label="Inverse A⁻¹">
             <MatrixView matrix={answer.result} prefix="A^{-1} = " />

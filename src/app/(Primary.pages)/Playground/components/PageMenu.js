@@ -69,6 +69,7 @@ export function PreferencesDialog({ isMobile, onClose, fingerDraws, setFingerDra
  */
 export default function PageMenu({
   isMobile,
+  pageCount = 1,
   run,
   notesMode,
   setNotesMode,
@@ -201,8 +202,8 @@ export default function PageMenu({
         <div className="flex flex-wrap items-center gap-1.5 pl-3 pr-1 py-1 min-h-[48px]">
           <FiDownload className={icon} aria-hidden="true" />
           <span className="flex-1 ml-1.5 text-pg-body font-medium text-pg-ink">{UI.export}</span>
-          {['PNG', 'SVG', 'PDF', 'HTML', 'TEX', 'NETZ'].map((format) => {
-            const label = format === 'TEX' ? 'LaTeX' : format === 'NETZ' ? '.netz' : format;
+          {['PNG', 'SVG', 'PDF', ...(pageCount > 1 ? ['PDF_ALL'] : []), 'HTML', 'TEX', 'NETZ'].map((format) => {
+            const label = format === 'TEX' ? 'LaTeX' : format === 'NETZ' ? '.netz' : format === 'PDF_ALL' ? 'PDF, all pages' : format;
             // SVG, LaTeX and NETZ files come with Pro: this opens Pricing in a new tab so the page stays as it is
             return (format === 'SVG' || format === 'TEX' || format === 'NETZ') && !pro ? (
               <a key={format} href="/Pricing" target="_blank" rel="noopener" title={`${label} export comes with NETZ Pro`} aria-label={`${label} export comes with NETZ Pro: see Pricing`} className={`${BTN_SECONDARY} px-2.5 inline-flex items-center gap-1 text-pg-muted`}>
@@ -214,6 +215,8 @@ export default function PageMenu({
                     ? 'Export this page as LaTeX: typed maths, text and tables, with the handwriting as a picture'
                     : format === 'NETZ'
                       ? 'Export every page as a .netz file that opens again fully editable'
+                      : format === 'PDF_ALL'
+                        ? 'Export every page into one PDF'
                       : format === 'HTML'
                         ? 'Export this page as a web page'
                         : `Export this page as ${format}`

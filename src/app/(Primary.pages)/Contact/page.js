@@ -6,7 +6,7 @@ export const metadata = {
   description: 'How to reach the people behind NETZ.',
 };
 
-/** Contact page (NETZ_LAUNCH_PLAN.md 5.3). Details come from legalDetails.js. */
+/** Contact page (docs/launch/NETZ_LAUNCH_PLAN.md 5.3). Details come from legalDetails.js. */
 export default function ContactPage() {
   const rows = [
     ['Run by', LEGAL.owner],

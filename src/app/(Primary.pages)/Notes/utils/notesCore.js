@@ -1,5 +1,5 @@
 /**
- * Rules for the cloud copy of notes (NETZ_LAUNCH_PLAN.md 4.4), shared by the server route and the
+ * Rules for the cloud copy of notes (docs/launch/NETZ_LAUNCH_PLAN.md 4.4), shared by the server route and the
  * device. Pure, so test_notes_sync.mjs checks them without a database.
  */
 

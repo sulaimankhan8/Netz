@@ -1,5 +1,5 @@
 /**
- * Rules for publishing a note to the web (NETZ_LAUNCH_PLAN.md 4.4, board artboards 10–12). Pure,
+ * Rules for publishing a note to the web (docs/launch/NETZ_LAUNCH_PLAN.md 4.4, board artboards 10–12). Pure,
  * shared by the server routes and tested by test_publish.mjs.
  */
 

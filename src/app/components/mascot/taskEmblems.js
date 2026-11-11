@@ -1,5 +1,5 @@
 /**
- * The picture inside each of the 50 task medals (NETZ_MEDALS_CATALOG.md section 2): a small drawing of
+ * The picture inside each of the 50 task medals (docs/rewards/NETZ_MEDALS_CATALOG.md section 2): a small drawing of
  * the method itself. Drawn in the hexagon's 120×120 box, inside about x 26–94, y 28–92.
  * `ink` is the main line colour, `acc` the accent, `rim` the frame colour and `soft` a pale line;
  * all come from the medal's group (medals.js).

@@ -1,5 +1,5 @@
 /**
- * Where NETZ may show ads (NETZ_LAUNCH_PLAN.md 6.1). Pure, so it can be tested on its own.
+ * Where NETZ may show ads (docs/launch/NETZ_LAUNCH_PLAN.md 6.1). Pure, so it can be tested on its own.
  * Never for Pro, never offline (the slot just hides and the PWA keeps working), and never in the
  * Playground, on Pricing or on a shared public note.
  */

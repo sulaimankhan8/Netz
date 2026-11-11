@@ -21,7 +21,7 @@ const CARD_TYPES = ['widget', 'quiz', 'ink', 'table', 'board', 'image', 'file'];
 const HANDLE_CENTER = { paragraph: 17, heading1: 34, heading2: 27, heading3: 21, callout: 30, math: 24, widget: 36, quiz: 36, ink: 36, table: 36, board: 36, image: 36, file: 36, divider: 16 };
 
 /**
- * One block of a note (NOTES_VISUAL_REDESIGN_PLAN.md, section 4). Its tools (Add block below,
+ * One block of a note (docs/notes/NOTES_VISUAL_REDESIGN_PLAN.md, section 4). Its tools (Add block below,
  * Move up, Move down, Delete block) sit behind a grip: in the left margin on laptops (shown on
  * hover and while the block has focus), and on the block you are in on touch screens.
  */

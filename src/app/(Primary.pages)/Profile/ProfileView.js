@@ -25,7 +25,7 @@ import { PF_FONT } from './fonts';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const LAUNCH = { year: 2026, month: 10 };
-const GROUP_ORDER = ['unit1', 'unit2', 'unit3', 'unit4', 'unit5', 'notes', 'playground', 'sharing'];
+const GROUP_ORDER = ['unit1', 'unit2', 'unit3', 'unit4', 'unit5', 'unit6', 'unit7', 'unit8', 'unit9', 'unit10', 'unit11', 'unit12', 'unit13', 'unit14', 'unit15', 'notes', 'playground', 'sharing'];
 
 const BTN = 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-xl font-bold text-[14px] transition-colors';
 const BTN_QUIET = `${BTN} bg-[var(--pf-tray)] text-[var(--pf-ink)] border border-[var(--pf-line)] hover:brightness-95`;
@@ -45,7 +45,7 @@ function formatDay(day) {
 
 function Hex({ group, id, size = 36 }) {
   const g = GROUPS[group] || GROUPS.unit1;
-  return <MedalBadge family="task" id={id} earned fill={g.fill} rim={g.rim} size={size} label="" />;
+  return <MedalBadge family="task" id={id} earned fill={g.fill} fill2={g.fill2} rim={g.rim} size={size} label="" />;
 }
 
 /* ---------------- sections ---------------- */
@@ -245,7 +245,7 @@ function MedalCase({ state, today, className }) {
         label: 'Tasks',
         items: TASKS.map((t) => {
           const g = GROUPS[t.group];
-          return { id: `task.${t.id}`, family: 'task', fill: g.fill, rim: g.rim, name: t.medal, how: t.name, href: t.href, earnedOn: state.tasksFirstDone[t.id] };
+          return { id: `task.${t.id}`, family: 'task', fill: g.fill, fill2: g.fill2, rim: g.rim, name: t.medal, how: t.name, href: t.href, earnedOn: state.tasksFirstDone[t.id] };
         }),
       },
       onboarding: {
@@ -305,13 +305,13 @@ function MedalCase({ state, today, className }) {
             aria-label={`${m.name}, ${m.earnedOn ? 'earned' : 'not earned yet'}`}
             className={`flex aspect-square items-center justify-center rounded-xl p-0.5 ${m.id === selected ? 'bg-[var(--pf-tray)] ring-2 ring-[#FBAE3D]' : ''}`}
           >
-            <MedalBadge family={m.family} id={m.id} earned={!!m.earnedOn} fill={m.fill} rim={m.rim} tier={m.tier} days={m.days} size={48} label="" />
+            <MedalBadge family={m.family} id={m.id} earned={!!m.earnedOn} fill={m.fill} fill2={m.fill2} rim={m.rim} tier={m.tier} days={m.days} size={48} label="" />
           </button>
         ))}
       </div>
       {current ? (
         <div className="flex items-center gap-4 rounded-2xl bg-[var(--pf-tray)] p-4" aria-live="polite">
-          <MedalBadge family={current.family} id={current.id} earned={!!current.earnedOn} fill={current.fill} rim={current.rim} tier={current.tier} days={current.days} size={80} label={current.name} />
+          <MedalBadge family={current.family} id={current.id} earned={!!current.earnedOn} fill={current.fill} fill2={current.fill2} rim={current.rim} tier={current.tier} days={current.days} size={80} label={current.name} />
           <div className="min-w-0 flex-1">
             <div className="pf-display text-[19px] font-semibold">{current.name}</div>
             <div className="text-[14px] text-[var(--pf-text2)]">{current.how}</div>
@@ -332,6 +332,8 @@ function AllTasks({ state, className }) {
       <h2 id="pf-all" className={CARD_TITLE}>All {TASKS.length} tasks</h2>
       {GROUP_ORDER.map((group) => {
         const tasks = TASKS.filter((t) => t.group === group);
+        // Units 6–15 show once they have a live page
+        if (!tasks.length) return null;
         const done = tasks.filter((t) => state.tasksFirstDone[t.id]).length;
         const g = GROUPS[group];
         return (
@@ -350,7 +352,7 @@ function AllTasks({ state, className }) {
                 const soon = t.id === 'sharing.publish';
                 return (
                   <li key={t.id} className="flex items-center gap-3 rounded-xl bg-[var(--pf-tray)] px-3 py-2">
-                    <MedalBadge family="task" id={t.id} earned={isDone} fill={g.fill} rim={g.rim} size={30} label="" />
+                    <MedalBadge family="task" id={t.id} earned={isDone} fill={g.fill} fill2={g.fill2} rim={g.rim} size={30} label="" />
                     <span className="min-w-0 flex-1 text-[14px]"><span className="font-semibold">{t.medal}</span> · {t.name}</span>
                     {isDone ? (
                       <span className="text-[13px] font-bold text-[var(--pf-done-ink)]">Done</span>
@@ -370,7 +372,7 @@ function AllTasks({ state, className }) {
   );
 }
 
-/** "Watch an ad, get gems" (NETZ_LAUNCH_PLAN.md 6.4): free accounts where ads are allowed, 3 a day. */
+/** "Watch an ad, get gems" (docs/launch/NETZ_LAUNCH_PLAN.md 6.4): free accounts where ads are allowed, 3 a day. */
 function WatchAd({ state, today, signedIn }) {
   const allowed = useAdsAllowed();
   const [phase, setPhase] = useState('idle');

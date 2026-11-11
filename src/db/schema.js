@@ -1,7 +1,7 @@
 import { bigint, bigserial, boolean, date, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 /**
- * NETZ database tables (NETZ_LAUNCH_PLAN.md 4.3). Plain Postgres, so the same schema runs on
+ * NETZ database tables (docs/launch/NETZ_LAUNCH_PLAN.md 4.3). Plain Postgres, so the same schema runs on
  * Supabase today and on any Postgres later. The SQL that creates them, with row-level security,
  * is in supabase/migrations/.
  *
@@ -80,7 +80,7 @@ export const gemLedger = pgTable('gem_ledger', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [uniqueIndex('gem_ledger_user_reason').on(t.userId, t.reason)]);
 
-// NETZ Pro bought through Razorpay (NETZ_LAUNCH_PLAN.md 5.2). One row per Razorpay subscription
+// NETZ Pro bought through Razorpay (docs/launch/NETZ_LAUNCH_PLAN.md 5.2). One row per Razorpay subscription
 // (monthly, yearly) or order (lifetime); only the webhook marks one paid
 export const purchases = pgTable('purchases', {
   id: text('id').primaryKey(),

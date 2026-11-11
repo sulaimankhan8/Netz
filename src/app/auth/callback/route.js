@@ -5,11 +5,24 @@ import { getSupabaseServer } from '@/lib/supabase/server';
  * Google sends the student back here after sign-in. The one-time code becomes a session cookie,
  * then the student returns to the page they started from (only paths on this site are allowed).
  */
+/**
+ * True only for a path on this site. Browsers read "\" as "/", so "/\evil.com" means "//evil.com"
+ * (another site); the path is therefore resolved the way a browser would and its origin compared.
+ */
+function isSameSitePath(path, origin) {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return false;
+  try {
+    return new URL(path, origin).origin === origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') || '/Profile';
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/Profile';
+  const safeNext = isSameSitePath(next, url.origin) ? next : '/Profile';
 
   const supabase = await getSupabaseServer();
   if (code && supabase) {

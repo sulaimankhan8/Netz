@@ -2,7 +2,7 @@ import 'server-only';
 import crypto from 'node:crypto';
 
 /**
- * Razorpay on the server (NETZ_LAUNCH_PLAN.md 5.2): its REST API through fetch (no SDK), and the
+ * Razorpay on the server (docs/launch/NETZ_LAUNCH_PLAN.md 5.2): its REST API through fetch (no SDK), and the
  * webhook signature check. Keys come from .env.local; the secret never reaches the browser.
  * Plans for monthly and yearly are made once in the Razorpay dashboard and their ids put in env.
  */

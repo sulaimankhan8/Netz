@@ -1,5 +1,5 @@
 /**
- * NETZ Pro billing rules without the database or Razorpay around them (NETZ_LAUNCH_PLAN.md 5.2), so
+ * NETZ Pro billing rules without the database or Razorpay around them (docs/launch/NETZ_LAUNCH_PLAN.md 5.2), so
  * they can be tested on their own: who is Pro right now, and what a Razorpay webhook event changes.
  */
 

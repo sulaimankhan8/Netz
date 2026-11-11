@@ -66,8 +66,11 @@ function standard(node) {
         const A = lin(ee), Bq = lin(unwrap(tr.args[0]));
         const r = Math.hypot(A.a, Bq.a), phi = Math.atan2(Bq.a, A.a);
         const F = tr.fn.name === 'sin' ? Math.sin : Math.cos;
-        const rTex = exactTex(r), phiTex = `\\tan^{-1}\\frac{${t(Bq.a)}}{${t(A.a)}}`;
-        return { tex: `(${rTex})^{n}e^{${linTex(A)}}\\${tr.fn.name}\\left(${linTex(Bq)} + n${phiTex}\\right)`, at: (n) => (x) => r ** n * Math.exp(A.a * x + A.b) * F(Bq.a * x + Bq.b + n * phi), rule: 'y = e^{ax}\\sin(bx + c) \\Rightarrow y_n = r^n e^{ax}\\sin(bx + c + n\\phi), \\ r = \\sqrt{a^2 + b^2}, \\ \\phi = \\tan^{-1}\\frac{b}{a}' };
+        // r = √(a² + b²) exactly: √13, 2√5, 5 (not 3.60555)
+        const r2 = A.a ** 2 + Bq.a ** 2;
+        const sqrtInt = (m) => { let out = 1, rest = m; for (let q = Math.floor(Math.sqrt(rest)); q > 1; q--) if (rest % (q * q) === 0) { out = q; rest /= q * q; break; } return rest === 1 ? String(out) : `${out === 1 ? '' : out}\\sqrt{${rest}}`; };
+        const rTex = Number.isInteger(r2) ? sqrtInt(r2) : exactTex(r), phiTex = `\\tan^{-1}\\frac{${t(Bq.a)}}{${t(A.a)}}`;
+        return { tex: `${/sqrt|frac/.test(rTex) ? `(${rTex})` : rTex}^{n}e^{${linTex(A)}}\\${tr.fn.name}\\left(${linTex(Bq)} + n${phiTex}\\right)`, at: (n) => (x) => r ** n * Math.exp(A.a * x + A.b) * F(Bq.a * x + Bq.b + n * phi), rule: 'y = e^{ax}\\sin(bx + c) \\Rightarrow y_n = r^n e^{ax}\\sin(bx + c + n\\phi), \\ r = \\sqrt{a^2 + b^2}, \\ \\phi = \\tan^{-1}\\frac{b}{a}' };
       }
     }
   }
@@ -87,7 +90,7 @@ function rational(node) {
   const dQ = Q.slice(1).map((k, i) => k * (i + 1));
   const parts = roots.map((x) => ({ r: x.re, A: snap(ev(P, x.re) / ev(dQ, x.re)) }));
   const pf = parts.map(({ r, A }, i) => `${i === 0 ? (A < 0 ? '-' : '') : A < 0 ? ' - ' : ' + '}\\frac{${t(Math.abs(A))}}{x ${r < 0 ? '+' : '-'} ${t(Math.abs(r))}}`).join('');
-  const tex = parts.map(({ r, A }, i) => `${i === 0 ? (A < 0 ? '-' : '') : A < 0 ? ' - ' : ' + '}\\frac{${t(Math.abs(A))}(-1)^n n!}{(x ${r < 0 ? '+' : '-'} ${t(Math.abs(r))})^{n+1}}`).join('');
+  const tex = parts.map(({ r, A }, i) => `${i === 0 ? (A < 0 ? '-' : '') : A < 0 ? ' - ' : ' + '}\\frac{${t(Math.abs(A)) === '1' ? '' : t(Math.abs(A))}(-1)^n n!}{(x ${r < 0 ? '+' : '-'} ${t(Math.abs(r))})^{n+1}}`).join('');
   return { tex, pf, at: (n) => (x) => parts.reduce((s, { r, A }) => s + (A * (-1) ** n * fact(n)) / (x - r) ** (n + 1), 0), rule: '\\text{partial fractions, then } \\frac{1}{x - a} \\Rightarrow \\frac{(-1)^n n!}{(x - a)^{n+1}}' };
 }
 

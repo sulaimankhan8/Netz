@@ -10,7 +10,7 @@ import { cloudNoteLimit } from '@/app/utils/proLimits';
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
 /**
- * POST /api/notes/sync (NETZ_LAUNCH_PLAN.md 4.4)
+ * POST /api/notes/sync (docs/launch/NETZ_LAUNCH_PLAN.md 4.4)
  * Body: { pushes: [{ id, data, changedAt }], deletions: [{ id, changedAt }], since: cursor | null }
  * Stores the newer versions, then returns every note that changed on the server since `since`.
  */
