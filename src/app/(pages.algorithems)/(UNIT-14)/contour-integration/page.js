@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.contour-integration';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Poles", text: <>Inside |z| = 1, or in the upper half-plane.</> },
           { title: "3. Residues", text: <>Multiply their sum by 2πi.</> },
         ]} />
+        <SymbolKey rows={EX['contour-integration'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate ∫₀^{'{'}2π{'}'} dθ/(5 + 4 cos θ).</ExampleProblem>
-        <ExampleStep n={1} title="SUBSTITUTE"><MathPanel><BlockMath math={"\\oint_{|z| = 1}\\frac{1}{5 + 2(z + z^{-1})}\\cdot\\frac{dz}{iz} = \\oint \\frac{dz}{i(2z + 1)(z + 2)}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="POLES"><MathPanel><BlockMath math={"z = -\\tfrac12 \\text{ (inside)}, \\ z = -2 \\text{ (outside)}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="RESIDUE"><MathPanel><BlockMath math={"\\operatorname{Res}_{-1/2} = \\frac{1}{i\\cdot 2\\cdot\\frac32} = \\frac{1}{3i} \\Rightarrow I = 2\\pi i\\cdot\\frac{1}{3i} = \\frac{2\\pi}{3}"} /></MathPanel></ExampleStep>
-        <Conclusion result="2π/3" math={<BlockMath math={"\\int_0^{2\\pi}\\frac{d\\theta}{5 + 4\\cos\\theta} = \\frac{2\\pi}{3}"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['contour-integration'].example} />
+      <CommonMistakes items={EX['contour-integration'].mistakes} />
       <Lab heading="Interactive Contour Integration Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["residues","improper-integrals","cauchy-integral"]} />

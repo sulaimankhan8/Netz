@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MatrixInverseCalculator from './algorithems.matrix-inverse';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit8';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function MatrixInversePage() {
             { title: '3. Adjoint ÷ |A|', text: <>Transpose the cofactor matrix to get <InlineMath math="\operatorname{adj} A" />, then divide every entry by <InlineMath math="|A|" />.</> },
           ]}
         />
+        <SymbolKey rows={EX['matrix-inverse'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -89,6 +92,7 @@ export default function MatrixInversePage() {
           Multiplying A by this matrix gives the identity matrix I.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['matrix-inverse'].mistakes} />
 
       <Lab heading="Interactive Inverse Calculator">
         <MatrixInverseCalculator />

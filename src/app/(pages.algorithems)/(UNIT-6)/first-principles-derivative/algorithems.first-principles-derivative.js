@@ -7,20 +7,25 @@ import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import { solve } from '@/app/utils/engines/first-principles';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: 'x^2', at: '' };
 const EXAMPLES = ['x^3', '3x^2 + 2x - 5', '1/x', 'sqrt(x)', 'sin(x)', 'e^x', 'ln(x)'];
 
 export default function FirstPrinciplesCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('first-principles');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('first-principles', 6, answer, () => ({ fn: v.f }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     const input = { ...v, ...override };
     try {
@@ -40,8 +45,9 @@ export default function FirstPrinciplesCalculator() {
         title="First Principles Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} />
+        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
           {EXAMPLES.map((e) => (
@@ -49,11 +55,12 @@ export default function FirstPrinciplesCalculator() {
           ))}
         </div>
         <div className="max-w-[14rem]">
-          <Field label="Slope at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={() => run()} />
+          <Field label="Slope at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={() => run()} help={guide?.help?.at} />
         </div>
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Works for polynomials, fractions of polynomials, square roots of polynomials, sin x, cos x, eˣ and ln x.</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Differentiate
           </EditorialButton>
         </div>

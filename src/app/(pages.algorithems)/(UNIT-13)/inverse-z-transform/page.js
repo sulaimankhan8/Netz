@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.inverse-z-transform';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Multiply back", text: <>Each term becomes A·z/(z − p).</> },
           { title: "3. Read off", text: <>pⁿ terms; complex pairs give cosines.</> },
         ]} />
+        <SymbolKey rows={EX['inverse-z-transform'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find Z⁻¹{'{'}z/((z − 1)(z − 2)){'}'}.</ExampleProblem>
-        <ExampleStep n={1} title="PARTIAL FRACTIONS"><MathPanel><BlockMath math={"\\frac{F(z)}{z} = \\frac{1}{(z - 1)(z - 2)} = \\frac{-1}{z - 1} + \\frac{1}{z - 2}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MULTIPLY BY z"><MathPanel><BlockMath math={"F(z) = -\\frac{z}{z - 1} + \\frac{z}{z - 2} \\;\\Rightarrow\\; x(n) = -1 + 2^n"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="CHECK"><MathPanel><BlockMath math={"F(z) = z^{-1} + 3z^{-2} + 7z^{-3} + \\cdots"} /></MathPanel><StepText>Long division: 0, 1, 3, 7, … = 2ⁿ − 1.</StepText></ExampleStep>
-        <Conclusion result="x(n) = 2ⁿ − 1" math={<BlockMath math={"x(n) = 2^n - 1"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['inverse-z-transform'].example} />
+      <CommonMistakes items={EX['inverse-z-transform'].mistakes} />
       <Lab heading="Interactive Inverse Z-Transform Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["z-transform","difference-equation-z","inverse-laplace"]} />

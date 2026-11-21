@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.series-solution-ode';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Match powers", text: <>Coefficient of xⁿ = 0: the recurrence.</> },
           { title: "3. Build y", text: <>From c₀ and c₁ (or each root r).</> },
         ]} />
+        <SymbolKey rows={EX['series-solution-ode'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve Legendre&apos;s equation (1 − x²)y″ − 2xy′ + 6y = 0 in series about x = 0.</ExampleProblem>
-        <ExampleStep n={1} title="RECURRENCE"><MathPanel><BlockMath math={"(n + 2)(n + 1)c_{n+2} - (n(n + 1) - 6)c_n = 0 \\Rightarrow c_{n+2} = \\frac{(n - 2)(n + 3)}{(n + 1)(n + 2)}c_n"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EVEN SERIES"><MathPanel><BlockMath math={"c_2 = -3c_0, \\ c_4 = 0, \\ c_6 = 0, \\ldots"} /></MathPanel><StepText>It stops: 1 − 3x² is (up to a factor) the Legendre polynomial P₂.</StepText></ExampleStep>
-        <ExampleStep n={3} title="ODD SERIES"><MathPanel><BlockMath math={"c_3 = -\\tfrac23 c_1, \\ c_5 = -\\tfrac15 c_1, \\ldots"} /></MathPanel></ExampleStep>
-        <Conclusion result="y = c₀(1 − 3x²) + c₁(x − ⅔x³ − ⅕x⁵ − ⋯)" math={<BlockMath math={"y = c_0(1 - 3x^2) + c_1\\left(x - \\tfrac23x^3 - \\tfrac15x^5 - \\cdots\\right)"} />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['series-solution-ode'].example} />
+      <CommonMistakes items={EX['series-solution-ode'].mistakes} />
       <Lab heading="Interactive Series Solutions Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["power-series","taylor-series","ode-cc"]} />

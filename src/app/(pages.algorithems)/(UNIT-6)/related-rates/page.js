@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.related-rates';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Differentiate", text: <>With respect to t (chain rule).</> },
           { title: "3. Substitute", text: <>The values at that moment.</> },
         ]} />
+        <SymbolKey rows={EX['related-rates'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A 10 m ladder slides away from a wall at 2 m/s. How fast does the top slide down when the foot is 6 m from the wall?</ExampleProblem>
-        <ExampleStep n={1} title="RELATION"><MathPanel><BlockMath math={"x^2 + y^2 = 100, \\quad x = 6 \\Rightarrow y = 8"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DIFFERENTIATE"><MathPanel><BlockMath math={"2x\\frac{dx}{dt} + 2y\\frac{dy}{dt} = 0 \\Rightarrow \\frac{dy}{dt} = -\\frac{6}{8}(2) = -\\frac{3}{2}"} /></MathPanel></ExampleStep>
-        <Conclusion result="1.5 m/s downwards" math={<BlockMath math={"\\frac{dy}{dt} = -\\frac{3}{2} \\text{ m/s}"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['related-rates'].example} />
+      <CommonMistakes items={EX['related-rates'].mistakes} />
       <Lab heading="Interactive Related Rates Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["implicit","derivative","optimization"]} />

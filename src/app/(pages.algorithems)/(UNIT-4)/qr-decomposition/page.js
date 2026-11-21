@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import QrCalculator from './algorithems.qr-decomposition';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function QrPage() {
           { title: '2. Normalise', text: <>Divide by the length to get the next q.</> },
           { title: '3. R', text: <>The dot products (and lengths) fill R.</> },
         ]} />
+        <SymbolKey rows={EX['qr'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the QR decomposition of the columns <InlineMath math="a_1 = (12, 6, -4), \ a_2 = (-51, 167, 24), \ a_3 = (4, -68, -41)" />.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST COLUMN"><MathPanel><BlockMath math="|a_1| = 14, \qquad q_1 = \left(\tfrac{6}{7}, \tfrac{3}{7}, -\tfrac{2}{7}\right)" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SECOND AND THIRD"><StepText>Subtracting projections gives lengths 175 and 35, and the dot products fill the rest of R.</StepText></ExampleStep>
-        <Conclusion result="R = [14 21 −14; 0 175 −70; 0 0 35]" math={<BlockMath math="R = \begin{bmatrix} 14 & 21 & -14 \\ 0 & 175 & -70 \\ 0 & 0 & 35 \end{bmatrix}" />}>The first example button below loads this matrix.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['qr'].example} />
+      <CommonMistakes items={EX['qr'].mistakes} />
       <Lab heading="Interactive QR Calculator"><QrCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['cholesky', 'jacobi-eigen', 'least-squares']} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.inverse-laplace-transform';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function InverseLaplacePage() {
           { title: '2. Split', text: <>Partial fractions.</> },
           { title: '3. Invert', text: <>Each fraction from the table.</> },
         ]} />
+        <SymbolKey rows={EX['inverse-laplace-transform'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math="\mathcal{L}^{-1}\left\{\frac{1}{s^2 - 3s + 2}\right\}" />.</ExampleProblem>
-        <ExampleStep n={1} title="PARTIAL FRACTIONS"><MathPanel><BlockMath math="\frac{1}{(s - 1)(s - 2)} = \frac{1}{s - 2} - \frac{1}{s - 1}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INVERT"><StepText>Each 1/(s − a) gives eᵃᵗ.</StepText></ExampleStep>
-        <Conclusion result="e²ᵗ − eᵗ" math={<BlockMath math="f(t) = e^{2t} - e^{t}" />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['inverse-laplace-transform'].example} />
+      <CommonMistakes items={EX['inverse-laplace-transform'].mistakes} />
       <Lab heading="Interactive Inverse Laplace Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['laplace', 'laplace-ode', 'unit-step']} />

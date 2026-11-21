@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MatrixCalculator from './algorithems.matrix-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit8';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function MatrixCalculatorPage() {
             { title: '3. Order Matters', text: <>In general <InlineMath math="AB \neq BA" />, so keep the order the question gives.</> },
           ]}
         />
+        <SymbolKey rows={EX['matrix-calculator'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -72,6 +75,7 @@ export default function MatrixCalculatorPage() {
           Try B × A in the calculator: the answer is different, because matrix multiplication depends on the order.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['matrix-calculator'].mistakes} />
 
       <Lab heading="Interactive Matrix Calculator">
         <MatrixCalculator />

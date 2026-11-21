@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ImplicitCalculator from './algorithems.implicit-differentiation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,27 +42,11 @@ export default function ImplicitPage() {
             { title: '3. Divide', text: <>Factor out dy/dx and divide by what is left.</> },
           ]}
         />
+        <SymbolKey rows={EX['implicit-differentiation'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Find <InlineMath math="\frac{dy}{dx}" /> for the circle <InlineMath math="x^2 + y^2 = 25" />, and the slope at (3, 4).
-        </ExampleProblem>
-        <ExampleStep n={1} title="DIFFERENTIATE BOTH SIDES">
-          <MathPanel><BlockMath math="2x + 2y\,\frac{dy}{dx} = 0" /></MathPanel>
-          <StepText>x² gives 2x; y² gives 2y dy/dx (chain rule); the constant 25 gives 0.</StepText>
-        </ExampleStep>
-        <ExampleStep n={2} title="SOLVE FOR dy/dx">
-          <MathPanel><BlockMath math="2y\,\frac{dy}{dx} = -2x \quad \Rightarrow \quad \frac{dy}{dx} = -\frac{x}{y}" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={3} title="PUT IN THE POINT">
-          <MathPanel><BlockMath math="\frac{dy}{dx}\Big|_{(3,\,4)} = -\frac{3}{4}" /></MathPanel>
-          <StepText>The radius to (3, 4) has slope 4/3; the tangent is at right angles to it, slope −3/4 ✓</StepText>
-        </ExampleStep>
-        <Conclusion result="dy/dx = −x/y, slope −3/4 at (3, 4)" math={<BlockMath math="\frac{dy}{dx} = -\frac{x}{y}" />}>
-          The calculator below opens on this circle. Try the folium x³ + y³ = 6xy for a harder one.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['implicit-differentiation'].example} />
+      <CommonMistakes items={EX['implicit-differentiation'].mistakes} />
 
       <Lab heading="Interactive Implicit Differentiation Calculator">
         <ImplicitCalculator />

@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.tds-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Rate", text: <>The section rate, or 20% without PAN.</> },
           { title: "3. Deduct", text: <>Pay the rest.</> },
         ]} />
+        <SymbolKey rows={EX['tds-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A professional is paid ₹1,00,000 under section 194J (10%). Find the TDS.</ExampleProblem>
-        <ExampleStep n={1} title="TDS"><MathPanel><BlockMath math={"1{,}00{,}000 \\times 10\\% = 10{,}000"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="NET"><MathPanel><BlockMath math={"1{,}00{,}000 - 10{,}000 = 90{,}000"} /></MathPanel><StepText>The ₹10,000 appears in the receiver&apos;s Form 26AS and counts towards their tax.</StepText></ExampleStep>
-        <Conclusion result="TDS ₹10,000" math={<BlockMath math={"\\text{TDS} = 10{,}000"} />}>The calculator below opens on this payment.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['tds-calculator'].example} />
+      <CommonMistakes items={EX['tds-calculator'].mistakes} />
       <Lab heading="Interactive TDS Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["income-tax","hra-exemption","gst"]} />

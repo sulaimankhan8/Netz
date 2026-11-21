@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.bfs-dfs';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Explore", text: <>Take the next node from the queue (BFS) or go deeper (DFS).</> },
           { title: "3. Add", text: <>Unvisited neighbours.</> },
         ]} />
+        <SymbolKey rows={EX['bfs-dfs'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Search the graph A–B, A–C, B–D, B–E, C–F, E–F, D–G from A.</ExampleProblem>
-        <ExampleStep n={1} title="BFS"><MathPanel><BlockMath math={"A \\to B \\to C \\to D \\to E \\to F \\to G"} /></MathPanel><StepText>All nodes 1 edge away, then 2 edges away, …</StepText></ExampleStep>
-        <ExampleStep n={2} title="DFS"><MathPanel><BlockMath math={"A \\to B \\to D \\to G \\to E \\to F \\to C"} /></MathPanel><StepText>Down A–B–D–G, back up, then E, F, C.</StepText></ExampleStep>
-        <Conclusion result="Two different orders" math={<BlockMath math={"\\text{BFS: } A,B,C,D,E,F,G \\qquad \\text{DFS: } A,B,D,G,E,F,C"} />}>The first two example buttons below load these searches.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['bfs-dfs'].example} />
+      <CommonMistakes items={EX['bfs-dfs'].mistakes} />
       <Lab heading="Interactive Graph Search Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["dijkstra","mst","truth-table"]} />

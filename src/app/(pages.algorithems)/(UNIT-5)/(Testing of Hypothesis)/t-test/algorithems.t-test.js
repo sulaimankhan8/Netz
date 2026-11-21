@@ -304,14 +304,14 @@ const TTestSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> t-Statistic Formula Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Formula Evaluation:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Formula Evaluation:</span>
                   <BlockMath math={`t = \\frac{\\bar{x} - \\mu_0}{s / \\sqrt{n}}`} />
                   <BlockMath math={`t = \\frac{${result.mean.toFixed(4)} - ${result.mu}}{${result.s.toFixed(4)} / \\sqrt{${result.n}}} = \\frac{${(result.mean - result.mu).toFixed(4)}}{${(result.s / Math.sqrt(result.n)).toFixed(4)}} = ${result.tCalc.toFixed(4)}`} />
                 </div>
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level, two-tailed):</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Hypothesis and Decision (5% level, two-tailed):</span>
                   <BlockMath math={`H_0: \\mu = ${result.mu}, \\quad H_1: \\mu \\neq ${result.mu}`} />
                   <BlockMath math={`t_{0.05}(${result.df}) = ${result.critical} \\quad \\text{(table value)}`} />
                   <BlockMath math={`|t_{\\text{calc}}| = ${Math.abs(result.tCalc).toFixed(4)} ${result.reject ? '>' : '<'} ${result.critical} \\;\\Rightarrow\\; \\text{${result.reject ? 'reject' : 'accept'} } H_0`} />

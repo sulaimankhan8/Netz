@@ -7,7 +7,8 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field, Select } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field, Select, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { CURRENCIES } from '@/app/utils/finance/money';
 import { solve, MODES } from '@/app/utils/engines/percentage';
 
@@ -15,6 +16,7 @@ const START = { mode: 'profit-loss', values: { x: '15', y: '240', a: '45', b: '1
 
 export default function PercentageCalculator() {
   const [mode, setMode] = useState(START.mode);
+  const guide = useCalcGuide('percentage');
   const [values, setValues] = useState(START.values);
   const [cur, setCur] = useState('INR');
   const [answer, setAnswer] = useState(null);
@@ -40,18 +42,20 @@ export default function PercentageCalculator() {
         title="Percentage Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <Choice label="What do you want to work out?" value={mode} onChange={(v) => { setMode(v); setAnswer(null); setError(''); }} options={MODES.map((m) => ({ value: m.id, label: m.label }))} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {info.inputs.map(([k, label]) => (
-            <Field key={k} label={label} value={values[k]} inputMode={k === 'discounts' ? 'text' : 'decimal'} onChange={(v) => { setValues((o) => ({ ...o, [k]: v })); setAnswer(null); }} onEnter={run} />
+            <Field key={k} label={label} help={guide?.help?.[k]} value={values[k]} inputMode={k === 'discounts' ? 'text' : 'decimal'} onChange={(v) => { setValues((o) => ({ ...o, [k]: v })); setAnswer(null); }} onEnter={run} />
           ))}
           {info.money && (
             <Select label="Currency" value={cur} onChange={(v) => { setCur(v); setAnswer(null); }} options={Object.entries(CURRENCIES).map(([value, c]) => ({ value, label: c.label }))} />
           )}
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

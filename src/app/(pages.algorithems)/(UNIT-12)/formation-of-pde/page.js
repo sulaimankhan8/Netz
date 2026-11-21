@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.formation-of-pde';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Solve", text: <>For the constants (or f′).</> },
           { title: "3. Eliminate", text: <>Substitute back.</> },
         ]} />
+        <SymbolKey rows={EX['formation-of-pde'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Form the PDE by eliminating a and b from z = (x − a)² + (y − b)².</ExampleProblem>
-        <ExampleStep n={1} title="DIFFERENTIATE"><MathPanel><BlockMath math={"p = 2(x - a), \\quad q = 2(y - b)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ELIMINATE"><MathPanel><BlockMath math={"x - a = \\frac p2, \\ y - b = \\frac q2 \\Rightarrow z = \\frac{p^2}{4} + \\frac{q^2}{4}"} /></MathPanel></ExampleStep>
-        <Conclusion result="4z = p² + q²" math={<BlockMath math={"4z = p^2 + q^2"} />}>The calculator below opens on this family.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['formation-of-pde'].example} />
+      <CommonMistakes items={EX['formation-of-pde'].mistakes} />
       <Lab heading="Interactive Formation of PDEs Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["lagrange-linear-pde","partial-derivative","charpit-method"]} />

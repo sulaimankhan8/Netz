@@ -6,11 +6,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { plotView } from '@/app/components/method/plotView';
 import { solve } from '@/app/utils/engines/area-under-curve';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { mode: 'under', f: 'x^2', g: '', a: '0', b: '3' };
 const EXAMPLES = [
@@ -25,10 +27,13 @@ const EXAMPLES = [
 
 export default function AreaCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('area-under-curve');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('area-under-curve', 6, answer, () => ({ fn: v.f, g: v.g, mode: v.mode }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     try { setError(''); setAnswer(solve({ ...v, ...override })); } catch (e) { setAnswer(null); setError(e.name === 'EngineError' ? e.message : 'Something went wrong. Please check the expressions.'); }
   };
@@ -40,15 +45,16 @@ export default function AreaCalculator() {
   return (
     <div className="w-full space-y-6">
       <CalcCard title="Area Engine" actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="Area" value={v.mode} onChange={(mode) => set({ mode })} options={[{ value: 'under', label: 'Under y = f(x)' }, { value: 'between', label: 'Between two curves' }, { value: 'average', label: 'Average value' }]} />
+        <Choice label="Area" value={v.mode} onChange={(mode) => set({ mode })} options={[{ value: 'under', label: 'Under y = f(x)' }, { value: 'between', label: 'Between two curves' }, { value: 'average', label: 'Average value' }]} help={guide?.help?.mode} />
         <div className={`grid grid-cols-1 ${between ? 'sm:grid-cols-2' : ''} gap-4`}>
-          <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} />
-          {between && <Field label="g(x) =" value={v.g} inputMode="text" placeholder="e.g. x" onChange={(g) => set({ g })} onEnter={() => run()} />}
+          <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
+          {between && <Field label="g(x) =" value={v.g} inputMode="text" placeholder="e.g. x" onChange={(g) => set({ g })} onEnter={() => run()} help={guide?.help?.g} />}
         </div>
         <div className="grid grid-cols-2 gap-4 max-w-sm">
-          <Field label={between ? 'From a (optional)' : 'From a ='} value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={() => run()} />
-          <Field label={between ? 'To b (optional)' : 'To b ='} value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={() => run()} />
+          <Field label={between ? 'From a (optional)' : 'From a ='} value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={() => run()} help={guide?.help?.a} />
+          <Field label={between ? 'To b (optional)' : 'To b ='} value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={() => run()} help={guide?.help?.b} />
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
@@ -57,8 +63,9 @@ export default function AreaCalculator() {
           ))}
         </div>
         {between && <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Leave the limits empty to use where the curves meet.</p>}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> {v.mode === 'average' ? 'Find Average' : 'Find Area'}</EditorialButton>
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> {v.mode === 'average' ? 'Find Average' : 'Find Area'}</EditorialButton>
         </div>
 
         {answer && (

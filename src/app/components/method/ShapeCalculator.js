@@ -8,9 +8,11 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { EditorialButton } from '@/app/components/editorial';
 import { sig } from '@/app/utils/numberFormat';
 import { n, PI_CHOICES } from '@/app/utils/numeric/geometry';
-import { CalcCard, ErrorBox, StepsCard, Choice } from './Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, HowToUse, GuideNote } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import ShapeDiagram from './ShapeDiagrams';
 import { useExportBar } from './ExportBar';
+import { useLoadInput } from './calcDemo';
 
 const UNITS = ['cm', 'm', 'mm', 'km', 'in', 'ft', 'units'];
 const POWER = { 0: '°', 1: '', 2: '²', 3: '³' };
@@ -37,6 +39,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   const shape = shapes.find((s) => s.id === shapeId);
+  const guide = useCalcGuide(exportId);
   const exportBar = useExportBar(exportId, () => ({ shape: shapeId, values, pi }), !!answer, title);
 
   const change = (fn) => (...args) => { fn(...args); setAnswer(null); setError(''); onAnswer?.(null); };
@@ -46,10 +49,10 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
   });
   const setValue = change((key, v) => setValues((old) => ({ ...old, [key]: v })));
 
-  const run = () => {
+  const run = (input = { shape: shapeId, values, pi }) => {
     try {
       setError('');
-      const r = solve({ shape: shapeId, values, pi });
+      const r = solve(input);
       setAnswer(r);
       onAnswer?.(r);
     } catch (e) {
@@ -59,6 +62,8 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
     }
   };
   const reset = () => { setShapeId(start.shape); setValues(start.values); setPi(start.pi || 'exact'); setAnswer(null); setError(''); onAnswer?.(null); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+  useLoadInput((x) => { const next = { shape: x.shape || start.shape, values: { ...(x.values || {}) }, pi: x.pi || pi }; setShapeId(next.shape); setValues(next.values); setPi(next.pi); run(next); });
 
   return (
     <div className="w-full space-y-6" id={`netz-solve-${exportId}`}>
@@ -66,6 +71,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
         title={title}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="flex flex-wrap gap-4 items-end">
           <label className="space-y-1 w-full sm:w-auto min-w-0">
@@ -102,6 +108,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
           </div>
           <div className="flex justify-center"><ShapeDiagram id={shapeId} title={shape.name} /></div>
         </div>
+        <GuideNote>{guide ? 'Each letter is marked on the picture. Type lengths as plain numbers (decimals are fine); boxes marked optional can stay empty. Use one unit for every length.' : null}</GuideNote>
 
         {shape.usesPi && (
           <Choice
@@ -113,7 +120,7 @@ export default function ShapeCalculator({ title, shapes, solve, start, onAnswer,
         )}
 
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

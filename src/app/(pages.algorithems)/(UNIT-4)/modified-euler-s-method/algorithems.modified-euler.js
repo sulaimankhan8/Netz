@@ -11,6 +11,7 @@ import { EditorialButton, EditorialExportButton } from '@/app/components/editori
 import { MAX_STEPS, tooManySteps, sig, odeStopMessage, ODE_BLOWUP, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 // Worked-step cards drawn (each is several equations); the table shows all steps
 const CARD_LIMIT = 20;
@@ -133,6 +134,11 @@ const ModifiedEulerSolver = () => {
     e?.preventDefault();
     calculateModifiedEuler(functionInput, x0, y0, stepH, targetX);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x0 !== undefined) setX0(Number(v.x0)); if (v.y0 !== undefined) setY0(Number(v.y0)); if (v.h !== undefined) setStepH(Number(v.h)); if (v.xn !== undefined) setTargetX(Number(v.xn)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);

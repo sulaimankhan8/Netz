@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MonotonicityCalculator from './algorithems.increasing-decreasing-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,21 +42,11 @@ export default function MonotonicityPage() {
             { title: '3. Sign table', text: <>Pick a test value in each interval and check the sign of f′.</> },
           ]}
         />
+        <SymbolKey rows={EX['increasing-decreasing-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>Find where <InlineMath math="f(x) = 2x^3 - 9x^2 + 12x + 1" /> is increasing and decreasing.</ExampleProblem>
-        <ExampleStep n={1} title="DIFFERENTIATE AND FACTOR">
-          <MathPanel><BlockMath math="f'(x) = 6x^2 - 18x + 12 = 6(x - 1)(x - 2)" /></MathPanel>
-          <StepText>f′(x) = 0 at x = 1 and x = 2.</StepText>
-        </ExampleStep>
-        <ExampleStep n={2} title="TEST EACH INTERVAL">
-          <MathPanel><BlockMath math="f'(0) = 12 > 0, \quad f'(1.5) = -1.5 < 0, \quad f'(3) = 12 > 0" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="Increasing on (−∞, 1) ∪ (2, ∞); decreasing on (1, 2)" math={<BlockMath math="\nearrow (-\infty, 1) \cup (2, \infty), \qquad \searrow (1, 2)" />}>
-          The calculator below opens on this function, with the sign table.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['increasing-decreasing-calculator'].example} />
+      <CommonMistakes items={EX['increasing-decreasing-calculator'].mistakes} />
 
       <Lab heading="Interactive Increasing & Decreasing Calculator">
         <MonotonicityCalculator />

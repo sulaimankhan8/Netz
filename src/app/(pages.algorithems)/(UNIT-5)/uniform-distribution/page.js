@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.uniform-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Length", text: <>Of the part of (c, d) inside [a, b].</> },
           { title: "3. Multiply", text: <>Length × height.</> },
         ]} />
+        <SymbolKey rows={EX['uniform-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A bus comes every 15 minutes and you arrive at a random time. Find the chance you wait less than 5 minutes.</ExampleProblem>
-        <ExampleStep n={1} title="MODEL"><MathPanel><BlockMath math={"X \\sim U(0, 15), \\qquad f(x) = \\frac{1}{15}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="PROBABILITY"><MathPanel><BlockMath math={"P(X < 5) = \\frac{5 - 0}{15} = \\frac{1}{3}"} /></MathPanel></ExampleStep>
-        <Conclusion result="1/3" math={<BlockMath math={"P(X < 5) = \\frac{1}{3}"} />}>The second example button below loads this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['uniform-distribution'].example} />
+      <CommonMistakes items={EX['uniform-distribution'].mistakes} />
       <Lab heading="Interactive Uniform Distribution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["normal","exponential-dist","random-variables"]} />

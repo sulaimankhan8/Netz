@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import NumericalDifferentiationSolver from './algorithems.numerical-differentiation';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { numericalDifferentiation as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function NumericalDifferentiationPage() {
   const firstDerivativeFormula = `
@@ -87,6 +90,16 @@ export default function NumericalDifferentiationPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x', t: 'Where we want the derivative (the slope).', e: 'x = 2' },
+                    { s: 'h', t: 'A small step either side of x.', e: 'h = 0.01' },
+                    { s: 'f(x \\pm h)', t: 'The function one step to the right and left.', e: 'f(2.01) = 9.100601' },
+                    { s: '\\frac{f(x+h) - f(x-h)}{2h}', t: 'Central difference: the slope between the points on both sides. Its error shrinks like h².', e: '10.0001' },
+                    { s: '\\frac{f(x+h) - f(x)}{h}', t: 'Forward difference: one side only, error shrinks like h.', e: '10.0601' },
+                    { s: '\\frac{f(x+h) - 2f(x) + f(x-h)}{h^2}', t: 'The second derivative (how the slope changes).', e: '12' },
+                  ]} />
                 </div>
               </div>
 
@@ -187,8 +200,18 @@ export default function NumericalDifferentiationPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Dividing the central difference by h.</>, f: <>The two points are 2h apart: divide by <InlineMath math="2h" />.</> },
+                { m: <>Choosing h extremely small.</>, f: <>With h = 10⁻¹² rounding errors take over. h ≈ 0.01–0.001 is usually best.</> },
+                { m: <>Using forward differences when central is possible.</>, f: <>Central is far more accurate (error ∝ h² instead of h); use one-sided only at the end of a table.</> },
+                { m: <>Wrong signs in the second-derivative formula.</>, f: <><InlineMath math="f(x+h) - 2f(x) + f(x-h)" />, over <InlineMath math="h^2" />.</> },
+                { m: <>Degrees for trig functions.</>, f: <>Use radians: the derivative of sin x is cos x only in radians.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show f at x − h, x, x + h, the formula with numbers, and the result.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -199,6 +222,8 @@ export default function NumericalDifferentiationPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import LagrangeInterpolations from './algorithems.lagrange-interpolations';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { lagrange as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function LagrangeInterpolationPage() {
   const formula = `
@@ -81,6 +84,15 @@ export default function LagrangeInterpolationPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_i,\\ y_i', t: 'The data points. The x values do not need to be equally spaced.', e: '(5, 12),\\ (6, 13),\\ (9, 14),\\ (11, 16)' },
+                    { s: 'x', t: 'Where we want the estimate.', e: 'x = 10' },
+                    { s: 'L_i(x)', t: 'The basis weight for point i: a product of fractions that is 1 at xᵢ and 0 at every other data x.', e: 'L_2(10) = \\dfrac{5}{6}' },
+                    { s: '\\prod_{j \\ne i}', t: 'Multiply over every data point except point i itself.', e: '(10-5)(10-6)(10-11)' },
+                    { s: 'P(x) = \\sum y_i L_i(x)', t: 'The estimate: each y value times its weight, all added up.', e: 'P(10) = \\dfrac{44}{3}' },
+                  ]} />
                 </div>
               </div>
 
@@ -146,6 +158,12 @@ export default function LagrangeInterpolationPage() {
                     <BlockMath math={`L_2(10) = \\frac{(10-5)(10-6)(10-11)}{(9-5)(9-6)(9-11)} = \\frac{-20}{-24} = \\frac{5}{6}`} />
                     <BlockMath math={`L_3(10) = \\frac{(10-5)(10-6)(10-9)}{(11-5)(11-6)(11-9)} = \\frac{20}{60} = \\frac{1}{3}`} />
                   </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    Quick check: the weights always add up to 1.
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center">
+                    <BlockMath math={`L_0 + L_1 + L_2 + L_3 = \\frac{1}{6} - \\frac{1}{3} + \\frac{5}{6} + \\frac{1}{3} = 1 \\ \\checkmark`} />
+                  </div>
                 </div>
 
                 {/* Step 2: Combine Weighted Sum */}
@@ -184,8 +202,18 @@ export default function LagrangeInterpolationPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Including the point itself in its own product.</>, f: <>For <InlineMath math="L_i" /> skip <InlineMath math="j = i" />: <InlineMath math="L_0" /> has <InlineMath math="(x - 6)(x - 9)(x - 11)" />, never <InlineMath math="(x - 5)" />.</> },
+                { m: <>Mixing up the numerator and denominator.</>, f: <>Top: x minus the <strong>other</strong> data x values. Bottom: <InlineMath math="x_i" /> minus the other data x values.</> },
+                { m: <>Sign slips in the products.</>, f: <><InlineMath math="(5-6)(5-9)(5-11) = (-1)(-4)(-6) = -24" />: count the minus signs.</> },
+                { m: <>Rounding the weights early.</>, f: <>Keep them as fractions (1/6, −1/3, 5/6, 1/3) and check that they add up to 1.</> },
+                { m: <>Using it far outside the data.</>, f: <>Interpolation is reliable between the data points; outside them (extrapolation) the error can be large.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show every <InlineMath math="L_i(x)" /> with its numbers, then the weighted sum.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -196,6 +224,8 @@ export default function LagrangeInterpolationPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

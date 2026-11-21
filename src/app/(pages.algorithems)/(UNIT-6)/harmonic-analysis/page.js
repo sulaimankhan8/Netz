@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.harmonic-analysis';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function HarmonicPage() {
           { title: '2. Sum', text: <>Each column.</> },
           { title: '3. Scale', text: <>Multiply by 2/N.</> },
         ]} />
+        <SymbolKey rows={EX['harmonic-analysis'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>y = 1.98, 1.30, 1.05, 1.30, −0.88, −0.25 at θ = 0°, 60°, …, 300°. Find the first harmonic.</ExampleProblem>
-        <ExampleStep n={1} title="SUMS"><MathPanel><BlockMath math="\sum y = 4.5, \quad \sum y\cos\theta = 1.12, \quad \sum y\sin\theta = 3.013" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SCALE BY 2/6"><MathPanel><BlockMath math="a_0 = 1.5, \quad a_1 = 0.373, \quad b_1 = 1.004" /></MathPanel><StepText>Amplitude √(a₁² + b₁²) ≈ 1.07.</StepText></ExampleStep>
-        <Conclusion result="y ≈ 0.75 + 0.373 cos θ + 1.004 sin θ" math={<BlockMath math="y \approx 0.75 + 0.373\cos\theta + 1.004\sin\theta" />}>The calculator below opens on this table.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['harmonic-analysis'].example} />
+      <CommonMistakes items={EX['harmonic-analysis'].mistakes} />
       <Lab heading="Interactive Harmonic Analysis Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['fourier-series', 'dft-fft', 'curve-fitting']} />

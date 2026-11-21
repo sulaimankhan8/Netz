@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.gamma-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Incomplete gamma", text: <>Gives P(X ≤ x).</> },
           { title: "3. Whole α", text: <>A finite sum (Erlang).</> },
         ]} />
+        <SymbolKey rows={EX['gamma-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>X has a gamma distribution with α = 2, θ = 3. Find <InlineMath math={"P(X \\le 5)"} />.</ExampleProblem>
-        <ExampleStep n={1} title="ERLANG FORM"><MathPanel><BlockMath math={"P(X > 5) = e^{-5/3}\\left(1 + \\tfrac{5}{3}\\right) = 0.5037"} /></MathPanel><StepText>With whole α the tail is a short sum.</StepText></ExampleStep>
-        <ExampleStep n={2} title="ANSWER"><MathPanel><BlockMath math={"P(X \\le 5) = 1 - 0.5037 = 0.4963"} /></MathPanel></ExampleStep>
-        <Conclusion result="≈ 0.496" math={<BlockMath math={"P(X \\le 5) \\approx 0.4963"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['gamma-distribution'].example} />
+      <CommonMistakes items={EX['gamma-distribution'].mistakes} />
       <Lab heading="Interactive Gamma Distribution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["exponential-dist","beta-gamma","chi-square"]} />

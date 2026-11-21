@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import FittingParabolaSolver from './algorithems.fitting-parabola';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { parabola as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function FittingParabolaPage() {
   const parabolaEquation = `y = a + b x + c x^2`;
@@ -84,6 +87,15 @@ export default function FittingParabolaPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'a,\\ b,\\ c', t: 'The unknown coefficients of the parabola y = a + bx + cx².', e: '1.0229,\\ 0.2343,\\ 0.4714' },
+                    { s: 'n', t: 'The number of data points.', e: '5' },
+                    { s: '\\sum x,\\ \\sum x^2,\\ \\sum x^3,\\ \\sum x^4', t: 'Column totals from the working table.', e: '10,\\ 30,\\ 100,\\ 354' },
+                    { s: '\\sum y,\\ \\sum xy,\\ \\sum x^2y', t: 'The totals that go on the right-hand side.', e: '21.6,\\ 64.4,\\ 221' },
+                    { s: '\\text{normal equations}', t: 'Three equations from least squares, one per coefficient; solve them together.', e: '5a + 10b + 30c = 21.6' },
+                  ]} />
                 </div>
               </div>
 
@@ -249,6 +261,15 @@ export default function FittingParabolaPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Missing a column in the table.', f: 'A parabola needs x, x², x³, x⁴, y, xy and x²y.' },
+                { m: 'Mixing up the normal equations.', f: 'Multiply y = a + bx + cx² by 1, x and x², then sum: each gives one equation.' },
+                { m: 'Arithmetic slips in the big totals.', f: 'Check one row of the table before adding the columns.' },
+                { m: 'Rounding the totals before solving.', f: 'Solve with the exact totals; round only a, b, c.' },
+                { m: 'Writing only the final answer.', f: 'Show the table with totals, the three normal equations, the solution and the curve.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -261,6 +282,8 @@ export default function FittingParabolaPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

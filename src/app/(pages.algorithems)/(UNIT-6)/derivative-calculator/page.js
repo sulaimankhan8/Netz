@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import DerivativeCalculator from './algorithems.derivative-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,34 +46,11 @@ export default function DerivativePage() {
             { title: '3. Go Inside', text: <>Differentiate each piece the same way, then tidy up.</> },
           ]}
         />
+        <SymbolKey rows={EX['derivative-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Differentiate <InlineMath math="y = x^2 \sin(3x)" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="IT IS A PRODUCT">
-          <StepText>Take <InlineMath math="u = x^2" /> and <InlineMath math="v = \sin(3x)" />, and use <InlineMath math="(uv)' = u'v + uv'" />.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="DIFFERENTIATE EACH PART">
-          <MathPanel>
-            <BlockMath math="u' = \frac{d}{dx}x^2 = 2x \quad \text{(power rule)}" />
-            <BlockMath math="v' = \frac{d}{dx}\sin(3x) = \cos(3x) \cdot 3 = 3\cos(3x) \quad \text{(chain rule)}" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="PUT IT TOGETHER">
-          <MathPanel>
-            <BlockMath math="\frac{dy}{dx} = 2x \cdot \sin(3x) + x^2 \cdot 3\cos(3x) = 2x\sin(3x) + 3x^2\cos(3x)" />
-          </MathPanel>
-        </ExampleStep>
-
-        <Conclusion result="dy/dx = 2x sin(3x) + 3x² cos(3x)" math={<BlockMath math="\frac{dy}{dx} = 2x\sin(3x) + 3x^2\cos(3x)" />}>
-          The calculator below opens on this function and shows the same rules, then checks the answer numerically.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['derivative-calculator'].example} />
+      <CommonMistakes items={EX['derivative-calculator'].mistakes} />
 
       <Lab heading="Interactive Derivative Calculator">
         <DerivativeCalculator />

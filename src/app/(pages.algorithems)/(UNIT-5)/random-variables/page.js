@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import RandomVariableCalculator from './algorithems.random-variables';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function RandomVariablesPage() {
           { title: '2. E(X) and E(X²)', text: <>Weighted sums (or integrals).</> },
           { title: '3. Variance', text: <>E(X²) minus the square of E(X).</> },
         ]} />
+        <SymbolKey rows={EX['random-variables'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>X is the number of heads in 3 tosses of a fair coin. Find E(X) and Var(X).</ExampleProblem>
-        <ExampleStep n={1} title="THE TABLE"><MathPanel><BlockMath math="x: 0, 1, 2, 3 \qquad p: \tfrac18, \tfrac38, \tfrac38, \tfrac18" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="E(X) AND E(X²)"><MathPanel><BlockMath math="E(X) = \frac{0 + 3 + 6 + 3}{8} = \frac32, \qquad E(X^2) = \frac{0 + 3 + 12 + 9}{8} = 3" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="VARIANCE"><MathPanel><BlockMath math="\text{Var}(X) = 3 - \left(\tfrac32\right)^2 = \tfrac34" /></MathPanel><StepText>The same as the binomial formula npq = 3 × ½ × ½.</StepText></ExampleStep>
-        <Conclusion result="E(X) = 3/2, Var(X) = 3/4" math={<BlockMath math="E(X) = 1.5, \quad \text{Var}(X) = 0.75" />}>The first example button below loads this table.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['random-variables'].example} />
+      <CommonMistakes items={EX['random-variables'].mistakes} />
       <Lab heading="Interactive Random Variable Calculator"><RandomVariableCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['binomial', 'poisson', 'bayes']} />

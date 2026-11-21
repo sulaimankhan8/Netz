@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import TTestSolver from './algorithems.t-test';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { tTest as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function TTestPage() {
   const formula = `
@@ -76,6 +79,16 @@ export default function TTestPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: '\\bar x', t: 'The sample mean.', e: '13' },
+                    { s: 's', t: 'The sample standard deviation (divide by n − 1).', e: '1.5811' },
+                    { s: '\\mu_0', t: 'The mean claimed by H₀.', e: '10' },
+                    { s: 't = \\frac{\\bar x - \\mu_0}{s/\\sqrt n}', t: 'How many standard errors the sample mean is from μ₀.', e: '\\tfrac{3}{0.7071} = 4.24' },
+                    { s: 'df = n - 1', t: 'Degrees of freedom for the t table.', e: '4' },
+                    { s: 't_{\\alpha/2,\\,df}', t: 'The two-tailed table value: reject H₀ if |t| is bigger.', e: '2.776' },
+                  ]} />
                 </div>
               </div>
 
@@ -158,6 +171,15 @@ export default function TTestPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Using z for a small sample with unknown σ.', f: 'When σ is unknown and n is small (under about 30), use t with n − 1 degrees of freedom.' },
+                { m: 'Dividing by n in s.', f: 'The sample standard deviation divides by n − 1: $s^2 = 10/4$.' },
+                { m: 'Forgetting $\\sqrt n$.', f: 'The standard error is $s / \\sqrt n$, not s.' },
+                { m: 'One-tailed value for a two-tailed test.', f: 'For H₁: μ ≠ μ₀ at 5% use $t_{0.025}$ (2.776 for df 4).' },
+                { m: 'Writing only the final answer.', f: 'Show the mean, s, SE, t, df, the table value and the decision.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -170,6 +192,8 @@ export default function TTestPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

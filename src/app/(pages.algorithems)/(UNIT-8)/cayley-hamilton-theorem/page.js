@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CayleyHamiltonCalculator from './algorithems.cayley-hamilton-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function CayleyHamiltonPage() {
           { title: '2. Verify', text: <>Compute A², A³ … and check p(A) = O.</> },
           { title: '3. Inverse', text: <>Multiply by A⁻¹ and rearrange.</> },
         ]} />
+        <SymbolKey rows={EX['cayley-hamilton-theorem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Verify the theorem for <InlineMath math="A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}" /> and find <InlineMath math="A^{-1}" />.</ExampleProblem>
-        <ExampleStep n={1} title="CHARACTERISTIC EQUATION"><MathPanel><BlockMath math="\lambda^2 - 5\lambda - 2 = 0" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="VERIFY"><MathPanel><BlockMath math="A^2 - 5A - 2I = \begin{bmatrix} 7 & 10 \\ 15 & 22 \end{bmatrix} - \begin{bmatrix} 5 & 10 \\ 15 & 20 \end{bmatrix} - \begin{bmatrix} 2 & 0 \\ 0 & 2 \end{bmatrix} = O \ \checkmark" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="INVERSE"><StepText>Multiply by A⁻¹: A − 5I − 2A⁻¹ = O, so</StepText><MathPanel><BlockMath math="A^{-1} = \frac{1}{2}(A - 5I) = \begin{bmatrix} -2 & 1 \\ \frac{3}{2} & -\frac{1}{2} \end{bmatrix}" /></MathPanel></ExampleStep>
-        <Conclusion result="p(A) = O; A⁻¹ = ½(A − 5I)" math={<BlockMath math="A^{-1} = \frac{1}{2}(A - 5I)" />}>Try a 3×3 matrix in the calculator below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cayley-hamilton-theorem'].example} />
+      <CommonMistakes items={EX['cayley-hamilton-theorem'].mistakes} />
       <Lab heading="Interactive Cayley–Hamilton Calculator"><CayleyHamiltonCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['eigenvalues', 'matrix-inverse', 'matrix-calculator']} />

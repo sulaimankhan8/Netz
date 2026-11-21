@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.heat-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. First row", text: <>u(x, 0) = f(x).</> },
           { title: "3. March", text: <>One time level at a time.</> },
         ]} />
+        <SymbolKey rows={EX['heat-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math={"u_t = u_{xx}"} />, u(0, t) = u(4, t) = 0, u(x, 0) = 4x − x², with h = 1.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST ROW"><MathPanel><BlockMath math={"u(x, 0): \\ 0, \\ 3, \\ 4, \\ 3, \\ 0"} /></MathPanel><StepText>k = h²/2 = 0.5 for Bender–Schmidt.</StepText></ExampleStep>
-        <ExampleStep n={2} title="NEXT ROW"><MathPanel><BlockMath math={"u_{1,1} = \\tfrac{1}{2}(0 + 4) = 2, \\ u_{2,1} = \\tfrac{1}{2}(3 + 3) = 3, \\ u_{3,1} = 2"} /></MathPanel></ExampleStep>
-        <Conclusion result="Row 1: 0, 2, 3, 2, 0" math={<BlockMath math={"u(x, 0.5) = 0,\\ 2,\\ 3,\\ 2,\\ 0"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['heat-equation'].example} />
+      <CommonMistakes items={EX['heat-equation'].mistakes} />
       <Lab heading="Interactive Heat Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["laplace-liebmann","finite-difference-bvp","gauss-seidel"]} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import BinomialCalculator from './algorithems.binomial-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function BinomialPage() {
           { title: '2. Which k?', text: <>One value, or several to add up.</> },
           { title: '3. Shortcut', text: <>Use the complement when it has fewer terms.</> },
         ]} />
+        <SymbolKey rows={EX['binomial-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A fair coin is tossed 6 times. Find the probability of at least one head.</ExampleProblem>
-        <ExampleStep n={1} title="n, p, q"><MathPanel><BlockMath math="n = 6, \quad p = q = \tfrac{1}{2}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COMPLEMENT"><MathPanel><BlockMath math="P(X \ge 1) = 1 - P(X = 0) = 1 - \left(\tfrac{1}{2}\right)^6 = 1 - \tfrac{1}{64}" /></MathPanel></ExampleStep>
-        <Conclusion result="63/64" math={<BlockMath math="P(X \ge 1) = \frac{63}{64} \approx 0.984" />}>Try it with the second example button below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['binomial-distribution'].example} />
+      <CommonMistakes items={EX['binomial-distribution'].mistakes} />
       <Lab heading="Interactive Binomial Calculator"><BinomialCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['poisson', 'normal', 'permutations-combinations']} />

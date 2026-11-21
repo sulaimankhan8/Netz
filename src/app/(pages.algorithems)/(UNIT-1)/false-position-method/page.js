@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import FalsePositionMethod from './algorithems.false-positions-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { falsePosition as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function FalsePositionMethods() {
   const iterationData = [
@@ -81,6 +84,16 @@ export default function FalsePositionMethods() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'f(x)', t: <>The function whose root we want: the <InlineMath math="x" /> where the graph crosses the x-axis.</>, e: 'f(x) = x^3 - 4x - 9' },
+                    { s: 'a,\\ b', t: <>The two ends of the bracket. <InlineMath math="f(a)" /> and <InlineMath math="f(b)" /> must have opposite signs, so the root is between them.</>, e: 'a = 2,\\ b = 3' },
+                    { s: 'f(a),\\ f(b)', t: 'The heights of the curve at the two ends. The straight line (chord) is drawn between these two points.', e: 'f(2) = -9,\\ f(3) = 6' },
+                    { s: 'C', t: 'Where the chord crosses the x-axis: the new guess for the root. It is closer to the end whose f value is smaller.', e: 'C_1 = \\dfrac{39}{15} = 2.6' },
+                    { s: 'f(C)', t: 'The function at the new guess. Its sign decides which end C replaces.', e: 'f(2.6) = -1.824' },
+                    { s: '|C_k - C_{k-1}|', t: 'How much the guess moved in the last step. We stop when it is smaller than the tolerance.', e: '0.000021 < 0.0001' },
+                  ]} />
                 </div>
               </div>
 
@@ -157,45 +170,27 @@ export default function FalsePositionMethods() {
                     <span>STEP 04</span> • <span>SUBSEQUENT ITERATIONS WALKTHROUGH</span>
                   </div>
 
-                  {/* Iteration 2 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 2:</strong>
-                    <div>Secant Formula: <InlineMath math="C_2 = \frac{2.6(6) - 3(-1.824)}{6 - (-1.824)} = \frac{21.072}{7.824} \approx 2.693252" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.693252) = -0.237227" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.693252" />. Change from last intercept: <InlineMath math="|C_2 - C_1| = 0.093252" /></div>
-                  </div>
-
-                  {/* Iteration 3 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 3:</strong>
-                    <div>Secant Formula: <InlineMath math="C_3 \approx 2.704918" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.704918) = -0.028912" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.704918" />. <InlineMath math="|C_3 - C_2| = 0.011667" /></div>
-                  </div>
-
-                  {/* Iteration 4 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 4:</strong>
-                    <div>Secant Formula: <InlineMath math="C_4 \approx 2.706333" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.706333) = -0.003495" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.706333" />. <InlineMath math="|C_4 - C_3| = 0.001415" /></div>
-                  </div>
-
-                  {/* Iteration 5 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 5:</strong>
-                    <div>Secant Formula: <InlineMath math="C_5 \approx 2.706504" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.706504) = -0.000422" /> (Negative)</div>
-                    <div>Update: Set <InlineMath math="a = 2.706504" />. <InlineMath math="|C_5 - C_4| = 0.000171" /></div>
-                  </div>
-
-                  {/* Iteration 6 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 6:</strong>
-                    <div>Secant Formula: <InlineMath math="C_6 \approx 2.706525" /></div>
-                    <div>Function Evaluation: <InlineMath math="f(2.706525) = -0.000051" /> (Negative)</div>
-                    <div>Stop: <InlineMath math="|C_6 - C_5| = 0.000021 < 0.0001" />.</div>
-                  </div>
+                  {/* Iterations 2–6, each with every number put in */}
+                  {[
+                    { k: 2, a: '2.6', fa: '-1.824', c: '2.693252', num: '21.072', den: '7.824', fc: '-0.237227', prev: '2.6', diff: '0.093252' },
+                    { k: 3, a: '2.693252', fa: '-0.237227', c: '2.704918', num: '16.871189', den: '6.237227', fc: '-0.028912', prev: '2.693252', diff: '0.011667' },
+                    { k: 4, a: '2.704918', fa: '-0.028912', c: '2.706333', num: '16.316247', den: '6.028912', fc: '-0.003495', prev: '2.704918', diff: '0.001415' },
+                    { k: 5, a: '2.706333', fa: '-0.003495', c: '2.706504', num: '16.248487', den: '6.003495', fc: '-0.000422', prev: '2.706333', diff: '0.000171' },
+                    { k: 6, a: '2.706504', fa: '-0.000422', c: '2.706525', num: '16.240293', den: '6.000422', fc: '-0.000051', prev: '2.706504', diff: '0.000021' },
+                  ].map((it) => (
+                    <div key={it.k} className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2">
+                      <strong className="text-amber-600 dark:text-amber-400 block text-xs font-mono">Iteration {it.k}: <InlineMath math={`[a, b] = [${it.a},\\ 3]`} /></strong>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`C_${it.k} = \\frac{a \\cdot f(b) - b \\cdot f(a)}{f(b) - f(a)} = \\frac{${it.a}(6) - 3(${it.fa})}{6 - (${it.fa})} = \\frac{${it.num}}{${it.den}} = ${it.c}`} />
+                        <BlockMath math={`f(${it.c}) = (${it.c})^3 - 4(${it.c}) - 9 = ${it.fc}`} />
+                      </div>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                        {it.k < 6
+                          ? <><InlineMath math={`f(C_${it.k}) < 0`} />, the same sign as <InlineMath math="f(a)" />, so set <InlineMath math={`a = ${it.c}`} /> (the right end stays at 3). Change from the last intercept: <InlineMath math={`|C_${it.k} - C_${it.k - 1}| = |${it.c} - ${it.prev}| = ${it.diff}`} />.</>
+                          : <>Change from the last intercept: <InlineMath math={`|C_6 - C_5| = |${it.c} - ${it.prev}| = ${it.diff} < 0.0001`} />, so stop.</>}
+                      </p>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Step 5: Summary Table */}
@@ -254,8 +249,18 @@ export default function FalsePositionMethods() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Mixing up the formula: <InlineMath math="\frac{a \cdot f(a) - b \cdot f(b)}{\dots}" />.</>, f: <>Each end is multiplied by the <strong>other</strong> end&apos;s f value: <InlineMath math="C = \dfrac{a \cdot f(b) - b \cdot f(a)}{f(b) - f(a)}" />.</> },
+                { m: <>Sign slips with negative f values.</>, f: <>Put negative numbers in brackets: <InlineMath math="2(6) - 3(-9) = 12 + 27" />, and <InlineMath math="6 - (-9) = 15" />.</> },
+                { m: <>Replacing the wrong end.</>, f: <>Keep the root bracketed: if <InlineMath math="f(C)" /> has the same sign as <InlineMath math="f(a)" />, set <InlineMath math="a = C" />; otherwise set <InlineMath math="b = C" />.</> },
+                { m: <>Using the bisection stopping rule.</>, f: <>One end often never moves (here <InlineMath math="b = 3" /> throughout), so the interval does not shrink to 0. Stop when two successive intercepts agree: <InlineMath math="|C_k - C_{k-1}| < \varepsilon" />.</> },
+                { m: <>Rounding the intercepts too early.</>, f: <>Keep 6 decimals in every step; the changes become tiny (0.000021) and early rounding hides them.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show <InlineMath math="f(a)" />, <InlineMath math="f(b)" />, each <InlineMath math="C" /> with the numbers in the formula, its <InlineMath math="f(C)" /> and which end changes, and the table.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -266,6 +271,8 @@ export default function FalsePositionMethods() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

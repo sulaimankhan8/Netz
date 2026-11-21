@@ -4,18 +4,20 @@ import { fixed } from '@/app/utils/numberFormat';
 import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 import { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
+import TermWorking from '@/app/components/method/TermWorking';
 import "katex/dist/katex.min.css";
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from "@/app/components/editorial";
 import DataPointsInput from '@/app/components/DataPointsInput';
 import { FiPlay, FiRotateCcw, FiPlus, FiTrash2, FiCheckCircle, FiList, FiLayers, FiTrendingUp } from "react-icons/fi";
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 export default function GaussBackwardInterpolation({ theme }) {
   const [vSteps, setVSteps] = useState([]);
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
   const [inline, setInline] = useState(false);
-  const [rows, setRows] = useState([{ x: "0", y: "0" }]);
-  const [interpolateX, setInterpolateX] = useState("");
+  const [rows, setRows] = useState([{ x: "1931", y: "15" }, { x: "1941", y: "20" }, { x: "1951", y: "27" }, { x: "1961", y: "39" }, { x: "1971", y: "52" }]); // the page's worked example
+  const [interpolateX, setInterpolateX] = useState("1946");
   const [output, setOutput] = useState("");
   useRecordSolve('gauss-backward', 2, output, () => ({ points: rows.filter((r) => r && String(r.x ?? '').trim() !== '').length }));
   useCodeExportInputs('gauss-backward', () => ({ ...rowsToXY(rows), at: interpolateX }));
@@ -117,6 +119,11 @@ export default function GaussBackwardInterpolation({ theme }) {
     setOutput(`Interpolated value at x = ${x}: P(${x}) = ${interpVal}`);
     setInterpolatedValue(interpVal);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { const sp = (t) => String(t || '').split(/[,\s]+/).filter(Boolean); const ys = sp(v.y); setRows(sp(v.x).map((x, i) => ({ x, y: ys[i] ?? '' }))); setInterpolateX(String(v.at ?? '')); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -389,32 +396,7 @@ export default function GaussBackwardInterpolation({ theme }) {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Parameter & Polynomial Derivation
               </h4>
 
-              {vSteps.length > 0 && (
-                <div className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                  <span className="text-xs font-mono font-bold uppercase text-neutral-500 block">Central Parameter (p) Calculation:</span>
-                  <div className="overflow-x-auto text-center py-2">
-                    <BlockMath math={vSteps.join(" \\quad, \\quad ")} />
-                  </div>
-                </div>
-              )}
-
-              {polynomialSteps.formulas.length > 0 && (
-                <div className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-4">
-                  <div>
-                    <span className="text-xs font-mono font-bold uppercase text-neutral-500 block mb-1">Substituted Gauss Backward Series:</span>
-                    <div className="overflow-x-auto text-center py-2">
-                      <BlockMath math={polynomialSteps.substituted.join(" + ")} />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-300 dark:border-neutral-700">
-                    <span className="text-xs font-mono font-bold uppercase text-neutral-500 block mb-1">Evaluated Term Sum:</span>
-                    <div className="overflow-x-auto text-center py-2 font-mono text-sm font-bold">
-                      {polynomialSteps.calculated.join(" + ")}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <TermWorking vSteps={vSteps} formulas={polynomialSteps.formulas} substituted={polynomialSteps.substituted} calculated={polynomialSteps.calculated} varName="p" />
             </div>
           )}
 

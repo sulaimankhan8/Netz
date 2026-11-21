@@ -9,6 +9,7 @@ import MatrixInputGrid from '@/app/components/MatrixInputGrid';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 function initMatrix(n) {
   // Diagonally dominant default
@@ -107,6 +108,11 @@ const JacobiMethod = () => {
     setConverged(res.converged);
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { if (!v.rows) return; setN(v.rows.length); setMatrix(v.rows.map((r) => r.map(String))); solveSoon(); });
+
+
   const handleDemo = () => {
     const demo = [
       ['20', '1', '-2', '17'],
@@ -176,7 +182,7 @@ const JacobiMethod = () => {
         </div>
 
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={handleSolve} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={handleSolve} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Iterate (Jacobi)
           </EditorialButton>
         </div>

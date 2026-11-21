@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MaximaMinimaCalculator from './algorithems.maxima-minima-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,24 +42,11 @@ export default function MaximaMinimaPage() {
             { title: '3. On [a, b]', text: <>Compare f at the ends and the critical points for the absolute max and min.</> },
           ]}
         />
+        <SymbolKey rows={EX['maxima-minima-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>Find the local maxima and minima of <InlineMath math="f(x) = 2x^3 - 9x^2 + 12x + 1" />.</ExampleProblem>
-        <ExampleStep n={1} title="CRITICAL POINTS">
-          <MathPanel><BlockMath math="f'(x) = 6(x - 1)(x - 2) = 0 \ \Rightarrow \ x = 1, \ 2" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={2} title="SECOND DERIVATIVE TEST">
-          <MathPanel><BlockMath math="f''(x) = 12x - 18: \quad f''(1) = -6 < 0, \quad f''(2) = 6 > 0" /></MathPanel>
-          <StepText>So x = 1 is a local maximum and x = 2 a local minimum.</StepText>
-        </ExampleStep>
-        <ExampleStep n={3} title="THE VALUES">
-          <MathPanel><BlockMath math="f(1) = 6, \qquad f(2) = 5" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="Local max 6 at x = 1; local min 5 at x = 2" math={<BlockMath math="\max f(1) = 6, \qquad \min f(2) = 5" />}>
-          The calculator below opens on this function. Add an interval to get the absolute maximum and minimum.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['maxima-minima-calculator'].example} />
+      <CommonMistakes items={EX['maxima-minima-calculator'].mistakes} />
 
       <Lab heading="Interactive Maxima & Minima Calculator">
         <MaximaMinimaCalculator />

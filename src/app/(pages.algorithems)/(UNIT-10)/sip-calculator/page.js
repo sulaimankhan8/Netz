@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import SipCalculator from './algorithems.sip-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function SipPage() {
           { title: '2. Months', text: <>12 × years.</> },
           { title: '3. Step-up', text: <>Optional: work out each year&apos;s 12 payments and add.</> },
         ]} />
+        <SymbolKey rows={EX['sip-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹10,000 is invested every month for 10 years at an expected 12% a year. Find the expected value.</ExampleProblem>
-        <ExampleStep n={1} title="RATE AND MONTHS"><MathPanel><BlockMath math="i = \frac{12}{1200} = 0.01, \qquad n = 120" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="FORMULA"><MathPanel><BlockMath math="F = 10{,}000 \times \frac{(1.01)^{120} - 1}{0.01} \times 1.01 = 23{,}23{,}391" /></MathPanel><StepText>Invested: ₹12,00,000, so the gains are ₹11,23,391.</StepText></ExampleStep>
-        <Conclusion result="About ₹23.23 lakh" math={<BlockMath math="F \approx 23{,}23{,}391" />}>The calculator below opens on this SIP; try adding a 10% step-up.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['sip-calculator'].example} />
+      <CommonMistakes items={EX['sip-calculator'].mistakes} />
       <Lab heading="Interactive SIP Calculator"><SipCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['lumpsum', 'ppf', 'compound-interest']} />

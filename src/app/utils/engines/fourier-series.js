@@ -8,7 +8,7 @@
  */
 import { EngineError } from '../numeric/steps';
 import { toFraction } from '../numeric/fraction';
-import { math, num, sym, fn, add, mul, div, pow, paren } from '../symbolic/tree';
+import { math, num, sym, fn, neg, add, mul, div, pow, paren } from '../symbolic/tree';
 import { mtex, exactTex, tidyMulti, readMulti } from '../symbolic/multi';
 import { definite, gaussLegendre } from '../symbolic/iterated';
 import { numNode, distribute } from '../symbolic/ode';
@@ -17,6 +17,19 @@ import { polyNode } from '../symbolic/integral';
 import { polyTex } from '../symbolic/algebra';
 
 const N = sym('n'), X = sym('x');
+/** An interval end as a node, kept exact when it is a simple multiple of π (π, −π, π/2 …) so the working reads π, not 3.14159. */
+const endNode = (v) => {
+  const f = Math.abs(v) > 1e-12 && toFraction(v / Math.PI, 24, 1e-9);
+  if (!f) return numNode(v);
+  const core = Math.abs(f.n) === 1 && f.d === 1 ? sym('pi') : f.d === 1 ? mul(num(Math.abs(f.n)), sym('pi')) : div(Math.abs(f.n) === 1 ? sym('pi') : mul(num(Math.abs(f.n)), sym('pi')), num(f.d));
+  return f.n < 0 ? paren(neg(core)) : core;
+};
+/** A scale such as 1/π or 2/π written exactly; otherwise exactTex. */
+const scaleTex = (k) => {
+  const f = toFraction(k * Math.PI, 24, 1e-9);
+  if (f && f.n > 0) return f.n === 1 ? `\\frac{1}{${f.d === 1 ? '' : f.d}\\pi}` : `\\frac{${f.n}}{${f.d === 1 ? '' : f.d}\\pi}`;
+  return exactTex(k);
+};
 const evalAt = (node, scope) => { try { const v = node.evaluate(scope); return typeof v === 'number' ? v : NaN; } catch { return NaN; } };
 const num0 = (t, label = 'An end of the interval') => {
   if (!String(t ?? '').trim()) throw new EngineError(`${label} is empty: type a number such as 0, pi or -pi.`);
@@ -159,16 +172,16 @@ function coefficient(pieces, weight, scale, vars) {
   for (const p of pieces) {
     const integrand = weight ? mul(p.g, weight) : p.g;
     let parts;
-    try { parts = [definite(integrand, 'x', numNode(p.from), numNode(p.to), vars, 0, { light: true, noNeat: true })]; } catch (e) {
+    try { parts = [definite(integrand, 'x', endNode(p.from), endNode(p.to), vars, 0, { light: true, noNeat: true })]; } catch (e) {
       // sin x + 3 sin 2x: integrate each term of f against the weight
       const ts = [];
       const go = (t, s) => { const x = t.isParenthesisNode ? t.content : t; if (x.isOperatorNode && (x.fn === 'add' || x.fn === 'subtract')) { go(x.args[0], s); go(x.args[1], x.fn === 'subtract' ? -s : s); return; } ts.push(s < 0 ? mul(num(-1), x) : x); };
       go(p.g, 1);
       // x(π − x)·sin nx: multiply out first
-      if (ts.length < 2) { try { parts = [definite(distribute(weight ? mul(p.g, weight) : p.g), 'x', numNode(p.from), numNode(p.to), vars, 0, { light: true, noNeat: true })]; } catch { /* try terms */ } }
+      if (ts.length < 2) { try { parts = [definite(distribute(weight ? mul(p.g, weight) : p.g), 'x', endNode(p.from), endNode(p.to), vars, 0, { light: true, noNeat: true })]; } catch { /* try terms */ } }
       if (!parts) { let ex; try { ex = distribute(p.g); } catch { throw e; } ts.length = 0; go(ex, 1); }
       if (!parts && ts.length < 2) throw e;
-      if (!parts) parts = ts.map((t) => definite(weight ? mul(t, weight) : t, 'x', numNode(p.from), numNode(p.to), vars, 0, { light: true, noNeat: true }));
+      if (!parts) parts = ts.map((t) => definite(weight ? mul(t, weight) : t, 'x', endNode(p.from), endNode(p.to), vars, 0, { light: true, noNeat: true }));
     }
     for (const d of parts) {
       lines.push(...d.lines);
@@ -213,7 +226,7 @@ export function solve({ mode = 'full', f, from = '-pi', to = 'pi' }) {
   const steps = [];
   const out = { mode, L: exactTex(L) };
   const wantA = mode !== 'half-sin', wantB = mode !== 'half-cos';
-  const kTex = exactTex(k);
+  const kTex = scaleTex(k);
   const check = [];
   if (wantA) {
     const a0 = coefficient(pieces, null, k, ['x']);

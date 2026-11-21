@@ -7,7 +7,8 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { StepTable } from '@/app/components/method';
 import { Stat } from '@/app/components/method/SavingsCalculator';
 import RatesBadge from '@/app/components/method/RatesBadge';
@@ -15,6 +16,7 @@ import { formatMoney, formatPct } from '@/app/utils/finance/money';
 import { IN_RULES } from '@/app/data/rates/in';
 import { versions } from '@/app/utils/rates/getRule';
 import { solve } from '@/app/utils/engines/income-tax';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const PERIODS = versions(IN_RULES, 'in.incometax');
 const START = {
@@ -84,12 +86,15 @@ function RegimeWorking({ title, r }) {
 
 export default function IncomeTaxCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('income-tax');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('income-tax', 11, answer, () => ({ better: answer?.better }));
   const rule = PERIODS[s.period];
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = (input = s) => {
     try {
       setError('');
@@ -108,6 +113,7 @@ export default function IncomeTaxCalculator() {
         title="Income Tax Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="flex flex-wrap gap-2">
           <span className="text-xs font-mono font-bold uppercase self-center text-neutral-600 dark:text-neutral-400">Try:</span>
@@ -118,26 +124,27 @@ export default function IncomeTaxCalculator() {
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Select label="Rates for" value={String(s.period)} onChange={(v) => set({ period: Number(v) })} options={PERIODS.map((p, i) => ({ value: String(i), label: p.label }))} />
-          <Select label="Age" value={s.age} onChange={(v) => set({ age: v })} options={[{ value: 'below60', label: 'Below 60' }, { value: 'senior', label: '60 to 79' }, { value: 'superSenior', label: '80 or more' }]} />
+          <Select label="Rates for" value={String(s.period)} onChange={(v) => set({ period: Number(v) })} options={PERIODS.map((p, i) => ({ value: String(i), label: p.label }))} help={guide?.help?.period} />
+          <Select label="Age" value={s.age} onChange={(v) => set({ age: v })} options={[{ value: 'below60', label: 'Below 60' }, { value: 'senior', label: '60 to 79' }, { value: 'superSenior', label: '80 or more' }]} help={guide?.help?.age} />
         </div>
-        <Choice label="Is the income salary or pension?" value={s.salaried} onChange={(v) => set({ salaried: v })} options={[{ value: 'yes', label: 'Yes (standard deduction)' }, { value: 'no', label: 'No' }]} />
+        <Choice label="Is the income salary or pension?" value={s.salaried} onChange={(v) => set({ salaried: v })} options={[{ value: 'yes', label: 'Yes (standard deduction)' }, { value: 'no', label: 'No' }]} help={guide?.help?.salaried} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="Salary or pension a year (₹)" value={s.salary} onChange={(v) => set({ salary: v })} onEnter={() => run()} />
-          <Field label="Other income a year (₹)" value={s.other} placeholder="interest, rent, …" onChange={(v) => set({ other: v })} onEnter={() => run()} />
+          <Field label="Salary or pension a year (₹)" value={s.salary} onChange={(v) => set({ salary: v })} onEnter={() => run()} help={guide?.help?.salary} />
+          <Field label="Other income a year (₹)" value={s.other} placeholder="interest, rent, …" onChange={(v) => set({ other: v })} onEnter={() => run()} help={guide?.help?.other} />
         </div>
         <fieldset className="p-3 border-2 border-dashed border-black/30 dark:border-neutral-600 rounded-xl space-y-3">
           <legend className="px-1 text-xs font-mono font-bold uppercase text-neutral-700 dark:text-neutral-300">Deductions (old regime only)</legend>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Field label="80C: PF, ELSS, LIC… (up to 1.5L)" value={s.sec80C} onChange={(v) => set({ sec80C: v })} onEnter={() => run()} />
-            <Field label="80D: health insurance" value={s.sec80D} onChange={(v) => set({ sec80D: v })} onEnter={() => run()} />
-            <Field label="Home loan interest (up to 2L)" value={s.homeLoan} onChange={(v) => set({ homeLoan: v })} onEnter={() => run()} />
-            <Field label="NPS 80CCD(1B) (up to 50k)" value={s.nps} onChange={(v) => set({ nps: v })} onEnter={() => run()} />
-            <Field label="HRA exemption and others" value={s.others} onChange={(v) => set({ others: v })} onEnter={() => run()} />
+            <Field label="80C: PF, ELSS, LIC… (up to 1.5L)" value={s.sec80C} onChange={(v) => set({ sec80C: v })} onEnter={() => run()} help={guide?.help?.sec80C} />
+            <Field label="80D: health insurance" value={s.sec80D} onChange={(v) => set({ sec80D: v })} onEnter={() => run()} help={guide?.help?.sec80D} />
+            <Field label="Home loan interest (up to 2L)" value={s.homeLoan} onChange={(v) => set({ homeLoan: v })} onEnter={() => run()} help={guide?.help?.homeLoan} />
+            <Field label="NPS 80CCD(1B) (up to 50k)" value={s.nps} onChange={(v) => set({ nps: v })} onEnter={() => run()} help={guide?.help?.nps} />
+            <Field label="HRA exemption and others" value={s.others} onChange={(v) => set({ others: v })} onEnter={() => run()} help={guide?.help?.others} />
           </div>
         </fieldset>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Compare Regimes
           </EditorialButton>
         </div>

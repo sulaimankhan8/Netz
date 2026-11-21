@@ -4,6 +4,7 @@ import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
+import RuleWorking from '@/app/components/method/RuleWorking';
 import 'katex/dist/katex.min.css';
 import { parseUserFunction } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
@@ -11,6 +12,7 @@ import { EditorialButton, EditorialExportButton } from '@/app/components/editori
 import { MAX_STEPS, tooManySteps, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const TrapezoidalRuleSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -122,6 +124,11 @@ const TrapezoidalRuleSolver = () => {
     e?.preventDefault();
     calculateTrapezoidal(functionInput, lowerLimit, upperLimit, subintervals);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.a !== undefined) setLowerLimit(Number(v.a)); if (v.b !== undefined) setUpperLimit(Number(v.b)); if (v.n !== undefined) setSubintervals(Number(v.n)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -397,11 +404,7 @@ const TrapezoidalRuleSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Trapezoidal Formula Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
-                <BlockMath math={`I = \\frac{h}{2} \\left[ (y_0 + y_n) + 2 \\sum_{i=1}^{n-1} y_i \\right]`} />
-                <BlockMath math={`I = \\frac{${result.h.toFixed(6)}}{2} \\left[ (${result.y0.toFixed(6)} + ${result.yn.toFixed(6)}) + 2(${result.sumMiddle.toFixed(6)}) \\right]`} />
-                <BlockMath math={`I \\approx ${result.integralValue.toFixed(8)}`} />
-              </div>
+              <RuleWorking rule="trapezoidal" points={plotPoints} value={result.integralValue} />
             </div>
           )}
 

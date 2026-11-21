@@ -7,8 +7,10 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve, group } from '@/app/utils/engines/permutations-combinations';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const MODES = [
   { value: 'ncr', label: 'nCr (choose)', fields: [['n', 'Total n'], ['r', 'Chosen r']] },
@@ -22,6 +24,7 @@ const START = { mode: 'ncr', n: '10', r: '3', word: 'MISSISSIPPI', necklace: fal
 
 export default function CountingCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('permutations-combinations');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('permutations-combinations', 7, answer, () => ({ mode: s.mode }));
@@ -29,6 +32,8 @@ export default function CountingCalculator() {
   const info = MODES.find((m) => m.value === s.mode);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -46,18 +51,20 @@ export default function CountingCalculator() {
         title="Counting Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you want to count?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map(({ value, label }) => ({ value, label }))} />
+        <Choice label="What do you want to count?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map(({ value, label }) => ({ value, label }))} help={guide?.help?.mode} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {info.fields.map(([k, label]) => (
-            <Field key={k} label={label} value={s[k]} inputMode={k === 'word' ? 'text' : 'numeric'} onChange={(v) => set({ [k]: v })} onEnter={run} />
+            <Field key={k} label={label} help={guide?.help?.[k]} value={s[k]} inputMode={k === 'word' ? 'text' : 'numeric'} onChange={(v) => set({ [k]: v })} onEnter={run} />
           ))}
         </div>
         {s.mode === 'circular' && (
-          <Choice label="Can it be flipped over?" value={s.necklace ? 'yes' : 'no'} onChange={(v) => set({ necklace: v === 'yes' })} options={[{ value: 'no', label: 'No (people at a table)' }, { value: 'yes', label: 'Yes (beads on a necklace)' }]} />
+          <Choice label="Can it be flipped over?" value={s.necklace ? 'yes' : 'no'} onChange={(v) => set({ necklace: v === 'yes' })} options={[{ value: 'no', label: 'No (people at a table)' }, { value: 'yes', label: 'Yes (beads on a necklace)' }]} help={guide?.help?.necklace} />
         )}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

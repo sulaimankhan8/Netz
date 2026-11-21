@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import BetaGammaCalculator from './algorithems.beta-gamma-function';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function BetaGammaPage() {
           { title: '2. Beta', text: <>Write B with three gammas.</> },
           { title: '3. Integrals', text: <>Match a standard form, read off m and n.</> },
         ]} />
+        <SymbolKey rows={EX['beta-gamma-function'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate <InlineMath math="\int_0^{\pi/2}\sin^4\theta\cos^2\theta\,d\theta" />.</ExampleProblem>
-        <ExampleStep n={1} title="BETA FORM"><MathPanel><BlockMath math="= \frac{1}{2}B\left(\frac{5}{2}, \frac{3}{2}\right) = \frac{\Gamma(5/2)\,\Gamma(3/2)}{2\,\Gamma(4)}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="GAMMA VALUES"><MathPanel><BlockMath math="\Gamma\left(\tfrac{5}{2}\right) = \tfrac{3}{4}\sqrt{\pi}, \quad \Gamma\left(\tfrac{3}{2}\right) = \tfrac{1}{2}\sqrt{\pi}, \quad \Gamma(4) = 6" /></MathPanel><StepText>So the integral is (3/8)π / 12.</StepText></ExampleStep>
-        <Conclusion result="π/32" math={<BlockMath math="\int_0^{\pi/2}\sin^4\theta\cos^2\theta\,d\theta = \frac{\pi}{32}" />}>The fifth example button below checks it.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['beta-gamma-function'].example} />
+      <CommonMistakes items={EX['beta-gamma-function'].mistakes} />
       <Lab heading="Interactive Beta & Gamma Calculator"><BetaGammaCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['integral', 'triple-integral', 'double-integral']} />

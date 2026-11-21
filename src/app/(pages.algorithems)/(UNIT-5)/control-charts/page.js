@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.control-charts';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Limits", text: <>From the table constants or 3√…</> },
           { title: "3. Check", text: <>Points outside are out of control.</> },
         ]} />
+        <SymbolKey rows={EX['control-charts'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A c chart for defects 2 3 5 1 4 12 3 2.</ExampleProblem>
-        <ExampleStep n={1} title="CENTRE"><MathPanel><BlockMath math={"\\bar{c} = \\frac{32}{8} = 4"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="LIMITS"><MathPanel><BlockMath math={"\\text{UCL} = 4 + 3\\sqrt4 = 10, \\quad \\text{LCL} = \\max(0, 4 - 6) = 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="CHECK"><MathPanel><BlockMath math={"12 > 10: \\text{ unit 6 is out of control}"} /></MathPanel></ExampleStep>
-        <Conclusion result="Unit 6 out of control" math={<BlockMath math={"\\text{UCL} = 10, \\ c_6 = 12"} />}>The calculator below opens on an x̄–R chart.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['control-charts'].example} />
+      <CommonMistakes items={EX['control-charts'].mistakes} />
       <Lab heading="Interactive Control Charts Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["descriptive-statistics","normal","z-test"]} />

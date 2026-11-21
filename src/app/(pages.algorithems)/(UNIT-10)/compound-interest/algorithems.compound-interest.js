@@ -7,11 +7,13 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { StepTable } from '@/app/components/method';
 import StackedBars from '@/app/components/method/StackedBars';
 import { CURRENCIES, formatMoney } from '@/app/utils/finance/money';
 import { solve, FREQUENCIES } from '@/app/utils/engines/compound-interest';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { kind: 'compound', principal: '8000', rate: '10', time: '1.5', timeUnit: 'years', frequency: '2' };
 
@@ -36,6 +38,7 @@ const Stat = ({ label, value, strong }) => (
 
 export default function InterestCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('compound-interest');
   const [cur, setCur] = useState('INR');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
@@ -44,6 +47,8 @@ export default function InterestCalculator() {
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const money = (v) => formatMoney(v, cur);
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -68,20 +73,22 @@ export default function InterestCalculator() {
         title="Interest Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="Type of interest" value={s.kind} onChange={(v) => set({ kind: v })} options={[{ value: 'compound', label: 'Compound interest' }, { value: 'simple', label: 'Simple interest' }]} />
+        <Choice label="Type of interest" value={s.kind} onChange={(v) => set({ kind: v })} options={[{ value: 'compound', label: 'Compound interest' }, { value: 'simple', label: 'Simple interest' }]} help={guide?.help?.kind} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="Principal P" value={s.principal} onChange={(v) => set({ principal: v })} onEnter={run} />
-          <Field label="Rate R (% a year)" value={s.rate} onChange={(v) => set({ rate: v })} onEnter={run} />
-          <Field label="Time T" value={s.time} onChange={(v) => set({ time: v })} onEnter={run} />
-          <Select label="Time is in" value={s.timeUnit} onChange={(v) => set({ timeUnit: v })} options={[{ value: 'years', label: 'Years' }, { value: 'months', label: 'Months' }]} />
+          <Field label="Principal P" value={s.principal} onChange={(v) => set({ principal: v })} onEnter={run} help={guide?.help?.principal} />
+          <Field label="Rate R (% a year)" value={s.rate} onChange={(v) => set({ rate: v })} onEnter={run} help={guide?.help?.rate} />
+          <Field label="Time T" value={s.time} onChange={(v) => set({ time: v })} onEnter={run} help={guide?.help?.time} />
+          <Select label="Time is in" value={s.timeUnit} onChange={(v) => set({ timeUnit: v })} options={[{ value: 'years', label: 'Years' }, { value: 'months', label: 'Months' }]} help={guide?.help?.timeUnit} />
           {s.kind === 'compound' && (
-            <Select label="Compounded" value={s.frequency} onChange={(v) => set({ frequency: v })} options={FREQUENCIES.map((f) => ({ value: f.value, label: f.label }))} />
+            <Select label="Compounded" value={s.frequency} onChange={(v) => set({ frequency: v })} options={FREQUENCIES.map((f) => ({ value: f.value, label: f.label }))} help={guide?.help?.frequency} />
           )}
           <Select label="Currency" value={cur} onChange={(v) => { setCur(v); setAnswer(null); }} options={Object.entries(CURRENCIES).map(([value, c]) => ({ value, label: c.label }))} />
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

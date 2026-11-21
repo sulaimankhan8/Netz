@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ComplexCalculator from './algorithems.complex-number-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function ComplexPage() {
           { title: 'Multiply / divide', text: <>Expand with i² = −1; divide using the conjugate.</> },
           { title: 'Polar form', text: <>Modulus r and argument θ (check the quadrant).</> },
         ]} />
+        <SymbolKey rows={EX['complex-number-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math="\frac{3 + 4i}{1 - 2i}" />.</ExampleProblem>
-        <ExampleStep n={1} title="MULTIPLY BY THE CONJUGATE"><MathPanel><BlockMath math="\frac{3 + 4i}{1 - 2i} \cdot \frac{1 + 2i}{1 + 2i}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="TOP AND BOTTOM"><MathPanel><BlockMath math="(3 + 4i)(1 + 2i) = 3 + 6i + 4i + 8i^2 = -5 + 10i, \qquad 1^2 + 2^2 = 5" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="DIVIDE"><MathPanel><BlockMath math="\frac{-5 + 10i}{5} = -1 + 2i" /></MathPanel><StepText>Check: (−1 + 2i)(1 − 2i) = −1 + 2i + 2i + 4 = 3 + 4i ✓</StepText></ExampleStep>
-        <Conclusion result="−1 + 2i" math={<BlockMath math="\frac{3 + 4i}{1 - 2i} = -1 + 2i" />}>Try it in the calculator below, with the points drawn on the Argand plane.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['complex-number-calculator'].example} />
+      <CommonMistakes items={EX['complex-number-calculator'].mistakes} />
       <Lab heading="Interactive Complex Number Calculator"><ComplexCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['quadratic', 'unit-circle', 'binomial-theorem']} />

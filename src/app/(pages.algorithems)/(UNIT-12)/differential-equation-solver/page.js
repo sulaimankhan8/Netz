@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.differential-equation-solver';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function OdeSolverPage() {
           { title: '2. Type', text: <>Match a standard form.</> },
           { title: '3. Solve and check', text: <>Then put the answer back in.</> },
         ]} />
+        <SymbolKey rows={EX['differential-equation-solver'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="\frac{dy}{dx} + \frac{y}{x} = x^2" />.</ExampleProblem>
-        <ExampleStep n={1} title="TYPE"><StepText>It is linear: P = 1/x, Q = x².</StepText></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATING FACTOR"><MathPanel><BlockMath math="\text{IF} = e^{\int dx/x} = x, \qquad xy = \int x^3\,dx = \frac{x^4}{4} + C" /></MathPanel></ExampleStep>
-        <Conclusion result="y = x³/4 + C/x" math={<BlockMath math="y = \frac{x^3}{4} + \frac{C}{x}" />}>The solver below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['differential-equation-solver'].example} />
+      <CommonMistakes items={EX['differential-equation-solver'].mistakes} />
       <Lab heading="Interactive Differential Equation Solver"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['linear-ode', 'ode-cc', 'runge-kutta']} />

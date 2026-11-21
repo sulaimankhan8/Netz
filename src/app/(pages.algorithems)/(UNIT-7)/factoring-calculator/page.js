@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FactoringCalculator from './algorithems.factoring-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function FactoringPage() {
           { title: '2. Identities', text: <>Two terms: squares or cubes? Three terms: a perfect square?</> },
           { title: '3. Quadratics and beyond', text: <>ac method for quadratics; factor theorem for cubics.</> },
         ]} />
+        <SymbolKey rows={EX['factoring-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Factor <InlineMath math="x^3 - 6x^2 + 11x - 6" />.</ExampleProblem>
-        <ExampleStep n={1} title="FIND A ROOT"><MathPanel><BlockMath math="f(1) = 1 - 6 + 11 - 6 = 0" /></MathPanel><StepText>So <InlineMath math="(x - 1)" /> is a factor.</StepText></ExampleStep>
-        <ExampleStep n={2} title="DIVIDE IT OUT"><MathPanel><BlockMath math="x^3 - 6x^2 + 11x - 6 = (x - 1)(x^2 - 5x + 6)" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="FACTOR THE QUADRATIC"><StepText>−2 and −3 multiply to 6 and add to −5:</StepText><MathPanel><BlockMath math="x^2 - 5x + 6 = (x - 2)(x - 3)" /></MathPanel></ExampleStep>
-        <Conclusion result="(x − 1)(x − 2)(x − 3)" math={<BlockMath math="x^3 - 6x^2 + 11x - 6 = (x - 1)(x - 2)(x - 3)" />}>Try it in the calculator below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['factoring-calculator'].example} />
+      <CommonMistakes items={EX['factoring-calculator'].mistakes} />
       <Lab heading="Interactive Factoring Calculator"><FactoringCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['quadratic', 'rational-expressions', 'inequalities']} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.shooting-method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Shoot", text: <>RK4 to x = b for each.</> },
           { title: "3. Correct", text: <>Secant step on the miss.</> },
         ]} />
+        <SymbolKey rows={EX['shooting-method'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math={"y'' = y"} />, y(0) = 0, y(1) = 1.</ExampleProblem>
-        <ExampleStep n={1} title="SHOOT"><MathPanel><BlockMath math={"s = 0 \\Rightarrow y(1) = 0, \\qquad s = 1 \\Rightarrow y(1) = 1.1752"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SECANT"><MathPanel><BlockMath math={"s = 1 - \\frac{(1.1752 - 1)(1 - 0)}{1.1752 - 0} = 0.8509"} /></MathPanel><StepText>For a linear equation one secant step is exact.</StepText></ExampleStep>
-        <Conclusion result="y′(0) ≈ 0.8509" math={<BlockMath math={"y'(0) = \\frac{1}{\\sinh 1} \\approx 0.8509"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['shooting-method'].example} />
+      <CommonMistakes items={EX['shooting-method'].mistakes} />
       <Lab heading="Interactive Shooting Method Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["finite-difference-bvp","runge-kutta","secant"]} />

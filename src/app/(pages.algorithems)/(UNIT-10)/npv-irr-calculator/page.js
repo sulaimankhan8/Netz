@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.npv-irr-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Add", text: <>NPV ≥ 0: accept.</> },
           { title: "3. IRR", text: <>Newton–Raphson on NPV.</> },
         ]} />
+        <SymbolKey rows={EX['npv-irr-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A project costs ₹10,000 and returns ₹3,000, ₹4,200 and ₹6,800 over 3 years. Find the NPV at 10% and the IRR.</ExampleProblem>
-        <ExampleStep n={1} title="NPV"><MathPanel><BlockMath math={"-10{,}000 + \\frac{3{,}000}{1.1} + \\frac{4{,}200}{1.1^2} + \\frac{6{,}800}{1.1^3} = 1{,}307.29"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="IRR"><StepText>Newton–Raphson from 10% settles at about 16.34%, where NPV = 0.</StepText></ExampleStep>
-        <Conclusion result="NPV ₹1,307.29; IRR ≈ 16.34%" math={<BlockMath math={"NPV \\approx 1{,}307.29"} />}>The calculator below opens on this project.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['npv-irr-calculator'].example} />
+      <CommonMistakes items={EX['npv-irr-calculator'].mistakes} />
       <Lab heading="Interactive NPV and IRR Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["tvm","newton-raphson","cagr"]} />

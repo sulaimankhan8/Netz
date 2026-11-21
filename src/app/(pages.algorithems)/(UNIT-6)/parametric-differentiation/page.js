@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ParametricCalculator from './algorithems.parametric-differentiation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,29 +42,11 @@ export default function ParametricPage() {
             { title: '3. Second derivative', text: <>Differentiate dy/dx with respect to t, then divide by dx/dt again.</> },
           ]}
         />
+        <SymbolKey rows={EX['parametric-differentiation'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          For <InlineMath math="x = t^2, \ y = 2t" />, find <InlineMath math="\frac{dy}{dx}" /> and <InlineMath math="\frac{d^2y}{dx^2}" />, and the tangent at t = 1.
-        </ExampleProblem>
-        <ExampleStep n={1} title="DIFFERENTIATE WITH RESPECT TO t">
-          <MathPanel><BlockMath math="\frac{dx}{dt} = 2t, \qquad \frac{dy}{dt} = 2" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={2} title="DIVIDE">
-          <MathPanel><BlockMath math="\frac{dy}{dx} = \frac{2}{2t} = \frac{1}{t}" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={3} title="SECOND DERIVATIVE">
-          <MathPanel><BlockMath math="\frac{d^2y}{dx^2} = \frac{\frac{d}{dt}\left(\frac{1}{t}\right)}{2t} = \frac{-1/t^2}{2t} = -\frac{1}{2t^3}" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={4} title="TANGENT AT t = 1">
-          <StepText>The point is (1, 2) and the slope is 1/1 = 1:</StepText>
-          <MathPanel><BlockMath math="y - 2 = 1(x - 1) \quad \Rightarrow \quad y = x + 1" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="dy/dx = 1/t, d²y/dx² = −1/(2t³)" math={<BlockMath math="\frac{dy}{dx} = \frac{1}{t}" />}>
-          This curve is the parabola y² = 4x. The calculator below opens on it.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['parametric-differentiation'].example} />
+      <CommonMistakes items={EX['parametric-differentiation'].mistakes} />
 
       <Lab heading="Interactive Parametric Differentiation Calculator">
         <ParametricCalculator />

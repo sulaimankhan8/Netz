@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import TaylorSeriesCalculator from './algorithems.taylor-series-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,24 +42,11 @@ export default function TaylorSeriesPage() {
             { title: '3. Divide by k!', text: <>These are the coefficients of (x − a)ᵏ.</> },
           ]}
         />
+        <SymbolKey rows={EX['taylor-series-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>Find the Maclaurin series of <InlineMath math="e^x" /> up to x⁴, and use it to estimate <InlineMath math="e^{0.5}" />.</ExampleProblem>
-        <ExampleStep n={1} title="ALL DERIVATIVES ARE eˣ">
-          <MathPanel><BlockMath math="f(0) = f'(0) = f''(0) = f'''(0) = f^{(4)}(0) = e^0 = 1" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={2} title="DIVIDE BY k!">
-          <MathPanel><BlockMath math="e^x \approx 1 + x + \frac{x^2}{2} + \frac{x^3}{6} + \frac{x^4}{24}" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={3} title="USE IT">
-          <MathPanel><BlockMath math="e^{0.5} \approx 1 + 0.5 + 0.125 + 0.020833 + 0.002604 = 1.648438" /></MathPanel>
-          <StepText>The true value is 1.648721…, so the error is about 0.0003.</StepText>
-        </ExampleStep>
-        <Conclusion result="eˣ ≈ 1 + x + x²/2 + x³/6 + x⁴/24" math={<BlockMath math="e^{0.5} \approx 1.6484" />}>
-          The calculator below opens on this example and draws eˣ and the series together.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['taylor-series-calculator'].example} />
+      <CommonMistakes items={EX['taylor-series-calculator'].mistakes} />
 
       <Lab heading="Interactive Taylor Series Calculator">
         <TaylorSeriesCalculator />

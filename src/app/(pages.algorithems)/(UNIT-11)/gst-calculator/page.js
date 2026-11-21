@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import GstCalculator from './algorithems.gst-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit11';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function GstPage() {
             { title: '3. Split It', text: <>Same state: CGST = SGST = GST ÷ 2. Different state or import: IGST = GST.</> },
           ]}
         />
+        <SymbolKey rows={EX['gst-calculator'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -76,6 +79,7 @@ export default function GstPage() {
           If the customer were in another state, the same ₹9,000 would be charged as IGST.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['gst-calculator'].mistakes} />
 
       <Lab heading="Interactive GST Calculator">
         <GstCalculator />

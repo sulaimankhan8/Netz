@@ -22,13 +22,31 @@ export function solve({ method = 'lagrange', x: xt, y: yt, target }) {
     if (new Set(Y).size !== n) throw new EngineError('Inverse Lagrange needs different y values.');
     let x = 0;
     const terms = [];
+    const weights = [];
     for (let i = 0; i < n; i++) {
       let L = 1;
-      for (let j = 0; j < n; j++) if (j !== i) L *= (t - Y[j]) / (Y[i] - Y[j]);
+      const top = [], bottom = [];
+      for (let j = 0; j < n; j++) if (j !== i) { L *= (t - Y[j]) / (Y[i] - Y[j]); top.push(`(${r8(t)} - ${r8(Y[j])})`); bottom.push(`(${r8(Y[i])} - ${r8(Y[j])})`); }
       x += X[i] * L;
-      terms.push(`${r8(X[i])} \\times ${r8(L)}`);
+      terms.push(`${r8(X[i])} \\times (${r8(L)})`);
+      weights.push(`L_${i} = \\frac{${top.join('')}}{${bottom.join('')}} = ${r8(L)}`);
     }
-    steps.push({ title: 'Inverse Lagrange', formula: 'x = \\sum_i x_i\\prod_{j \\ne i}\\frac{y - y_j}{y_i - y_j}', depth: 0, lines: [`x = ${terms.join(' + ').replace(/\+ -/g, '- ')}`, `x \\approx ${r8(x)}`] });
+    steps.push({
+      title: 'Swap the roles of x and y', depth: 0,
+      text: 'We know y and want x, so treat x as a function of y: Lagrange\'s formula is used with the y values as the "positions" and the x values as the "values".',
+      formula: 'x = \\sum_i x_i\\prod_{j \\ne i}\\frac{y - y_j}{y_i - y_j}',
+      lines: [`y = ${r8(t)}`],
+    });
+    steps.push({
+      title: 'The weight of each point', depth: 0,
+      text: 'Each weight is a product of fractions: the target y minus every other table y, over this point\'s y minus every other table y.',
+      lines: weights,
+    });
+    steps.push({
+      title: 'Combine', depth: 0,
+      text: 'Multiply each x by its weight and add.',
+      lines: [`x = ${terms.join(' + ')}`, `x \\approx ${r8(x)}`],
+    });
     const mono = Y.every((v, i) => i === 0 || v > Y[i - 1]) || Y.every((v, i) => i === 0 || v < Y[i - 1]);
     return { method, x: r8(x), steps, notes: mono ? [] : ['y is not monotone in the table, so x as a function of y is not single-valued; the answer may be unreliable.'], verified: true, result: r8(x) };
   }

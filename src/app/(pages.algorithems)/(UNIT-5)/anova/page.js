@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import AnovaCalculator from './algorithems.anova';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function AnovaPage() {
           { title: '2. Mean squares', text: <>Divide each by its degrees of freedom.</> },
           { title: '3. F test', text: <>Compare F with the critical F from the table.</> },
         ]} />
+        <SymbolKey rows={EX['anova'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Three fertilisers give yields 8, 10, 7, 14, 11 / 7, 5, 10, 9, 9 / 12, 9, 13, 12, 14. Do they differ at the 5% level?</ExampleProblem>
-        <ExampleStep n={1} title="SUMS OF SQUARES"><MathPanel><BlockMath math="G = 150, \ CF = \frac{150^2}{15} = 1500: \quad SST = 1600 - 1500 = 100, \quad SSTr = 40, \quad SSE = 60" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="F RATIO"><MathPanel><BlockMath math="F = \frac{40/2}{60/12} = \frac{20}{5} = 4" /></MathPanel><StepText>The 5% critical value F(2, 12) is 3.885.</StepText></ExampleStep>
-        <Conclusion result="F = 4 > 3.885: significant" math={<BlockMath math="F = 4.0 > F_{0.05}(2, 12) = 3.885" />}>So the fertilisers do not all give the same mean yield.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['anova'].example} />
+      <CommonMistakes items={EX['anova'].mistakes} />
       <Lab heading="Interactive ANOVA Calculator"><AnovaCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['f-test', 't-test', 'descriptive-statistics']} />

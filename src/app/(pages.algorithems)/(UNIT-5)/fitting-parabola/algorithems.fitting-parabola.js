@@ -413,9 +413,9 @@ const FittingParabolaSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> 3x3 Normal Equations System Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Normal Equations:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Normal Equations:</span>
                   <BlockMath math={`\\sum y = n a + b \\sum x + c \\sum x^2 \\implies ${+result.sumY.toFixed(4)} = ${combo([[result.n, 'a'], [result.sumX, 'b'], [result.sumX2, 'c']])}`} />
                   <BlockMath math={`\\sum xy = a \\sum x + b \\sum x^2 + c \\sum x^3 \\implies ${+result.sumXY.toFixed(4)} = ${combo([[result.sumX, 'a'], [result.sumX2, 'b'], [result.sumX3, 'c']])}`} />
                   <BlockMath math={`\\sum x^2 y = a \\sum x^2 + b \\sum x^3 + c \\sum x^4 \\implies ${+result.sumX2Y.toFixed(4)} = ${combo([[result.sumX2, 'a'], [result.sumX3, 'b'], [result.sumX4, 'c']])}`} />

@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import FTestSolver from './algorithems.f-test';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { fTest as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function FTestPage() {
   const formula = `
@@ -76,6 +79,14 @@ export default function FTestPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 's_1^2,\\ s_2^2', t: 'The two sample variances (with n − 1 in the denominator).', e: '25,\\ 10' },
+                    { s: 'F = \\frac{s_1^2}{s_2^2}', t: 'The ratio, with the larger variance on top so that F ≥ 1.', e: '\\tfrac{25}{10} = 2.5' },
+                    { s: 'df_1,\\ df_2', t: 'Degrees of freedom of the top and bottom variances: n − 1 each.', e: '9,\\ 11' },
+                    { s: 'F_{0.05}(df_1, df_2)', t: 'The table value; reject H₀ (equal variances) if F is bigger.', e: '2.896' },
+                  ]} />
                 </div>
               </div>
 
@@ -157,6 +168,15 @@ export default function FTestPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Putting the smaller variance on top.', f: 'Put the larger variance in the numerator so F ≥ 1.' },
+                { m: 'Swapping the degrees of freedom.', f: '$df_1$ belongs to the numerator, $df_2$ to the denominator: $F(9, 11) \\ne F(11, 9)$.' },
+                { m: 'Using standard deviations.', f: 'F compares variances: square the standard deviations first.' },
+                { m: 'Dividing by n instead of n − 1.', f: 'Sample variances use n − 1.' },
+                { m: 'Writing only the final answer.', f: 'Show the hypotheses, both variances, F, the degrees of freedom, the table value and the decision.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -169,6 +189,8 @@ export default function FTestPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import DescriptiveCalculator from './algorithems.descriptive-statistics';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function DescriptivePage() {
           { title: 'Spread', text: <>Variance, standard deviation, quartiles, range.</> },
           { title: 'Shape', text: <>Skewness (lopsided?) and kurtosis (peaked?).</> },
         ]} />
+        <SymbolKey rows={EX['descriptive-statistics'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the mean and standard deviation of <InlineMath math="2, 4, 4, 4, 5, 5, 7, 9" />.</ExampleProblem>
-        <ExampleStep n={1} title="MEAN"><MathPanel><BlockMath math="\bar x = \frac{40}{8} = 5" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SQUARED DEVIATIONS"><MathPanel><BlockMath math="(x - 5)^2: \ 9, 1, 1, 1, 0, 0, 4, 16 \ \Rightarrow \ \sum = 32" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="VARIANCE AND SD"><MathPanel><BlockMath math="\sigma^2 = \frac{32}{8} = 4, \qquad \sigma = 2" /></MathPanel><StepText>Median = 4.5 (between the 4th and 5th values) and mode = 4.</StepText></ExampleStep>
-        <Conclusion result="x̄ = 5, σ = 2" math={<BlockMath math="\bar x = 5, \quad \sigma = 2" />}>Try it with the first example button below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['descriptive-statistics'].example} />
+      <CommonMistakes items={EX['descriptive-statistics'].mistakes} />
       <Lab heading="Interactive Statistics Calculator"><DescriptiveCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['correlation', 'normal', 'least-squares']} />

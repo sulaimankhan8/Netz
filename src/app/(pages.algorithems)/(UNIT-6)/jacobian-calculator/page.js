@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import JacobianCalculator from './algorithems.jacobian-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function JacobianPage() {
           { title: '2. Matrix', text: <>One row per function.</> },
           { title: '3. Determinant', text: <>Expand and simplify.</> },
         ]} />
+        <SymbolKey rows={EX['jacobian-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math="\frac{\partial(x, y)}{\partial(r, \theta)}" /> for <InlineMath math="x = r\cos\theta, \ y = r\sin\theta" />.</ExampleProblem>
-        <ExampleStep n={1} title="MATRIX"><MathPanel><BlockMath math="J = \begin{vmatrix} \cos\theta & -r\sin\theta \\ \sin\theta & r\cos\theta \end{vmatrix}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EXPAND"><MathPanel><BlockMath math="J = r\cos^2\theta + r\sin^2\theta = r" /></MathPanel><StepText>So the area element dx dy becomes r dr dθ.</StepText></ExampleStep>
-        <Conclusion result="J = r" math={<BlockMath math="\frac{\partial(x, y)}{\partial(r, \theta)} = r" />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['jacobian-calculator'].example} />
+      <CommonMistakes items={EX['jacobian-calculator'].mistakes} />
       <Lab heading="Interactive Jacobian Calculator"><JacobianCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['partial-derivative', 'double-integral', 'determinant']} />

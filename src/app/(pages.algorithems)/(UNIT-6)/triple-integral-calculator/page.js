@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import TripleIntegralCalculator from './algorithems.triple-integral-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function TripleIntegralPage() {
           { title: '2. Middle', text: <>In y; x is a constant.</> },
           { title: '3. Outermost', text: <>In x, between numbers.</> },
         ]} />
+        <SymbolKey rows={EX['triple-integral-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the volume of the tetrahedron <InlineMath math="x, y, z \ge 0, \ x + y + z \le 1" />.</ExampleProblem>
-        <ExampleStep n={1} title="INNERMOST"><MathPanel><BlockMath math="\int_0^{1-x-y} dz = 1 - x - y" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MIDDLE"><MathPanel><BlockMath math="\int_0^{1-x} (1 - x - y)\,dy = \frac{(1-x)^2}{2}" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="OUTERMOST"><MathPanel><BlockMath math="\int_0^1 \frac{(1-x)^2}{2}\,dx = \frac{1}{6}" /></MathPanel><StepText>As expected: a sixth of the unit cube.</StepText></ExampleStep>
-        <Conclusion result="V = 1/6" math={<BlockMath math="V = \frac{1}{6}" />}>The second example button below loads this solid.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['triple-integral-calculator'].example} />
+      <CommonMistakes items={EX['triple-integral-calculator'].mistakes} />
       <Lab heading="Interactive Triple Integral Calculator"><TripleIntegralCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['double-integral', 'jacobian', 'beta-gamma']} />

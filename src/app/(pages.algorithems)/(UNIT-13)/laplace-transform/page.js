@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.laplace-transform';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LaplacePage() {
           { title: '2. Rules', text: <>eᵃᵗ shifts s; tⁿ differentiates F.</> },
           { title: '3. Table', text: <>Finish with the standard results.</> },
         ]} />
+        <SymbolKey rows={EX['laplace-transform'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math="\mathcal{L}\{e^{2t}\sin 3t\}" />.</ExampleProblem>
-        <ExampleStep n={1} title="TABLE"><MathPanel><BlockMath math="\mathcal{L}\{\sin 3t\} = \frac{3}{s^2 + 9}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="FIRST SHIFT"><MathPanel><BlockMath math="\mathcal{L}\{e^{2t}\sin 3t\} = \frac{3}{(s - 2)^2 + 9}" /></MathPanel><StepText>Replace s by s − 2.</StepText></ExampleStep>
-        <Conclusion result="3/((s − 2)² + 9)" math={<BlockMath math="= \frac{3}{s^2 - 4s + 13}" />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['laplace-transform'].example} />
+      <CommonMistakes items={EX['laplace-transform'].mistakes} />
       <Lab heading="Interactive Laplace Transform Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['inverse-laplace', 'laplace-ode', 'unit-step']} />

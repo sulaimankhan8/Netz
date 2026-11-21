@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.exact-differential-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function ExactOdePage() {
           { title: '2. If not', text: <>Find an integrating factor.</> },
           { title: '3. Integrate', text: <>M in x, leftover N in y.</> },
         ]} />
+        <SymbolKey rows={EX['exact-differential-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="(2xy + 3)\,dx + (x^2 - 1)\,dy = 0" />.</ExampleProblem>
-        <ExampleStep n={1} title="TEST"><MathPanel><BlockMath math="\frac{\partial M}{\partial y} = 2x = \frac{\partial N}{\partial x}" /></MathPanel><StepText>Exact.</StepText></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math="\int (2xy + 3)\,dx = x^2y + 3x, \qquad \int (-1)\,dy = -y" /></MathPanel></ExampleStep>
-        <Conclusion result="x²y + 3x − y = C" math={<BlockMath math="x^2y + 3x - y = C" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['exact-differential-equation'].example} />
+      <CommonMistakes items={EX['exact-differential-equation'].mistakes} />
       <Lab heading="Interactive Exact Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['partial-derivative', 'homogeneous-ode', 'ode-solver']} />

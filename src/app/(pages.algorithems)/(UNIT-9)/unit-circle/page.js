@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import UnitCircle from './algorithems.unit-circle';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function UnitCirclePage() {
             { title: '3. Sign by ASTC', text: <>Take the value for the reference angle and give it the sign of that quadrant.</> },
           ]}
         />
+        <SymbolKey rows={EX['unit-circle'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -74,6 +77,7 @@ export default function UnitCirclePage() {
           Drag the point on the circle below to 150° and the same values appear.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['unit-circle'].mistakes} />
 
       <Lab heading="Interactive Unit Circle">
         <UnitCircle />

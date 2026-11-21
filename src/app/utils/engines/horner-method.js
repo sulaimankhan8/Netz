@@ -32,25 +32,45 @@ export function solve({ coeffs, places = '3' }) {
   const rows = [];
   let p = shift(a, start.a);
   rows.push({ stage: `diminish by ${start.a}`, coeffs: p.map((c) => Number(c.toPrecision(10))).join(', ') });
-  steps.push({ title: 'Whole part', depth: 0, lines: [`p(${start.a}) = ${Number(val(a, start.a).toPrecision(8))}, \\ p(${start.a + 1}) = ${Number(val(a, start.a + 1).toPrecision(8))}: \\ \\text{a root between ${start.a} and ${start.a + 1}}`] });
+  const fmt = (v) => String(Number(v.toPrecision(8)));
+  const poly = (c) => c.map((v, i) => {
+    const pw = c.length - 1 - i;
+    const mag = Math.abs(v) === 1 && pw > 0 ? '' : fmt(Math.abs(v)); // x³, not 1x³
+    const sign = i === 0 ? (v < 0 ? '-' : '') : v < 0 ? ' - ' : ' + ';
+    return `${sign}${mag}${pw > 1 ? `x^{${pw}}` : pw === 1 ? 'x' : ''}`;
+  }).join('');
+  steps.push({
+    title: 'Whole part: find the sign change', depth: 0,
+    text: 'Try whole numbers until p changes sign: the root lies between them, so its whole-number part is the smaller one.',
+    lines: [`p(${start.a}) = ${fmt(val(a, start.a))}, \\ p(${start.a + 1}) = ${fmt(val(a, start.a + 1))}: \\ \\text{a root between ${start.a} and ${start.a + 1}}`],
+  });
+  steps.push({
+    title: `Diminish the roots by ${start.a}`, depth: 0,
+    text: `Synthetic division by (x − ${start.a}), repeated, gives the polynomial whose roots are the old roots minus ${start.a}. Its root now lies between 0 and 1.`,
+    lines: [`p(x + ${start.a}) = ${poly(p)}`],
+  });
   const digits = [];
   for (let k = 0; k < D; k++) {
     // multiply roots by 10
-    const n = p.length - 1;
     p = p.map((c, i) => c * 10 ** i);
     let d = 0;
     while (d < 9 && val(p, d) * val(p, d + 1) > 0) d++;
-    if (val(p, d) === 0) { digits.push(d); break; }
+    const exact = val(p, d) === 0;
+    steps.push({
+      title: `Decimal place ${k + 1}: digit ${d}`, depth: 0,
+      text: `Multiply the roots by 10 (multiply the coefficients by 1, 10, 100, … from the top), so the root lies between 0 and 10. It is between ${d} and ${d + 1}, where the new polynomial changes sign, so the next digit is ${d}. Then diminish by ${d}.`,
+      lines: [`\\text{roots} \\times 10: \\ ${poly(p)}`, `q(${d}) = ${fmt(val(p, d))}, \\quad q(${d + 1}) = ${fmt(val(p, d + 1))}`],
+    });
     digits.push(d);
+    if (exact) break;
     p = shift(p, d);
     rows.push({ stage: `×10, diminish by ${d}`, coeffs: p.map((c) => Number(c.toPrecision(10))).join(', ') });
-    void n;
   }
-  const root = Number(`${start.a < 0 && start.a !== 0 ? '' : ''}${start.a}`) + Number(`0.${digits.join('')}`) * (1);
-  steps.push({ title: 'Digits', formula: '\\text{multiply the roots by 10, find the next digit, diminish}', depth: 0, lines: [`x \\approx ${root.toFixed(digits.length)}`] });
+  const root = start.a + Number(`0.${digits.join('')}`);
+  steps.push({ title: 'Collect the digits', depth: 0, text: 'The whole part followed by the digits found, in order.', lines: [`x \\approx ${start.a} + 0.${digits.join('')} = ${root.toFixed(digits.length)}`] });
   // Horner evaluation table at the root
   const evalRows = []; let acc = 0;
   orig.forEach((c, i) => { acc = acc * root + c; evalRows.push(`b_{${orig.length - 1 - i}} = ${Number(acc.toPrecision(8))}`); });
-  steps.push({ title: "Horner's scheme at the root", formula: 'p(c) = (\\cdots(a_nc + a_{n-1})c + \\cdots)c + a_0', depth: 0, lines: [evalRows.join(', \\ '), `p(${root.toFixed(digits.length)}) = ${Number(val(orig, root).toPrecision(6))}`] });
+  steps.push({ title: "Check with Horner's scheme", text: 'Evaluate p at the root by nesting: multiply by x and add the next coefficient, again and again. The last value is p(x), which should be close to 0.', formula: 'p(c) = (\\cdots(a_nc + a_{n-1})c + \\cdots)c + a_0', depth: 0, lines: [evalRows.join(', \\ '), `p(${root.toFixed(digits.length)}) = ${Number(val(orig, root).toPrecision(6))}`] });
   return { root: root.toFixed(digits.length), table: { columns: [{ key: 'stage', label: 'Stage', bold: true }, { key: 'coeffs', label: 'Transformed coefficients', highlight: true }], rows }, steps, notes: ['Each digit is exact (it is not rounded): the root lies between the value shown and the value plus one unit in the last place.'], verified: val(orig, root) * val(orig, root + 10 ** -digits.length) <= 0, result: root.toFixed(digits.length) };
 }

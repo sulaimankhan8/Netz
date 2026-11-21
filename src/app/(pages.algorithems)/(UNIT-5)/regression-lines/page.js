@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import RegressionCalculator from './algorithems.regression-lines';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function RegressionPage() {
           { title: '2. Coefficients', text: <>b_yx and b_xy from the deviation table.</> },
           { title: '3. Lines and estimates', text: <>Substitute into each line.</> },
         ]} />
+        <SymbolKey rows={EX['regression-lines'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the line of regression of y on x for x = 1, 2, 3, 4, 5 and y = 2, 4, 5, 4, 5, and estimate y at x = 6.</ExampleProblem>
-        <ExampleStep n={1} title="COEFFICIENT"><MathPanel><BlockMath math="\bar x = 3, \ \bar y = 4, \qquad b_{yx} = \frac{6}{10} = 0.6" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="THE LINE"><MathPanel><BlockMath math="y - 4 = 0.6(x - 3) \ \Rightarrow \ y = 0.6x + 2.2" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="ESTIMATE"><MathPanel><BlockMath math="y(6) = 0.6(6) + 2.2 = 5.8" /></MathPanel><StepText>The other line, x on y, is x = y − 1.</StepText></ExampleStep>
-        <Conclusion result="y = 0.6x + 2.2; y(6) = 5.8" math={<BlockMath math="y = 0.6x + 2.2" />}>The calculator below opens on this data.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['regression-lines'].example} />
+      <CommonMistakes items={EX['regression-lines'].mistakes} />
       <Lab heading="Interactive Regression Calculator"><RegressionCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['correlation', 'straight-line', 'curve-fitting']} />

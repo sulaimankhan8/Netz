@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRecordSolve } from '@/app/utils/activity';
 import OdeCalculator from '@/app/components/method/OdeCalculator';
+import { rk2Working } from '@/app/components/method/odeWorking';
 import { solve } from '@/app/utils/engines/rk2';
 
 const START = { f: 'x + y', x0: '0', y0: '1', h: '0.1', xn: '0.2', variant: 'heun' };
@@ -16,7 +17,7 @@ export default function Rk2Calculator() {
   useRecordSolve('rk2', 4, answer, () => ({ fn: answer?.fn }));
   return (
     <OdeCalculator
-      exportId="rk2"
+      exportId="rk2" working={rk2Working}
       onAnswer={(r, v) => setAnswer(r && { ...r, fn: v.f })} title="RK2 Engine" solve={solve} start={START} columns={COLUMNS}
       toRow={(r) => ({ n: r.n, x: r.x, y: r.y, k1: r.k1, k2: r.k2, yNext: r.yNext })}
       variants={[{ value: 'heun', label: 'Heun (improved Euler)' }, { value: 'midpoint', label: 'Midpoint' }]}

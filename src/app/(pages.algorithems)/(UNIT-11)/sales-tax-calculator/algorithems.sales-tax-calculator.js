@@ -6,11 +6,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { Stat } from '@/app/components/method/SavingsCalculator';
 import RatesBadge from '@/app/components/method/RatesBadge';
 import { formatMoney } from '@/app/utils/finance/money';
 import { solve, salesTaxRule } from '@/app/utils/engines/sales-tax';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const RULE = salesTaxRule();
 const STATES = RULE.data.states;
@@ -18,6 +20,7 @@ const START = { amount: '100', mode: 'add', state: RULE.data.defaultState, state
 
 export default function SalesTaxCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('sales-tax');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('sales-tax', 11, answer, () => ({ state: s.state, mode: s.mode }));
@@ -25,6 +28,8 @@ export default function SalesTaxCalculator() {
   const m = (v) => formatMoney(v, 'USD');
   const st = STATES.find((x) => x.code === s.state);
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -42,17 +47,19 @@ export default function SalesTaxCalculator() {
         title="Sales Tax Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before tax (add tax)' }, { value: 'remove', label: 'Price including tax (remove tax)' }]} />
+        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before tax (add tax)' }, { value: 'remove', label: 'Price including tax (remove tax)' }]} help={guide?.help?.mode} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label={s.mode === 'add' ? 'Price before tax ($)' : 'Price including tax ($)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} />
-          <Select label="State" value={s.state} onChange={(v) => set({ state: v })} options={[...STATES.map((x) => ({ value: x.code, label: `${x.name} (${x.rate}%)` })), { value: 'custom', label: 'Other: type the rate' }]} />
-          {s.state === 'custom' && <Field label="State rate (%)" value={s.stateRate} placeholder="e.g. 6" onChange={(v) => set({ stateRate: v })} onEnter={run} />}
-          <Field label="Local rate: county + city (%)" value={s.local} placeholder="0 if none" onChange={(v) => set({ local: v })} onEnter={run} />
+          <Field label={s.mode === 'add' ? 'Price before tax ($)' : 'Price including tax ($)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} help={guide?.help?.amount} />
+          <Select label="State" value={s.state} onChange={(v) => set({ state: v })} options={[...STATES.map((x) => ({ value: x.code, label: `${x.name} (${x.rate}%)` })), { value: 'custom', label: 'Other: type the rate' }]} help={guide?.help?.state} />
+          {s.state === 'custom' && <Field label="State rate (%)" value={s.stateRate} placeholder="e.g. 6" onChange={(v) => set({ stateRate: v })} onEnter={run} help={guide?.help?.stateRate} />}
+          <Field label="Local rate: county + city (%)" value={s.local} placeholder="0 if none" onChange={(v) => set({ local: v })} onEnter={run} help={guide?.help?.local} />
         </div>
         {st?.note && <p className="text-sm text-neutral-700 dark:text-neutral-300">{st.name}: {st.note}.</p>}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate Sales Tax
           </EditorialButton>
         </div>

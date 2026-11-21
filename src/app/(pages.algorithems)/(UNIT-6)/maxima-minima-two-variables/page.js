@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MaximaMinima2VarCalculator from './algorithems.maxima-minima-two-variables';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function MaximaMinima2VarPage() {
           { title: '2. r, s, t', text: <>Second partials at each point.</> },
           { title: '3. Decide', text: <>Sign of rt − s², then of r.</> },
         ]} />
+        <SymbolKey rows={EX['maxima-minima-two-variables'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the extreme values of <InlineMath math="f = x^3 + y^3 - 3xy" />.</ExampleProblem>
-        <ExampleStep n={1} title="CRITICAL POINTS"><MathPanel><BlockMath math="f_x = 3x^2 - 3y = 0, \ f_y = 3y^2 - 3x = 0 \Rightarrow (0, 0), \ (1, 1)" /></MathPanel><StepText>y = x², so x⁴ = x: x = 0 or 1.</StepText></ExampleStep>
-        <ExampleStep n={2} title="TEST"><MathPanel><BlockMath math="r = 6x, \ s = -3, \ t = 6y" /></MathPanel><StepText>At (0, 0): rt − s² = −9 &lt; 0, a saddle point. At (1, 1): rt − s² = 27 &gt; 0 and r = 6 &gt; 0, a minimum.</StepText></ExampleStep>
-        <Conclusion result="Minimum −1 at (1, 1)" math={<BlockMath math="f_{\min} = f(1, 1) = -1" />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['maxima-minima-two-variables'].example} />
+      <CommonMistakes items={EX['maxima-minima-two-variables'].mistakes} />
       <Lab heading="Interactive Maxima & Minima Calculator"><MaximaMinima2VarCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['lagrange-multipliers', 'maxima-minima', 'partial-derivative']} />

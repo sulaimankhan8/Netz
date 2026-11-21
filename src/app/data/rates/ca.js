@@ -13,11 +13,12 @@ export const CA_RULES = [
     validFrom: '2025-04-01',
     validTo: null,
     label: 'Rates from 1 Apr 2025 (Nova Scotia HST 14%)',
+    // Read 2026-11-21: every rate below is in the CRA table; Manitoba RST and Saskatchewan PST also on their own sites
     source: {
-      title: 'Canada Revenue Agency, "GST/HST rates"; provincial finance ministries',
+      title: 'Canada Revenue Agency, "GST/HST calculator (and rates)"; Manitoba and Saskatchewan finance sites',
       url: 'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate/calculator.html',
-      verifiedOn: '2026-11-04',
-      status: 'secondary',
+      verifiedOn: '2026-11-21',
+      status: 'official',
     },
     data: {
       gst: 5,

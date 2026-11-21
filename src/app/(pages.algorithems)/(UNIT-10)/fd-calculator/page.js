@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FdCalculator from './algorithems.fd-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function FdPage() {
           { title: '2. Number of periods', text: <>4 × years (plus any part quarter).</> },
           { title: '3. Grow', text: <>Multiply by (1 + i) once for each quarter.</> },
         ]} />
+        <SymbolKey rows={EX['fd-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹1,00,000 is deposited for 5 years at 7% a year, compounded quarterly. Find the maturity amount.</ExampleProblem>
-        <ExampleStep n={1} title="RATE AND PERIODS"><MathPanel><BlockMath math="i = \frac{7}{400} = 0.0175, \qquad 4T = 4 \times 5 = 20" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="GROW"><MathPanel><BlockMath math="A = 1{,}00{,}000 \times (1.0175)^{20} = 1{,}41{,}477.8" /></MathPanel><StepText>The interest is ₹41,477.8, against ₹35,000 if it were simple interest.</StepText></ExampleStep>
-        <Conclusion result="Maturity ₹1,41,478" math={<BlockMath math="A \approx 1{,}41{,}478" />}>The calculator below opens on this deposit.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['fd-calculator'].example} />
+      <CommonMistakes items={EX['fd-calculator'].mistakes} />
       <Lab heading="Interactive FD Calculator"><FdCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['rd', 'compound-interest', 'ppf']} />

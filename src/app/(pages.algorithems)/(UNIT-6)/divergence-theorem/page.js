@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.divergence-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Volume side", text: <>∭ ∇·F dV.</> },
           { title: "3. Surface side", text: <>The flux through each face, added.</> },
         ]} />
+        <SymbolKey rows={EX['divergence-theorem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Verify the theorem for F = 4xz i − y² j + yz k over the unit cube 0 ≤ x, y, z ≤ 1.</ExampleProblem>
-        <ExampleStep n={1} title="DIVERGENCE"><MathPanel><BlockMath math={"\\nabla\\cdot\\mathbf{F} = 4z - 2y + y = 4z - y"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="VOLUME SIDE"><MathPanel><BlockMath math={"\\iiint (4z - y)\\,dV = 2 - \\tfrac12 = \\tfrac32"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="FACES"><MathPanel><BlockMath math={"x = 1: \\iint 4z = 2, \\quad y = 1: \\iint -1 = -1, \\quad z = 1: \\iint y = \\tfrac12, \\quad \\text{others } 0"} /></MathPanel><StepText>The total flux is 2 − 1 + ½ = 3/2.</StepText></ExampleStep>
-        <Conclusion result="Both sides = 3/2" math={<BlockMath math={"\\oint\\!\\!\\oint_S \\mathbf{F}\\cdot\\mathbf{n}\\,dS = \\frac32"} />}>The calculator below opens on this cube.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['divergence-theorem'].example} />
+      <CommonMistakes items={EX['divergence-theorem'].mistakes} />
       <Lab heading="Interactive Divergence Theorem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["surface-integral","grad-div-curl","triple-integral"]} />

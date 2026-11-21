@@ -4,6 +4,9 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import NewtonRaphsonMethod from './aldorithems.newton-raphson';
+import { newtonRaphson as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, IterationPanel, StepTable, Conclusion,
@@ -41,6 +44,15 @@ export default function NewtonRaphsonMethods() {
             { title: '3. Tangent Intercept Step', text: <>Subtract ratio <InlineMath math="\frac{f(x_n)}{f'(x_n)}" /> to slide directly along tangent line to <InlineMath math="x_{n+1}" />.</> },
           ]}
         />
+        <SymbolKey rows={[
+          { s: 'f(x)', t: <>The function whose root we want: where the graph crosses the x-axis.</>, e: 'f(x) = x^2 - 5' },
+          { s: "f'(x)", t: 'The derivative: the slope of the tangent line at x. Newton slides down this tangent to the axis.', e: "f'(x) = 2x" },
+          { s: 'x_0', t: 'The starting guess. A guess close to the root makes Newton converge in very few steps.', e: 'x_0 = 2' },
+          { s: 'x_n', t: 'The guess after n steps.', e: 'x_1 = 2.25' },
+          { s: 'x_{n+1}', t: 'The next guess: where the tangent at x_n meets the x-axis.', e: 'x_2 = 2.236111' },
+          { s: '\\dfrac{f(x_n)}{f\'(x_n)}', t: 'The correction: how far to move from x_n. Near the root it becomes tiny.', e: '\\dfrac{-1}{4} = -0.25' },
+          { s: '|x_{n+1} - x_n|', t: 'How much the guess moved. Stop when it is smaller than the tolerance.', e: '0.000043' },
+        ]} />
       </FormulaBox>
 
       <WorkedExample>
@@ -74,9 +86,17 @@ export default function NewtonRaphsonMethods() {
 
         <ExampleStep n={4} title="SUBSEQUENT ITERATIONS WALKTHROUGH" space={4}>
           <IterationPanel label="Iteration 3:">
-            <div>Function Value: <InlineMath math="f(2.236111) = (2.236111)^2 - 5 = +0.000193" /></div>
-            <div>Derivative Value: <InlineMath math="f'(2.236111) = 4.472222" /></div>
-            <div>Next Guess: <InlineMath math="x_3 = 2.236111 - \frac{0.000193}{4.472222} = 2.236068" /></div>
+            <div className="text-sm md:text-base font-sans overflow-x-auto text-center">
+              <BlockMath math="f(2.236111) = (2.236111)^2 - 5 = +0.000193" />
+              <BlockMath math="f'(2.236111) = 2(2.236111) = 4.472222" />
+              <BlockMath math="x_3 = 2.236111 - \frac{0.000193}{4.472222} = 2.236111 - 0.000043 = 2.236068" />
+            </div>
+          </IterationPanel>
+          <IterationPanel label="Iteration 4 (check):">
+            <div className="text-sm md:text-base font-sans overflow-x-auto text-center">
+              <BlockMath math="f(2.236068) = (2.236068)^2 - 5 \approx 0.0000001 \quad\Longrightarrow\quad x_4 = 2.236068" />
+            </div>
+            <div className="text-sm font-sans">The guess no longer changes in the 6th decimal: <InlineMath math="|x_4 - x_3| < 0.000001" />, so stop.</div>
           </IterationPanel>
         </ExampleStep>
 
@@ -92,9 +112,20 @@ export default function NewtonRaphsonMethods() {
         </Conclusion>
       </WorkedExample>
 
+      <CommonMistakes items={[
+        { m: <>Getting the derivative wrong.</>, f: <>Differentiate carefully before starting and check one value: for <InlineMath math="x^2 - 5" />, <InlineMath math="f'(x) = 2x" />, so <InlineMath math="f'(2) = 4" />. A wrong slope sends every step the wrong way.</> },
+        { m: <>Adding the correction instead of subtracting it.</>, f: <><InlineMath math="x_{n+1} = x_n - \dfrac{f(x_n)}{f'(x_n)}" />. With <InlineMath math="f(x_n) < 0" /> the minus makes the guess go up: <InlineMath math="2 - \dfrac{-1}{4} = 2.25" />.</> },
+        { m: <>Starting where <InlineMath math="f'(x_0) = 0" /> or very small.</>, f: <>The tangent is flat and never meets the axis (or meets it far away). Choose <InlineMath math="x_0" /> where the curve is clearly sloping, e.g. from a quick sign check.</> },
+        { m: <>Using degrees for trigonometric functions.</>, f: <>Work in radians, and remember <InlineMath math="\dfrac{d}{dx}\sin x = \cos x" /> only holds in radians.</> },
+        { m: <>Rounding each new guess heavily.</>, f: <>Newton doubles the correct digits each step; rounding to 2–3 decimals throws that away. Keep 6 decimals.</> },
+        { m: <>Writing only the final answer.</>, f: <>Show <InlineMath math="f'(x)" />, then for each step <InlineMath math="f(x_n)" />, <InlineMath math="f'(x_n)" />, the formula with numbers, and the change <InlineMath math="|x_{n+1} - x_n|" />.</> },
+      ]} />
+
       <Lab heading="Interactive Live Calculator & Visualizer">
         <NewtonRaphsonMethod />
       </Lab>
+      <Faq items={EXTRAS.faq} />
+      <RelatedMethods ids={EXTRAS.related} />
     </MethodPage>
   );
 }

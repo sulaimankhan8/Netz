@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.linear-differential-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LinearOdePage() {
           { title: '2. IF', text: <>e to the ∫P dx; simplify e^(ln x) = x.</> },
           { title: '3. Integrate', text: <>Q·IF, add C, divide by IF.</> },
         ]} />
+        <SymbolKey rows={EX['linear-differential-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="\frac{dy}{dx} + y\tan x = \sec x" />.</ExampleProblem>
-        <ExampleStep n={1} title="INTEGRATING FACTOR"><MathPanel><BlockMath math="\int \tan x\,dx = -\ln|\cos x| \;\Rightarrow\; \text{IF} = \sec x" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math="y\sec x = \int \sec^2 x\,dx = \tan x + C" /></MathPanel><StepText>Multiply by cos x.</StepText></ExampleStep>
-        <Conclusion result="y = sin x + C cos x" math={<BlockMath math="y = \sin x + C\cos x" />}>The fourth example button below loads this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['linear-differential-equation'].example} />
+      <CommonMistakes items={EX['linear-differential-equation'].mistakes} />
       <Lab heading="Interactive Linear Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['bernoulli', 'variable-separable', 'ode-solver']} />

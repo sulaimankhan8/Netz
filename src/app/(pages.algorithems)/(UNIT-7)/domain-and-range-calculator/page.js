@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.domain-and-range-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Solve them", text: <>Critical points split the line; test each interval.</> },
           { title: "3. Range", text: <>Turning values and the limits at the ends.</> },
         ]} />
+        <SymbolKey rows={EX['domain-and-range-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the domain and range of f(x) = √(x − 2)/(x − 5).</ExampleProblem>
-        <ExampleStep n={1} title="CONDITIONS"><MathPanel><BlockMath math={"x - 2 \\ge 0, \\qquad x - 5 \\ne 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DOMAIN"><MathPanel><BlockMath math={"D_f = [2, 5) \\cup (5, \\infty)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="RANGE"><StepText>On [2, 5) f falls from 0 to −∞; on (5, ∞) it falls from +∞ towards 0. Together every real number is reached.</StepText></ExampleStep>
-        <Conclusion result="D = [2, 5) ∪ (5, ∞), R = ℝ" math={<BlockMath math={"D_f = [2, 5) \\cup (5, \\infty), \\quad R_f = \\mathbb{R}"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['domain-and-range-calculator'].example} />
+      <CommonMistakes items={EX['domain-and-range-calculator'].mistakes} />
       <Lab heading="Interactive Domain and Range Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["inequalities","continuity","asymptotes"]} />

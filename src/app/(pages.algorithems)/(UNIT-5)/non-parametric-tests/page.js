@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.non-parametric-tests';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Statistic", text: <>S, or U.</> },
           { title: "3. P-value", text: <>Binomial, or the normal approximation.</> },
         ]} />
+        <SymbolKey rows={EX['non-parametric-tests'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Ten values 12 15 9 18 20 11 14 16 13 17: is the median 12 (α = 0.05)?</ExampleProblem>
-        <ExampleStep n={1} title="SIGNS"><MathPanel><BlockMath math={"7 \\text{ plus}, \\ 2 \\text{ minus}, \\ 1 \\text{ tie (dropped)}: \\ n = 9, \\ S = 2"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="P-VALUE"><MathPanel><BlockMath math={"P = 2\\sum_{i=0}^{2}\\binom{9}{i}\\left(\\tfrac12\\right)^9 = \\frac{2\\cdot 46}{512} = 0.18"} /></MathPanel><StepText>P &gt; 0.05: there is not enough evidence against median 12.</StepText></ExampleStep>
-        <Conclusion result="P = 0.18, do not reject" math={<BlockMath math={"P = 0.1797 > 0.05"} />}>The calculator below opens on these data.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['non-parametric-tests'].example} />
+      <CommonMistakes items={EX['non-parametric-tests'].mistakes} />
       <Lab heading="Interactive Non-Parametric Tests Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["z-test","chi-square","anova"]} />

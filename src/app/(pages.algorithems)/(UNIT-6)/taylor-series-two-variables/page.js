@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Taylor2VarCalculator from './algorithems.taylor-series-two-variables';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Taylor2VarPage() {
           { title: '2. At the point', text: <>Put x = a, y = b.</> },
           { title: '3. Assemble', text: <>Multiply by powers of h and k.</> },
         ]} />
+        <SymbolKey rows={EX['taylor-series-two-variables'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Expand <InlineMath math="e^x\sin y" /> about (0, 0) up to third-degree terms.</ExampleProblem>
-        <ExampleStep n={1} title="DERIVATIVES AT (0, 0)"><MathPanel><BlockMath math="f = 0, \ f_x = 0, \ f_y = 1, \ f_{xy} = 1, \ f_{xxy} = 1, \ f_{yyy} = -1" /></MathPanel><StepText>All the others are 0 at the origin.</StepText></ExampleStep>
-        <ExampleStep n={2} title="ASSEMBLE"><MathPanel><BlockMath math="y + \frac{2xy}{2!} + \frac{3x^2y - y^3}{3!}" /></MathPanel></ExampleStep>
-        <Conclusion result="y + xy + x²y/2 − y³/6" math={<BlockMath math="e^x\sin y \approx y + xy + \frac{1}{2}x^2y - \frac{1}{6}y^3" />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['taylor-series-two-variables'].example} />
+      <CommonMistakes items={EX['taylor-series-two-variables'].mistakes} />
       <Lab heading="Interactive Two-Variable Taylor Calculator"><Taylor2VarCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['taylor-series', 'partial-derivative', 'maxima-minima-2var']} />

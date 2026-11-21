@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import VectorCalculator from './algorithems.vector-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function VectorPage() {
           { title: 'Cross product', text: <>Expand the î ĵ k̂ determinant along the top row.</> },
           { title: 'Projection', text: <>(a · b / |b|²) b is the part of a along b.</> },
         ]} />
+        <SymbolKey rows={EX['vector-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the angle between <InlineMath math="\hat i + \hat j" /> and <InlineMath math="\hat j + \hat k" />.</ExampleProblem>
-        <ExampleStep n={1} title="DOT PRODUCT AND LENGTHS"><MathPanel><BlockMath math="\vec a \cdot \vec b = (1)(0) + (1)(1) + (0)(1) = 1, \qquad |\vec a| = |\vec b| = \sqrt{2}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="THE ANGLE"><MathPanel><BlockMath math="\cos\theta = \frac{1}{\sqrt2 \cdot \sqrt2} = \frac{1}{2} \ \Rightarrow \ \theta = \frac{\pi}{3} = 60^\circ" /></MathPanel><StepText>Try it with the first example button below.</StepText></ExampleStep>
-        <Conclusion result="θ = π/3 (60°)" math={<BlockMath math="\theta = \frac{\pi}{3}" />}>The calculator below also does cross products, projections and triple products.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['vector-calculator'].example} />
+      <CommonMistakes items={EX['vector-calculator'].mistakes} />
       <Lab heading="Interactive Vector Calculator"><VectorCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['coordinate-geometry', 'determinant', 'linear-dependence']} />

@@ -7,9 +7,11 @@ import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import { solve } from '@/app/utils/engines/implicit';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { eq: 'x^2 + y^2 = 25', x0: '3', y0: '4' };
 const EXAMPLES = [
@@ -22,11 +24,14 @@ const EXAMPLES = [
 
 export default function ImplicitCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('implicit');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('implicit', 6, answer, () => ({ eq: v.eq }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     const input = { ...v, ...override };
     try {
@@ -46,8 +51,9 @@ export default function ImplicitCalculator() {
         title="Implicit Differentiation Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Field label="Equation in x and y" value={v.eq} inputMode="text" placeholder="e.g. x^2 + y^2 = 25" onChange={(eq) => set({ eq })} onEnter={() => run()} />
+        <Field label="Equation in x and y" value={v.eq} inputMode="text" placeholder="e.g. x^2 + y^2 = 25" onChange={(eq) => set({ eq })} onEnter={() => run()} help={guide?.help?.eq} />
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
           {EXAMPLES.map((e) => (
@@ -55,12 +61,13 @@ export default function ImplicitCalculator() {
           ))}
         </div>
         <div className="grid grid-cols-2 gap-4 max-w-sm">
-          <Field label="Point x₀ (optional)" value={v.x0} onChange={(x0) => set({ x0 })} onEnter={() => run()} />
-          <Field label="Point y₀ (optional)" value={v.y0} onChange={(y0) => set({ y0 })} onEnter={() => run()} />
+          <Field label="Point x₀ (optional)" value={v.x0} onChange={(x0) => set({ x0 })} onEnter={() => run()} help={guide?.help?.x0} />
+          <Field label="Point y₀ (optional)" value={v.y0} onChange={(y0) => set({ y0 })} onEnter={() => run()} help={guide?.help?.y0} />
         </div>
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Write xy for x times y. Use ^ for powers: x^2 y^3 = 4, sin(x + y) = y.</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Find dy/dx
           </EditorialButton>
         </div>

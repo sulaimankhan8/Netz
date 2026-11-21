@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.laplace-transform-ode';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LaplaceOdePage() {
           { title: '2. Solve for Y', text: <>Plain algebra in s.</> },
           { title: '3. Invert', text: <>Partial fractions, then the table.</> },
         ]} />
+        <SymbolKey rows={EX['laplace-transform-ode'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="y'' + 3y' + 2y = e^{-3t}" />, <InlineMath math="y(0) = 1, \ y'(0) = 0" />.</ExampleProblem>
-        <ExampleStep n={1} title="TRANSFORM"><MathPanel><BlockMath math="(s^2 + 3s + 2)Y - (s + 3) = \frac{1}{s + 3}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE AND SPLIT"><MathPanel><BlockMath math="Y = \frac{s^2 + 6s + 10}{(s + 1)(s + 2)(s + 3)} = \frac{5/2}{s + 1} - \frac{2}{s + 2} + \frac{1/2}{s + 3}" /></MathPanel></ExampleStep>
-        <Conclusion result="y = (5/2)e⁻ᵗ − 2e⁻²ᵗ + ½e⁻³ᵗ" math={<BlockMath math="y(t) = \frac{5}{2}e^{-t} - 2e^{-2t} + \frac{1}{2}e^{-3t}" />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['laplace-transform-ode'].example} />
+      <CommonMistakes items={EX['laplace-transform-ode'].mistakes} />
       <Lab heading="Interactive Laplace ODE Solver"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['laplace', 'inverse-laplace', 'ode-cc']} />

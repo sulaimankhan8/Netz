@@ -212,6 +212,12 @@ export function tex(node) {
     .replace(/\\mathrm\{([a-zA-Z])\}/g, '$1');
 }
 
+/** For working lines shown to the reader: a − (−b) and a + (−b), as math.js prints them ("--", "+-"), read a + b and a − b. */
+export const tidySigns = (t) => t
+  .replace(/(^|[^\\{^_])-\s*-/g, '$1+')
+  .replace(/\+\s*-/g, '-')
+  .replace(/(^|\\left\(|=\s*)\+(?=\s*[\w\\(])/g, '$1');
+
 /** Plain text for a node, e.g. for the answer box: 3 * x ^ 2 → 3x^2. */
 export const text = (node) => node.toString({ implicit: 'hide' })
   .replace(/(\d) \* (?=[a-zA-Z(])/g, '$1')

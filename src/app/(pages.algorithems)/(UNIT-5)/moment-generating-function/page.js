@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.moment-generating-function';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Differentiate", text: <>Once and twice.</> },
           { title: "3. Put t = 0", text: <>Mean and second moment.</> },
         ]} />
+        <SymbolKey rows={EX['moment-generating-function'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the mean and variance of the Poisson distribution from its MGF <InlineMath math={"M(t) = e^{\\lambda(e^t - 1)}"} />.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST DERIVATIVE"><MathPanel><BlockMath math={"M'(t) = \\lambda e^t M(t) \\Rightarrow M'(0) = \\lambda"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SECOND DERIVATIVE"><MathPanel><BlockMath math={"M''(t) = (\\lambda e^t + \\lambda^2e^{2t})M(t) \\Rightarrow M''(0) = \\lambda + \\lambda^2"} /></MathPanel></ExampleStep>
-        <Conclusion result="μ = σ² = λ" math={<BlockMath math={"\\sigma^2 = \\lambda + \\lambda^2 - \\lambda^2 = \\lambda"} />}>The second example button below loads the Poisson case.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['moment-generating-function'].example} />
+      <CommonMistakes items={EX['moment-generating-function'].mistakes} />
       <Lab heading="Interactive Moment Generating Function Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["random-variables","binomial","poisson"]} />

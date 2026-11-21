@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LumpsumCalculator from './algorithems.lumpsum-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LumpsumPage() {
           { title: '2. Power', text: <>Raise it to the number of years.</> },
           { title: '3. Inflation', text: <>Optional: divide by (1 + f/100)^T.</> },
         ]} />
+        <SymbolKey rows={EX['lumpsum-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹1,00,000 is invested for 10 years at an expected 12% a year. Find the value, and its worth in today&apos;s money if inflation is 6%.</ExampleProblem>
-        <ExampleStep n={1} title="GROW"><MathPanel><BlockMath math="F = 1{,}00{,}000 \times (1.12)^{10} = 3{,}10{,}584.82" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INFLATION"><MathPanel><BlockMath math="\frac{3{,}10{,}584.82}{(1.06)^{10}} = 1{,}73{,}428.94" /></MathPanel><StepText>The real return is 1.12/1.06 − 1 ≈ 5.66% a year.</StepText></ExampleStep>
-        <Conclusion result="₹3,10,585 (₹1,73,429 in today's money)" math={<BlockMath math="F \approx 3{,}10{,}585" />}>The calculator below opens on this investment.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['lumpsum-calculator'].example} />
+      <CommonMistakes items={EX['lumpsum-calculator'].mistakes} />
       <Lab heading="Interactive Lump Sum Calculator"><LumpsumCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['sip', 'compound-interest', 'fd']} />

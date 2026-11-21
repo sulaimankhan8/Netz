@@ -5,11 +5,13 @@ import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
+import TermWorking from '@/app/components/method/TermWorking';
 import "katex/dist/katex.min.css";
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton, EditorialStepViewer } from '@/app/components/editorial';
 import DataPointsInput from '@/app/components/DataPointsInput';
 import { FiPlus, FiTrash2, FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 export default function GaussForwardInterpolation({ theme }) {
   const [vSteps, setVSteps] = useState([]);
@@ -117,6 +119,11 @@ export default function GaussForwardInterpolation({ theme }) {
     setOutput(`Interpolated value at x = ${x}: P(${x}) = ${interpVal.toFixed(6)}`);
     setInterpolatedValue(interpVal);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { const sp = (t) => String(t || '').split(/[,\s]+/).filter(Boolean); const ys = sp(v.y); setRows(sp(v.x).map((x, i) => ({ x, y: ys[i] ?? '' }))); setInterpolateX(String(v.at ?? '')); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -400,32 +407,7 @@ export default function GaussForwardInterpolation({ theme }) {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Step-by-Step Parameter & Polynomial Derivation
               </h4>
 
-              {vSteps.length > 0 && (
-                <div className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                  <span className="text-xs font-mono font-bold uppercase text-neutral-500 block">Central Parameter (p) Calculation:</span>
-                  <div className="overflow-x-auto text-center py-2">
-                    <BlockMath math={vSteps.join(" \\quad, \\quad ")} />
-                  </div>
-                </div>
-              )}
-
-              {polynomialSteps.formulas.length > 0 && (
-                <div className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-4">
-                  <div>
-                    <span className="text-xs font-mono font-bold uppercase text-neutral-500 block mb-1">Substituted Gauss Forward Series:</span>
-                    <div className="overflow-x-auto text-center py-2">
-                      <BlockMath math={polynomialSteps.substituted.join(" + ")} />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-300 dark:border-neutral-700">
-                    <span className="text-xs font-mono font-bold uppercase text-neutral-500 block mb-1">Evaluated Term Sum:</span>
-                    <div className="overflow-x-auto text-center py-2 font-mono text-sm font-bold">
-                      {polynomialSteps.calculated.join(" + ")}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <TermWorking vSteps={vSteps} formulas={polynomialSteps.formulas} substituted={polynomialSteps.substituted} calculated={polynomialSteps.calculated} varName="p" />
             </div>
           )}
 

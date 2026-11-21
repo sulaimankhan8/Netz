@@ -10,6 +10,7 @@ import MatrixInputGrid from '@/app/components/MatrixInputGrid';
 import { Choice } from '@/app/components/method/Calculator';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 function initMatrix(n) {
   return Array.from({ length: n }, (_, r) =>
@@ -110,6 +111,11 @@ const GaussElimination = () => {
     setSolution(sol);
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { if (!v.rows) return; setN(v.rows.length); setMatrix(v.rows.map((r) => r.map(String))); solveSoon(); });
+
+
   const handleDemo = () => {
     const demo = [
       ['2', '1', '-1', '8'],
@@ -170,7 +176,7 @@ const GaussElimination = () => {
         />
 
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={handleSolve} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={handleSolve} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Solve System
           </EditorialButton>
         </div>

@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import RationalExpressionsCalculator from './algorithems.rational-expressions-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function RationalExpressionsPage() {
           { title: '2. One fraction', text: <>For sums, use the lowest common denominator.</> },
           { title: '3. Factor and cancel', text: <>Cancel only common factors.</> },
         ]} />
+        <SymbolKey rows={EX['rational-expressions-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Simplify <InlineMath math="\frac{1}{x - 1} + \frac{1}{x + 1}" />.</ExampleProblem>
-        <ExampleStep n={1} title="COMMON DENOMINATOR"><MathPanel><BlockMath math="\frac{(x + 1) + (x - 1)}{(x - 1)(x + 1)}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ADD THE TOPS"><MathPanel><BlockMath math="= \frac{2x}{(x - 1)(x + 1)}, \quad x \neq \pm 1" /></MathPanel><StepText>Nothing cancels: 2x has no factor in common with the bottom.</StepText></ExampleStep>
-        <Conclusion result="2x / ((x − 1)(x + 1))" math={<BlockMath math="\frac{2x}{x^2 - 1}" />}>Try more in the calculator below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['rational-expressions-calculator'].example} />
+      <CommonMistakes items={EX['rational-expressions-calculator'].mistakes} />
       <Lab heading="Interactive Rational Expressions Calculator"><RationalExpressionsCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['factoring', 'inequalities', 'linear-equation']} />

@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import BooleRuleSolver from './algorithems.boole-rule';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { boole as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function BooleRulePage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function BooleRulePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'n', t: 'The number of strips. It must be a multiple of 4: the rule fits a degree-4 curve over each group of four strips.', e: 'n = 4' },
+                    { s: 'h', t: 'The width of each strip: (b − a)/n.', e: 'h = 1' },
+                    { s: '7,\\ 32,\\ 12,\\ 32,\\ 7', t: 'The weights for one group of four strips. Where two groups meet the 7s add up to 14.', e: '7y_0 + 32y_1 + 12y_2 + 32y_3 + 7y_4' },
+                    { s: '\\frac{2h}{45}', t: 'The factor in front of the bracket.', e: '\\dfrac{2(1)}{45}' },
+                    { s: 'y_i', t: 'The heights f(xᵢ) at the strip edges.', e: 'y_1 = e^1 = 2.71828' },
+                  ]} />
                 </div>
               </div>
 
@@ -214,8 +226,18 @@ export default function BooleRulePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using n that is not a multiple of 4.</>, f: <>Boole&apos;s rule needs n = 4, 8, 12, …</> },
+                { m: <>Wrong weight pattern.</>, f: <>7, 32, 12, 32, 7 for each group; where groups join, the shared point gets 7 + 7 = 14.</> },
+                { m: <>Wrong factor.</>, f: <>It is <InlineMath math="\dfrac{2h}{45}" />.</> },
+                { m: <>Expecting it to be exact for every function.</>, f: <>It is exact for polynomials up to degree 5; for <InlineMath math="e^x" /> with h = 1 it is 53.6701 against 53.5982.</> },
+                { m: <>Rounding the heights too early.</>, f: <>The weights are large (32), so rounding errors grow: keep 5–6 decimals.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show h, the table, each weight times its height, the bracket, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -226,6 +248,8 @@ export default function BooleRulePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

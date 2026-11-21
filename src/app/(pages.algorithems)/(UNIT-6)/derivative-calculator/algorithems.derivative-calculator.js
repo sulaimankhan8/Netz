@@ -1,15 +1,18 @@
 'use client';
 // The live derivative calculator. The maths is in src/app/utils/engines/derivative.js and src/app/utils/symbolic.
 import React, { useState } from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import CoordPlot from '@/app/components/method/CoordPlot';
+import StepList from '@/app/components/method/StepList';
 import { solve } from '@/app/utils/engines/derivative';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: 'x^2 sin(3x)', order: '1', at: '' };
 const EXAMPLES = ['x^3 - 4x + 1', 'sin(x^2)', '(x+1)/(x-1)', 'e^(2x) cos(x)', 'ln(x^2+1)', 'sqrt(1-x^2)'];
@@ -27,11 +30,14 @@ function viewFor(f, centre = 0) {
 
 export default function DerivativeCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('derivative');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('derivative', 6, answer, () => ({ fn: v.f, order: v.order }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     const input = { ...v, ...override };
     try {
@@ -56,8 +62,9 @@ export default function DerivativeCalculator() {
         title="Derivative Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2 sin(3x)" onChange={(f) => set({ f })} onEnter={() => run()} />
+        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2 sin(3x)" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
           {EXAMPLES.map((e) => (
@@ -65,12 +72,13 @@ export default function DerivativeCalculator() {
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,14rem)] gap-4 items-end">
-          <Choice label="Derivative" value={v.order} onChange={(order) => set({ order })} options={[{ value: '1', label: "1st f'" }, { value: '2', label: "2nd f''" }, { value: '3', label: "3rd f'''" }]} />
-          <Field label="Slope at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={() => run()} />
+          <Choice label="Derivative" value={v.order} onChange={(order) => set({ order })} options={[{ value: '1', label: "1st f'" }, { value: '2', label: "2nd f''" }, { value: '3', label: "3rd f'''" }]} help={guide?.help?.order} />
+          <Field label="Slope at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={() => run()} help={guide?.help?.at} />
         </div>
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Use ^ for powers and brackets for functions: sin(3x), ln(x), e^(2x), sqrt(x).</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Differentiate
           </EditorialButton>
         </div>
@@ -108,17 +116,8 @@ export default function DerivativeCalculator() {
         <StepsCard key={round.k} title={answer.order === 1 ? 'Step-by-Step Working' : `Derivative ${round.k} of ${answer.order}`}>
           <div className="overflow-x-auto"><BlockMath math={`\\frac{d}{d${x}}\\left[${round.from}\\right]`} /></div>
           {round.steps.length === 0 && <p className="text-sm text-neutral-700 dark:text-neutral-300">This is a constant, so its derivative is 0.</p>}
-          <ol className="space-y-2">
-            {round.steps.map((s, i) => (
-              <li key={i} style={{ marginLeft: `${Math.min(s.depth, 4) * 12}px` }} className="border border-black/20 dark:border-neutral-700 rounded-xl overflow-hidden">
-                <div className="bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-xs font-mono font-bold text-black dark:text-white border-b border-black/20 dark:border-neutral-700 flex flex-wrap gap-x-3 justify-between">
-                  <span>{s.rule}</span>
-                  <span className="font-normal text-neutral-600 dark:text-neutral-400"><InlineMath math={s.formula} /></span>
-                </div>
-                <div className="px-2 overflow-x-auto text-center text-black dark:text-white"><BlockMath math={s.line} /></div>
-              </li>
-            ))}
-          </ol>
+          {/* Each rule: its formula full size, then the line with this function put in */}
+          <StepList steps={round.steps.map((s) => ({ title: s.rule, formula: s.formula, lines: [s.line], depth: s.depth }))} />
           {round.changed && (
             <div className="space-y-1">
               <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">Simplify</div>

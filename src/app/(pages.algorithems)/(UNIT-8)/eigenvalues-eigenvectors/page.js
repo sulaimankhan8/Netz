@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import EigenvalueCalculator from './algorithems.eigenvalues-eigenvectors';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function EigenvaluesPage() {
           { title: '2. Eigenvalues', text: <>Solve it: factor, or use the factor theorem.</> },
           { title: '3. Eigenvectors', text: <>For each λ, row-reduce A − λI and solve.</> },
         ]} />
+        <SymbolKey rows={EX['eigenvalues-eigenvectors'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the eigenvalues and eigenvectors of <InlineMath math="A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}" />.</ExampleProblem>
-        <ExampleStep n={1} title="CHARACTERISTIC EQUATION"><MathPanel><BlockMath math="\lambda^2 - 7\lambda + 10 = 0 \ \Rightarrow \ (\lambda - 2)(\lambda - 5) = 0" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="λ = 2"><MathPanel><BlockMath math="\begin{bmatrix} 2 & 1 \\ 2 & 1 \end{bmatrix}X = 0 \ \Rightarrow \ 2x + y = 0 \ \Rightarrow \ X = \begin{bmatrix} 1 \\ -2 \end{bmatrix}" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="λ = 5"><MathPanel><BlockMath math="\begin{bmatrix} -1 & 1 \\ 2 & -2 \end{bmatrix}X = 0 \ \Rightarrow \ x = y \ \Rightarrow \ X = \begin{bmatrix} 1 \\ 1 \end{bmatrix}" /></MathPanel><StepText>Check: A(1, 1) = (5, 5) = 5(1, 1) ✓</StepText></ExampleStep>
-        <Conclusion result="λ = 2, 5" math={<BlockMath math="\lambda_1 = 2: (1, -2), \qquad \lambda_2 = 5: (1, 1)" />}>The calculator below opens on this matrix.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['eigenvalues-eigenvectors'].example} />
+      <CommonMistakes items={EX['eigenvalues-eigenvectors'].mistakes} />
       <Lab heading="Interactive Eigenvalue Calculator"><EigenvalueCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['cayley-hamilton', 'power-method', 'determinant']} />

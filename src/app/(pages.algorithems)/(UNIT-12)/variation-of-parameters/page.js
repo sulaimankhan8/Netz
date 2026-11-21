@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.variation-of-parameters';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function VariationPage() {
           { title: '2. W', text: <>The Wronskian.</> },
           { title: '3. Two integrals', text: <>Then combine into the PI.</> },
         ]} />
+        <SymbolKey rows={EX['variation-of-parameters'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="y'' + y = \sec x" />.</ExampleProblem>
-        <ExampleStep n={1} title="CF AND W"><MathPanel><BlockMath math="y_1 = \cos x, \ y_2 = \sin x, \qquad W = \cos^2 x + \sin^2 x = 1" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRALS"><MathPanel><BlockMath math="\int \sin x\sec x\,dx = -\ln|\cos x|, \qquad \int \cos x\sec x\,dx = x" /></MathPanel></ExampleStep>
-        <Conclusion result="PI = cos x ln|cos x| + x sin x" math={<BlockMath math="y = C_1\cos x + C_2\sin x + \cos x\ln|\cos x| + x\sin x" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['variation-of-parameters'].example} />
+      <CommonMistakes items={EX['variation-of-parameters'].mistakes} />
       <Lab heading="Interactive Variation of Parameters Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['ode-cc', 'cauchy-euler', 'ode-solver']} />

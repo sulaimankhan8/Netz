@@ -44,6 +44,42 @@ export function solve({ cells, b: tb, omega: tw = '1.25', tol: tt = '0.0001', ma
 
   const run = iterate(A, b, omega, tol, maxIter);
   const gs = isZero(omega - 1) ? run : iterate(A, b, 1, tol, maxIter);
+
+  // Iteration 1 worked in full (from x = 0), one unknown at a time, as it is written in an exam
+  const V = ['x', 'y', 'z', 'u', 'v', 'w'];
+  const num = (v) => String(Number(v.toPrecision(6)));
+  const working = [{
+    title: 'Make each unknown the subject (the SOR formula)',
+    text: 'Each new value mixes the old value with the Gauss-Seidel value: ω = 1 is plain Gauss-Seidel, ω > 1 pushes further in the direction it is moving.',
+    formula: 'x_i^{new} = (1 - \\omega)x_i^{old} + \\frac{\\omega}{a_{ii}}\\Big(b_i - \\sum_{j \\ne i} a_{ij}x_j\\Big)',
+    lines: A.map((r, i) => `${V[i]} = (1 - \\omega)${V[i]} + \\frac{\\omega}{${num(r[i])}}\\left(${num(b[i])}${r.map((a, j) => (j === i || isZero(a) ? '' : ` ${a < 0 ? '+' : '-'} ${num(Math.abs(a))}${V[j]}`)).join('')}\\right)`),
+  }];
+  const x1 = new Array(n).fill(0);
+  const firstLines = [];
+  for (let i = 0; i < n; i++) {
+    let s = b[i];
+    const parts = [];
+    for (let j = 0; j < n; j++) {
+      if (j === i || isZero(A[i][j])) continue;
+      s -= A[i][j] * x1[j];
+      parts.push(`${A[i][j] < 0 ? '+' : '-'} ${num(Math.abs(A[i][j]))}(${num(x1[j])})`);
+    }
+    const old = x1[i];
+    x1[i] = (1 - omega) * old + (omega / A[i][i]) * s;
+    firstLines.push(`${V[i]}^{(1)} = (1 - ${num(omega)})(${num(old)}) + \\frac{${num(omega)}}{${num(A[i][i])}}\\left(${num(b[i])} ${parts.join(' ')}\\right) = ${num(x1[i])}`);
+  }
+  working.push({
+    title: 'Iteration 1 in full (start from all zeros)',
+    text: 'Work out the unknowns in order, using each new value as soon as it is known (unknowns not yet updated still have their old value).',
+    lines: firstLines,
+  });
+  working.push({
+    title: run.converged ? `Repeat until nothing changes by more than ${tol}` : 'Repeat',
+    text: run.converged
+      ? `The table below continues the same way. After ${run.rows.length} iterations no unknown changes by more than the tolerance, so the values are the solution.${isZero(omega - 1) ? '' : ` Plain Gauss-Seidel would need ${gs.converged ? gs.rows.length : 'more'} iterations.`}`
+      : 'The table below continues the same way; see the note on convergence.',
+    lines: [run.x.map((v, i) => `${V[i]} = ${num(v)}`).join(', \\quad ')],
+  });
   const notes = [];
   if (!diagonallyDominant(A)) notes.push('A is not diagonally dominant, so convergence is not guaranteed. Reordering the equations can help.');
   if (run.diverged) notes.push('The values blew up: the method diverged for this ω and system.');
@@ -51,6 +87,6 @@ export function solve({ cells, b: tb, omega: tw = '1.25', tol: tt = '0.0001', ma
   return {
     n, A, b, omega, tol, ...run, result: run.x,
     gsIterations: gs.converged ? gs.rows.length : null,
-    notes, steps: { headers: [], rows: [] }, plot: null,
+    notes, working, steps: { headers: [], rows: [] }, plot: null,
   };
 }

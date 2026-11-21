@@ -8,6 +8,7 @@ import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import DataPointsInput from '@/app/components/DataPointsInput';
 import { FiPlay, FiRotateCcw, FiPlus, FiTrash2, FiCheckCircle, FiTrendingUp, FiLayers, FiList } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 export default function LagrangeInterpolations({ theme }) {
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
@@ -87,6 +88,11 @@ export default function LagrangeInterpolations({ theme }) {
       final: `f(${xToInterpolate}) = ${interpolatedValue}`,
     });
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { const sp = (t) => String(t || '').split(/[,\s]+/).filter(Boolean); const ys = sp(v.y); setRows(sp(v.x).map((x, i) => ({ x, y: ys[i] ?? '' }))); setInterpolateX(String(v.at ?? '')); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -358,14 +364,40 @@ export default function LagrangeInterpolations({ theme }) {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Step Derivation & Polynomial Expansion
               </h4>
 
-              {polynomialSteps.formulas.length > 0 && (
-                <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
-                  <span className="text-xs font-mono font-bold uppercase text-neutral-500 block">Substituted Lagrange Sum:</span>
-                  <div className="overflow-x-auto py-1">
-                    <BlockMath math={polynomialSteps.substituted.join(" + ")} />
+              {polynomialSteps.formulas.length > 0 && (() => {
+                const terms = polynomialSteps.calculated.slice(1).map((v) => Number(v));
+                const total = terms.reduce((s, v) => s + v, 0);
+                const box = 'p-4 md:p-5 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white';
+                const label = 'text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400 block';
+                return (
+                  <div className="space-y-3">
+                    <div className={box}>
+                      <span className={label}>1. The formula</span>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`P(x) = \\sum_i y_i\\,L_i(x), \\qquad L_i(x) = \\prod_{j \\ne i} \\frac{x - x_j}{x_i - x_j}`} />
+                      </div>
+                    </div>
+                    <div className={box}>
+                      <span className={label}>{`2. Each weight L_i(${interpolateX}) with the numbers put in`}</span>
+                      <div className="overflow-x-auto text-center">
+                        {diffTable.map((row, i) => <BlockMath key={i} math={`L_{${i}}(${interpolateX}) = ${row[1]}`} />)}
+                      </div>
+                    </div>
+                    <div className={box}>
+                      <span className={label}>3. Each y value times its weight</span>
+                      <div className="overflow-x-auto text-center">
+                        {diffTable.map((row, i) => <BlockMath key={i} math={`y_{${i}}\\,L_{${i}} = ${row[0]} \\times ${String(row[1]).split('=').pop().trim()} = ${terms[i].toFixed(4)}`} />)}
+                      </div>
+                    </div>
+                    <div className={box}>
+                      <span className={label}>4. Add the terms</span>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`P(${interpolateX}) = ${terms.map((v) => (v < 0 ? `(${v.toFixed(4)})` : v.toFixed(4))).join(' + ')} = ${Number(total.toFixed(6))}`} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
 

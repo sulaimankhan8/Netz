@@ -1,0 +1,112 @@
+/**
+ * Measures how fully each method page teaches and shows its working, against the original pages' standard
+ * (docs/methods/METHOD_PAGES_TEACHING_PLAN.md). Writes docs/methods/METHOD_PAGES_TEACHING_AUDIT.md.
+ *
+ *   npm run audit:teaching
+ *
+ * Theory (page.js): words of plain explanation, worked-example steps, a procedure (FormulaSteps), FAQ, practice and
+ * exam-layout sections. Working (the calculator, for pages whose engine can be run here): steps for the page's own
+ * example, how many say in words what they do, how many show a formula with numbers put in, a table, a graph.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = path.resolve('src/app/(pages.algorithems)');
+const OUT = path.resolve('docs/methods/METHOD_PAGES_TEACHING_AUDIT.md');
+const { METHODS } = await import('../src/app/data/methods.js');
+const { METHOD_WIDGETS } = await import('../src/app/data/methodWidgets.js');
+
+const pages = [];
+(function walk(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory() && !/example/.test(e.name)) walk(p);
+    else if (e.name === 'page.js') pages.push(path.dirname(p));
+  }
+}(ROOT));
+
+/** Plain words on the page: JSX text and string literals, without LaTeX, class names or code. */
+function proseWords(src) {
+  const noMath = src.replace(/math=\{?(['"`])(?:\\.|(?!\1).)*\1\}?/gs, ' ').replace(/<(Block|Inline)Math[^>]*\/>/g, ' ');
+  const jsxText = [...noMath.matchAll(/>([^<>{}]+)</g)].map((m) => m[1]);
+  const strings = [...noMath.matchAll(/\b(?:q|a|text|title|children):\s*(['"`])((?:\\.|(?!\1).)*)\1/g)].map((m) => m[2]);
+  return [...jsxText, ...strings].join(' ').split(/\s+/).filter((w) => /[a-z]{2,}/i.test(w)).length;
+}
+
+const rows = [];
+for (const dir of pages) {
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.js'));
+  const page = fs.readFileSync(path.join(dir, 'page.js'), 'utf8');
+  const calc = files.filter((f) => f !== 'page.js' && f !== 'layout.js').map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+  const route = '/' + path.basename(dir);
+  const m = METHODS.find((x) => x.route.toLowerCase() === route.toLowerCase());
+  if (!m) continue;
+  const graphInCalc = /(CoordPlot|UnifiedPlot|Plot\b|ContourPlot|RegionSketch|GraphView|VennDiagram|ProbabilityBars|StackedBars|ShapeDiagram|TriangleDiagram|ButterflyDiagram|KMap|chart)/.test(calc);
+  const tableInCalc = /(StepTable|DifferenceTable|<table|TransportTable|columns=)/.test(calc);
+  rows.push({
+    id: m.id, name: m.name, unit: m.unit, status: m.status, original: m.batch === 0,
+    words: proseWords(page),
+    exampleSteps: (page.match(/<ExampleStep\b/g) || []).length + (page.match(/STEP 0\d/g) || []).length,
+    procedure: /FormulaSteps|PROCEDURE|step-intro-3/.test(page),
+    faq: /<Faq\b/.test(page),
+    practice: /<Practice\b/.test(page),
+    exam: /<ExamLayout\b/.test(page),
+    graphInCalc, tableInCalc,
+    run: null,
+  });
+}
+
+// Run each generated-widget engine on its page's own example
+for (const w of METHOD_WIDGETS) {
+  const r = rows.find((x) => x.id === w.id);
+  if (!r) continue;
+  try {
+    const mod = await w.load();
+    const ans = mod.solve({ ...w.start });
+    // The page adds plain sentences from src/app/data/stepTexts (withStepText); count them the same way
+    const texts = (await import(`../src/app/data/stepTexts/unit${r.unit}.js`)).default[w.id] || {};
+    const keys = Object.keys(texts).sort((x, y) => y.length - x.length);
+    const steps = (Array.isArray(ans.steps) ? ans.steps : []).map((s) => (s && !s.text ? { ...s, text: texts[keys.find((k) => String(s.title || '').startsWith(k))] } : s));
+    const flat = steps.map((s) => `${s.title || ''} ${s.text || ''} ${(s.lines || []).join(' ')}`);
+    r.run = {
+      steps: steps.length,
+      explained: steps.filter((s) => s.text && s.text.split(/\s+/).length >= 6).length,
+      substituted: steps.filter((s) => (s.lines || []).length >= 2).length,
+      table: !!(ans.table && ans.table.columns) || r.tableInCalc,
+      graph: r.graphInCalc,
+      chars: flat.join(' ').length,
+    };
+  } catch (e) {
+    r.run = { error: String(e.message || e).slice(0, 80) };
+  }
+}
+
+// Score: theory out of 6, working out of 4 (only where the engine ran)
+for (const r of rows) {
+  r.theory = (r.words >= 600 ? 2 : r.words >= 300 ? 1 : 0) + (r.exampleSteps >= 3 ? 1 : 0) + (r.procedure ? 1 : 0) + (r.practice ? 1 : 0) + (r.exam ? 1 : 0);
+  if (r.run && !r.run.error) {
+    r.working = (r.run.steps >= 4 ? 1 : 0) + (r.run.explained >= Math.ceil(r.run.steps / 2) ? 1 : 0) + (r.run.table ? 1 : 0) + (r.run.graph ? 1 : 0);
+  }
+}
+
+const live = rows.filter((r) => r.status === 'live' || r.status === 'building');
+const avg = (xs) => (xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1) : '—');
+const orig = live.filter((r) => r.original);
+const fresh = live.filter((r) => !r.original);
+let md = `# Method pages: teaching audit\n\nGenerated by \`npm run audit:teaching\` on ${new Date().toISOString().slice(0, 10)}. The standard is in \`docs/methods/METHOD_PAGES_TEACHING_PLAN.md\`.\n\n`;
+md += `| | Pages | Avg words of explanation | Avg worked-example steps | With practice | With exam layout |\n|---|---|---|---|---|---|\n`;
+md += `| Original 34 | ${orig.length} | ${avg(orig.map((r) => r.words))} | ${avg(orig.map((r) => r.exampleSteps))} | ${orig.filter((r) => r.practice).length} | ${orig.filter((r) => r.exam).length} |\n`;
+md += `| Newer pages | ${fresh.length} | ${avg(fresh.map((r) => r.words))} | ${avg(fresh.map((r) => r.exampleSteps))} | ${fresh.filter((r) => r.practice).length} | ${fresh.filter((r) => r.exam).length} |\n\n`;
+const ran = fresh.filter((r) => r.run && !r.run.error);
+md += `Working (calculator), ${ran.length} newer pages whose engine ran here: ${ran.filter((r) => r.run.table).length} show a table, ${ran.filter((r) => r.run.graph).length} a graph; ${ran.filter((r) => r.run.explained >= Math.ceil(r.run.steps / 2)).length} explain most steps in words; average ${avg(ran.map((r) => r.run.steps))} steps.\n\n`;
+md += `## Every page (lowest theory score first)\n\nTheory /6: 2 for 600+ words (1 for 300+), 1 for 3+ worked-example steps, 1 procedure, 1 practice, 1 exam layout. Working /4: 4+ steps, most steps explained in words, a table, a graph.\n\n`;
+md += `| Unit | Page | Status | Words | Ex. steps | Proc. | Practice | Exam | Theory /6 | Steps | Explained | Table | Graph | Working /4 |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n`;
+for (const r of [...live].sort((a, b) => a.theory - b.theory || a.unit - b.unit)) {
+  const w = r.run && !r.run.error ? r.run : null;
+  md += `| ${r.unit} | ${r.name}${r.original ? ' *(original)*' : ''} | ${r.status} | ${r.words} | ${r.exampleSteps} | ${r.procedure ? '✓' : ''} | ${r.practice ? '✓' : ''} | ${r.exam ? '✓' : ''} | ${r.theory} | ${w ? w.steps : '—'} | ${w ? w.explained : '—'} | ${w ? (w.table ? '✓' : '') : (r.tableInCalc ? '✓' : '')} | ${r.graphInCalc ? '✓' : ''} | ${r.working ?? '—'} |\n`;
+}
+fs.writeFileSync(OUT, md);
+console.log(`audited ${live.length} pages; wrote ${path.relative(process.cwd(), OUT)}`);
+console.log(`original avg words ${avg(orig.map((r) => r.words))}, newer avg words ${avg(fresh.map((r) => r.words))}`);
+const errs = rows.filter((r) => r.run?.error);
+if (errs.length) console.log(`${errs.length} engines did not run here:`, errs.map((r) => r.id).join(', '));

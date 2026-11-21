@@ -330,9 +330,9 @@ const ZTestSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Z-Statistic Formula Evaluation
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Formula Evaluation:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Formula Evaluation:</span>
                   <BlockMath math={`SE = \\frac{\\sigma}{\\sqrt{n}} = \\frac{${result.sigma}}{\\sqrt{${result.n}}} = ${result.se.toFixed(6)}`} />
                   <BlockMath math={`Z_{\\text{calc}} = \\frac{\\bar{x} - \\mu_0}{SE} = \\frac{${result.xBar} - ${result.mu}}{${result.se.toFixed(6)}} = ${result.zCalc.toFixed(4)}`} />
                   <p className="text-sm font-sans font-bold text-indigo-700 dark:text-indigo-300 pt-2">

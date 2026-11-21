@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import Simpson13RuleSolver from './algorithems.simpson-1-3-rule';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { simpson13 as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function Simpson13RulePage() {
   const formula = `
@@ -76,6 +79,16 @@ export default function Simpson13RulePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'n', t: 'The number of strips. It must be even: the rule fits a parabola over each pair of strips.', e: 'n = 4' },
+                    { s: 'h', t: 'The width of each strip: (b − a)/n.', e: 'h = 0.25' },
+                    { s: 'y_0,\\ y_n', t: 'The two end heights: weight 1.', e: '1,\\ 0.5' },
+                    { s: 'y_1, y_3, \\dots', t: 'Heights at odd positions (the middles of the parabolas): weight 4.', e: '4(0.8 + 0.571429)' },
+                    { s: 'y_2, y_4, \\dots', t: 'Heights at even inside positions (where two parabolas meet): weight 2.', e: '2(0.666667)' },
+                    { s: '\\frac{h}{3}', t: 'The factor in front of the bracket.', e: '\\dfrac{0.25}{3}' },
+                  ]} />
                 </div>
               </div>
 
@@ -214,8 +227,18 @@ export default function Simpson13RulePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using an odd number of strips.</>, f: <>Simpson&apos;s 1/3 rule needs n even. For odd n use the 3/8 rule on three strips and 1/3 on the rest.</> },
+                { m: <>Swapping the 4s and 2s.</>, f: <>Odd positions (y₁, y₃, …) get 4; even inside positions (y₂, y₄, …) get 2; the ends get 1.</> },
+                { m: <>Giving the ends weight 2.</>, f: <>Only y₀ and yₙ have weight 1.</> },
+                { m: <>Using h/2 or 3h/8.</>, f: <>The factor for this rule is <InlineMath math="\dfrac{h}{3}" />.</> },
+                { m: <>Rounding the heights too early.</>, f: <>Keep 5–6 decimals; Simpson is accurate enough that early rounding shows.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show h, the table, the odd and even sums, the formula with numbers, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -226,6 +249,8 @@ export default function Simpson13RulePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

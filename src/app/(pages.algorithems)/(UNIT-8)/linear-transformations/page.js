@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.linear-transformations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. RREF", text: <>Pivot and free columns.</> },
           { title: "3. Bases", text: <>Kernel from the free variables, image from the pivot columns.</> },
         ]} />
+        <SymbolKey rows={EX['linear-transformations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the kernel and image of T(x, y, z) = (x + 2y − z, y + z, x + y − 2z).</ExampleProblem>
-        <ExampleStep n={1} title="MATRIX"><MathPanel><BlockMath math={"A = \\begin{bmatrix} 1 & 2 & -1 \\\\ 0 & 1 & 1 \\\\ 1 & 1 & -2 \\end{bmatrix} \\to \\begin{bmatrix} 1 & 0 & -3 \\\\ 0 & 1 & 1 \\\\ 0 & 0 & 0 \\end{bmatrix}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="KERNEL"><MathPanel><BlockMath math={"x = 3z, \\ y = -z \\Rightarrow \\ker T = \\operatorname{span}\\{(3, -1, 1)\\}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="IMAGE"><MathPanel><BlockMath math={"\\operatorname{Im} T = \\operatorname{span}\\{(1, 0, 1), (2, 1, 1)\\}, \\quad 2 + 1 = 3"} /></MathPanel></ExampleStep>
-        <Conclusion result="rank 2, nullity 1" math={<BlockMath math={"\\text{rank } 2 + \\text{nullity } 1 = 3"} />}>The calculator below opens on this transformation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['linear-transformations'].example} />
+      <CommonMistakes items={EX['linear-transformations'].mistakes} />
       <Lab heading="Interactive Linear Transformations Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["rank","linear-dependence","consistency"]} />

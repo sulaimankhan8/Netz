@@ -8,18 +8,23 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps } from '@/app/components/method/Matrix';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve } from '@/app/utils/engines/rank';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = [['1', '2', '3'], ['2', '4', '6'], ['1', '1', '1']];
 
 export default function RankCalculator() {
   const [cells, setCells] = useState(START);
+  const guide = useCalcGuide('rank');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('rank', 8, answer, () => ({ rows: cells.length, cols: cells[0].length }));
   const exportBar = useExportBar('rank', () => ({ cells }), !!answer);
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setCells(x.cells ? x.cells.map((r) => r.map(String)) : x); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -37,10 +42,13 @@ export default function RankCalculator() {
         title="Rank & RREF Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <MatrixInput label="A" value={cells} onChange={(v) => { setCells(v); setAnswer(null); }} max={6} />
+        <GuideNote>{guide?.help?.matrix}</GuideNote>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Find Rank
           </EditorialButton>
         </div>

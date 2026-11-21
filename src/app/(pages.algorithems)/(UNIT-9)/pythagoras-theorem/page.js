@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PythagorasCalculator from './algorithems.pythagoras-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function PythagorasPage() {
             { title: '3. Square Root', text: <>Take the square root. Leave it as a surd (like <InlineMath math="5\sqrt{2}" />) if the question asks for an exact answer.</> },
           ]}
         />
+        <SymbolKey rows={EX['pythagoras-theorem'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -73,6 +76,7 @@ export default function PythagorasPage() {
           The calculator below opens on this ladder and also gives the angle it makes with the ground.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['pythagoras-theorem'].mistakes} />
 
       <Lab heading="Interactive Pythagoras Calculator">
         <PythagorasCalculator />

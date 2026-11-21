@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import InterestCalculator from './algorithems.compound-interest';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit10';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function CompoundInterestPage() {
             { title: '3. Grow, then Subtract', text: <>Work out the amount A, then CI = A − P.</> },
           ]}
         />
+        <SymbolKey rows={EX['compound-interest'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -77,6 +80,7 @@ export default function CompoundInterestPage() {
           The calculator below opens on this question and shows the amount at the end of each year.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['compound-interest'].mistakes} />
 
       <Lab heading="Interactive Interest Calculator">
         <InterestCalculator />

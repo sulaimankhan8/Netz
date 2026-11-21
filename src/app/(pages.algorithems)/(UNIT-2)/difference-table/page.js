@@ -6,7 +6,7 @@ import 'katex/dist/katex.min.css';
 import DifferenceTableCalculator from './algorithems.difference-table';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
+  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion, CommonMistakes, SymbolKey,
   Faq, RelatedMethods,
 } from '@/app/components/method';
 
@@ -41,6 +41,13 @@ export default function DifferenceTablePage() {
             { title: '3. Stop When Constant', text: <>When a column is constant (the next is all 0), you have found the degree.</> },
           ]}
         />
+        <SymbolKey rows={[
+          { s: '\\Delta y_i', t: 'Forward difference: the next y minus this y. Written on row i.', e: '\\Delta y_0 = 8 - 1 = 7' },
+          { s: '\\nabla y_i', t: 'Backward difference: this y minus the previous y. The same numbers, labelled on the lower row.', e: '\\nabla y_1 = 7' },
+          { s: '\\delta y_{i+\\frac12}', t: 'Central difference: labelled halfway between the two rows.', e: '\\delta y_{\\frac12} = 7' },
+          { s: '\\Delta^2 y_i', t: 'A difference of differences. The k-th differences of a degree-k polynomial are constant.', e: '\\Delta^2 y_0 = 19 - 7 = 12' },
+          { s: 'E,\\ \\Delta,\\ \\nabla', t: 'Operators: E shifts to the next value (E y_i = y₍ᵢ₊₁₎), and E = 1 + Δ.', e: 'E y_0 = y_1' },
+        ]} />
       </FormulaBox>
 
       <WorkedExample>
@@ -65,6 +72,15 @@ export default function DifferenceTablePage() {
           The calculator below opens on this data. Switch the notation to see the same numbers labelled ∇ or δ.
         </Conclusion>
       </WorkedExample>
+
+      <CommonMistakes items={[
+        { m: <>Subtracting upper minus lower.</>, f: <>Always lower minus upper: <InlineMath math="\Delta y_0 = y_1 - y_0" />.</> },
+        { m: <>Writing the differences in the wrong rows.</>, f: <>Forward differences go on the upper row of each pair; backward on the lower row; central halfway between.</> },
+        { m: <>Thinking Δ, ∇ and δ give different numbers.</>, f: <>They are the same numbers with different labels: <InlineMath math="\Delta y_0 = \nabla y_1 = \delta y_{\frac12}" />.</> },
+        { m: <>Unequal x steps.</>, f: <>These tables need equally spaced x values; otherwise use divided differences.</> },
+        { m: <>Sign slips with negative entries.</>, f: <>Bracket them: <InlineMath math="-0.37 - (-0.80) = 0.43" />.</> },
+        { m: <>Misreading the degree.</>, f: <>If the k-th differences are constant (and the next are 0), the data come from a polynomial of degree k.</> },
+      ]} />
 
       <Lab heading="Interactive Difference Table">
         <DifferenceTableCalculator />

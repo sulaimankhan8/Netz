@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import TriangleSolverCalculator from './algorithems.triangle-solver';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function TriangleSolverPage() {
             { title: '3. Angles Add to 180°', text: <>Once two angles are known, <InlineMath math="C = 180^\circ - A - B" />.</> },
           ]}
         />
+        <SymbolKey rows={EX['triangle-solver'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -77,6 +80,7 @@ export default function TriangleSolverPage() {
           All three angles are under 90°, so this is an acute scalene triangle. The calculator below opens on it.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['triangle-solver'].mistakes} />
 
       <Lab heading="Interactive Triangle Solver">
         <TriangleSolverCalculator />

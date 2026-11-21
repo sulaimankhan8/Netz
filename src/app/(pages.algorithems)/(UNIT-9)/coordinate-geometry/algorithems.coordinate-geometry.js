@@ -8,9 +8,11 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { solve, MODES } from '@/app/utils/engines/coordinate-geometry';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = {
   mode: 'line',
@@ -46,6 +48,7 @@ function summary(r) {
 
 export default function CoordinateGeometryCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('coordinate-geometry');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('coordinate-geometry', 9, answer, () => ({ mode: s.mode }));
@@ -54,6 +57,8 @@ export default function CoordinateGeometryCalculator() {
 
   const set = (patch) => { setS((old) => ({ ...old, ...patch })); setAnswer(null); setError(''); };
   const setPoint = (key, axis, v) => set({ [key]: { ...s[key], [axis]: v } });
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -72,8 +77,9 @@ export default function CoordinateGeometryCalculator() {
         title="Coordinate Geometry Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you want to find?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map((m) => ({ value: m.id, label: m.label }))} />
+        <Choice label="What do you want to find?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map((m) => ({ value: m.id, label: m.label }))} help={guide?.help?.mode} />
 
         {info.points > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -91,31 +97,32 @@ export default function CoordinateGeometryCalculator() {
         {s.mode === 'section' && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Field label="Ratio m" value={s.m} onChange={(v) => set({ m: v })} onEnter={run} />
-              <Field label="Ratio n" value={s.n} onChange={(v) => set({ n: v })} onEnter={run} />
+              <Field label="Ratio m" value={s.m} onChange={(v) => set({ m: v })} onEnter={run} help={guide?.help?.m} />
+              <Field label="Ratio n" value={s.n} onChange={(v) => set({ n: v })} onEnter={run} help={guide?.help?.n} />
             </div>
-            <Choice label="Divide AB" value={s.external ? 'ext' : 'int'} onChange={(v) => set({ external: v === 'ext' })} options={[{ value: 'int', label: 'Internally' }, { value: 'ext', label: 'Externally' }]} />
+            <Choice label="Divide AB" value={s.external ? 'ext' : 'int'} onChange={(v) => set({ external: v === 'ext' })} options={[{ value: 'int', label: 'Internally' }, { value: 'ext', label: 'Externally' }]} help={guide?.help?.external} />
           </div>
         )}
         {s.mode === 'angle' && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Field label="Slope m₁" value={s.m1} onChange={(v) => set({ m1: v })} onEnter={run} />
-            <Field label="Slope m₂" value={s.m2} onChange={(v) => set({ m2: v })} onEnter={run} />
+            <Field label="Slope m₁" value={s.m1} onChange={(v) => set({ m1: v })} onEnter={run} help={guide?.help?.m1} />
+            <Field label="Slope m₂" value={s.m2} onChange={(v) => set({ m2: v })} onEnter={run} help={guide?.help?.m2} />
           </div>
         )}
         {s.mode === 'point-line' && (
           <div className="space-y-1">
             <span className="text-xs font-mono font-bold uppercase text-black dark:text-white block">Line ax + by + c = 0</span>
             <div className="grid grid-cols-3 gap-3 max-w-md">
-              <Field label="a" value={s.a} onChange={(v) => set({ a: v })} onEnter={run} />
-              <Field label="b" value={s.b} onChange={(v) => set({ b: v })} onEnter={run} />
-              <Field label="c" value={s.c} onChange={(v) => set({ c: v })} onEnter={run} />
+              <Field label="a" value={s.a} onChange={(v) => set({ a: v })} onEnter={run} help={guide?.help?.a} />
+              <Field label="b" value={s.b} onChange={(v) => set({ b: v })} onEnter={run} help={guide?.help?.b} />
+              <Field label="c" value={s.c} onChange={(v) => set({ c: v })} onEnter={run} help={guide?.help?.c} />
             </div>
           </div>
         )}
 
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.markov-chain';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Distribution", text: <>π⁽⁰⁾Pⁿ.</> },
           { title: "3. Steady state", text: <>Solve πP = π with Σπ = 1.</> },
         ]} />
+        <SymbolKey rows={EX['markov-chain'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Weather: sunny → sunny 0.7, rainy → sunny 0.4. Starting sunny, find the chances after 3 days and in the long run.</ExampleProblem>
-        <ExampleStep n={1} title="THREE STEPS"><MathPanel><BlockMath math={"\\pi^{(3)} = (1, 0)P^3 = (0.583, 0.417)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="STEADY STATE"><MathPanel><BlockMath math={"0.3\\pi_1 = 0.4\\pi_2, \\ \\pi_1 + \\pi_2 = 1 \\Rightarrow \\pi = \\left(\\tfrac47, \\tfrac37\\right)"} /></MathPanel></ExampleStep>
-        <Conclusion result="π = (4/7, 3/7)" math={<BlockMath math={"\\pi = \\left(\\tfrac47, \\tfrac37\\right) \\approx (0.571, 0.429)"} />}>The calculator below opens on this chain.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['markov-chain'].example} />
+      <CommonMistakes items={EX['markov-chain'].mistakes} />
       <Lab heading="Interactive Markov Chains Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["matrix-calculator","eigenvalues","bayes"]} />

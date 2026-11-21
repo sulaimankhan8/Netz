@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import NormalCalculator from './algorithems.normal-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function NormalPage() {
           { title: '2. Areas', text: <>Look up Φ(z), or the area from 0 to z.</> },
           { title: '3. Combine', text: <>Left, right, or between: add or subtract.</> },
         ]} />
+        <SymbolKey rows={EX['normal-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Marks are N(60, 10²). What fraction score above 75?</ExampleProblem>
-        <ExampleStep n={1} title="STANDARDISE"><MathPanel><BlockMath math="z = \frac{75 - 60}{10} = 1.5" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="AREA TO THE RIGHT"><MathPanel><BlockMath math="P(Z > 1.5) = 0.5 - 0.4332 = 0.0668" /></MathPanel><StepText>0.4332 is the table area from 0 to 1.5.</StepText></ExampleStep>
-        <Conclusion result="about 6.68%" math={<BlockMath math="P(X > 75) = 0.0668" />}>Try it with the second example button below.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['normal-distribution'].example} />
+      <CommonMistakes items={EX['normal-distribution'].mistakes} />
       <Lab heading="Interactive Normal Distribution Calculator"><NormalCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['z-test', 'binomial', 'descriptive-statistics']} />

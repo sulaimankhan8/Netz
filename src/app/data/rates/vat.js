@@ -32,7 +32,8 @@ const unverified = (title, url) => ({ title, url, verifiedOn: '2026-11-03', stat
 export const VAT_COUNTRIES = [
   {
     code: 'GB', name: 'United Kingdom', taxName: 'VAT', currency: 'GBP', group: 'Europe (outside the EU)',
-    rules: [{ id: 'vat.GB', validFrom: '2011-01-04', validTo: null, label: 'UK VAT', source: unverified('GOV.UK, "VAT rates"', 'https://www.gov.uk/guidance/rates-of-vat-on-different-goods-and-services'), data: { standard: 20, reduced: [{ rate: 5, label: 'Reduced rate (e.g. home energy)' }, { rate: 0, label: 'Zero rate (e.g. most food, children\'s clothes)' }] } }],
+    // Read 2026-11-21 on gov.uk/vat-rates: 20% standard, 5% reduced (home energy), 0% (most food, children's clothes)
+    rules: [{ id: 'vat.GB', validFrom: '2011-01-04', validTo: null, label: 'UK VAT', source: { title: 'GOV.UK, "VAT rates"', url: 'https://www.gov.uk/vat-rates', verifiedOn: '2026-11-21', status: 'official' }, data: { standard: 20, reduced: [{ rate: 5, label: 'Reduced rate (e.g. home energy)' }, { rate: 0, label: 'Zero rate (e.g. most food, children\'s clothes)' }] } }],
   },
   ...EU.map(([code, name, rate, note]) => ({
     code, name, taxName: 'VAT', currency: EU_CURRENCY[code] || 'EUR', group: 'European Union', note: note || null,
@@ -40,7 +41,7 @@ export const VAT_COUNTRIES = [
   })),
   {
     code: 'AE', name: 'United Arab Emirates', taxName: 'VAT', currency: 'AED', group: 'Middle East',
-    rules: [{ id: 'vat.AE', validFrom: '2018-01-01', validTo: null, label: 'UAE VAT', source: unverified('UAE Federal Tax Authority', 'https://tax.gov.ae/'), data: { standard: 5, reduced: [{ rate: 0, label: 'Zero rate (e.g. exports)' }] } }],
+    rules: [{ id: 'vat.AE', validFrom: '2018-01-01', validTo: null, label: 'UAE VAT', source: { title: 'UAE Federal Tax Authority (VAT 5% on its VAT calculator)', url: 'https://tax.gov.ae/', verifiedOn: '2026-11-21', status: 'official' }, data: { standard: 5, reduced: [{ rate: 0, label: 'Zero rate (e.g. exports)' }] } }],
   },
   {
     code: 'SA', name: 'Saudi Arabia', taxName: 'VAT', currency: 'SAR', group: 'Middle East',
@@ -56,10 +57,13 @@ export const VAT_COUNTRIES = [
   },
   {
     code: 'SG', name: 'Singapore', taxName: 'GST', currency: 'SGD', group: 'Asia–Pacific',
-    rules: [{ id: 'vat.SG', validFrom: '2024-01-01', validTo: null, label: 'Singapore GST', source: unverified('IRAS', 'https://www.iras.gov.sg/'), data: { standard: 9, reduced: [] } }],
+    rules: [{ id: 'vat.SG', validFrom: '2024-01-01', validTo: null, label: 'Singapore GST', source: { title: 'IRAS, "Current GST rates"', url: 'https://www.iras.gov.sg/taxes/goods-services-tax-(gst)/basics-of-gst/current-gst-rates', verifiedOn: '2026-11-21', status: 'official' }, data: { standard: 9, reduced: [] } }],
   },
   {
+    // NTA special site (read 2026-11-21): the cabinet approved on 15 Sep 2026 an outline for a two-year cut in the rate on
+    // food and drink; it needs a law passed first. Update the reduced rate and add a dated rule when it is enacted.
     code: 'JP', name: 'Japan', taxName: 'Consumption tax', currency: 'JPY', group: 'Asia–Pacific',
+    note: 'a two-year cut in the food and drink rate was approved by the cabinet on 15 Sep 2026; it applies only once the law is passed',
     rules: [{ id: 'vat.JP', validFrom: '2019-10-01', validTo: null, label: 'Japan consumption tax', source: unverified('National Tax Agency', 'https://www.nta.go.jp/'), data: { standard: 10, reduced: [{ rate: 8, label: 'Reduced rate (food and drink, newspapers)' }] } }],
   },
 ];

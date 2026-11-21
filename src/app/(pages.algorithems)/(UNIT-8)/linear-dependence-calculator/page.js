@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LinearDependenceCalculator from './algorithems.linear-dependence-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LinearDependencePage() {
           { title: '2. Row-reduce', text: <>Count the pivots (the rank).</> },
           { title: '3. Relation', text: <>A column without a pivot gives the combination that is 0.</> },
         ]} />
+        <SymbolKey rows={EX['linear-dependence-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Are <InlineMath math="(1,2,3), (4,5,6), (7,8,9)" /> independent?</ExampleProblem>
-        <ExampleStep n={1} title="ROW-REDUCE"><MathPanel><BlockMath math="\begin{bmatrix} 1 & 4 & 7 \\ 2 & 5 & 8 \\ 3 & 6 & 9 \end{bmatrix} \to \begin{bmatrix} 1 & 0 & -1 \\ 0 & 1 & 2 \\ 0 & 0 & 0 \end{bmatrix}" /></MathPanel><StepText>Rank 2 &lt; 3: dependent. Column 3 has no pivot.</StepText></ExampleStep>
-        <ExampleStep n={2} title="THE RELATION"><StepText>Put c₃ = 1; then c₁ = 1, c₂ = −2:</StepText><MathPanel><BlockMath math="v_1 - 2v_2 + v_3 = 0" /></MathPanel></ExampleStep>
-        <Conclusion result="Dependent: v₁ − 2v₂ + v₃ = 0" math={<BlockMath math="v_3 = 2v_2 - v_1" />}>Check: 2(4,5,6) − (1,2,3) = (7,8,9) ✓</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['linear-dependence-calculator'].example} />
+      <CommonMistakes items={EX['linear-dependence-calculator'].mistakes} />
       <Lab heading="Interactive Linear Dependence Calculator"><LinearDependenceCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['rank', 'determinant', 'consistency']} />

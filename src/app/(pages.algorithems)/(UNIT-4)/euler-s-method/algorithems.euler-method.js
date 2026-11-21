@@ -5,12 +5,13 @@ import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import { parseUserFunction } from '@/app/utils/evaluateMath';
+import { parseUserFunction, substituteTexVars } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { MAX_STEPS, tooManySteps, sig, odeStopMessage, ODE_BLOWUP, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 // Worked-step cards drawn (each is several equations); the table shows all steps
 const CARD_LIMIT = 20;
@@ -116,6 +117,11 @@ const EulerMethodSolver = () => {
     e?.preventDefault();
     calculateEuler(functionInput, x0, y0, stepH, targetX);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x0 !== undefined) setX0(Number(v.x0)); if (v.y0 !== undefined) setY0(Number(v.y0)); if (v.h !== undefined) setStepH(Number(v.h)); if (v.xn !== undefined) setTargetX(Number(v.xn)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -410,15 +416,19 @@ const EulerMethodSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Tangent Step Substitutions
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-1 text-black dark:text-white overflow-x-auto text-center">
+                <span className="text-xs font-mono font-bold uppercase text-neutral-500 block text-left">The formula used in every step</span>
+                <BlockMath math={`y_{n+1} = y_n + h\\,f(x_n, y_n), \\qquad x_{n+1} = x_n + h`} />
+              </div>
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto">
                 {(stepsData.length - 1) > CARD_LIMIT && (
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Worked steps 1–{CARD_LIMIT} of {(stepsData.length - 1)} are shown; the rest follow the same pattern. The table above lists every step.</p>
                 )}
                 {stepsData.slice(0, Math.min(stepsData.length - 1, CARD_LIMIT)).map((row, idx) => (
                   <div key={idx} className="p-3 border-b border-neutral-200 dark:border-neutral-700 last:border-none space-y-1">
-                    <span className="font-bold text-neutral-500 uppercase block">Iteration Step n = {row.step}:</span>
+                    <span className="text-xs font-mono font-bold text-neutral-500 uppercase block">Iteration Step n = {row.step}:</span>
                     <BlockMath math={`x_{${row.step}} = ${row.x.toFixed(4)}, \\quad y_{${row.step}} = ${row.y.toFixed(6)}`} />
-                    <BlockMath math={`f(x_{${row.step}}, y_{${row.step}}) = ${row.slope.toFixed(6)}`} />
+                    <BlockMath math={`f(${Number(row.x.toFixed(6))}, ${Number(row.y.toFixed(6))}) = ${(() => { const sub = substituteTexVars(functionInput, { x: row.x, y: row.y }); return sub ? `${sub} = ` : ''; })()}${row.slope.toFixed(6)}`} />
                     <BlockMath math={`y_{${row.step + 1}} = ${row.y.toFixed(6)} + (${stepH}) \\times (${row.slope.toFixed(6)}) = ${stepsData[idx + 1].y.toFixed(6)}`} />
                   </div>
                 ))}

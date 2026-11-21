@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.optimization-problems';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Critical points", text: <>Solve f′(x) = 0.</> },
           { title: "3. Test", text: <>Second derivative (and the ends).</> },
         ]} />
+        <SymbolKey rows={EX['optimization-problems'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Squares of side x are cut from the corners of a 12 cm square sheet, which is folded into an open box. Find the largest volume.</ExampleProblem>
-        <ExampleStep n={1} title="MODEL"><MathPanel><BlockMath math={"V = x(12 - 2x)^2, \\quad 0 < x < 6"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DIFFERENTIATE"><MathPanel><BlockMath math={"V' = (12 - 2x)(12 - 6x) = 0 \\Rightarrow x = 2"} /></MathPanel><StepText>V″(2) = −48 &lt; 0, so a maximum.</StepText></ExampleStep>
-        <Conclusion result="128 cm³ at x = 2" math={<BlockMath math={"V_{\\max} = 2(8)^2 = 128 \\text{ cm}^3"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['optimization-problems'].example} />
+      <CommonMistakes items={EX['optimization-problems'].mistakes} />
       <Lab heading="Interactive Optimisation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["maxima-minima","related-rates","maxima-minima-2var"]} />

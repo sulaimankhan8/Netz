@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import MatrixInputGrid from '@/app/components/MatrixInputGrid';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 function initMatrix(n) {
   return Array.from({ length: n }, (_, r) =>
@@ -117,6 +118,11 @@ const LUDecomposition = () => {
     setResult(res);
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { if (!v.rows) return; setN(v.rows.length); setMatrix(v.rows.map((r) => r.map(String))); solveSoon(); });
+
+
   const handleDemo = () => {
     const demo = [['2', '1', '1', '4'], ['4', '3', '3', '8'], ['8', '7', '9', '12']];
     setN(3); setMatrix(demo); setError(''); setResult(null);
@@ -174,7 +180,7 @@ const LUDecomposition = () => {
         <MatrixInputGrid n={n} setN={(newN) => { setN(newN); setMatrix(initMatrix(newN)); }} matrix={matrix} setMatrix={setMatrix} augmented />
 
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={handleSolve} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={handleSolve} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Decompose & Solve
           </EditorialButton>
         </div>

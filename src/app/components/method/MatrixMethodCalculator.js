@@ -6,9 +6,11 @@ import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps } from '@/app/components/method/Matrix';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Field, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Field, Choice, HowToUse, GuideNote } from '@/app/components/method/Calculator';
+import { useCalcGuide, useStepTexts, withStepText } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import { useExportBar } from './ExportBar';
+import { useLoadInput } from './calcDemo';
 
 /**
  * start: string[][]; examples: [{ label, cells, extra? }]; solve({ cells, ...extra }) → answer with steps
@@ -26,11 +28,16 @@ export default function MatrixMethodCalculator({
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve(id, unit, answer, () => ({ rows: cells.length, cols: cells[0].length }));
+  const guide = useCalcGuide(id);
+  // One plain sentence per working step (src/app/data/stepTexts), where the engine gives none
+  const stepTexts = useStepTexts(id);
   const exportBar = useExportBar(id, () => ({ cells, ...extra }), !!answer, title);
   const run = (c = cells, x = extra) => {
     try { setError(''); setAnswer(solve({ cells: c, ...x })); } catch (e) { setAnswer(null); setError(e.name === 'EngineError' ? e.message : 'Something went wrong. Please check the numbers.'); }
   };
   const reset = () => { setCells(start); setExtra(extraStart); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+  useLoadInput((x) => { const c = (x.cells || start).map((r) => r.map(String)); const e = { ...extraStart, ...(x.extra || {}) }; setCells(c); setExtra(e); setAnswer(null); run(c, e); });
   const setX = (patch) => { setExtra((o) => ({ ...o, ...patch })); setAnswer(null); };
   // DEV ONLY: lets the break-ui check type whole matrices in (see SymbolicCalculator)
   const runRef = useRef(run);
@@ -49,12 +56,14 @@ export default function MatrixMethodCalculator({
     <div className="w-full space-y-6" id={`netz-solve-${id}`}>
       <CalcCard title={title} actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
         <ErrorBox>{error}</ErrorBox>
+        <HowToUse steps={guide?.howTo} />
         <MatrixInput label={label} value={cells} onChange={(v) => { setCells(v); setAnswer(null); }} square={square} min={min} max={max} />
+        <GuideNote>{guide?.help?.matrix}</GuideNote>
         {extraFields.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {extraFields.map((f) => (f.kind === 'choice'
-              ? <div key={f.key} className="sm:col-span-2"><Choice label={f.label} value={extra[f.key]} onChange={(v) => setX({ [f.key]: v })} options={f.options} /></div>
-              : <Field key={f.key} label={f.label} value={extra[f.key] ?? ''} inputMode="text" placeholder={f.placeholder} onChange={(v) => setX({ [f.key]: v })} onEnter={() => run()} />))}
+              ? <div key={f.key} className="sm:col-span-2"><Choice label={f.label} value={extra[f.key]} onChange={(v) => setX({ [f.key]: v })} options={f.options} help={guide?.help?.[f.key]} /></div>
+              : <Field key={f.key} label={f.label} value={extra[f.key] ?? ''} inputMode="text" placeholder={f.placeholder} help={guide?.help?.[f.key]} onChange={(v) => setX({ [f.key]: v })} onEnter={() => run()} />))}
           </div>
         )}
         {examples.length > 0 && (
@@ -80,7 +89,7 @@ export default function MatrixMethodCalculator({
       {answer && (
         <StepsCard title="Step-by-Step Working">
           {renderSteps && renderSteps(answer)}
-          <StepList steps={answer.steps} />
+          <StepList steps={withStepText(answer.steps, stepTexts)} />
           {answer.ops?.length > 0 && (
             <details className="rounded-xl border border-black/20 dark:border-neutral-700">
               <summary className="cursor-pointer px-4 py-3 min-h-[44px] text-xs font-mono font-bold uppercase text-black dark:text-white">{opsTitle} ({answer.ops.length} row operations)</summary>

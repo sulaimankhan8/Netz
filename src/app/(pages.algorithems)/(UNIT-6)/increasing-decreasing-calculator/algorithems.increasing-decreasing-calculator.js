@@ -6,11 +6,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { plotView, around } from '@/app/components/method/plotView';
 import { solve } from '@/app/utils/engines/monotonicity';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: '2x^3 - 9x^2 + 12x + 1', a: '', b: '' };
 const EXAMPLES = [
@@ -23,10 +25,13 @@ const EXAMPLES = [
 
 export default function MonotonicityCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('monotonicity');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('monotonicity', 6, answer, () => ({ fn: v.f }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     try { setError(''); setAnswer(solve({ ...v, ...override })); } catch (e) { setAnswer(null); setError(e.name === 'EngineError' ? e.message : 'Something went wrong. Please check the expression.'); }
   };
@@ -37,8 +42,9 @@ export default function MonotonicityCalculator() {
   return (
     <div className="w-full space-y-6">
       <CalcCard title="Increasing & Decreasing Engine" actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^3 - 3x" onChange={(f) => set({ f })} onEnter={() => run()} />
+        <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^3 - 3x" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
           {EXAMPLES.map((e) => (
@@ -46,12 +52,13 @@ export default function MonotonicityCalculator() {
           ))}
         </div>
         <div className="grid grid-cols-2 gap-4 max-w-sm">
-          <Field label="From (optional)" value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={() => run()} />
-          <Field label="To (optional)" value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={() => run()} />
+          <Field label="From (optional)" value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={() => run()} help={guide?.help?.a} />
+          <Field label="To (optional)" value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={() => run()} help={guide?.help?.b} />
         </div>
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Polynomials and fractions are solved over all real numbers. Trig functions use [0, 2π] unless you give an interval.</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> Find Intervals</EditorialButton>
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> Find Intervals</EditorialButton>
         </div>
 
         {answer && (

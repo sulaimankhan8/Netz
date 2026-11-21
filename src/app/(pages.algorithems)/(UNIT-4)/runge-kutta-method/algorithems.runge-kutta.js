@@ -5,12 +5,13 @@ import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import { parseUserFunction } from '@/app/utils/evaluateMath';
+import { parseUserFunction, substituteTexVars } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { MAX_STEPS, tooManySteps, sig, odeStopMessage, ODE_BLOWUP, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 // Worked-step cards drawn (each is several equations); the table shows all steps
 const CARD_LIMIT = 20;
@@ -125,6 +126,11 @@ const RungeKuttaSolver = () => {
     e?.preventDefault();
     calculateRK4(functionInput, x0, y0, stepH, targetX);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x0 !== undefined) setX0(Number(v.x0)); if (v.y0 !== undefined) setY0(Number(v.y0)); if (v.h !== undefined) setStepH(Number(v.h)); if (v.xn !== undefined) setTargetX(Number(v.xn)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -426,17 +432,27 @@ const RungeKuttaSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> RK4 Intermediate Slopes Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-4 font-mono text-xs">
+              <div className="p-4 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-1 text-black dark:text-white overflow-x-auto text-center">
+                <span className="text-xs font-mono font-bold uppercase text-neutral-500 block text-left">The formulas used in every step</span>
+                <BlockMath math={`k_1 = h f(x_n, y_n), \\quad k_2 = h f\\left(x_n + \\tfrac{h}{2}, y_n + \\tfrac{k_1}{2}\\right), \\quad k_3 = h f\\left(x_n + \\tfrac{h}{2}, y_n + \\tfrac{k_2}{2}\\right), \\quad k_4 = h f(x_n + h, y_n + k_3)`} />
+                <BlockMath math={`y_{n+1} = y_n + \\tfrac{1}{6}(k_1 + 2k_2 + 2k_3 + k_4)`} />
+              </div>
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-4 text-black dark:text-white overflow-x-auto">
                 {stepsData.length > CARD_LIMIT && (
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Worked steps 1–{CARD_LIMIT} of {stepsData.length} are shown; the rest follow the same pattern. The table above lists every step.</p>
                 )}
                 {stepsData.slice(0, CARD_LIMIT).map((row) => (
                   <div key={row.step} className="p-3 border-b border-neutral-200 dark:border-neutral-700 last:border-none space-y-1">
-                    <span className="font-bold text-neutral-500 uppercase block">Step {row.step}: x_{row.step - 1} = {fixed(row.x, 4)} to x_{row.step} = {fixed(row.nextX, 4)}</span>
-                    <BlockMath math={`k_1 = h \\cdot f(x_n, y_n) = ${row.k1.toFixed(6)}`} />
-                    <BlockMath math={`k_2 = h \\cdot f\\left(x_n + \\frac{h}{2}, y_n + \\frac{k_1}{2}\\right) = ${row.k2.toFixed(6)}`} />
-                    <BlockMath math={`k_3 = h \\cdot f\\left(x_n + \\frac{h}{2}, y_n + \\frac{k_2}{2}\\right) = ${row.k3.toFixed(6)}`} />
-                    <BlockMath math={`k_4 = h \\cdot f\\left(x_n + h, y_n + k_3\\right) = ${row.k4.toFixed(6)}`} />
+                    <span className="text-xs font-mono font-bold text-neutral-500 uppercase block">Step {row.step}: x_{row.step - 1} = {fixed(row.x, 4)} to x_{row.step} = {fixed(row.nextX, 4)}</span>
+                    {(() => {
+                      const h = Number(stepH), r6 = (v) => Number(Number(v).toFixed(6));
+                      const pts = [[row.x, row.y], [row.x + h / 2, row.y + row.k1 / 2], [row.x + h / 2, row.y + row.k2 / 2], [row.x + h, row.y + row.k3]];
+                      return [row.k1, row.k2, row.k3, row.k4].map((k, i) => {
+                        const [px, py] = pts[i];
+                        const sub = substituteTexVars(functionInput, { x: px, y: py });
+                        return <BlockMath key={i} math={`k_${i + 1} = ${r6(h)} \\cdot f(${r6(px)}, ${r6(py)}) = ${r6(h)}\\left(${sub ?? r6(k / h)}\\right) = ${k.toFixed(6)}`} />;
+                      });
+                    })()}
                     <div className="p-3 bg-emerald-50 dark:bg-neutral-900 rounded-lg space-y-1">
                       <BlockMath math={`y_{${row.step}} = ${row.y.toFixed(6)} + \\frac{1}{6}(${row.k1.toFixed(6)} + 2(${row.k2.toFixed(6)}) + 2(${row.k3.toFixed(6)}) + ${row.k4.toFixed(6)}) = ${row.nextY.toFixed(6)}`} />
                     </div>

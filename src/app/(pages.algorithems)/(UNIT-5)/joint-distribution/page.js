@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.joint-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Expectations", text: <>E[X], E[Y], E[XY].</> },
           { title: "3. Independence", text: <>Every cell = product of its marginals.</> },
         ]} />
+        <SymbolKey rows={EX['joint-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>X and Y take values 0 and 1 with P(0,0) = 0.4, P(0,1) = 0.1, P(1,0) = 0.1, P(1,1) = 0.4. Find Cov(X, Y).</ExampleProblem>
-        <ExampleStep n={1} title="MARGINALS"><MathPanel><BlockMath math={"P(X = 1) = 0.5, \\ P(Y = 1) = 0.5 \\Rightarrow E[X] = E[Y] = 0.5"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COVARIANCE"><MathPanel><BlockMath math={"E[XY] = 0.4, \\qquad \\text{Cov} = 0.4 - 0.25 = 0.15, \\quad \\rho = 0.6"} /></MathPanel></ExampleStep>
-        <Conclusion result="Cov = 0.15, ρ = 0.6" math={<BlockMath math={"\\text{Cov}(X, Y) = 0.15"} />}>The second example button below loads this table.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['joint-distribution'].example} />
+      <CommonMistakes items={EX['joint-distribution'].mistakes} />
       <Lab heading="Interactive Joint Distribution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["random-variables","correlation","bayes"]} />

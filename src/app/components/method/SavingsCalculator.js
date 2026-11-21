@@ -8,11 +8,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from './Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { StepTable } from './StepTable';
 import StackedBars from './StackedBars';
 import { useExportBar } from './ExportBar';
 import { CURRENCIES, formatMoney, formatPct } from '@/app/utils/finance/money';
+import { useLoadInput } from './calcDemo';
 
 /** Short axis labels: ₹12k, ₹1.2L, ₹3.4Cr for rupees; $12k, $1.2M otherwise. */
 export function shortMoney(v, cur) {
@@ -60,7 +62,10 @@ export default function SavingsCalculator({
     }
   };
   const reset = () => { setS(start); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+  useLoadInput((x) => { const next = { ...start, ...x }; setS(next); setAnswer(null); run(next); });
   const load = (ex) => { const next = { ...start, ...ex.input }; setS(next); run(next); };
+  const guide = useCalcGuide(id);
   const shown = fields.filter((f) => !f.show || f.show(s));
   const choices = shown.filter((f) => f.kind === 'choice');
   const boxes = shown.filter((f) => f.kind !== 'choice');
@@ -84,17 +89,18 @@ export default function SavingsCalculator({
             ))}
           </div>
         )}
-        {choices.map((f) => <Choice key={f.key} label={f.label} value={s[f.key]} onChange={(v) => set({ [f.key]: v })} options={f.options} />)}
+        <HowToUse steps={guide?.howTo} />
+        {choices.map((f) => <Choice key={f.key} label={f.label} value={s[f.key]} onChange={(v) => set({ [f.key]: v })} options={f.options} help={guide?.help?.[f.key]} />)}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {boxes.map((f) => (f.kind === 'select'
-            ? <Select key={f.key} label={f.label} value={s[f.key]} onChange={(v) => set({ [f.key]: v })} options={f.options} />
-            : <Field key={f.key} label={f.label} value={s[f.key] ?? ''} placeholder={f.placeholder} onChange={(v) => set({ [f.key]: v })} onEnter={() => run()} />))}
+            ? <Select key={f.key} label={f.label} value={s[f.key]} onChange={(v) => set({ [f.key]: v })} options={f.options} help={guide?.help?.[f.key]} />
+            : <Field key={f.key} label={f.label} value={s[f.key] ?? ''} placeholder={f.placeholder} help={guide?.help?.[f.key]} onChange={(v) => set({ [f.key]: v })} onEnter={() => run()} />))}
           {currencyPicker && (
-            <Select label="Currency" value={cur} onChange={(v) => { setCur(v); setAnswer(null); }} options={Object.entries(CURRENCIES).map(([value, c]) => ({ value, label: c.label }))} />
+            <Select label="Currency" value={cur} onChange={(v) => { setCur(v); setAnswer(null); }} options={Object.entries(CURRENCIES).map(([value, c]) => ({ value, label: c.label }))} help={guide ? 'Only changes how money is shown (₹, $, £…). The maths is the same.' : null} />
           )}
         </div>
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> {button}
           </EditorialButton>
         </div>

@@ -5,6 +5,7 @@
  * a definite integral then still gets a numerical value (adaptive Simpson's rule), clearly labelled.
  */
 import { EngineError } from '../numeric/steps';
+import { withIntegralText } from '../symbolic/explainIntegral';
 import { toFraction } from '../numeric/fraction';
 import { readConstant } from './input';
 import { math, parse, variablesOf, tex, text, polish, sub, tidy } from '../symbolic/tree';
@@ -86,7 +87,16 @@ export function solve({ f: tf, kind = 'indefinite', a: ta = '', b: tb = '' }) {
     const r = integrate(node, v);
     // The most readable form that still checks out
     F = cleanest(r.result, v, (g) => derivativeMatches(g, node, v, scope));
-    if (F) { steps = r.steps; raw = tex(polish(tidy(r.result))); }
+    if (F) {
+      raw = tex(polish(tidy(r.result)));
+      // Each step says in words what it does; the last step shows the check the answer has already passed
+      steps = [...withIntegralText(r.steps), {
+        title: 'Check by differentiating',
+        text: 'Integration undoes differentiation, so differentiating the answer must give back the function we started with. It does, so the answer is right.',
+        formula: `\\frac{d}{d${v}}F(${v}) = f(${v})`,
+        lines: [`\\frac{d}{d${v}}\\left[${tex(polish(F))}\\right] = ${tex(polish(node))} \\;\\checkmark`],
+      }];
+    }
     else why = 'NETZ found an answer but it failed the check, so it is not shown.';
   } catch (e) {
     if (!(e instanceof EngineError)) throw e;

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.line-integral';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Substitute", text: <>F(r(t))·r′(t), one function of t.</> },
           { title: "3. Integrate", text: <>From t = a to t = b.</> },
         ]} />
+        <SymbolKey rows={EX['line-integral'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the work done by F = (3x² + 6y)i − 14yz j + 20xz² k along x = t, y = t², z = t³ from t = 0 to 1.</ExampleProblem>
-        <ExampleStep n={1} title="SUBSTITUTE"><MathPanel><BlockMath math={"\\mathbf{F}\\cdot\\mathbf{r}' = (3t^2 + 6t^2)\\cdot 1 - 14t^5\\cdot 2t + 20t^7\\cdot 3t^2 = 9t^2 - 28t^6 + 60t^9"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math={"W = \\int_0^1 (9t^2 - 28t^6 + 60t^9)\\,dt = 3 - 4 + 6"} /></MathPanel></ExampleStep>
-        <Conclusion result="W = 5" math={<BlockMath math={"W = 5"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['line-integral'].example} />
+      <CommonMistakes items={EX['line-integral'].mistakes} />
       <Lab heading="Interactive Line Integral Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["greens-theorem","grad-div-curl","arc-length"]} />

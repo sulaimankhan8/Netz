@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import RankCalculator from './algorithems.rank-of-matrix';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit8';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function RankPage() {
             { title: '3. Count', text: <>Repeat for the next column. The rank is the number of pivots (non-zero rows).</> },
           ]}
         />
+        <SymbolKey rows={EX['rank-of-matrix'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -77,6 +80,7 @@ export default function RankPage() {
           Row 2 was just 2 × row 1, so only two rows are independent. That also means |A| = 0.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['rank-of-matrix'].mistakes} />
 
       <Lab heading="Interactive Rank Calculator">
         <RankCalculator />

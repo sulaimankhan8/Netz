@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ProgressionCalculator from './algorithems.arithmetic-geometric-progression';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,36 +46,11 @@ export default function ProgressionPage() {
             { title: '3. Substitute', text: <>Put a, d (or r) and n into the formula. Count n carefully.</> },
           ]}
         />
+        <SymbolKey rows={EX['arithmetic-geometric-progression'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          For the AP 5, 9, 13, 17, …, find the 20th term and the sum of the first 20 terms.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="FIRST TERM AND COMMON DIFFERENCE">
-          <MathPanel>
-            <BlockMath math="a = 5, \qquad d = 9 - 5 = 4" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="THE 20TH TERM">
-          <MathPanel>
-            <BlockMath math="a_{20} = a + 19d = 5 + 19 \times 4 = 81" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="SUM OF 20 TERMS">
-          <MathPanel>
-            <BlockMath math="S_{20} = \frac{20}{2}\left[2(5) + 19(4)\right] = 10 \times 86 = 860" />
-          </MathPanel>
-          <StepText>Check with the first and last terms: <InlineMath math="\frac{20}{2}(5 + 81) = 860" /> ✓</StepText>
-        </ExampleStep>
-
-        <Conclusion result="a₂₀ = 81, S₂₀ = 860" math={<BlockMath math="a_{20} = 81, \qquad S_{20} = 860" />}>
-          The calculator below opens on this AP. Switch to GP or &quot;AP or GP?&quot; to test a sequence of your own.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['arithmetic-geometric-progression'].example} />
+      <CommonMistakes items={EX['arithmetic-geometric-progression'].mistakes} />
 
       <Lab heading="Interactive AP & GP Calculator">
         <ProgressionCalculator />

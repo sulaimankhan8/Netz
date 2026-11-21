@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.us-income-tax-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Brackets", text: <>Each rate on its slice only.</> },
           { title: "3. FICA", text: <>6.2% + 1.45% of wages.</> },
         ]} />
+        <SymbolKey rows={EX['us-income-tax-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Wages $85,000 (single, 2026), $5,000 into a 401(k), 5% state tax. Find the take-home pay.</ExampleProblem>
-        <ExampleStep n={1} title="TAXABLE"><MathPanel><BlockMath math={"85{,}000 - 5{,}000 - 16{,}100 = 63{,}900"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="FEDERAL"><MathPanel><BlockMath math={"1{,}240 + 4{,}560 + 2{,}970 = 8{,}770"} /></MathPanel><StepText>10% on the first $12,400, 12% up to $50,400, 22% on the rest.</StepText></ExampleStep>
-        <ExampleStep n={3} title="FICA AND STATE"><MathPanel><BlockMath math={"5{,}270 + 1{,}232.50 = 6{,}502.50, \\quad 5\\% \\times 80{,}000 = 4{,}000"} /></MathPanel></ExampleStep>
-        <Conclusion result="$60,727.50 a year" math={<BlockMath math={"85{,}000 - 5{,}000 - 8{,}770 - 6{,}502.50 - 4{,}000 = 60{,}727.50"} />}>The calculator below opens on this paycheck.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['us-income-tax-calculator'].example} />
+      <CommonMistakes items={EX['us-income-tax-calculator'].mistakes} />
       <Lab heading="Interactive US Income Tax Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["uk-income-tax","sales-tax","percentage"]} />

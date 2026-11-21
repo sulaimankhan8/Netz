@@ -330,14 +330,19 @@ const ChiSquareSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Chi-Square Summation Evaluation
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Chi-Square Test Statistic:</span>
-                  <BlockMath math={`\\chi^2_{\\text{calc}} = \\sum_{i=1}^{k} \\frac{(O_i - E_i)^2}{E_i} = ${result.chiSquareSum.toFixed(4)}`} />
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Chi-Square Test Statistic:</span>
+                  <BlockMath math={`\\chi^2_{\\text{calc}} = \\sum_{i=1}^{k} \\frac{(O_i - E_i)^2}{E_i}`} />
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left pt-2">Each category with the numbers put in:</span>
+                  {stepsData.map((r) => (
+                    <BlockMath key={r.index} math={`\\frac{(${r.obs} - ${r.exp})^2}{${r.exp}} = \\frac{${Number(r.diffSq.toFixed(4))}}{${r.exp}} = ${r.term.toFixed(4)}`} />
+                  ))}
+                  <BlockMath math={`\\chi^2_{\\text{calc}} = ${stepsData.map((r) => r.term.toFixed(4)).join(' + ')} = ${result.chiSquareSum.toFixed(4)}`} />
                   <BlockMath math={`d.f. = k - 1 = ${result.n} - 1 = ${result.df}`} />
                 </div>
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level):</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Hypothesis and Decision (5% level):</span>
                   {/* Words stay outside the formula so they wrap on phones */}
                   <p className="text-center"><InlineMath math="H_0" />: the observed frequencies agree with the expected ones</p>
                   <BlockMath math={`\\chi^2_{0.05}(${result.df}) = ${result.critical} \\quad \\text{(table value)}`} />

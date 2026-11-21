@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.polar-coordinates';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Quadrant", text: <>Look at the signs of x and y.</> },
           { title: "3. θ", text: <>The angle in that quadrant.</> },
         ]} />
+        <SymbolKey rows={EX['polar-coordinates'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Write the point (−1, √3) in polar coordinates.</ExampleProblem>
-        <ExampleStep n={1} title="DISTANCE"><MathPanel><BlockMath math={"r = \\sqrt{1 + 3} = 2"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ANGLE"><MathPanel><BlockMath math={"\\tan\\theta = -\\sqrt3, \\ \\text{quadrant II} \\Rightarrow \\theta = \\pi - \\frac{\\pi}{3} = \\frac{2\\pi}{3}"} /></MathPanel><StepText>Not −π/3: that would be in quadrant IV.</StepText></ExampleStep>
-        <Conclusion result="(2, 2π/3)" math={<BlockMath math={"(r, \\theta) = \\left(2, \\frac{2\\pi}{3}\\right)"} />}>The calculator below opens on this point.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['polar-coordinates'].example} />
+      <CommonMistakes items={EX['polar-coordinates'].mistakes} />
       <Lab heading="Interactive Polar Coordinates Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["coordinate-geometry","unit-circle","geometry-3d"]} />

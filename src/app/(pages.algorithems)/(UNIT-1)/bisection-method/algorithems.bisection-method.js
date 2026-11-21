@@ -6,16 +6,17 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
-import { parseUserFunction } from "@/app/utils/evaluateMath";
+import { parseUserFunction, checkParses, substituteTex } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton, EditorialStepViewer } from '@/app/components/editorial';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const BisectionMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
-  const [functionInput, setFunctionInput] = useState("x * x * x - 4 * x - 9"); // Default function
+  const [functionInput, setFunctionInput] = useState("x^3 - 4*x - 9"); // Default function
   const [tolerance, setTolerance] = useState(0.05);
   const [result, setResult] = useState(null);
   useRecordSolve('bisection', 1, result, () => ({ fn: functionInput }));
@@ -54,7 +55,7 @@ const BisectionMethod = () => {
     let f;
     try {
       f = parseUserFunction(functionInput);
-      f(0);
+      checkParses(f);
     } catch (err) {
       setError("Invalid function input. Please enter a valid mathematical expression like x^3 - 4*x - 9.");
       return;
@@ -197,9 +198,12 @@ const BisectionMethod = () => {
     };
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here: { f, tol }
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.tol) setTolerance(Number(v.tol)); solveSoon(); });
+
   const handleDemo = () => {
     setDemoInProgress(true);
-    const demoFn = "x * x * x - 4 * x - 9";
+    const demoFn = "x^3 - 4*x - 9";
     const demoTol = 0.05;
 
     setFunctionInput(demoFn);
@@ -209,7 +213,7 @@ const BisectionMethod = () => {
     let f;
     try {
       f = parseUserFunction(demoFn);
-      f(0);
+      checkParses(f);
     } catch {
       setError("Invalid demo function input.");
       setDemoInProgress(false);
@@ -262,7 +266,7 @@ const BisectionMethod = () => {
   };
 
   const handleReset = () => {
-    setFunctionInput("x * x * x - 4 * x - 9");
+    setFunctionInput("x^3 - 4*x - 9");
     setTolerance(0.05);
     setResult(null);
     setIntervalSteps([]);
@@ -527,29 +531,74 @@ const BisectionMethod = () => {
                 </div>
               </div>
 
-              <div className="p-3 border border-black/30 dark:border-neutral-700 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-xs font-mono text-center text-black dark:text-white overflow-x-auto">
-                <InlineMath math={`\\text{Steps needed: } \\frac{b-a}{2^k} < \\varepsilon \\iff k > \\log_2\\frac{${bisectionIterations[0].b} - ${bisectionIterations[0].a}}{${tolerance}} \\approx ${Math.log2((bisectionIterations[0].b - bisectionIterations[0].a) / tolerance).toFixed(2)}`} />
+              {/* 1. The formula used in every iteration */}
+              <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formula used in every iteration</div>
+                <div className="overflow-x-auto text-center text-black dark:text-white">
+                  <BlockMath math={`c = \\frac{a + b}{2}`} />
+                </div>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  Work out <InlineMath math="f(c)" />. If <InlineMath math="f(a)" /> and <InlineMath math="f(c)" /> have opposite signs the root is in <InlineMath math="[a, c]" />, so <InlineMath math="b" /> becomes <InlineMath math="c" />; otherwise it is in <InlineMath math="[c, b]" />, so <InlineMath math="a" /> becomes <InlineMath math="c" />. Stop when half the interval, <InlineMath math="\dfrac{b - a}{2}" />, is smaller than the tolerance <InlineMath math="\varepsilon" />.
+                </p>
               </div>
 
-              <div className="space-y-3">
-                {(showAllSteps ? bisectionIterations : bisectionIterations.slice(0, 5)).map((iter, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {iter.iteration}</span>
-                      <span>Midpoint Calculation</span>
+              {/* 2. How many iterations: worked out before starting */}
+              {(() => {
+                const a0 = bisectionIterations[0].a, b0 = bisectionIterations[0].b;
+                const w = Number((b0 - a0).toFixed(6));
+                const ratio = w / tolerance;
+                const k = Math.max(1, Math.floor(Math.log2(ratio)) + 1);
+                const r6 = (v) => Number(v.toFixed(6));
+                return (
+                  <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-amber-50 dark:bg-amber-950/30 space-y-2 text-black dark:text-white">
+                    <div className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">How many iterations are needed?</div>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                      The starting interval <InlineMath math={`[${r6(a0)},\\ ${r6(b0)}]`} /> has width <InlineMath math={`${w}`} />. Each iteration halves it, so after <InlineMath math="k" /> iterations half the interval is <InlineMath math={`\\dfrac{${w}}{2^k}`} />. We need this to be smaller than <InlineMath math={`\\varepsilon = ${tolerance}`} />:
+                    </p>
+                    <div className="overflow-x-auto text-center">
+                      <BlockMath math={`\\frac{${w}}{2^k} < ${tolerance} \\quad\\Longrightarrow\\quad 2^k > \\frac{${w}}{${tolerance}} = ${r6(ratio)}`} />
+                      <BlockMath math={`2^{${k - 1}} = ${2 ** (k - 1)} \\ \\text{is not enough}, \\qquad 2^{${k}} = ${2 ** k} > ${r6(ratio)}`} />
+                      <BlockMath math={`\\Longrightarrow\\quad k = ${k}`} />
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`c^{(${iter.iteration})} = \\frac{a + b}{2} = \\frac{${iter.a.toFixed(6)} + ${iter.b.toFixed(6)}}{2} = ${iter.c.toFixed(6)}`} />
-                    </div>
-                    <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(c) = ${iter.fc.toFixed(6)}`} /> &rarr; {index === bisectionIterations.length - 1
-                        ? (iter.fc === 0
-                          ? `f(c) = 0 exactly, so c = ${iter.c} is the root.`
-                          : `Half-width (b − a)/2 = ${((iter.b - iter.a) / 2).toFixed(6)} < ${tolerance}, so stop: root ≈ ${iter.c.toFixed(6)}.`)
-                        : iter.fa * iter.fc < 0 ? 'Sign change in left interval [a, c]. New b = c.' : 'Sign change in right interval [c, b]. New a = c.'}
-                    </div>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                      So the method needs <strong>{k} iteration{k === 1 ? '' : 's'}</strong>{bisectionIterations.length < k ? ` (it stopped sooner because f(c) was exactly 0)` : ''}.
+                    </p>
                   </div>
-                ))}
+                );
+              })()}
+
+              {/* 3. Each iteration with every number put in */}
+              <div className="space-y-3">
+                {(showAllSteps ? bisectionIterations : bisectionIterations.slice(0, 5)).map((iter, index) => {
+                  const isLast = iter === bisectionIterations[bisectionIterations.length - 1];
+                  const n6 = (v) => Number(v.toFixed(6));
+                  const sgn = (v) => (v < 0 ? '< 0' : v > 0 ? '> 0' : '= 0');
+                  const sub = substituteTex(functionInput, iter.c);
+                  const left = iter.fa * iter.fc < 0;
+                  return (
+                    <div key={index} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                        <span>Iteration {iter.iteration}</span>
+                        <span>Interval [{n6(iter.a)}, {n6(iter.b)}]</span>
+                      </div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`c_{${iter.iteration}} = \\frac{a + b}{2} = \\frac{${n6(iter.a)} + ${n6(iter.b)}}{2} = ${n6(iter.c)}`} />
+                        <BlockMath math={`f(${n6(iter.c)}) = ${sub ? `${sub} = ` : ''}${n6(iter.fc)}`} />
+                      </div>
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        {isLast ? (
+                          iter.fc === 0
+                            ? <>f(c) = 0 exactly, so <InlineMath math={`x = ${n6(iter.c)}`} /> is the root.</>
+                            : <>Check the stopping rule: half the interval is now smaller than <InlineMath math={`\\varepsilon = ${tolerance}`} />, so stop.<div className="overflow-x-auto text-center text-black dark:text-white"><BlockMath math={`\\frac{b - a}{2} = \\frac{${n6(iter.b)} - ${n6(iter.a)}}{2} = ${n6((iter.b - iter.a) / 2)} < ${tolerance}`} /><BlockMath math={`\\text{Root: } x \\approx ${n6(iter.c)}`} /></div></>
+                        ) : left ? (
+                          <><InlineMath math={`f(a) = ${n6(iter.fa)} ${sgn(iter.fa)}`} /> and <InlineMath math={`f(c) ${sgn(iter.fc)}`} /> have opposite signs, so the root is in <InlineMath math={`[${n6(iter.a)},\\ ${n6(iter.c)}]`} />: set <InlineMath math={`b = ${n6(iter.c)}`} />.</>
+                        ) : (
+                          <><InlineMath math={`f(a) = ${n6(iter.fa)} ${sgn(iter.fa)}`} /> and <InlineMath math={`f(c) ${sgn(iter.fc)}`} /> have the same sign, so the root is in <InlineMath math={`[${n6(iter.c)},\\ ${n6(iter.b)}]`} />: set <InlineMath math={`a = ${n6(iter.c)}`} />.</>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 {!showAllSteps && bisectionIterations.length > 5 && (
                   <div className="text-center pt-2">
                     <button

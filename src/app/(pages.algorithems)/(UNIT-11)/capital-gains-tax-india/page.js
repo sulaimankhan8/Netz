@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.capital-gains-tax-india';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Gain", text: <>Less any exemption.</> },
           { title: "3. Rate", text: <>Special rate or your slab, plus 4% cess.</> },
         ]} />
+        <SymbolKey rows={EX['capital-gains-tax-india'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Shares bought for ₹5,00,000 in January 2024 are sold for ₹8,00,000 in August 2025. Find the tax.</ExampleProblem>
-        <ExampleStep n={1} title="HOLDING"><StepText>About 19 months: more than 12, so the gain is long-term.</StepText></ExampleStep>
-        <ExampleStep n={2} title="GAIN AND EXEMPTION"><MathPanel><BlockMath math={"8{,}00{,}000 - 5{,}00{,}000 = 3{,}00{,}000, \\quad 3{,}00{,}000 - 1{,}25{,}000 = 1{,}75{,}000"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="TAX"><MathPanel><BlockMath math={"1{,}75{,}000 \\times 12.5\\% = 21{,}875, \\quad + 4\\% \\text{ cess} = 22{,}750"} /></MathPanel></ExampleStep>
-        <Conclusion result="₹22,750" math={<BlockMath math={"\\text{LTCG tax} = 22{,}750"} />}>The calculator below opens on this sale. Rates are hidden from the menus until they are checked.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['capital-gains-tax-india'].example} />
+      <CommonMistakes items={EX['capital-gains-tax-india'].mistakes} />
       <Lab heading="Interactive Capital Gains Tax Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["income-tax","cagr","lumpsum"]} />

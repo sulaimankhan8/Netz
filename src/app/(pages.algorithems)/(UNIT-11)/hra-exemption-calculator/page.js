@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.hra-exemption-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Three amounts", text: <>HRA, rent − 10%, 50% or 40%.</> },
           { title: "3. Least", text: <>That much is exempt.</> },
         ]} />
+        <SymbolKey rows={EX['hra-exemption-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Basic ₹50,000 a month, HRA ₹20,000, rent ₹18,000, in Mumbai. Find the exempt HRA for the year.</ExampleProblem>
-        <ExampleStep n={1} title="YEARLY"><MathPanel><BlockMath math={"\\text{salary} = 6{,}00{,}000, \\ \\text{HRA} = 2{,}40{,}000, \\ \\text{rent} = 2{,}16{,}000"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="THREE AMOUNTS"><MathPanel><BlockMath math={"(a)\\ 2{,}40{,}000 \\quad (b)\\ 2{,}16{,}000 - 60{,}000 = 1{,}56{,}000 \\quad (c)\\ 3{,}00{,}000"} /></MathPanel><StepText>The least is (b).</StepText></ExampleStep>
-        <Conclusion result="₹1,56,000 exempt" math={<BlockMath math={"\\text{exempt} = 1{,}56{,}000, \\quad \\text{taxable} = 84{,}000"} />}>The calculator below opens on this salary.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['hra-exemption-calculator'].example} />
+      <CommonMistakes items={EX['hra-exemption-calculator'].mistakes} />
       <Lab heading="Interactive HRA Exemption Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["income-tax","tds","percentage"]} />

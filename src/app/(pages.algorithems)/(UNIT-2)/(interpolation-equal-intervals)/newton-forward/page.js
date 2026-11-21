@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import NewtonForwardInterpolations from './algorithems.newton-forward-interpolations';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { newtonForward as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function NewtonForwardInterpolation() {
   const formula = `
@@ -77,6 +80,17 @@ export default function NewtonForwardInterpolation() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_0,\\ y_0', t: 'The first row of the table: the starting point for the formula.', e: 'x_0 = 1,\\ y_0 = 2' },
+                    { s: 'h', t: 'The equal gap between the x values.', e: 'h = 2 - 1 = 1' },
+                    { s: 'v', t: 'How many steps of size h the point x is past x₀ (it can be a fraction).', e: 'v = \\dfrac{2.5 - 1}{1} = 1.5' },
+                    { s: '\\Delta y_0', t: 'The first forward difference: next y minus this y.', e: '\\Delta y_0 = 5 - 2 = 3' },
+                    { s: '\\Delta^2 y_0,\\ \\Delta^3 y_0', t: 'Differences of the differences, read from the top diagonal of the table.', e: '\\Delta^2 y_0 = 2,\\ \\Delta^3 y_0 = 0' },
+                    { s: '2!,\\ 3!', t: 'Factorials: 2! = 2, 3! = 6. They divide the terms with v(v − 1) and v(v − 1)(v − 2).', e: '3! = 6' },
+                    { s: 'P(x)', t: 'The interpolating polynomial: the estimate of y at x.', e: 'P(2.5) = 7.25' },
+                  ]} />
                 </div>
               </div>
 
@@ -189,6 +203,17 @@ export default function NewtonForwardInterpolation() {
                       </tbody>
                     </table>
                   </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    Each difference is the entry <strong>below</strong> minus the entry <strong>above</strong> in the previous column:
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-1">
+                    <BlockMath math={`\\Delta y_0 = 5 - 2 = 3, \\quad \\Delta y_1 = 10 - 5 = 5, \\quad \\Delta y_2 = 17 - 10 = 7`} />
+                    <BlockMath math={`\\Delta^2 y_0 = 5 - 3 = 2, \\quad \\Delta^2 y_1 = 7 - 5 = 2`} />
+                    <BlockMath math={`\\Delta^3 y_0 = 2 - 2 = 0`} />
+                  </div>
+                  <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">
+                    The second differences are constant and the third is 0: the data come from a quadratic, so the formula will be exact.
+                  </p>
                 </div>
 
                 {/* Step 3: Formula & Explicit Substitution */}
@@ -233,8 +258,18 @@ export default function NewtonForwardInterpolation() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using it for a point near the end of the table.</>, f: <>Newton forward is for x near the <strong>start</strong> (small v). Near the end use Newton backward; near the middle use Gauss, Stirling or Bessel.</> },
+                { m: <>Subtracting the wrong way in the table.</>, f: <>Always lower minus upper: <InlineMath math="\Delta y_0 = y_1 - y_0 = 5 - 2" />.</> },
+                { m: <>Taking differences from the wrong row.</>, f: <>Forward uses the <strong>top</strong> diagonal: <InlineMath math="\Delta y_0, \Delta^2 y_0, \Delta^3 y_0" />, all in the x₀ row.</> },
+                { m: <>Forgetting the factorials.</>, f: <>The third term is <InlineMath math="\dfrac{v(v-1)}{2!}\Delta^2 y_0" />, the fourth <InlineMath math="\dfrac{v(v-1)(v-2)}{3!}\Delta^3 y_0" />.</> },
+                { m: <>Using v = x − x₀ when h ≠ 1.</>, f: <>Divide by the step: <InlineMath math="v = \dfrac{x - x_0}{h}" />.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show v, the full difference table, the formula, the substitution term by term, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -245,6 +280,8 @@ export default function NewtonForwardInterpolation() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

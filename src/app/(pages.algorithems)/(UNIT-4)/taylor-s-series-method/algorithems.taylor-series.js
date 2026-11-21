@@ -10,6 +10,7 @@ import { evaluateMath, getSymbolicDerivative, simplifyExpression, expressionToTe
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const TaylorSeriesSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -90,6 +91,11 @@ const TaylorSeriesSolver = () => {
     e?.preventDefault();
     calculateTaylor(functionInput, x0, y0, targetX);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x0 !== undefined) setX0(Number(v.x0)); if (v.y0 !== undefined) setY0(Number(v.y0)); if (v.xn !== undefined) setTargetX(Number(v.xn)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);

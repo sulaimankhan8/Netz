@@ -9,7 +9,8 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { at, solve, SPECIAL_ANGLES } from '@/app/utils/engines/unit-circle';
 
 const SPECIAL = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
@@ -24,6 +25,7 @@ const valueTex = (exact, v) => exact ?? (v === null ? '\\text{undefined}' : sig(
 
 export default function UnitCircle() {
   const [deg, setDeg] = useState(60);
+  const guide = useCalcGuide('unit-circle');
   const [text, setText] = useState('60');
   const [unit, setUnit] = useState('deg');
   const [snap, setSnap] = useState(true);
@@ -78,6 +80,7 @@ export default function UnitCircle() {
   return (
     <div className="w-full space-y-6" id="netz-solve-unit-circle">
       <CalcCard title="Unit Circle Explorer">
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         {exportBar}
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-6 items-start">
@@ -124,12 +127,13 @@ export default function UnitCircle() {
           </svg>
 
           <div className="space-y-4 min-w-0">
+            {guide?.maths?.length > 0 && <TypingGuide />}
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
               <label className="space-y-1 min-w-0">
                 <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400 block">Angle θ</span>
                 <input type="text" autoComplete="off" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') enter(); }} className={fieldClass} placeholder="45 or pi/3" />
               </label>
-              <EditorialButton variant="primary" size="md" onClick={enter}><FiCheckCircle className="w-4 h-4 mr-1" /> Go</EditorialButton>
+              <EditorialButton variant="primary" data-solve="" size="md" onClick={enter}><FiCheckCircle className="w-4 h-4 mr-1" /> Go</EditorialButton>
             </div>
             <Choice label="Typed angle is in" value={unit} onChange={setUnit} options={[{ value: 'deg', label: 'Degrees' }, { value: 'rad', label: 'Radians' }]} />
             <label className="flex items-center gap-2 text-sm font-mono min-h-[44px] text-black dark:text-white">

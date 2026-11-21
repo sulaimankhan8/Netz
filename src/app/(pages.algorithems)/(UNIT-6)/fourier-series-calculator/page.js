@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.fourier-series-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function FourierPage() {
           { title: '2. Simplify', text: <>sin nπ = 0, cos nπ = (−1)ⁿ.</> },
           { title: '3. Assemble', text: <>Put aₙ, bₙ into the series.</> },
         ]} />
+        <SymbolKey rows={EX['fourier-series-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the Fourier series of <InlineMath math="f(x) = x" /> on (−π, π).</ExampleProblem>
-        <ExampleStep n={1} title="ODD FUNCTION"><StepText>x is odd, so a₀ = aₙ = 0.</StepText></ExampleStep>
-        <ExampleStep n={2} title="bₙ BY PARTS"><MathPanel><BlockMath math="b_n = \frac{1}{\pi}\int_{-\pi}^{\pi} x\sin nx\,dx = \frac{1}{\pi}\left[-\frac{x\cos nx}{n} + \frac{\sin nx}{n^2}\right]_{-\pi}^{\pi} = \frac{2(-1)^{n+1}}{n}" /></MathPanel></ExampleStep>
-        <Conclusion result="x = 2(sin x − sin 2x/2 + sin 3x/3 − …)" math={<BlockMath math="x = 2\left(\sin x - \frac{\sin 2x}{2} + \frac{\sin 3x}{3} - \cdots\right)" />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['fourier-series-calculator'].example} />
+      <CommonMistakes items={EX['fourier-series-calculator'].mistakes} />
       <Lab heading="Interactive Fourier Series Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['harmonic-analysis', 'integral', 'dft-fft']} />

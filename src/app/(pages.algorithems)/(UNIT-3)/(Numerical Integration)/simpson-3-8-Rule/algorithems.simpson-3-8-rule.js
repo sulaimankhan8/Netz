@@ -4,6 +4,7 @@ import { useCodeExportInputs } from '@/app/utils/codeExport/inputs';
 
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
+import RuleWorking from '@/app/components/method/RuleWorking';
 import 'katex/dist/katex.min.css';
 import { parseUserFunction } from '@/app/utils/evaluateMath';
 import Plot from '@/app/components/UnifiedPlot';
@@ -11,6 +12,7 @@ import { EditorialButton, EditorialExportButton } from '@/app/components/editori
 import { MAX_STEPS, tooManySteps, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const Simpson38RuleSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -130,6 +132,11 @@ const Simpson38RuleSolver = () => {
     e?.preventDefault();
     calculateSimpson38(functionInput, lowerLimit, upperLimit, subintervals);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.a !== undefined) setLowerLimit(Number(v.a)); if (v.b !== undefined) setUpperLimit(Number(v.b)); if (v.n !== undefined) setSubintervals(Number(v.n)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -405,11 +412,7 @@ const Simpson38RuleSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Simpson&apos;s 3/8 Formula Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
-                <BlockMath math={`I = \\frac{3h}{8} \\left[ (y_0 + y_n) + 3 \\sum_{i \\ne 3k} y_i + 2 \\sum_{i = 3k} y_i \\right]`} />
-                <BlockMath math={`I = \\frac{3(${result.h.toFixed(6)})}{8} \\left[ (${result.y0.toFixed(6)} + ${result.yn.toFixed(6)}) + 3(${result.sumOthers.toFixed(6)}) + 2(${result.sumMult3.toFixed(6)}) \\right]`} />
-                <BlockMath math={`I \\approx ${result.integralValue.toFixed(8)}`} />
-              </div>
+              <RuleWorking rule="simpson38" points={plotPoints} value={result.integralValue} />
             </div>
           )}
 

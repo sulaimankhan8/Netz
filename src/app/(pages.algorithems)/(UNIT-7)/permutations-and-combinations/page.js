@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CountingCalculator from './algorithems.permutations-and-combinations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,37 +46,11 @@ export default function CountingPage() {
             { title: '3. Cancel First', text: <>Cancel the factorials before multiplying: <InlineMath math="\frac{10!}{7!} = 10 \times 9 \times 8" />.</> },
           ]}
         />
+        <SymbolKey rows={EX['permutations-and-combinations'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          A class of 10 students must pick 3 representatives. (a) In how many ways can a team of 3 be chosen? (b) In how many ways if the 3 are a president, a secretary and a treasurer?
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="(a) ORDER DOESN'T MATTER: COMBINATIONS">
-          <MathPanel>
-            <BlockMath math="{}^{10}C_3 = \frac{10!}{3!\,7!} = \frac{10 \times 9 \times 8}{3 \times 2 \times 1} = \frac{720}{6} = 120" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="(b) DIFFERENT ROLES: PERMUTATIONS">
-          <StepText>Now Asha as president and Ben as secretary differs from the other way round, so order matters:</StepText>
-          <MathPanel>
-            <BlockMath math="{}^{10}P_3 = \frac{10!}{7!} = 10 \times 9 \times 8 = 720" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="HOW THEY CONNECT">
-          <MathPanel>
-            <BlockMath math="{}^{10}P_3 = 3! \times {}^{10}C_3 = 6 \times 120 = 720" />
-          </MathPanel>
-          <StepText>Each team of 3 can hand out the 3 roles in 3! = 6 ways.</StepText>
-        </ExampleStep>
-
-        <Conclusion result="(a) 120 teams, (b) 720 ways with roles" math={<BlockMath math="{}^{10}C_3 = 120, \qquad {}^{10}P_3 = 720" />}>
-          The calculator below opens on 10C3 and works with exact answers however big.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['permutations-and-combinations'].example} />
+      <CommonMistakes items={EX['permutations-and-combinations'].mistakes} />
 
       <Lab heading="Interactive Permutations & Combinations Calculator">
         <CountingCalculator />

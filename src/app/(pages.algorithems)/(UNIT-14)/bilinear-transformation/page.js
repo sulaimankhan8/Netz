@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.bilinear-transformation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Solve", text: <>For w in terms of z.</> },
           { title: "3. Fixed points", text: <>cz² + (d − a)z − b = 0.</> },
         ]} />
+        <SymbolKey rows={EX['bilinear-transformation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the bilinear map sending z = −1, 0, 1 to w = 0, i, 3i.</ExampleProblem>
-        <ExampleStep n={1} title="CROSS-RATIO"><MathPanel><BlockMath math={"\\frac{(w - 0)(i - 3i)}{(w - 3i)(i - 0)} = \\frac{(z + 1)(0 - 1)}{(z - 1)(0 + 1)}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math={"w = \\frac{-3i(z + 1)}{z - 3}"} /></MathPanel><StepText>Check: z = 0 gives w = i.</StepText></ExampleStep>
-        <Conclusion result="w = −3i(z + 1)/(z − 3)" math={<BlockMath math={"w = \\frac{-3iz - 3i}{z - 3}"} />}>The calculator below opens on these points.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['bilinear-transformation'].example} />
+      <CommonMistakes items={EX['bilinear-transformation'].mistakes} />
       <Lab heading="Interactive Bilinear Transformation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["complex-numbers","cauchy-riemann","polar-coordinates"]} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.trigonometric-equations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Principal value", text: <>Solve for the function, then α.</> },
           { title: "3. General solution", text: <>The formula for that function.</> },
         ]} />
+        <SymbolKey rows={EX['trigonometric-equations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve 2cos²x + 3cos x + 1 = 0.</ExampleProblem>
-        <ExampleStep n={1} title="FACTOR"><MathPanel><BlockMath math={"(2\\cos x + 1)(\\cos x + 1) = 0 \\ \\Rightarrow \\ \\cos x = -\\tfrac12 \\text{ or } \\cos x = -1"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="GENERAL SOLUTIONS"><MathPanel><BlockMath math={"x = 2n\\pi \\pm \\frac{2\\pi}{3}, \\qquad x = 2n\\pi \\pm \\pi"} /></MathPanel><StepText>The second is the same as x = (2n + 1)π.</StepText></ExampleStep>
-        <Conclusion result="x = 2π/3, π, 4π/3 in [0, 2π)" math={<BlockMath math={"x = \\frac{2\\pi}{3}, \\ \\pi, \\ \\frac{4\\pi}{3}"} />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['trigonometric-equations'].example} />
+      <CommonMistakes items={EX['trigonometric-equations'].mistakes} />
       <Lab heading="Interactive Trig Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["trig-identities","inverse-trig","unit-circle"]} />

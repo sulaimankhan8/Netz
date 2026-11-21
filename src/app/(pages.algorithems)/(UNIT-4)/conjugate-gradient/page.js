@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.conjugate-gradient';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Step", text: <>α, then x and r.</> },
           { title: "3. New direction", text: <>β, then p.</> },
         ]} />
+        <SymbolKey rows={EX['conjugate-gradient'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve [4 1; 1 3]x = (1, 2) starting from x₀ = 0.</ExampleProblem>
-        <ExampleStep n={1} title="STEP 1"><MathPanel><BlockMath math={"r_0 = (1, 2), \\ \\alpha_0 = \\frac{5}{20} = 0.25, \\ x_1 = (0.25, 0.5)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="STEP 2"><MathPanel><BlockMath math={"x_2 = \\left(\\tfrac{1}{11}, \\tfrac{7}{11}\\right), \\quad r_2 = 0"} /></MathPanel><StepText>Two steps for a 2 × 2 system.</StepText></ExampleStep>
-        <Conclusion result="x = (1/11, 7/11)" math={<BlockMath math={"\\mathbf{x} = \\left(\\tfrac{1}{11}, \\tfrac{7}{11}\\right)"} />}>The calculator below opens on this system.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['conjugate-gradient'].example} />
+      <CommonMistakes items={EX['conjugate-gradient'].mistakes} />
       <Lab heading="Interactive Conjugate Gradient Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["gauss-seidel","gradient-descent","cholesky"]} />

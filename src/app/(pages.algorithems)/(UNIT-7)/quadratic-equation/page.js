@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import QuadraticSolver from './algorithems.quadratic-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,46 +46,11 @@ export default function QuadraticPage() {
             { title: '3. Plus and Minus', text: <>Do the formula twice, once with + and once with −, to get both roots.</> },
           ]}
         />
+        <SymbolKey rows={EX['quadratic-equation'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Solve <InlineMath math="2x^2 - 7x + 3 = 0" />, factorise it, and find the vertex of its graph.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="DISCRIMINANT">
-          <StepText>Here <InlineMath math="a = 2" />, <InlineMath math="b = -7" />, <InlineMath math="c = 3" />:</StepText>
-          <MathPanel>
-            <BlockMath math="D = (-7)^2 - 4(2)(3) = 49 - 24 = 25" />
-          </MathPanel>
-          <StepText>D = 25 is a positive perfect square, so there are two different rational roots.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="QUADRATIC FORMULA">
-          <MathPanel>
-            <BlockMath math="x = \frac{7 \pm \sqrt{25}}{2 \times 2} = \frac{7 \pm 5}{4}" />
-            <BlockMath math="x = \frac{12}{4} = 3 \quad \text{or} \quad x = \frac{2}{4} = \frac{1}{2}" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="FACTORS AND CHECK">
-          <MathPanel>
-            <BlockMath math="2x^2 - 7x + 3 = (2x - 1)(x - 3)" />
-            <BlockMath math="\alpha + \beta = 3 + \tfrac{1}{2} = \tfrac{7}{2} = -\tfrac{b}{a} \ \checkmark \qquad \alpha\beta = \tfrac{3}{2} = \tfrac{c}{a} \ \checkmark" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={4} title="VERTEX">
-          <MathPanel>
-            <BlockMath math="x = -\frac{b}{2a} = \frac{7}{4}, \qquad y = 2\left(\tfrac{7}{4}\right)^2 - 7\left(\tfrac{7}{4}\right) + 3 = -\frac{25}{8}" />
-          </MathPanel>
-          <StepText>a = 2 &gt; 0, so the parabola opens upwards and (7/4, −25/8) is its lowest point.</StepText>
-        </ExampleStep>
-
-        <Conclusion result="x = 3 or x = 1/2" math={<BlockMath math="2x^2 - 7x + 3 = (2x - 1)(x - 3) = 0" />}>
-          The solver below opens on this equation and draws the parabola through both roots.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['quadratic-equation'].example} />
+      <CommonMistakes items={EX['quadratic-equation'].mistakes} />
 
       <Lab heading="Interactive Quadratic Solver">
         <QuadraticSolver />

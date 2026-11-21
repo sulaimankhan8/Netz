@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.errors-and-approximations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Differentiate", text: <>f′(x) at that value.</> },
           { title: "3. Multiply", text: <>by Δx and add.</> },
         ]} />
+        <SymbolKey rows={EX['errors-and-approximations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Use differentials to find <InlineMath math={"\\sqrt{25.3}"} />.</ExampleProblem>
-        <ExampleStep n={1} title="SET UP"><MathPanel><BlockMath math={"f(x) = \\sqrt{x}, \\ x = 25, \\ \\Delta x = 0.3, \\qquad f'(x) = \\frac{1}{2\\sqrt{x}} = \\frac{1}{10}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="APPROXIMATE"><MathPanel><BlockMath math={"\\sqrt{25.3} \\approx 5 + \\frac{1}{10}(0.3) = 5.03"} /></MathPanel><StepText>The true value is 5.02991…</StepText></ExampleStep>
-        <Conclusion result="≈ 5.03" math={<BlockMath math={"\\sqrt{25.3} \\approx 5.03"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['errors-and-approximations'].example} />
+      <CommonMistakes items={EX['errors-and-approximations'].mistakes} />
       <Lab heading="Interactive Errors and Approximations Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["derivative","tangent-normal","taylor-series"]} />

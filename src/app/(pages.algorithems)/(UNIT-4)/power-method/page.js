@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PowerMethodCalculator from './algorithems.power-method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,38 +42,11 @@ export default function PowerMethodPage() {
             { title: '3. Repeat', text: <>Stop when λ stops changing; the vector is the eigenvector.</> },
           ]}
         />
+        <SymbolKey rows={EX['power-method'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Find the dominant eigenvalue and eigenvector of <InlineMath math="A = \begin{bmatrix} 1 & 6 & 1 \\ 1 & 2 & 0 \\ 0 & 0 & 3 \end{bmatrix}" />, starting from <InlineMath math="x^{(0)} = [1, 0, 0]^T" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="FIRST TWO ITERATIONS">
-          <MathPanel>
-            <BlockMath math="A\,x^{(0)} = [1, 1, 0]^T \Rightarrow \lambda = 1, \quad x^{(1)} = [1, 1, 0]^T" />
-            <BlockMath math="A\,x^{(1)} = [7, 3, 0]^T \Rightarrow \lambda = 7, \quad x^{(2)} = [1, 0.4286, 0]^T" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="KEEP GOING">
-          <MathPanel>
-            <BlockMath math="A\,x^{(2)} = [3.5714, 1.8571, 0]^T \Rightarrow \lambda = 3.5714, \quad x^{(3)} = [1, 0.52, 0]^T" />
-            <BlockMath math="A\,x^{(3)} = [4.12, 2.04, 0]^T \Rightarrow \lambda = 4.12" />
-          </MathPanel>
-          <StepText>The estimates swing around 4 and settle there after about ten iterations.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="CHECK">
-          <MathPanel>
-            <BlockMath math="A\begin{bmatrix} 1 \\ 0.5 \\ 0 \end{bmatrix} = \begin{bmatrix} 1 + 3 \\ 1 + 1 \\ 0 \end{bmatrix} = 4\begin{bmatrix} 1 \\ 0.5 \\ 0 \end{bmatrix} \ \checkmark" />
-          </MathPanel>
-        </ExampleStep>
-
-        <Conclusion result="λ = 4, eigenvector [1, 0.5, 0]" math={<BlockMath math="\lambda_{\max} = 4, \qquad x = [1,\ 0.5,\ 0]^T" />}>
-          The calculator below opens on this matrix. Switch to &ldquo;smallest&rdquo; for the inverse power method.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['power-method'].example} />
+      <CommonMistakes items={EX['power-method'].mistakes} />
 
       <Lab heading="Interactive Power Method Calculator">
         <PowerMethodCalculator />

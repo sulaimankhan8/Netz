@@ -48,11 +48,26 @@ export function solve({ f, L, c2 = '1', h, k = '', g0 = '0', g1 = '0', steps: nt
   }
   const columns = [{ key: 't', label: 't', bold: true }, ...xs.map((x, i) => ({ key: `u${i}`, label: `x = ${r4(x)}` }))];
   const rows = grid.map((row, j) => ({ t: r4(j * K), ...Object.fromEntries(row.map((v, i) => [`u${i}`, r4(v)])) }));
+  // The first time level in full: every inner point with its numbers (up to 6 points), so the pattern is clear
+  const shown = Math.min(n - 1, 6);
+  const initLine = `u_{i,0} = f(x_i): \\ ${xs.map((x, i) => `u_{${i},0} = ${r4(grid[0][i])}`).slice(0, 8).join(', \\ ')}`;
+  const benderLines = grid.length > 1 ? [
+    initLine,
+    ...Array.from({ length: shown }, (_, k) => { const i = k + 1; return `u_{${i},1} = \\tfrac{1}{2}(u_{${i - 1},0} + u_{${i + 1},0}) = \\tfrac{1}{2}(${r4(grid[0][i - 1])} + ${r4(grid[0][i + 1])}) = ${r4(grid[1][i])}`; }),
+    ...(grid.length > 2 ? [`u_{1,2} = \\tfrac{1}{2}(${r4(grid[1][0])} + ${r4(grid[1][2])}) = ${r4(grid[2][1])} \\quad \\text{(and so on, row by row)}`] : []),
+  ] : [];
+  const fmt = (v) => (v < 0 ? `(${r4(v)})` : `${r4(v)}`);
+  const crankLines = grid.length > 1 ? [
+    initLine,
+    `\\text{Row } j = 0 \\to 1, \\ i = 1: \\ ${r4(2 * (1 + lam))}u_{1,1} - ${r4(lam)}u_{2,1} = ${r4(lam)}(${r4(grid[0][0])}) + ${fmt(2 * (1 - lam))}(${r4(grid[0][1])}) + ${r4(lam)}(${r4(grid[0][2])}) + ${r4(lam)}(${r4(left)})`,
+    '\\text{One such equation per inner point gives a tridiagonal system, solved by the Thomas algorithm.}',
+    `u_{\\cdot,1} = (${grid[1].slice(1, n).map(r4).slice(0, 8).join(', ')})`,
+  ] : [];
   const steps = [
-    { title: 'Grid', formula: '\\lambda = \\frac{c^2k}{h^2}', depth: 0, lines: [`h = ${H}, \\quad k = ${r4(K)}, \\quad \\lambda = ${r4(lam)}`] },
+    { title: 'Grid', formula: '\\lambda = \\frac{c^2k}{h^2}', depth: 0, lines: [`h = ${H}, \\quad k = ${r4(K)}, \\quad \\lambda = \\frac{${r4(c)} \\times ${r4(K)}}{${H}^2} = ${r4(lam)}`] },
     method === 'bender'
-      ? { title: 'Bender–Schmidt (explicit)', formula: 'u_{i,j+1} = \\tfrac{1}{2}(u_{i-1,j} + u_{i+1,j}) \\quad (\\lambda = \\tfrac{1}{2})', depth: 0, lines: grid.length > 1 ? [`u_{1,1} = \\tfrac{1}{2}(${r4(grid[0][0])} + ${r4(grid[0][2])}) = ${r4(grid[1][1])}`] : [] }
-      : { title: 'Crank–Nicolson (implicit)', formula: '-\\lambda u_{i-1,j+1} + 2(1+\\lambda)u_{i,j+1} - \\lambda u_{i+1,j+1} = \\lambda u_{i-1,j} + 2(1-\\lambda)u_{i,j} + \\lambda u_{i+1,j}', depth: 0, lines: ['\\text{Each time level is a tridiagonal system, solved by the Thomas algorithm.}'] },
+      ? { title: 'Bender–Schmidt (explicit)', formula: 'u_{i,j+1} = \\tfrac{1}{2}(u_{i-1,j} + u_{i+1,j}) \\quad (\\lambda = \\tfrac{1}{2})', depth: 0, lines: benderLines }
+      : { title: 'Crank–Nicolson (implicit)', formula: '-\\lambda u_{i-1,j+1} + 2(1+\\lambda)u_{i,j+1} - \\lambda u_{i+1,j+1} = \\lambda u_{i-1,j} + 2(1-\\lambda)u_{i,j} + \\lambda u_{i+1,j}', depth: 0, lines: crankLines },
   ];
   const notes = method === 'bender' ? ['Bender–Schmidt fixes λ = ½ (so k = h²/(2c²)); larger λ would make the explicit scheme unstable.'] : ['Crank–Nicolson is stable for any λ; λ = 1 (k = h²/c²) is the usual textbook choice.'];
   return { method, h: H, k: r4(K), lambda: r4(lam), columns, rows, steps, notes, verified: true };

@@ -6,13 +6,15 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { Stat } from '@/app/components/method/SavingsCalculator';
 import RatesBadge from '@/app/components/method/RatesBadge';
 import { formatCurrencyCode } from '@/app/utils/finance/money';
 import { CA_RULES } from '@/app/data/rates/ca';
 import { versions } from '@/app/utils/rates/getRule';
 import { solve, provinceParts } from '@/app/utils/engines/canada-sales-tax';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const PERIODS = versions(CA_RULES, 'ca.salestax.provinces');
 const START = { amount: '100', mode: 'add', province: 'ON', period: 0 };
@@ -20,6 +22,7 @@ const KIND = { gst: 'GST only', hst: 'HST', pst: 'GST + provincial tax' };
 
 export default function CanadaSalesTaxCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('canada-sales-tax');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('canada-sales-tax', 11, answer, () => ({ province: s.province, mode: s.mode }));
@@ -28,6 +31,8 @@ export default function CanadaSalesTaxCalculator() {
   const m = (v) => formatCurrencyCode(v, 'CAD');
   const rateText = (p) => provinceParts(rule, p.code).parts.map((x) => `${x.rate}% ${x.label}`).join(' + ');
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -45,15 +50,17 @@ export default function CanadaSalesTaxCalculator() {
         title="GST/HST Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before tax (add tax)' }, { value: 'remove', label: 'Price including tax (remove tax)' }]} />
+        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before tax (add tax)' }, { value: 'remove', label: 'Price including tax (remove tax)' }]} help={guide?.help?.mode} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label={s.mode === 'add' ? 'Price before tax ($)' : 'Price including tax ($)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} />
-          <Select label="Province or territory" value={s.province} onChange={(v) => set({ province: v })} options={rule.data.provinces.map((p) => ({ value: p.code, label: `${p.name} (${rateText(p)})` }))} />
-          <Select label="Rates for" value={String(s.period)} onChange={(v) => set({ period: Number(v) })} options={PERIODS.map((p, i) => ({ value: String(i), label: p.label }))} />
+          <Field label={s.mode === 'add' ? 'Price before tax ($)' : 'Price including tax ($)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} help={guide?.help?.amount} />
+          <Select label="Province or territory" value={s.province} onChange={(v) => set({ province: v })} options={rule.data.provinces.map((p) => ({ value: p.code, label: `${p.name} (${rateText(p)})` }))} help={guide?.help?.province} />
+          <Select label="Rates for" value={String(s.period)} onChange={(v) => set({ period: Number(v) })} options={PERIODS.map((p, i) => ({ value: String(i), label: p.label }))} help={guide?.help?.period} />
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate Tax
           </EditorialButton>
         </div>

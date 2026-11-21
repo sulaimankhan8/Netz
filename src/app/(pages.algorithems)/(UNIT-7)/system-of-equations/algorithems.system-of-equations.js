@@ -7,7 +7,8 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { RowOps, MatrixView } from '@/app/components/method/Matrix';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { texNumber } from '@/app/utils/numeric/latex';
@@ -21,6 +22,7 @@ const cellClass = 'w-full min-w-0 min-h-[44px] px-2 text-center text-base font-m
 
 export default function SystemSolver() {
   const [size, setSize] = useState(2);
+  const guide = useCalcGuide('system-of-equations');
   const [cells, setCells] = useState(START[2]);
   const [method, setMethod] = useState('cramer');
   const [answer, setAnswer] = useState(null);
@@ -54,6 +56,7 @@ export default function SystemSolver() {
         title="Simultaneous Equations Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="flex flex-wrap gap-6">
           <Choice label="Number of equations" value={String(size)} onChange={(v) => pickSize(Number(v))} options={[{ value: '2', label: '2 (x, y)' }, { value: '3', label: '3 (x, y, z)' }]} />
@@ -82,8 +85,9 @@ export default function SystemSolver() {
           <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Type 0 for a missing term and a negative number for a minus sign (x − y = −1 is 1, −1, −1).</p>
         </div>
 
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Solve System
           </EditorialButton>
         </div>

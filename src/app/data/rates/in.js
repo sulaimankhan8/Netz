@@ -110,10 +110,12 @@ export const IN_RULES = [
     validFrom: '2025-04-01',
     validTo: '2026-04-01',
     label: 'FY 2025-26 (AY 2026-27)',
+    // Read 2026-11-21 on incometax.gov.in (AY 2026-27 help pages): both regimes' slabs, 87A rebates, surcharge, 4% cess.
+    // The standard deductions were not on those pages, so 'secondary'.
     source: {
-      title: 'Finance Act 2025 (Union Budget 1 Feb 2025); incometax.gov.in',
-      url: 'https://www.incometax.gov.in/',
-      verifiedOn: '2026-11-04',
+      title: 'Finance Act 2025 (Union Budget 1 Feb 2025); incometax.gov.in help pages for AY 2026-27',
+      url: 'https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1',
+      verifiedOn: '2026-11-21',
       status: 'secondary',
     },
     data: {
@@ -281,12 +283,14 @@ export const IN_RULES = [
     validFrom: '2019-04-01',
     validTo: null,
     label: 'Domestic companies (Taxation Laws (Amendment) Act 2019 regimes)',
-    source: { title: 'Income-tax Act 1961: s.115BAA, s.115BAB, Finance Act rates; Income Tax Department tax rates page', url: 'https://www.incometaxindia.gov.in/', verifiedOn: '2026-11-08', status: 'unverified' },
+    // Read 2026-11-21 on incometax.gov.in (domestic company, AY 2026-27): 115BAA 22%, 115BAB 15% on business income
+    // (22% on other income), normal 30% / 25% (turnover ≤ ₹400 crore in 2020-21), surcharge 7% / 12% / 10%, MAT 15%, cess 4%
+    source: { title: 'incometax.gov.in: "Domestic company" tax rates for AY 2026-27', url: 'https://www.incometax.gov.in/iec/foportal/help/company/return-applicable', verifiedOn: '2026-11-21', status: 'official' },
     data: {
       regimes: {
         // rate %, surcharge % (flat for the concessional regimes), MAT applies?
         '115BAA': { label: 'Section 115BAA (no exemptions)', rate: 22, surcharge: [[0, 10]], mat: false },
-        '115BAB': { label: 'Section 115BAB (new manufacturing companies)', rate: 15, surcharge: [[0, 10]], mat: false },
+        '115BAB': { label: 'Section 115BAB (new manufacturing companies; 15% is on the manufacturing business income, other income pays 22%)', rate: 15, surcharge: [[0, 10]], mat: false },
         normal: { label: 'Normal provisions', rate: 30, smallRate: 25, smallTurnover: 4000000000, surcharge: [[10000000, 7], [100000000, 12]], mat: true },
       },
       cess: 4,

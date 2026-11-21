@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LinearEquationCalculator from './algorithems.linear-equation-solver';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function LinearEquationPage() {
           { title: '2. Expand and collect', text: <>x-terms to the left, numbers to the right.</> },
           { title: '3. Divide and check', text: <>Divide by the coefficient of x, then substitute back.</> },
         ]} />
+        <SymbolKey rows={EX['linear-equation-solver'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="3(x - 2) + 4 = 2x + 7" />.</ExampleProblem>
-        <ExampleStep n={1} title="EXPAND"><MathPanel><BlockMath math="3x - 6 + 4 = 2x + 7 \ \Rightarrow \ 3x - 2 = 2x + 7" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COLLECT"><MathPanel><BlockMath math="3x - 2x = 7 + 2 \ \Rightarrow \ x = 9" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="CHECK"><MathPanel><BlockMath math="3(9 - 2) + 4 = 25, \qquad 2(9) + 7 = 25 \ \checkmark" /></MathPanel><StepText>Both sides agree.</StepText></ExampleStep>
-        <Conclusion result="x = 9" math={<BlockMath math="x = 9" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['linear-equation-solver'].example} />
+      <CommonMistakes items={EX['linear-equation-solver'].mistakes} />
       <Lab heading="Interactive Linear Equation Solver"><LinearEquationCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['quadratic', 'system-of-equations', 'inequalities']} />

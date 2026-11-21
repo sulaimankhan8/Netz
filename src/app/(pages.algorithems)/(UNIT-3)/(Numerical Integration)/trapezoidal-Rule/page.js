@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import TrapezoidalRuleSolver from './algorithems.trapezoidal-rule';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { trapezoidal as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function TrapezoidalRulePage() {
   const formula = `
@@ -76,6 +79,16 @@ export default function TrapezoidalRulePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'a,\\ b', t: 'The limits of the integral: where the area starts and ends.', e: 'a = 0,\\ b = 1' },
+                    { s: 'n', t: 'The number of strips the area is cut into (any whole number for this rule).', e: 'n = 6' },
+                    { s: 'h', t: 'The width of each strip: (b − a)/n.', e: 'h = \\tfrac16' },
+                    { s: 'x_i,\\ y_i', t: 'The strip edges xᵢ = a + ih and the heights yᵢ = f(xᵢ) there.', e: 'y_1 = f(\\tfrac16) = 0.97297' },
+                    { s: 'y_0 + y_n', t: 'The two end heights: each belongs to only one strip, so it counts once.', e: '1 + 0.5' },
+                    { s: '2(y_1 + \\cdots + y_{n-1})', t: 'The inside heights: each is shared by two strips, so it counts twice.', e: '2(3.95544)' },
+                  ]} />
                 </div>
               </div>
 
@@ -226,8 +239,18 @@ export default function TrapezoidalRulePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Counting the inside heights once.</>, f: <>Inside heights are shared by two trapezia: multiply their sum by 2. Only y₀ and yₙ count once.</> },
+                { m: <>Forgetting the h/2 in front.</>, f: <>The bracket is multiplied by <InlineMath math="\dfrac{h}{2}" />, not h.</> },
+                { m: <>Using n points instead of n strips.</>, f: <>n strips need n + 1 heights: y₀ to yₙ. Here 6 strips, 7 heights.</> },
+                { m: <>Degrees in trig functions.</>, f: <>Work out f(xᵢ) in radians.</> },
+                { m: <>Rounding the heights too early.</>, f: <>Keep 5–6 decimals in the table; round only the final answer.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show h, the table of xᵢ and yᵢ, the formula with the numbers, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -238,6 +261,8 @@ export default function TrapezoidalRulePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ChangeOfOrderCalculator from './algorithems.change-of-order-of-integration';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function ChangeOfOrderPage() {
           { title: '2. New strip', text: <>Horizontal instead of vertical.</> },
           { title: '3. Solve for x', text: <>Each curve gives the new inner limits.</> },
         ]} />
+        <SymbolKey rows={EX['change-of-order-of-integration'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Change the order and evaluate <InlineMath math="\int_0^1\int_x^1 e^{y^2}\,dy\,dx" />.</ExampleProblem>
-        <ExampleStep n={1} title="THE REGION"><MathPanel><BlockMath math="0 \le x \le 1, \quad x \le y \le 1" /></MathPanel><StepText>The triangle above y = x. A horizontal strip at height y runs from x = 0 to x = y.</StepText></ExampleStep>
-        <ExampleStep n={2} title="NEW ORDER"><MathPanel><BlockMath math="\int_0^1\int_0^y e^{y^2}\,dx\,dy = \int_0^1 y\,e^{y^2}\,dy = \left[\frac{e^{y^2}}{2}\right]_0^1" /></MathPanel></ExampleStep>
-        <Conclusion result="(e − 1)/2" math={<BlockMath math="= \frac{e - 1}{2} \approx 0.859" />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['change-of-order-of-integration'].example} />
+      <CommonMistakes items={EX['change-of-order-of-integration'].mistakes} />
       <Lab heading="Interactive Change of Order Calculator"><ChangeOfOrderCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['double-integral', 'triple-integral', 'area-under-curve']} />

@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import BisectionMethod from './algorithems.bisection-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { bisection as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function BisectionMethods() {
   const iterationData = [
@@ -86,6 +89,17 @@ export default function BisectionMethods() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                  { s: 'f(x)', t: <>The function whose root we want: the <InlineMath math="x" /> where <InlineMath math="f(x) = 0" />, i.e. where the graph crosses the x-axis.</>, e: 'f(x) = x^3 - 4x - 9' },
+                  { s: 'a', t: <>Left end of the interval. <InlineMath math="f(a)" /> must have the opposite sign to <InlineMath math="f(b)" />.</>, e: 'a = 2,\\ f(2) = -9' },
+                  { s: 'b', t: 'Right end of the interval. Together a and b trap (bracket) the root.', e: 'b = 3,\\ f(3) = 6' },
+                  { s: 'C', t: 'The midpoint of [a, b]: our new guess for the root at every step.', e: 'C = \\dfrac{2 + 3}{2} = 2.5' },
+                  { s: 'f(C)', t: 'The function at the midpoint. Its sign tells us which half still contains the root.', e: 'f(2.5) = -3.375' },
+                  { s: '\\varepsilon', t: 'The tolerance: how close to the root the answer must be. We stop when half the interval is smaller than it.', e: '\\varepsilon = 0.05' },
+                  { s: 'k', t: <>The number of halvings (iterations). After <InlineMath math="k" /> of them the interval is <InlineMath math="\dfrac{b - a}{2^k}" /> wide.</>, e: 'k = 5' },
+                  ]} />
                 </div>
               </div>
 
@@ -137,9 +151,17 @@ export default function BisectionMethods() {
                     <BlockMath math={`f(2) = 2^3 - 4(2) - 9 = 8 - 8 - 9 = -9 \\quad (\\text{Negative})`} />
                     <BlockMath math={`f(3) = 3^3 - 4(3) - 9 = 27 - 12 - 9 = 6 \\quad (\\text{Positive})`} />
                   </div>
-                  <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">
-                    Since <InlineMath math="f(2) < 0" /> and <InlineMath math="f(3) > 0" />, a root must lie in <InlineMath math="[2, 3]" />. Each step halves the interval, so the number of steps is known in advance: stop at step <InlineMath math="k" /> once <InlineMath math="\frac{b-a}{2^k} < \varepsilon" />, i.e. <InlineMath math="k > \log_2 \frac{3-2}{0.05} = \log_2 20 \approx 4.32" />, so <strong>5 steps</strong>.
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    Since <InlineMath math="f(2) < 0" /> and <InlineMath math="f(3) > 0" />, a root must lie in <InlineMath math="[2, 3]" />.
                   </p>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    <strong>How many steps?</strong> The interval is <InlineMath math="3 - 2 = 1" /> wide and every step halves it, so after <InlineMath math="k" /> steps half the interval is <InlineMath math="\dfrac{1}{2^k}" />. We need it below <InlineMath math="\varepsilon = 0.05" />:
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl overflow-x-auto text-center space-y-2">
+                    <BlockMath math={`\\frac{1}{2^k} < 0.05 \\quad\\Longrightarrow\\quad 2^k > \\frac{1}{0.05} = 20`} />
+                    <BlockMath math={`2^4 = 16 \\ \\text{is not enough}, \\qquad 2^5 = 32 > 20`} />
+                    <BlockMath math={`\\Longrightarrow\\quad k = 5 \\text{ steps}`} />
+                  </div>
                 </div>
 
                 {/* Step 3: Calculate Midpoint */}
@@ -264,8 +286,18 @@ export default function BisectionMethods() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Starting with <InlineMath math="f(a)" /> and <InlineMath math="f(b)" /> of the same sign.</>, f: <>Check the signs first. If <InlineMath math="f(a) \cdot f(b) > 0" /> there may be no root (or two) in between: try other values of <InlineMath math="a" /> and <InlineMath math="b" />.</> },
+                { m: <>Keeping the wrong half of the interval.</>, f: <>Keep the half where the sign changes: if <InlineMath math="f(a)" /> and <InlineMath math="f(C)" /> differ in sign, set <InlineMath math="b = C" />; otherwise set <InlineMath math="a = C" />.</> },
+                { m: <>Stopping when <InlineMath math="f(C)" /> is small instead of when the interval is small.</>, f: <>The tolerance is about <InlineMath math="x" />: stop when <InlineMath math="\dfrac{b - a}{2} < \varepsilon" />. A flat curve can have a tiny <InlineMath math="f(C)" /> far from the root.</> },
+                { m: <>Rounding the midpoints too early.</>, f: <>Keep 4–6 decimals in every step and round only the final answer (here <InlineMath math="2.71875 \to 2.7" />).</> },
+                { m: <>Using degrees for trigonometric functions.</>, f: <>Calculators for numerical methods work in radians: <InlineMath math="\cos 1" /> means 1 radian.</> },
+                { m: <>Writing only the final answer.</>, f: <>Marks are for the working: show <InlineMath math="f(a)" />, <InlineMath math="f(b)" />, each midpoint with its <InlineMath math="f(C)" /> and sign, and the table.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -276,6 +308,8 @@ export default function BisectionMethods() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.lagrange-linear-pde';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Multipliers", text: <>lP + mQ + nR = 0 makes l dx + m dy + n dz = 0.</> },
           { title: "3. Combine", text: <>φ(u, v) = 0.</> },
         ]} />
+        <SymbolKey rows={EX['lagrange-linear-pde'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve x²p + y²q = z².</ExampleProblem>
-        <ExampleStep n={1} title="FIRST PAIR"><MathPanel><BlockMath math={"\\frac{dx}{x^2} = \\frac{dy}{y^2} \\Rightarrow -\\frac1x = -\\frac1y + c \\Rightarrow \\frac1x - \\frac1y = c_1"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SECOND PAIR"><MathPanel><BlockMath math={"\\frac{dx}{x^2} = \\frac{dz}{z^2} \\Rightarrow \\frac1x - \\frac1z = c_2"} /></MathPanel></ExampleStep>
-        <Conclusion result="φ(1/x − 1/y, 1/x − 1/z) = 0" math={<BlockMath math={"\\phi\\left(\\frac1x - \\frac1y,\\ \\frac1x - \\frac1z\\right) = 0"} />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['lagrange-linear-pde'].example} />
+      <CommonMistakes items={EX['lagrange-linear-pde'].mistakes} />
       <Lab heading="Interactive Lagrange's Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["formation-of-pde","charpit-method","pde-constant-coefficients"]} />

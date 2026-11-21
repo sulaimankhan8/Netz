@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import DeterminantCalculator from './algorithems.determinant';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit8';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function DeterminantPage() {
             { title: '3. Signs and Sum', text: <>Use the signs <InlineMath math="+,\ -,\ +,\ \dots" /> and add <InlineMath math="a_{1j} M_{1j}" /> with those signs.</> },
           ]}
         />
+        <SymbolKey rows={EX['determinant'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -87,6 +90,7 @@ export default function DeterminantPage() {
           Because the determinant is not zero, this matrix has an inverse.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['determinant'].mistakes} />
 
       <Lab heading="Interactive Determinant Calculator">
         <DeterminantCalculator />

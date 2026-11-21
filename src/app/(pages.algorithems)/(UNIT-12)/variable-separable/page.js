@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.variable-separable';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function VariableSeparablePage() {
           { title: '2. Separate', text: <>dy/h(y) = g(x) dx.</> },
           { title: '3. Integrate', text: <>Both sides, one constant.</> },
         ]} />
+        <SymbolKey rows={EX['variable-separable'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="\frac{dy}{dx} = xy" />.</ExampleProblem>
-        <ExampleStep n={1} title="SEPARATE"><MathPanel><BlockMath math="\frac{dy}{y} = x\,dx" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math="\ln|y| = \frac{x^2}{2} + c" /></MathPanel><StepText>Take e of both sides; C = ±e^c.</StepText></ExampleStep>
-        <Conclusion result="y = C e^(x²/2)" math={<BlockMath math="y = Ce^{x^2/2}" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['variable-separable'].example} />
+      <CommonMistakes items={EX['variable-separable'].mistakes} />
       <Lab heading="Interactive Variable Separable Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['homogeneous-ode', 'linear-ode', 'ode-solver']} />

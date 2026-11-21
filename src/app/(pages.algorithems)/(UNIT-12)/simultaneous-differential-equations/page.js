@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.simultaneous-differential-equations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Eliminate y", text: <>A second-order equation in x.</> },
           { title: "3. Back-substitute", text: <>y from the first equation.</> },
         ]} />
+        <SymbolKey rows={EX['simultaneous-differential-equations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve dx/dt + y = sin t, dy/dt + x = cos t with x(0) = 2, y(0) = 0.</ExampleProblem>
-        <ExampleStep n={1} title="ELIMINATE"><MathPanel><BlockMath math={"x'' = \\cos t - y' = \\cos t - (\\cos t - x) = x \\Rightarrow x'' - x = 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math={"x = C_1e^{t} + C_2e^{-t}, \\quad y = \\sin t - x' = \\sin t - C_1e^{t} + C_2e^{-t}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="CONSTANTS"><MathPanel><BlockMath math={"x(0) = C_1 + C_2 = 2, \\ y(0) = -C_1 + C_2 = 0 \\Rightarrow C_1 = C_2 = 1"} /></MathPanel></ExampleStep>
-        <Conclusion result="x = eᵗ + e⁻ᵗ, y = sin t + e⁻ᵗ − eᵗ" math={<BlockMath math={"x = e^{t} + e^{-t}, \\qquad y = \\sin t + e^{-t} - e^{t}"} />}>The calculator below opens on this system.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['simultaneous-differential-equations'].example} />
+      <CommonMistakes items={EX['simultaneous-differential-equations'].mistakes} />
       <Lab heading="Interactive Simultaneous ODEs Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["ode-cc","laplace-ode","eigenvalues"]} />

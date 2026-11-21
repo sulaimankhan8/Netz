@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.trigonometric-integrals';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Even powers", text: <>Half-angle forms, then term by term.</> },
           { title: "3. Roots", text: <>Standard results for √(a² ± x²).</> },
         ]} />
+        <SymbolKey rows={EX['trigonometric-integrals'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math={"\\int \\sin^3 x\\,dx"} />.</ExampleProblem>
-        <ExampleStep n={1} title="ODD POWER"><MathPanel><BlockMath math={"\\sin^3 x = (1 - \\cos^2 x)\\sin x, \\qquad t = \\cos x, \\ dt = -\\sin x\\,dx"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE IN t"><MathPanel><BlockMath math={"-\\int (1 - t^2)\\,dt = -t + \\frac{t^3}{3}"} /></MathPanel><StepText>Put t = cos x back.</StepText></ExampleStep>
-        <Conclusion result="−cos x + cos³x/3 + C" math={<BlockMath math={"\\int \\sin^3 x\\,dx = -\\cos x + \\frac{\\cos^3 x}{3} + C"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['trigonometric-integrals'].example} />
+      <CommonMistakes items={EX['trigonometric-integrals'].mistakes} />
       <Lab heading="Interactive Trigonometric Integral Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["integral","improper-integrals","area-under-curve"]} />

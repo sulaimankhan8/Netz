@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import NewtonBackwardInterpolations from './algorithems.newton-backward-interpolations';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { newtonBackward as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function NewtonBackwardInterpolation() {
   const formula = `
@@ -94,6 +97,16 @@ export default function NewtonBackwardInterpolation() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_n,\\ y_n', t: 'The last row of the table: the starting point for the backward formula.', e: 'x_n = 40,\\ y_n = 40.00' },
+                    { s: 'h', t: 'The equal gap between the x values.', e: 'h = 28 - 24 = 4' },
+                    { s: 'v', t: 'How many steps of size h the point x is from x_n. It is negative when x is before x_n.', e: 'v = \\dfrac{33 - 40}{4} = -1.75' },
+                    { s: '\\nabla y_n', t: 'The first backward difference: this y minus the y before it.', e: '\\nabla y_n = 40.00 - 34.94 = 5.06' },
+                    { s: '\\nabla^2 y_n,\\ \\dots', t: 'Differences of differences, read from the bottom diagonal of the table.', e: '\\nabla^2 y_n = 2.87' },
+                    { s: 'v(v + 1)', t: 'The backward formula uses plus signs: v, v + 1, v + 2, … (forward uses v − 1, v − 2, …).', e: '(-1.75)(-0.75)' },
+                  ]} />
                 </div>
               </div>
 
@@ -212,6 +225,13 @@ export default function NewtonBackwardInterpolation() {
                       </tbody>
                     </table>
                   </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    The bottom-row differences, each one the entry below minus the entry above in the previous column:
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-1">
+                    <BlockMath math={`\\nabla y_n = 40.00 - 34.94 = 5.06, \\qquad \\nabla^2 y_n = 5.06 - 2.19 = 2.87`} />
+                    <BlockMath math={`\\nabla^3 y_n = 2.87 - (-0.37) = 3.24, \\qquad \\nabla^4 y_n = 3.24 - (-0.80) = 4.04`} />
+                  </div>
                 </div>
 
                 {/* Step 2: Calculate v */}
@@ -276,8 +296,18 @@ export default function NewtonBackwardInterpolation() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using it for a point near the start of the table.</>, f: <>Newton backward is for x near the <strong>end</strong>. Near the start use Newton forward; near the middle Gauss, Stirling or Bessel.</> },
+                { m: <>Measuring v from x₀ instead of xₙ.</>, f: <><InlineMath math="v = \dfrac{x - x_n}{h}" />: here <InlineMath math="\dfrac{33 - 40}{4} = -1.75" />, a negative number.</> },
+                { m: <>Using v − 1, v − 2 as in the forward formula.</>, f: <>Backward uses <InlineMath math="v(v+1)" />, <InlineMath math="v(v+1)(v+2)" />, …</> },
+                { m: <>Taking differences from the top row.</>, f: <>Backward uses the <strong>bottom</strong> diagonal: <InlineMath math="\nabla y_n, \nabla^2 y_n, \dots" />, all in the xₙ row.</> },
+                { m: <>Sign slips with negative v.</>, f: <>Bracket every factor: <InlineMath math="(-1.75)(-0.75)(0.25)" />.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show the difference table, v, the formula, each term with its numbers, and the sum.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -288,6 +318,8 @@ export default function NewtonBackwardInterpolation() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

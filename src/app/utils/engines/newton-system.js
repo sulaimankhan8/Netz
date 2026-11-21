@@ -54,8 +54,8 @@ export function solve({ f1 = '', f2 = '', f3 = '', x0 = '', y0 = '', z0 = '', to
   const JA = (P) => J.map((row) => row.map((d) => d.evaluate(scope(P))));
 
   const steps = [
-    { title: 'Write each equation as f = 0', lines: eqs.map((e, i) => `f_{${i + 1}}(${names.join(', ')}) = ${tex(polish(e)).trim()}`) },
-    { title: 'The Jacobian matrix', formula: 'J = \\left[\\frac{\\partial f_i}{\\partial x_j}\\right]', lines: [`J = \\begin{bmatrix} ${J.map((row) => row.map((d) => tex(polish(d)).trim()).join(' & ')).join(' \\\\ ')} \\end{bmatrix}`] },
+    { title: 'Write each equation as f = 0', text: 'Move everything to one side, so a solution makes every f zero at the same time.', lines: eqs.map((e, i) => `f_{${i + 1}}(${names.join(', ')}) = ${tex(polish(e)).trim()}`) },
+    { title: 'The Jacobian matrix', text: 'Each row holds the partial derivatives of one equation: it plays the part of f′(x) in ordinary Newton-Raphson.', formula: 'J = \\left[\\frac{\\partial f_i}{\\partial x_j}\\right]', lines: [`J = \\begin{bmatrix} ${J.map((row) => row.map((d) => tex(polish(d)).trim()).join(' & ')).join(' \\\\ ')} \\end{bmatrix}`] },
   ];
   const rows = [];
   let converged = false, Fx;
@@ -67,6 +67,7 @@ export function solve({ f1 = '', f2 = '', f3 = '', x0 = '', y0 = '', z0 = '', to
     if (k === 0) {
       steps.push({
         title: 'Iteration 1 in full',
+        text: 'Put the starting point into F and J, solve J·Δ = −F for the correction Δ (a small linear system), and add Δ to the point.',
         formula: 'J(X_0)\\,\\Delta = -F(X_0), \\quad X_1 = X_0 + \\Delta',
         lines: [
           `X_0 = (${X.map(n6).join(', ')}), \\quad F(X_0) = (${Fx.map(n6).join(', ')})`,
@@ -86,7 +87,8 @@ export function solve({ f1 = '', f2 = '', f3 = '', x0 = '', y0 = '', z0 = '', to
   const table = { columns: [{ key: 'k', label: 'n' }, ...names.map((v) => ({ key: v, label: `${v}ₙ`, highlight: true })), ...Fx.map((_, i) => ({ key: `f${i + 1}`, label: `f${'₁₂₃'[i]} (before)` })), { key: 'd', label: 'max |Δ|' }], rows };
   steps.push({
     title: converged ? `Converged after ${rows.length} iterations` : 'Did not converge in 30 iterations',
-    lines: [`(${names.join(', ')}) = (${X.map(n6).join(', ')})`, `F = (${Fx.map(n4).join(', ')})`],
+    text: converged ? 'Each later iteration (see the table) repeats the same steps. When the correction is tiny and F is almost zero, the point solves every equation.' : 'The iteration did not settle: try a starting point closer to the solution (a sketch of the curves helps).',
+    lines: [`(${names.join(', ')}) = (${X.map(n6).join(', ')})`, `F = (${Fx.map((v) => (Math.abs(v) < 1e-10 ? '0' : n4(v))).join(', ')})`],
   });
   return { n, names, solution: X, converged, iterations: rows.length, residual: Math.max(...Fx.map(Math.abs)), steps, table, verified: converged && Math.max(...Fx.map(Math.abs)) < 1e-6, result: X, notes: converged ? [] : ['Newton’s method needs a starting point close enough to a solution. Try another start.'], plot: null };
 }

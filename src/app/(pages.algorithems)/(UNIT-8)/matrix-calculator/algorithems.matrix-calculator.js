@@ -8,7 +8,8 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView } from '@/app/components/method/Matrix';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve, OPERATIONS } from '@/app/utils/engines/matrix-calculator';
 
 const START_A = [['1', '2'], ['3', '4']];
@@ -18,6 +19,7 @@ const RESULT_TEX = { add: 'A + B', subtract: 'A - B', multiply: 'AB', transpose:
 
 export default function MatrixCalculator() {
   const [a, setA] = useState(START_A);
+  const guide = useCalcGuide('matrix-calculator');
   const [b, setB] = useState(START_B);
   const [op, setOp] = useState('multiply');
   const [k, setK] = useState('2');
@@ -48,14 +50,17 @@ export default function MatrixCalculator() {
         title="Matrix Operations Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <Choice label="Operation" value={op} onChange={clearAnswer(setOp)} options={OPERATIONS.map((o) => ({ value: o.op, label: o.label }))} />
         <MatrixInput label="A" value={a} onChange={clearAnswer(setA)} max={6} square={op === 'power'} />
+        <GuideNote>{guide?.help?.matrix}</GuideNote>
         {needsB && <MatrixInput label="B" value={b} onChange={clearAnswer(setB)} max={6} />}
         {op === 'scale' && <NumberField label="Number k" value={k} onChange={clearAnswer(setK)} />}
         {op === 'power' && <NumberField label="Power n (0 to 50)" value={n} onChange={clearAnswer(setN)} />}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

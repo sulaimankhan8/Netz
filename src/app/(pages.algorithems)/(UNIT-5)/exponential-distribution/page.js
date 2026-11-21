@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.exponential-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Formula", text: <>1 − e^(−λx) for P(X ≤ x).</> },
           { title: "3. Between", text: <>Subtract two values.</> },
         ]} />
+        <SymbolKey rows={EX['exponential-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Bulbs last on average 1000 hours (exponential). Find the chance one lasts more than 1200 hours.</ExampleProblem>
-        <ExampleStep n={1} title="RATE"><MathPanel><BlockMath math={"\\lambda = \\frac{1}{1000} = 0.001"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="PROBABILITY"><MathPanel><BlockMath math={"P(X > 1200) = e^{-0.001 \\times 1200} = e^{-1.2} = 0.3012"} /></MathPanel></ExampleStep>
-        <Conclusion result="0.3012" math={<BlockMath math={"P(X > 1200) = e^{-1.2} \\approx 0.3012"} />}>The second example button below loads this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['exponential-distribution'].example} />
+      <CommonMistakes items={EX['exponential-distribution'].mistakes} />
       <Lab heading="Interactive Exponential Distribution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["poisson","gamma-dist","normal"]} />

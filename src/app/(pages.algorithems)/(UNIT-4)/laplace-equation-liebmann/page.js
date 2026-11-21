@@ -4,10 +4,11 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.laplace-equation-liebmann';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Start", text: <>A first guess inside.</> },
           { title: "3. Sweep", text: <>Replace each point by the average.</> },
         ]} />
+        <SymbolKey rows={EX['laplace-liebmann'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A square plate has its top edge at 100° and the other edges at 0°. Find the temperatures at the 9 inner points of a 4 × 4 grid.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST SWEEP"><MathPanel><BlockMath math={"u_{11} = \\tfrac{1}{4}(100 + 0 + u_{12} + u_{21})"} /></MathPanel><StepText>New values are used straight away.</StepText></ExampleStep>
-        <ExampleStep n={2} title="CONVERGE"><StepText>After a few sweeps the values settle: about 52.7 at the top middle, 25 in the centre and 9.8 at the bottom middle.</StepText></ExampleStep>
-        <Conclusion result="centre ≈ 25" math={<BlockMath math={"u_{22} \\approx 25"} />}>The calculator below opens on this plate.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['laplace-liebmann'].example} />
+      <CommonMistakes items={EX['laplace-liebmann'].mistakes} />
       <Lab heading="Interactive Liebmann Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["heat-equation","gauss-seidel","finite-difference-bvp"]} />

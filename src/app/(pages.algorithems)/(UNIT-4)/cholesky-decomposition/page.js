@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CholeskyCalculator from './algorithems.cholesky-decomposition';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function CholeskyPage() {
           { title: '2. Column by column', text: <>The diagonal entry first, then the entries below it.</> },
           { title: '3. Solve', text: <>Optional: Ly = b, then Lᵀx = y.</> },
         ]} />
+        <SymbolKey rows={EX['cholesky'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Decompose <InlineMath math="A = \begin{bmatrix} 4 & 2 & 14 \\ 2 & 17 & -5 \\ 14 & -5 & 83 \end{bmatrix}" />.</ExampleProblem>
-        <ExampleStep n={1} title="COLUMN 1"><MathPanel><BlockMath math="l_{11} = \sqrt{4} = 2, \quad l_{21} = \frac{2}{2} = 1, \quad l_{31} = \frac{14}{2} = 7" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COLUMN 2"><MathPanel><BlockMath math="l_{22} = \sqrt{17 - 1^2} = 4, \quad l_{32} = \frac{-5 - 7 \cdot 1}{4} = -3" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="COLUMN 3"><MathPanel><BlockMath math="l_{33} = \sqrt{83 - 49 - 9} = 5" /></MathPanel><StepText>Check: LLᵀ gives back A.</StepText></ExampleStep>
-        <Conclusion result="L = [2 0 0; 1 4 0; 7 −3 5]" math={<BlockMath math="L = \begin{bmatrix} 2 & 0 & 0 \\ 1 & 4 & 0 \\ 7 & -3 & 5 \end{bmatrix}" />}>The calculator below also solves Ax = b with this L.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cholesky'].example} />
+      <CommonMistakes items={EX['cholesky'].mistakes} />
       <Lab heading="Interactive Cholesky Calculator"><CholeskyCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['lu', 'qr', 'gauss-elimination']} />

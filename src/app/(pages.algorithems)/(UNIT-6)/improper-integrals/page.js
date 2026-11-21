@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.improper-integrals';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Limit", text: <>At ∞, or at the point where f blows up.</> },
           { title: "3. Decide", text: <>A finite limit converges.</> },
         ]} />
+        <SymbolKey rows={EX['improper-integrals'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate <InlineMath math={"\\int_1^\\infty \\frac{dx}{x^2}"} />.</ExampleProblem>
-        <ExampleStep n={1} title="ANTIDERIVATIVE"><MathPanel><BlockMath math={"\\int \\frac{dx}{x^2} = -\\frac{1}{x}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="LIMIT"><MathPanel><BlockMath math={"\\lim_{t\\to\\infty}\\left(-\\frac{1}{t}\\right) - \\left(-1\\right) = 0 + 1 = 1"} /></MathPanel><StepText>Finite, so it converges.</StepText></ExampleStep>
-        <Conclusion result="1" math={<BlockMath math={"\\int_1^\\infty \\frac{dx}{x^2} = 1"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['improper-integrals'].example} />
+      <CommonMistakes items={EX['improper-integrals'].mistakes} />
       <Lab heading="Interactive Improper Integral Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["integral","convergence-tests","beta-gamma"]} />

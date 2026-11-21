@@ -8,13 +8,16 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps, matrixTex, texNumber } from '@/app/components/method/Matrix';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Notes, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve } from '@/app/utils/engines/determinant';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = [['2', '-3', '1'], ['2', '0', '-1'], ['1', '4', '5']];
 
 export default function DeterminantCalculator() {
   const [cells, setCells] = useState(START);
+  const guide = useCalcGuide('determinant');
   const [method, setMethod] = useState('cofactor');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
@@ -25,6 +28,8 @@ export default function DeterminantCalculator() {
   const tooBigForCofactors = cells.length > 5;
   const shownMethod = tooBigForCofactors ? 'rows' : method;
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setCells(x.cells ? x.cells.map((r) => r.map(String)) : x); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -42,8 +47,10 @@ export default function DeterminantCalculator() {
         title="Determinant Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <MatrixInput label="A" value={cells} onChange={(v) => { setCells(v); setAnswer(null); }} square max={6} />
+        <GuideNote>{guide?.help?.matrix}</GuideNote>
         <Choice
           label="Method"
           value={shownMethod}
@@ -53,8 +60,9 @@ export default function DeterminantCalculator() {
             { value: 'rows', label: 'Row reduction' },
           ]}
         />
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate Determinant
           </EditorialButton>
         </div>

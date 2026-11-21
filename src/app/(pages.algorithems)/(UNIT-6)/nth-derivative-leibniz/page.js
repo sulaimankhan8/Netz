@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.nth-derivative-leibniz';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Product", text: <>Leibniz: binomial coefficients.</> },
           { title: "3. Check", text: <>Against n = 1, 2, 3.</> },
         ]} />
+        <SymbolKey rows={EX['nth-derivative-leibniz'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math={"y_4"} /> for <InlineMath math={"y = x^2e^{3x}"} /> by Leibniz&apos;s theorem.</ExampleProblem>
-        <ExampleStep n={1} title="CHOOSE u AND v"><MathPanel><BlockMath math={"u = e^{3x}, \\ v = x^2: \\quad v_1 = 2x, \\ v_2 = 2, \\ v_3 = 0"} /></MathPanel><StepText>Only three terms survive.</StepText></ExampleStep>
-        <ExampleStep n={2} title="LEIBNIZ"><MathPanel><BlockMath math={"y_4 = 81e^{3x}x^2 + 4\\cdot 27e^{3x}\\cdot 2x + 6\\cdot 9e^{3x}\\cdot 2"} /></MathPanel></ExampleStep>
-        <Conclusion result="e³ˣ(81x² + 216x + 108)" math={<BlockMath math={"y_4 = 27e^{3x}(3x^2 + 8x + 4)"} />}>The fifth example button below loads this product.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['nth-derivative-leibniz'].example} />
+      <CommonMistakes items={EX['nth-derivative-leibniz'].mistakes} />
       <Lab heading="Interactive nth Derivative Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["derivative","taylor-series","binomial-theorem"]} />

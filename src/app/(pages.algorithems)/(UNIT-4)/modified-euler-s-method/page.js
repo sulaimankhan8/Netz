@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import ModifiedEulerSolver from './algorithems.modified-euler';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { modifiedEuler as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function ModifiedEulerMethodPage() {
   const predictorFormula = `
@@ -87,6 +90,15 @@ export default function ModifiedEulerMethodPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'f(x, y)', t: 'The slope function from dy/dx = f(x, y).', e: 'x + y' },
+                    { s: 'y_1^{(0)}', t: 'The predictor: a first guess for y₁ from a plain Euler step.', e: '1 + 0.1(1) = 1.1' },
+                    { s: 'y_1^{(k)}', t: 'The k-th corrected value: the step taken with the average of the slope at the start and at the latest guess.', e: 'y_1^{(1)} = 1.11' },
+                    { s: '\\frac{h}{2}[f(x_0, y_0) + f(x_1, y_1^{(k-1)})]', t: 'Half a step with each slope: the average slope times h.', e: '0.05(1 + 1.2)' },
+                    { s: '\\text{stop}', t: 'Repeat the corrector until two successive values agree to the decimals you need.', e: '1.1105 \\to 1.11050' },
+                  ]} />
                 </div>
               </div>
 
@@ -174,8 +186,18 @@ export default function ModifiedEulerMethodPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Giving the predicted value as the answer.</>, f: <><InlineMath math="y_1^{(0)}" /> is only a first guess; the answer is the corrected value.</> },
+                { m: <>Working out the second slope at the old x.</>, f: <>The second slope is at the end of the step: <InlineMath math="f(x_1, y_1^{(k)})" /> with <InlineMath math="x_1 = x_0 + h" />.</> },
+                { m: <>Using h instead of h/2 in the corrector.</>, f: <>It is the average of two slopes: <InlineMath math="y_0 + \dfrac{h}{2}(\text{slope}_1 + \text{slope}_2)" />.</> },
+                { m: <>Not updating the second slope between corrections.</>, f: <>Each new correction uses f at the latest corrected value.</> },
+                { m: <>Correcting forever.</>, f: <>Stop when two corrections agree to the required decimals (usually 2–3 passes).</> },
+                { m: <>Writing only the final answer.</>, f: <>Show the predictor, each slope with numbers, and each corrected value.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -186,6 +208,8 @@ export default function ModifiedEulerMethodPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

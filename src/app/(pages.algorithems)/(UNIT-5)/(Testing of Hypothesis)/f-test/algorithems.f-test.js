@@ -321,14 +321,14 @@ const FTestSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> F-Ratio Variance Comparison Formula
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Variance Ratio Evaluation:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Variance Ratio Evaluation:</span>
                   <BlockMath math={`F_{\\text{calc}} = \\frac{S_1^2}{S_2^2} = \\frac{${result.largerVar.toFixed(4)}}{${result.smallerVar.toFixed(4)}} = ${result.fRatio.toFixed(4)}`} />
                   <BlockMath math={`d.f._1 = ${result.df1}, \\quad d.f._2 = ${result.df2}`} />
                 </div>
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Hypothesis and Decision (5% level):</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Hypothesis and Decision (5% level):</span>
                   <BlockMath math={`H_0: \\sigma_1^2 = \\sigma_2^2`} />
                   {/* Words stay outside the formula so they wrap on phones */}
                   <p className="text-center">(the two populations have equal variances)</p>

@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.truth-table-generator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Columns", text: <>Each sub-formula, innermost first.</> },
           { title: "3. Read off", text: <>All T, all F, or mixed.</> },
         ]} />
+        <SymbolKey rows={EX['truth-table-generator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Show that <InlineMath math={"p \\to q"} /> and <InlineMath math={"\\lnot p \\lor q"} /> are equivalent.</ExampleProblem>
-        <ExampleStep n={1} title="TABLE"><MathPanel><BlockMath math={"\\begin{array}{cc|cc} p & q & p \\to q & \\lnot p \\lor q \\\\ \\hline T & T & T & T \\\\ T & F & F & F \\\\ F & T & T & T \\\\ F & F & T & T \\end{array}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COMPARE"><StepText>The two columns agree in every row.</StepText></ExampleStep>
-        <Conclusion result="Equivalent" math={<BlockMath math={"p \\to q \\equiv \\lnot p \\lor q"} />}>The second example button below checks it.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['truth-table-generator'].example} />
+      <CommonMistakes items={EX['truth-table-generator'].mistakes} />
       <Lab heading="Interactive Truth Table Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["modular-arithmetic","permutations-combinations","bayes"]} />

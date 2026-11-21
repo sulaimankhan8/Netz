@@ -122,4 +122,56 @@ export function expressionToTex(expr) {
   return math.parse(sanitizeMathString(expr)).toTex({ parenthesis: 'auto', implicit: 'hide' });
 }
 
+/**
+ * The expression in LaTeX with a number put in for the variable, for working shown to students:
+ * substituteTex('x^3 - 4*x - 9', 2.5) -> "\left(2.5\right)^{3}-4\cdot\left(2.5\right)-9". Returns null if it cannot be parsed.
+ */
+export function substituteTex(expr, value, variable = 'x') {
+  try {
+    const shown = Number(Number(value).toFixed(6));
+    const num = new math.ConstantNode(shown);
+    // Brackets only where a hand-written answer has them: negative numbers, powers and products; none inside f( )
+    const node = math.parse(sanitizeMathString(expr)).transform((n, path, parent) => {
+      if (!(n.isSymbolNode && n.name === variable) || (parent && parent.isFunctionNode && path === 'fn')) return n;
+      const wrap = shown < 0 || (parent && parent.isOperatorNode && ['^', '*', '/'].includes(parent.op) && !(parent.op === '/' && shown >= 0));
+      return parent && parent.isFunctionNode ? num : wrap ? new math.ParenthesisNode(num) : num;
+    });
+    return node.toTex({ parenthesis: 'keep', implicit: 'hide' })
+      .replace(/(\d|\\right\))\s*(\\cdot|~)\s*\\left\(/g, '$1\\left(')
+      // Exponents as written by hand: ^{1/3}, not ^{(\frac{1}{3})}
+      .replace(/\^\{\\left\(\\frac\{([^{}]+)\}\{([^{}]+)\}\\right\)\}/g, '^{$1/$2}');
+  } catch {
+    return null;
+  }
+}
+
+/** substituteTex for several variables at once: substituteTexVars('x + y^2', { x: 0.1, y: 1.1 }). Null if it cannot be parsed. */
+export function substituteTexVars(expr, values) {
+  try {
+    const node = math.parse(sanitizeMathString(expr)).transform((n, path, parent) => {
+      if (!(n.isSymbolNode && Object.hasOwn(values, n.name)) || (parent && parent.isFunctionNode && path === 'fn')) return n;
+      const shown = Number(Number(values[n.name]).toFixed(6));
+      const num = new math.ConstantNode(shown);
+      const wrap = shown < 0 || (parent && parent.isOperatorNode && ['^', '*'].includes(parent.op));
+      return parent && parent.isFunctionNode ? num : wrap ? new math.ParenthesisNode(num) : num;
+    });
+    return node.toTex({ parenthesis: 'keep', implicit: 'hide' })
+      .replace(/(\d|\\right\))\s*(\\cdot|~)\s*\\left\(/g, '$1\\left(')
+      .replace(/\^\{\\left\(\\frac\{([^{}]+)\}\{([^{}]+)\}\\right\)\}/g, '^{$1/$2}');
+  } catch {
+    return null;
+  }
+}
+
 export default evaluateMath;
+
+/**
+ * Throws if the typed function cannot be worked out anywhere. Tries several x values, so functions that are
+ * undefined at 0 (ln x, log10 x, 1/x, √x) are accepted; testing only f(0) wrongly rejected them.
+ */
+export function checkParses(f) {
+  for (const x of [0, 1, 0.5, 2, 3, -1, 10]) {
+    try { f(x); return; } catch { /* try the next point */ }
+  }
+  throw new Error('The function could not be worked out at any test point.');
+}

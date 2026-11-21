@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.arc-length-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Simplify", text: <>Often a perfect square under the root.</> },
           { title: "3. Integrate", text: <>Between the limits.</> },
         ]} />
+        <SymbolKey rows={EX['arc-length-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the length of <InlineMath math={"y = x^{3/2}"} /> from x = 0 to x = 4.</ExampleProblem>
-        <ExampleStep n={1} title="DERIVATIVE"><MathPanel><BlockMath math={"y' = \\frac{3}{2}x^{1/2}, \\qquad 1 + y'^2 = 1 + \\frac{9x}{4}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math={"L = \\int_0^4 \\sqrt{1 + \\frac{9x}{4}}\\,dx = \\frac{8}{27}\\left[\\left(1 + \\frac{9x}{4}\\right)^{3/2}\\right]_0^4 = \\frac{8}{27}(10\\sqrt{10} - 1)"} /></MathPanel></ExampleStep>
-        <Conclusion result="≈ 9.07" math={<BlockMath math={"L = \\frac{8}{27}\\left(10\\sqrt{10} - 1\\right) \\approx 9.07"} />}>The calculator below opens on this curve.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['arc-length-calculator'].example} />
+      <CommonMistakes items={EX['arc-length-calculator'].mistakes} />
       <Lab heading="Interactive Arc Length Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["volume-revolution","integral","parametric"]} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.convergence-tests';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function ConvergencePage() {
           { title: '2. Standard series', text: <>Geometric or p-series.</> },
           { title: '3. Tests', text: <>Ratio, root, comparison, alternating.</> },
         ]} />
+        <SymbolKey rows={EX['convergence-tests'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Test <InlineMath math="\sum \frac{n!}{n^n}" /> for convergence.</ExampleProblem>
-        <ExampleStep n={1} title="RATIO"><MathPanel><BlockMath math="\frac{a_{n+1}}{a_n} = \frac{(n+1)!}{(n+1)^{n+1}}\cdot\frac{n^n}{n!} = \left(\frac{n}{n+1}\right)^n" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="LIMIT"><MathPanel><BlockMath math="\left(\frac{n}{n+1}\right)^n = \frac{1}{(1 + 1/n)^n} \to \frac{1}{e} < 1" /></MathPanel><StepText>So the series converges.</StepText></ExampleStep>
-        <Conclusion result="Converges (ratio test)" math={<BlockMath math="L = \frac{1}{e} < 1" />}>The calculator below opens on this series.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['convergence-tests'].example} />
+      <CommonMistakes items={EX['convergence-tests'].mistakes} />
       <Lab heading="Interactive Convergence Test Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['power-series', 'limit', 'taylor-series']} />

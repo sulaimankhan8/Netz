@@ -373,12 +373,14 @@ const LeastSquaresSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Log-Linear Parameter Solving Derivation
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Log Linear Transformation:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Log Linear Transformation:</span>
                   <BlockMath math={`Y = \\ln a + b X \\implies Y = A' + b X`} />
-                  <BlockMath math={`b = \\frac{n \\sum XY - \\sum X \\sum Y}{n \\sum X^2 - (\\sum X)^2} = ${result.B.toFixed(4)}`} />
-                  <BlockMath math={`A' = \\ln a = ${result.A_cap.toFixed(4)} \\implies a = e^{A'} = ${result.A.toFixed(4)}`} />
+                  <BlockMath math={`n = ${result.n}, \\quad \\sum X = ${result.sumX.toFixed(4)}, \\quad \\sum Y = ${result.sumY.toFixed(4)}, \\quad \\sum X^2 = ${result.sumX2.toFixed(4)}, \\quad \\sum XY = ${result.sumXY.toFixed(4)}`} />
+                  <BlockMath math={`b = \\frac{n \\sum XY - \\sum X \\sum Y}{n \\sum X^2 - (\\sum X)^2} = \\frac{${result.n}(${result.sumXY.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumY.toFixed(4)})}{${result.n}(${result.sumX2.toFixed(4)}) - (${result.sumX.toFixed(4)})^2} = ${result.B.toFixed(4)}`} />
+                  <BlockMath math={`A' = \\frac{\\sum Y \\sum X^2 - \\sum X \\sum XY}{n \\sum X^2 - (\\sum X)^2} = \\frac{(${result.sumY.toFixed(4)})(${result.sumX2.toFixed(4)}) - (${result.sumX.toFixed(4)})(${result.sumXY.toFixed(4)})}{${result.denom.toFixed(4)}} = ${result.A_cap.toFixed(4)}`} />
+                  <BlockMath math={`a = e^{A'} = e^{${result.A_cap.toFixed(4)}} = ${result.A.toFixed(4)}`} />
                   <BlockMath math={`\\text{Final Equation: } ${result.eqnString}`} />
                 </div>
               </div>

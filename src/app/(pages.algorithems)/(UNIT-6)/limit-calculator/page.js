@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LimitCalculator from './algorithems.limit-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,37 +46,11 @@ export default function LimitPage() {
             { title: "3. L'Hôpital", text: <>Still 0/0 or ∞/∞? Differentiate top and bottom separately and try again.</> },
           ]}
         />
+        <SymbolKey rows={EX['limit-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Find <InlineMath math="\lim_{x \to 2} \frac{x^2 - 5x + 6}{x^2 - 4}" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="TRY SUBSTITUTING">
-          <MathPanel>
-            <BlockMath math="\frac{2^2 - 5(2) + 6}{2^2 - 4} = \frac{0}{0}" />
-          </MathPanel>
-          <StepText>0/0 is indeterminate: it doesn&apos;t tell us the limit, so simplify first.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="FACTOR AND CANCEL">
-          <StepText>Both top and bottom are 0 at x = 2, so both have the factor <InlineMath math="(x - 2)" />:</StepText>
-          <MathPanel>
-            <BlockMath math="\frac{x^2 - 5x + 6}{x^2 - 4} = \frac{(x - 2)(x - 3)}{(x - 2)(x + 2)} = \frac{x - 3}{x + 2} \quad (x \neq 2)" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="SUBSTITUTE AGAIN">
-          <MathPanel>
-            <BlockMath math="\lim_{x \to 2} \frac{x - 3}{x + 2} = \frac{2 - 3}{2 + 2} = -\frac{1}{4}" />
-          </MathPanel>
-        </ExampleStep>
-
-        <Conclusion result="The limit is −1/4" math={<BlockMath math="\lim_{x \to 2} \frac{x^2 - 5x + 6}{x^2 - 4} = -\frac{1}{4}" />}>
-          The calculator below opens on this limit. Tap sin(x)/x to see L&apos;Hôpital&apos;s rule instead.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['limit-calculator'].example} />
+      <CommonMistakes items={EX['limit-calculator'].mistakes} />
 
       <Lab heading="Interactive Limit Calculator">
         <LimitCalculator />

@@ -6,15 +6,16 @@ import React, { useState } from 'react';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
-import { evaluateMath, getSymbolicDerivative } from '@/app/utils/evaluateMath';
+import { evaluateMath, getSymbolicDerivative, expressionToTex, substituteTex } from '@/app/utils/evaluateMath';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const NewtonRaphsonMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
-  const [expression, setExpression] = useState("x * x * x - 4 * x - 9");
+  const [expression, setExpression] = useState("x^3 - 4*x - 9");
   const [initialGuess, setInitialGuess] = useState('2.5');
   const [tolerance, setTolerance] = useState(0.0001);
   const [result, setResult] = useState(null);
@@ -169,9 +170,14 @@ const NewtonRaphsonMethod = () => {
     setStepDetails(stepsLog);
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setExpression(v.f); if (v.x0) setInitialGuess(String(v.x0)); solveSoon(); });
+
+
   const handleDemo = () => {
     setDemoInProgress(true);
-    const demoExpr = "x * x * x - 4 * x - 9";
+    const demoExpr = "x^3 - 4*x - 9";
     const demoX0 = "2.5";
     const demoTol = 0.0001;
 
@@ -224,7 +230,7 @@ const NewtonRaphsonMethod = () => {
   };
 
   const handleReset = () => {
-    setExpression("x * x * x - 4 * x - 9");
+    setExpression("x^3 - 4*x - 9");
     setInitialGuess("2.5");
     setTolerance(0.0001);
     setResult(null);
@@ -347,7 +353,7 @@ const NewtonRaphsonMethod = () => {
         {derivativeText && (
           <div className="p-4 border border-black/30 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 rounded-xl font-mono text-xs text-black dark:text-white">
             <strong className="uppercase text-neutral-500 block mb-1">Auto-Derived Derivative:</strong>
-            <InlineMath math={`f'(x) = ${derivativeText}`} />
+            <span className="text-sm"><InlineMath math={`f'(x) = ${(() => { try { return expressionToTex(derivativeText); } catch { return derivativeText; } })()}`} /></span>
           </div>
         )}
 
@@ -496,21 +502,63 @@ const NewtonRaphsonMethod = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {(showAllSteps ? stepDetails : stepDetails.slice(0, 5)).map((step, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {step.iteration}</span>
-                      <span>Tangent Intersect Calculation</span>
+              {/* 1. The formula, with f'(x) worked out once */}
+              {(() => {
+                let fTex = null, dTex = null;
+                try { fTex = expressionToTex(expression); dTex = expressionToTex(derivativeText); } catch { /* shown without */ }
+                return (
+                  <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                    <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formula used in every iteration</div>
+                    <div className="overflow-x-auto text-center text-black dark:text-white">
+                      <BlockMath math={`x_{n+1} = x_n - \\frac{f(x_n)}{f'(x_n)}`} />
+                      {fTex && dTex && <BlockMath math={`f(x) = ${fTex}, \\qquad f'(x) = ${dTex}`} />}
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`x_{${step.iteration}} = x_{${step.iteration - 1}} - \\frac{f(x_{${step.iteration - 1}})}{f'(x_{${step.iteration - 1}})} = ${step.x.toFixed(6)} - \\frac{${step.fx.toFixed(6)}}{${step.fpx.toFixed(6)}} = ${step.nextX.toFixed(6)}`} />
-                    </div>
-                    <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(x) = ${step.fx.toFixed(6)}, \\quad f'(x) = ${step.fpx.toFixed(6)}`} />
-                    </div>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                      At each guess work out the height <InlineMath math="f(x_n)" /> and the slope <InlineMath math="f'(x_n)" />; the tangent line meets the x-axis at <InlineMath math="x_{n+1}" />. Stop when the guess moves by less than the tolerance, <InlineMath math={`|x_{n+1} - x_n| < ${tolerance}`} /> (or <InlineMath math={`|f(x_n)| < ${tolerance}`} />).
+                    </p>
                   </div>
-                ))}
+                );
+              })()}
+
+              {/* 2. Each iteration with every number put in */}
+              <div className="space-y-3">
+                {(showAllSteps ? stepDetails : stepDetails.slice(0, 5)).map((step) => {
+                  const n6 = (v) => Number(v.toFixed(6));
+                  const br = (v) => (v < 0 ? `(${n6(v)})` : `${n6(v)}`);
+                  const n = step.iteration - 1;
+                  const isLast = step === stepDetails[stepDetails.length - 1];
+                  const fSub = substituteTex(expression, step.x);
+                  const dSub = substituteTex(derivativeText, step.x);
+                  const move = Math.abs(step.nextX - step.x);
+                  return (
+                    <div key={step.iteration} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                        <span>Iteration {step.iteration}</span>
+                        <span>x{String.fromCharCode(0x2080 + Math.min(n, 9))} = {n6(step.x)}</span>
+                      </div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`f(${n6(step.x)}) = ${fSub ? `${fSub} = ` : ''}${n6(step.fx)}`} />
+                        <BlockMath math={`f'(${n6(step.x)}) = ${dSub ? `${dSub} = ` : ''}${n6(step.fpx)}`} />
+                        <BlockMath math={`x_{${n + 1}} = ${n6(step.x)} - \\frac{${n6(step.fx)}}{${n6(step.fpx)}} = ${n6(step.x)} - ${br(step.fx / step.fpx)} = ${n6(step.nextX)}`} />
+                      </div>
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        {isLast ? (
+                          <>
+                            Check the stopping rule:
+                            <div className="overflow-x-auto text-center text-black dark:text-white">
+                              {move < tolerance
+                                ? <BlockMath math={`|x_{${n + 1}} - x_{${n}}| = ${n6(move)} < ${tolerance}`} />
+                                : <BlockMath math={`|f(x_{${n}})| = ${Math.abs(n6(step.fx))} < ${tolerance}`} />}
+                              <BlockMath math={`\\text{Root: } x \\approx ${n6(step.nextX)}`} />
+                            </div>
+                          </>
+                        ) : (
+                          <>The guess moved by <InlineMath math={`|x_{${n + 1}} - x_{${n}}| = ${n6(move)}`} />, not yet below <InlineMath math={`${tolerance}`} />, so repeat from <InlineMath math={`x_{${n + 1}} = ${n6(step.nextX)}`} />.</>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 {!showAllSteps && stepDetails.length > 5 && (
                   <div className="text-center pt-2">
                     <button

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.recurrence-relations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Particular", text: <>A trial like the extra term.</> },
           { title: "3. Constants", text: <>From the starting values.</> },
         ]} />
+        <SymbolKey rows={EX['recurrence-relations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve aₙ = 5aₙ₋₁ − 6aₙ₋₂ with a₀ = 1, a₁ = 0.</ExampleProblem>
-        <ExampleStep n={1} title="CHARACTERISTIC"><MathPanel><BlockMath math={"r^2 - 5r + 6 = 0 \\Rightarrow r = 2, 3 \\Rightarrow a_n = A\\cdot 2^n + B\\cdot 3^n"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="CONSTANTS"><MathPanel><BlockMath math={"A + B = 1, \\quad 2A + 3B = 0 \\Rightarrow A = 3, \\ B = -2"} /></MathPanel></ExampleStep>
-        <Conclusion result="aₙ = 3·2ⁿ − 2·3ⁿ" math={<BlockMath math={"a_n = 3\\cdot 2^n - 2\\cdot 3^n"} />}>The calculator below opens on this relation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['recurrence-relations'].example} />
+      <CommonMistakes items={EX['recurrence-relations'].mistakes} />
       <Lab heading="Interactive Recurrence Relations Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["difference-equation-z","progressions","modular-arithmetic"]} />

@@ -9,9 +9,11 @@ import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { n } from '@/app/utils/numeric/geometry';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { solve } from '@/app/utils/engines/cubic-spline';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { x: '1, 2, 3', y: '2, 3, 5', at: '1.5', type: 'natural', s0: '1', sn: '2' };
 
@@ -24,11 +26,14 @@ const pieceTex = (p, i) => {
 
 export default function SplineCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('cubic-spline');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('cubic-spline', 2, answer, () => ({ type: v.type, points: answer?.x?.length }));
   const exportBar = useExportBar('cubic-spline', () => v, !!answer);
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -46,21 +51,23 @@ export default function SplineCalculator() {
         title="Cubic Spline Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="x values (increasing)" value={v.x} inputMode="text" onChange={(x) => set({ x })} onEnter={run} />
-          <Field label="y values" value={v.y} inputMode="text" onChange={(y) => set({ y })} onEnter={run} />
-          <Field label="Find y at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={run} />
+          <Field label="x values (increasing)" value={v.x} inputMode="text" onChange={(x) => set({ x })} onEnter={run} help={guide?.help?.x} />
+          <Field label="y values" value={v.y} inputMode="text" onChange={(y) => set({ y })} onEnter={run} help={guide?.help?.y} />
+          <Field label="Find y at x = (optional)" value={v.at} onChange={(at) => set({ at })} onEnter={run} help={guide?.help?.at} />
         </div>
-        <Choice label="End conditions" value={v.type} onChange={(type) => set({ type })} options={[{ value: 'natural', label: 'Natural (S″ = 0 at both ends)' }, { value: 'clamped', label: 'Clamped (given end slopes)' }]} />
+        <Choice label="End conditions" value={v.type} onChange={(type) => set({ type })} options={[{ value: 'natural', label: 'Natural (S″ = 0 at both ends)' }, { value: 'clamped', label: 'Clamped (given end slopes)' }]} help={guide?.help?.type} />
         {v.type === 'clamped' && (
           <div className="grid grid-cols-2 gap-3 max-w-md">
-            <Field label="Slope at the start S′(x₀)" value={v.s0} onChange={(s0) => set({ s0 })} onEnter={run} />
-            <Field label="Slope at the end S′(xₙ)" value={v.sn} onChange={(sn) => set({ sn })} onEnter={run} />
+            <Field label="Slope at the start S′(x₀)" value={v.s0} onChange={(s0) => set({ s0 })} onEnter={run} help={guide?.help?.s0} />
+            <Field label="Slope at the end S′(xₙ)" value={v.sn} onChange={(sn) => set({ sn })} onEnter={run} help={guide?.help?.sn} />
           </div>
         )}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Build Spline
           </EditorialButton>
         </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.z-transform';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Rules", text: <>Damping by aⁿ, multiplying by n.</> },
           { title: "3. Add", text: <>Linearity; |z| &gt; the largest |a|.</> },
         ]} />
+        <SymbolKey rows={EX['z-transform'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find Z{'{'}n·2ⁿ{'}'}.</ExampleProblem>
-        <ExampleStep n={1} title="BASE"><MathPanel><BlockMath math={"\\mathcal{Z}\\{2^n\\} = \\frac{z}{z - 2}, \\quad |z| > 2"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MULTIPLY BY n"><MathPanel><BlockMath math={"\\mathcal{Z}\\{n\\,2^n\\} = -z\\frac{d}{dz}\\left(\\frac{z}{z - 2}\\right) = -z\\cdot\\frac{-2}{(z - 2)^2}"} /></MathPanel></ExampleStep>
-        <Conclusion result="2z/(z − 2)²" math={<BlockMath math={"\\mathcal{Z}\\{n\\,2^n\\} = \\frac{2z}{(z - 2)^2}"} />}>The calculator below opens on this sequence.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['z-transform'].example} />
+      <CommonMistakes items={EX['z-transform'].mistakes} />
       <Lab heading="Interactive Z-Transform Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["inverse-z","difference-equation-z","laplace"]} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import MilneCalculator from './algorithems.milne-predictor-corrector';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,38 +42,11 @@ export default function MilnePage() {
             { title: '3. Correct', text: <>Put <InlineMath math="f_4" /> into the corrector; repeat until it stops changing.</> },
           ]}
         />
+        <SymbolKey rows={EX['milne'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Solve <InlineMath math="\frac{dy}{dx} = x + y" />, <InlineMath math="y(0) = 1" /> with <InlineMath math="h = 0.1" />, and find <InlineMath math="y(0.4)" /> by Milne&apos;s method.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="STARTING VALUES BY RK4">
-          <MathPanel>
-            <BlockMath math="y_1 = 1.110342, \quad y_2 = 1.242805, \quad y_3 = 1.399717" />
-            <BlockMath math="f_1 = 1.210342, \quad f_2 = 1.442805, \quad f_3 = 1.699717" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="PREDICT">
-          <MathPanel>
-            <BlockMath math="y_4^P = 1 + \frac{0.4}{3}\left(2 \times 1.210342 - 1.442805 + 2 \times 1.699717\right) = 1.583642" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="CORRECT">
-          <MathPanel>
-            <BlockMath math="f_4 = 0.4 + 1.583642 = 1.983642" />
-            <BlockMath math="y_4^C = 1.242805 + \frac{0.1}{3}\left(1.442805 + 4 \times 1.699717 + 1.983642\right) = 1.583649" />
-          </MathPanel>
-          <StepText>The exact value <InlineMath math="2e^{0.4} - 1.4 = 1.583649" /> agrees to six decimal places.</StepText>
-        </ExampleStep>
-
-        <Conclusion result="y(0.4) ≈ 1.583649" math={<BlockMath math="y(0.4) \approx 1.583649" />}>
-          The calculator below opens on this problem and shows every predictor and corrector value.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['milne'].example} />
+      <CommonMistakes items={EX['milne'].mistakes} />
 
       <Lab heading="Interactive Milne Calculator">
         <MilneCalculator />

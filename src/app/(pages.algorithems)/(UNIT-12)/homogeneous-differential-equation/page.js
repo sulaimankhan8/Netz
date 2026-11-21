@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.homogeneous-differential-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function HomogeneousOdePage() {
           { title: '2. y = vx', text: <>dy/dx = v + x dv/dx.</> },
           { title: '3. Separate', text: <>Integrate, then put v = y/x.</> },
         ]} />
+        <SymbolKey rows={EX['homogeneous-differential-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="\frac{dy}{dx} = \frac{x + y}{x}" />.</ExampleProblem>
-        <ExampleStep n={1} title="SUBSTITUTE"><MathPanel><BlockMath math="v + x\frac{dv}{dx} = 1 + v \;\Rightarrow\; x\frac{dv}{dx} = 1" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math="v = \ln|x| + C" /></MathPanel><StepText>Put back v = y/x.</StepText></ExampleStep>
-        <Conclusion result="y = x(ln|x| + C)" math={<BlockMath math="\frac{y}{x} = \ln|x| + C" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['homogeneous-differential-equation'].example} />
+      <CommonMistakes items={EX['homogeneous-differential-equation'].mistakes} />
       <Lab heading="Interactive Homogeneous Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['variable-separable', 'exact-ode', 'ode-solver']} />

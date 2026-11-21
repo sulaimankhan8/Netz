@@ -8,7 +8,7 @@
 import { EngineError } from '../numeric/steps';
 import { toFraction } from '../numeric/fraction';
 import {
-  math, num, sym, fn, neg, add, sub, mul, div, pow, paren, unwrap, tidy, tex, polish, isConstantIn, simplifyExact, variablesOf,
+  math, num, sym, fn, neg, add, sub, mul, div, pow, paren, unwrap, tidy, tex, polish, isConstantIn, simplifyExact, variablesOf, bestForm, tidySigns,
 } from './tree';
 import { rationalParts, polynomialCoeffs } from './poly';
 
@@ -388,7 +388,7 @@ export function integrate(node, v = 'x') {
   // Steps that wrap sub-steps are reserved first so they read outermost first
   function reserve() { steps.push(null); return steps.length - 1; }
   function fill(slot, title, n, w, result, depth, formula = null, before = []) {
-    steps[slot] = { title, formula, depth, lines: [...before, `${intTex(n, w)} = ${tex(polish(tidy(result)))}`] };
+    steps[slot] = { title, formula, depth, lines: [...before, tidySigns(`${intTex(n, w)} = ${tex(polish(tidy(result)))}`)] };
     return tidy(result);
   }
 
@@ -742,9 +742,25 @@ export function integrate(node, v = 'x') {
         pieces.push(`\\frac{${texN(c)}}{${tex(polish(j === 1 ? factor(rt) : pow(paren(factor(rt)), num(j))))}}`);
         integralParts.push(j === 1 ? { c, node: absLog(factor(rt)) } : { c: -c / (j - 1), node: div(num(1), j === 2 ? factor(rt) : pow(paren(factor(rt)), num(j - 1))) });
       });
-      const facTex = roots.map(({ r: rt, m }) => `${tex(polish(paren(factor(rt))))}${m > 1 ? `^{${m}}` : ''}`).join('');
-      lines.push(`${tex(polish(polyNode(Qt, w)))} = ${Math.abs(lead - 1) < 1e-12 ? '' : texN(lead)}${facTex}`);
-      lines.push(`\\frac{${tex(polish(polyNode(R, w)))}}{${tex(polish(polyNode(Qt, w)))}} = ${pieces.join(' + ').replace(/\+ -/g, '- ')}`);
+      // Written out as in a textbook: factorise, set up A, B, …, find each constant, rewrite, integrate each piece
+      const facTex = roots.map(({ r: rt, m }) => `\\left(${tex(polish(factor(rt)))}\\right)${m > 1 ? `^{${m}}` : ''}`).join('');
+      const leadTex = Math.abs(lead - 1) < 1e-12 ? '' : texN(lead);
+      const letters = 'ABCDEFGH';
+      const RT = tex(polish(polyNode(R, w))), QT = tex(polish(polyNode(Qt, w)));
+      const shape = unknowns.map(({ rt, j }, k) => `\\frac{${letters[k]}}{${j === 1 ? tex(polish(factor(rt))) : `\\left(${tex(polish(factor(rt)))}\\right)^{${j}}`}}`).join(' + ');
+      lines.push(`\\text{Factorise the bottom: } ${QT} = ${leadTex}${facTex}`);
+      lines.push(`\\text{Set up one fraction per factor: } \\frac{${RT}}{${QT}} = ${shape}`);
+      const simple = roots.every(({ m }) => m === 1);
+      if (simple && unknowns.length <= 4) {
+        // Cover-up: put x = each root; every other term has that factor and becomes 0
+        lines.push(`\\text{Multiply both sides by the bottom, then put } ${w} \\text{ = each root (the other terms become 0):}`);
+        unknowns.forEach(({ rt }, k) => lines.push(`${w} = ${texN(rt)}: \\quad ${letters[k]} = ${texN(coef[k])}`));
+      } else {
+        lines.push(`\\text{Multiply both sides by the bottom and compare coefficients (or put in convenient values of } ${w}\\text{):}`);
+        lines.push(unknowns.map((_, k) => `${letters[k]} = ${texN(coef[k])}`).join(', \\quad '));
+      }
+      lines.push(`\\text{So } \\frac{${RT}}{${QT}} = ${pieces.join(' + ').replace(/\+ -/g, '- ')}`);
+      lines.push(`\\text{Integrate each piece: } \\int \\frac{A}{${w} - a}\\,d${w} = A\\ln|${w} - a|${roots.some(({ m }) => m > 1) ? `, \\quad \\int \\frac{A}{(${w} - a)^{k}}\\,d${w} = \\frac{-A}{(k - 1)(${w} - a)^{k - 1}}` : ''}`);
     } else if (Qt.length === 3 && rest.length === 3) {
       // One irreducible quadratic ax² + bx + c: split into a ln part and an arctan part
       const [c0, c1, c2] = Qt;
@@ -843,18 +859,34 @@ export function integrate(node, v = 'x') {
         const t2 = simpleInt(cur, w);
         if (!t2) return null;
         cur = tidy(t2);
-        ints.push(cur);
+        // shown and used in its tidiest form: sin(nx)/n/n reads sin(nx)/n², not a fraction inside a fraction
+        let shown = cur;
+        if (/\\frac\{[^{}]*\\frac/.test(tex(polish(cur)))) { try { shown = bestForm(cur); } catch { /* keep the raw form */ } }
+        ints.push(shown);
       }
       let result = null;
       const rows = [];
+      const tableRows = [];
       ders.forEach((d, i) => {
         const term = mul(polyNode(d, w), ints[i]);
         result = result ? (i % 2 ? sub(result, term) : add(result, term)) : term;
-        rows.push(`${i % 2 ? '-' : '+'} \\ (${tex(polish(polyNode(d, w)))}) \\times (${tex(polish(ints[i]))})`);
+        rows.push(`${i % 2 ? '-' : '+'} \\ (${tex(polish(polyNode(d, w)))}) (${tex(polish(ints[i]))})`);
+        // the product with its sign: "− (−a)" is written "+ a"
+        let pt = tex(polish(term)).trim();
+        const one = pt.match(/^-\\left\((.*)\\right\)$/);
+        if (one && !/\\left|\\right/.test(one[1])) pt = `-${one[1]}`;
+        const neg0 = pt.startsWith('-');
+        const sign = (i % 2 === 1) !== neg0 ? '-' : '+';
+        tableRows.push(`${i % 2 ? '-' : '+'} & ${tex(polish(polyNode(d, w)))} & ${tex(polish(ints[i]))} & ${sign}\\,${neg0 ? pt.slice(1) : pt}`);
       });
+      tableRows.push(` & 0 & & \\text{(stop: the derivative is 0)}`);
+      const kind = (f) => ['Log', 'Inverse trig', 'Algebraic', 'Trig', 'Exponential'][rank(f)] || '';
       const slot = reserve();
-      return fill(slot, 'Integration by parts (tabular method)', n, w, result, depth, `\\int u\\,dv = uv - \\int v\\,du`,
-        [`u = ${tex(polish(u))} \\ \\text{(differentiate until 0)}, \\quad dv = ${tex(polish(dv))}\\,d${w} \\ \\text{(integrate)}`, `\\text{Signs alternate: } ${rows.join(' \\; ')}`]);
+      return fill(slot, 'Integration by parts (tabular method)', n, w, result, depth, `\\int u\\,dv = uv - \\int v\\,du`, [
+        `\\text{ILATE: } u = ${tex(polish(u))} \\ (\\text{${kind(u)}}), \\quad dv = ${tex(polish(dv))}\\,d${w} \\ (\\text{${kind(dv)}})`,
+        `\\begin{array}{c|c|c|l} \\text{sign} & \\text{differentiate } u & \\text{integrate } dv & \\text{product (along the diagonal)} \\\\ \\hline ${tableRows.join(' \\\\ ')} \\end{array}`,
+        `\\text{Add the products with their signs: } ${rows.join(' \\; ')}`,
+      ]);
     }
     return partsWith(u, dv, w, depth);
   }

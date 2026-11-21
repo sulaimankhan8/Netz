@@ -43,8 +43,31 @@ export function solve({ f, x0, y0 = '', alpha = '0.1', steps: nsteps = '20', tol
   const last = rows.at(-1);
   // Not blown up yet, but f and |∇f| keep growing: α is too large and the steps overshoot
   const growing = stop === 'steps' && rows.length > 3 && last.f > rows[0].f && last.n > rows[rows.length - 2].n;
+  // Step 1 worked in full: the gradient at the start, then the move
+  const s0 = Object.fromEntries(V.map((v, i) => [v, Number(rows[0][v])]));
+  const g0 = g.map((d) => r6(evalAt(d, s0)));
+  const p1 = V.map((v, i) => r6(Number(rows[0][v]) - a * g0[i]));
   const steps = [
-    { title: 'The gradient', formula: '\\mathbf{x}_{k+1} = \\mathbf{x}_k - \\alpha\\nabla f(\\mathbf{x}_k)', depth: 0, lines: [`\\nabla f = \\left(${g.map((d) => mtex(d)).join(',\\ ')}\\right), \\qquad \\alpha = ${a}`] },
+    {
+      title: 'Find the gradient', depth: 0,
+      text: two ? 'The gradient is the pair of partial derivatives. It points uphill (where f grows fastest), so we step the opposite way.' : "In one variable the gradient is just the derivative f′(x). It points uphill, so we step the opposite way.",
+      formula: '\\mathbf{x}_{k+1} = \\mathbf{x}_k - \\alpha\\nabla f(\\mathbf{x}_k)',
+      lines: [`\\nabla f = \\left(${g.map((d) => mtex(d)).join(',\\ ')}\\right), \\qquad \\alpha = ${a}`],
+    },
+    {
+      title: 'Step 1 in full', depth: 0,
+      text: 'Put the starting point into the gradient, multiply by the learning rate α, and subtract from the point.',
+      lines: [
+        `\\nabla f(${V.map((v) => tx(rows[0][v])).join(', ')}) = (${g0.map(tx).join(', ')})`,
+        ...V.map((v, i) => `${v}_1 = ${tx(rows[0][v])} - ${a}(${tx(g0[i])}) = ${tx(p1[i])}`),
+        rows[1] ? `f \\text{ goes from } ${tx(rows[0].f)} \\text{ to } ${tx(rows[1].f)}` : '',
+      ].filter(Boolean),
+    },
+    {
+      title: 'Repeat', depth: 0,
+      text: 'Each row of the table is one more step downhill. The steps get shorter as the slope flattens near the minimum, and we stop when the gradient is almost zero.',
+      lines: [`\\text{stop when } |\\nabla f| < ${eps} \\text{ or after ${N} steps}`],
+    },
     { title: stop === 'converged' ? 'Converged' : stop === 'diverged' ? 'Diverged' : growing ? 'Diverging' : 'Stopped', depth: 0, lines: [stop === 'diverged' ? '\\text{The values blew up: try a smaller } \\alpha' : `\\text{After ${last.k} steps: } (${two ? `${tx(last.x)}, ${tx(last.y)}` : tx(last.x)}), \\ f = ${tx(last.f)}, \\ |\\nabla f| = ${tx(last.n)}`, ...(growing ? [`\\text{f has grown from } ${rows[0].f} \\text{ to } ${last.f}: \\ \\alpha = ${a} \\text{ is too large}`] : [])] },
   ];
   const notes = ['Gradient descent finds a local minimum. A small α is slow; a large one can overshoot and diverge.'];

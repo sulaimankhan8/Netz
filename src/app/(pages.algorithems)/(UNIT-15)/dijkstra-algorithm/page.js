@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.dijkstra-algorithm';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Visit", text: <>The unvisited node with the smallest d.</> },
           { title: "3. Update", text: <>Its neighbours; repeat.</> },
         ]} />
+        <SymbolKey rows={EX['dijkstra-algorithm'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>In the 6-node graph below, find the shortest path from A to F.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST STEPS"><MathPanel><BlockMath math={"d(A) = 0 \\to d(C) = 2, \\ d(B) = \\min(4,\\ 2 + 1) = 3"} /></MathPanel><StepText>C is fixed first, then B via C.</StepText></ExampleStep>
-        <ExampleStep n={2} title="FINISH"><MathPanel><BlockMath math={"d(D) = 8, \\ d(E) = 10, \\ d(F) = \\min(8 + 6,\\ 10 + 2) = 12"} /></MathPanel></ExampleStep>
-        <Conclusion result="A → C → B → D → E → F, length 12" math={<BlockMath math={"d(F) = 12"} />}>The calculator below opens on this graph.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['dijkstra-algorithm'].example} />
+      <CommonMistakes items={EX['dijkstra-algorithm'].mistakes} />
       <Lab heading="Interactive Dijkstra's Algorithm Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["bfs-dfs","mst","simplex"]} />

@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import GaussElimination from './algorithems.gauss-elimination';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { gaussElimination as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function GaussEliminationPage() {
   return (
@@ -63,6 +66,15 @@ export default function GaussEliminationPage() {
                       <span className="text-neutral-600 dark:text-neutral-400">Solve from <InlineMath math="x_n" /> backwards: <InlineMath math="x_i = (b'_i - \sum_{j>i} u_{ij} x_j) / u_{ii}" />.</span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: '[A \\mid b]', t: 'The augmented matrix: coefficients and right-hand sides together.', e: '[2\\ 1\\ -1 \\mid 8]' },
+                    { s: 'a_{kk}', t: 'The pivot: the diagonal entry used to clear its column.', e: 'a_{11} = 2' },
+                    { s: '\\frac{a_{ik}}{a_{kk}}', t: 'The multiplier for row i: the entry to remove divided by the pivot.', e: '\\dfrac{-3}{2} = -1.5' },
+                    { s: 'R_i \\leftarrow R_i - m R_k', t: 'The row operation that makes a zero below the pivot.', e: 'R_2 + 1.5R_1' },
+                    { s: '\\text{back substitution}', t: 'Solve the last row first (one unknown), then put that value into the row above, and so on.', e: 'x_3 = -1,\\ x_2 = 3,\\ x_1 = 2' },
+                  ]} />
                 </div>
               </div>
 
@@ -97,11 +109,22 @@ export default function GaussEliminationPage() {
                 </div>
 
                 <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
-                  <div className="text-xs font-mono font-bold uppercase text-neutral-500">STEP 03 • BACK SUBSTITUTION → SOLUTION</div>
+                  <div className="text-xs font-mono font-bold uppercase text-neutral-500">STEP 03 • ELIMINATE BELOW PIVOT 2</div>
                   <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-2">
-                    <BlockMath math={`x_3 = 1, \\quad x_2 = 2, \\quad x_1 = 3`} />
+                    <BlockMath math={`R_3 \\leftarrow R_3 - \\frac{2}{0.5}R_2 = R_3 - 4R_2: \\quad [0,\\ 2 - 2,\\ 1 - 2 \\mid 5 - 4] = [0,\\ 0,\\ -1 \\mid 1]`} />
+                    <BlockMath math={`\\begin{pmatrix} 2 & 1 & -1 & | & 8 \\\\ 0 & 0.5 & 0.5 & | & 1 \\\\ 0 & 0 & -1 & | & 1 \\end{pmatrix}`} />
                   </div>
-                  <p className="text-xs font-mono text-neutral-500">Verify: <InlineMath math="2(3)+1(2)-1(1)=6+2-1=7... " /> — use the demo below with exact numbers to verify.</p>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">The matrix is now upper triangular: zeros below the diagonal.</p>
+                </div>
+
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
+                  <div className="text-xs font-mono font-bold uppercase text-neutral-500">STEP 04 • BACK SUBSTITUTION → SOLUTION</div>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-2">
+                    <BlockMath math={`-x_3 = 1 \\Rightarrow x_3 = -1`} />
+                    <BlockMath math={`0.5x_2 + 0.5(-1) = 1 \\Rightarrow 0.5x_2 = 1.5 \\Rightarrow x_2 = 3`} />
+                    <BlockMath math={`2x_1 + 3 - (-1) = 8 \\Rightarrow 2x_1 = 4 \\Rightarrow x_1 = 2`} />
+                  </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">Check in equation 2: <InlineMath math="-3(2) - 3 + 2(-1) = -6 - 3 - 2 = -11" /> ✓</p>
                 </div>
 
                 <div className="border-2 border-black/80 dark:border-neutral-600 rounded-2xl p-6 relative overflow-hidden bg-[#FAF8F5] dark:bg-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none">
@@ -116,13 +139,25 @@ export default function GaussEliminationPage() {
                 </div>
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Applying the operation to only part of the row.</>, f: <>Every entry changes, including the right-hand side.</> },
+                { m: <>Sign slips with negative multipliers.</>, f: <><InlineMath math="R_2 - \tfrac{-3}{2}R_1 = R_2 + 1.5R_1" />: subtracting a negative adds.</> },
+                { m: <>Using the old row 2 for column 2.</>, f: <>Column 2 uses the new row 2 (after the column-1 step).</> },
+                { m: <>Back substitution in the wrong order.</>, f: <>Start with the last row (one unknown) and work upwards.</> },
+                { m: <>A zero pivot.</>, f: <>Swap with a lower row that has a non-zero entry in that column (partial pivoting picks the largest).</> },
+                { m: <>Not checking the answer.</>, f: <>Put the solution into one original equation: <InlineMath math="-3(2) - 3 + 2(-1) = -11" /> ✓</> },
+              ]} />
+
               {/* Interactive Calculator */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">LABORATORY</div>
                 <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Interactive Live Calculator</h2>
                 <GaussElimination />
               </div>
 
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
             </section>
           </div>

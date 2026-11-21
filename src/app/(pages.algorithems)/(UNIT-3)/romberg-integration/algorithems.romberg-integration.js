@@ -8,18 +8,23 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve } from '@/app/utils/engines/romberg';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: '1/(1+x)', a: '0', b: '1', levels: '2' };
 
 export default function RombergCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('romberg');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('romberg', 3, answer, () => ({ fn: v.f }));
   const exportBar = useExportBar('romberg', () => v, !!answer);
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -37,16 +42,18 @@ export default function RombergCalculator() {
         title="Romberg Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-2 sm:grid-cols-[2fr_1fr_1fr_1fr] gap-3">
-          <div className="col-span-2 sm:col-span-1"><Field label="f(x)" value={v.f} inputMode="text" onChange={(f) => set({ f })} onEnter={run} /></div>
-          <Field label="Lower limit a" value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={run} />
-          <Field label="Upper limit b" value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={run} />
-          <Field label="Levels (1–10)" value={v.levels} inputMode="numeric" onChange={(levels) => set({ levels })} onEnter={run} />
+          <div className="col-span-2 sm:col-span-1"><Field label="f(x)" value={v.f} inputMode="text" onChange={(f) => set({ f })} onEnter={run} help={guide?.help?.f} /></div>
+          <Field label="Lower limit a" value={v.a} inputMode="text" onChange={(a) => set({ a })} onEnter={run} help={guide?.help?.a} />
+          <Field label="Upper limit b" value={v.b} inputMode="text" onChange={(b) => set({ b })} onEnter={run} help={guide?.help?.b} />
+          <Field label="Levels (1–10)" value={v.levels} inputMode="numeric" onChange={(levels) => set({ levels })} onEnter={run} help={guide?.help?.levels} />
         </div>
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Limits can be numbers or constants such as pi or pi/2. Level k uses 2ᵏ strips.</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Integrate
           </EditorialButton>
         </div>

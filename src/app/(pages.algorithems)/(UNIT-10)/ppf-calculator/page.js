@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PpfCalculator from './algorithems.ppf-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function PpfPage() {
           { title: '2. Interest yearly', text: <>(Opening balance + deposit) × r, added on 31 March.</> },
           { title: '3. 15 years', text: <>Then extend in blocks of 5 if you want.</> },
         ]} />
+        <SymbolKey rows={EX['ppf-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹1,50,000 is deposited in a PPF at the start of every year for 15 years, at 7.1% a year. Find the maturity amount.</ExampleProblem>
-        <ExampleStep n={1} title="SET UP"><MathPanel><BlockMath math="D = 1{,}50{,}000, \quad r = 0.071, \quad n = 15" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="FORMULA"><MathPanel><BlockMath math="F = 1{,}50{,}000 \times \frac{(1.071)^{15} - 1}{0.071} \times 1.071 = 40{,}68{,}209" /></MathPanel><StepText>Deposited: 15 × ₹1,50,000 = ₹22,50,000, so the interest is ₹18,18,209, all tax-free.</StepText></ExampleStep>
-        <Conclusion result="Maturity ₹40,68,209" math={<BlockMath math="F \approx 40{,}68{,}209" />}>The calculator below opens on this plan.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['ppf-calculator'].example} />
+      <CommonMistakes items={EX['ppf-calculator'].mistakes} />
       <Lab heading="Interactive PPF Calculator"><PpfCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['sip', 'fd', 'income-tax']} />

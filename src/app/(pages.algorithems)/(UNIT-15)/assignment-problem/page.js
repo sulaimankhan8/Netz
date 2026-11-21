@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.assignment-problem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Cover", text: <>The fewest lines through all zeros.</> },
           { title: "3. Adjust or assign", text: <>Fewer than n lines: adjust; n lines: assign.</> },
         ]} />
+        <SymbolKey rows={EX['assignment-problem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Assign five jobs to five workers with the cost table 9 11 14 11 7 / 6 15 13 13 10 / 12 13 6 8 8 / 11 9 10 12 9 / 7 12 14 10 14.</ExampleProblem>
-        <ExampleStep n={1} title="REDUCE"><MathPanel><BlockMath math={"\\text{row minimums } 7, 6, 6, 9, 7, \\text{ then the column minimums}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COVER AND ADJUST"><MathPanel><BlockMath math={"\\text{fewer than 5 lines: subtract the smallest uncovered number, add it at the crossings}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="ASSIGN"><MathPanel><BlockMath math={"1 \\to 5, \\ 2 \\to 1, \\ 3 \\to 3, \\ 4 \\to 2, \\ 5 \\to 4: \\quad 7 + 6 + 6 + 9 + 10 = 38"} /></MathPanel></ExampleStep>
-        <Conclusion result="Minimum total 38" math={<BlockMath math={"\\text{minimum total} = 38"} />}>The calculator below opens on this table.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['assignment-problem'].example} />
+      <CommonMistakes items={EX['assignment-problem'].mistakes} />
       <Lab heading="Interactive Assignment Problem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["transportation-problem","simplex","kuhn-tucker"]} />

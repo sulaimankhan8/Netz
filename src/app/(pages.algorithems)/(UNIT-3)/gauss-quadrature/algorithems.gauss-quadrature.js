@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { parseUserFunction } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 // Standard Gauss-Legendre nodes and weights on [-1, 1]
 const GAUSS_LEGENDRE = {
@@ -98,6 +99,11 @@ const GaussQuadrature = () => {
       setError("Function evaluation error: " + err.message);
     }
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.a !== undefined) setAInput(String(v.a)); if (v.b !== undefined) setBInput(String(v.b)); if (v.n !== undefined) setNPoints(Number(v.n)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -282,6 +288,43 @@ const GaussQuadrature = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* The working: formula, mapping, one point in full, the sum and the factor */}
+            {(() => {
+              const r6 = (v) => Number(v.toFixed(6));
+              const two = tableRows.find((r) => Math.abs(r.ti) > 1e-12);
+              const half = two ? (two.xi - tableRows[0].xi) / (two.ti - tableRows[0].ti || 1) : (parseFloat(bInput) - parseFloat(aInput)) / 2;
+              const mid = tableRows[0].xi - half * tableRows[0].ti;
+              const first = tableRows[0];
+              const sum = tableRows.reduce((s, r) => s + r.product, 0);
+              const box = 'p-4 md:p-5 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white';
+              const label = 'text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400 block';
+              return (
+                <div className="space-y-3">
+                  <div className={box}>
+                    <span className={label}>1. The formula and the mapping from [−1, 1] to [a, b]</span>
+                    <div className="overflow-x-auto text-center">
+                      <BlockMath math={`\\int_a^b f(x)\\,dx \\approx \\frac{b - a}{2}\\sum_{i} w_i\\,f(x_i), \\qquad x_i = \\frac{b - a}{2}t_i + \\frac{a + b}{2}`} />
+                      <BlockMath math={`\\frac{b - a}{2} = ${r6(half)}, \\qquad \\frac{a + b}{2} = ${r6(mid)}`} />
+                    </div>
+                  </div>
+                  <div className={box}>
+                    <span className={label}>2. The first point in full</span>
+                    <div className="overflow-x-auto text-center">
+                      <BlockMath math={`x_1 = ${r6(half)}(${r6(first.ti)}) + ${r6(mid)} = ${r6(first.xi)}, \\qquad f(x_1) = ${r6(first.fxi)}`} />
+                      <BlockMath math={`w_1 f(x_1) = ${r6(first.wi)} \\times ${r6(first.fxi)} = ${r6(first.product)}`} />
+                    </div>
+                  </div>
+                  <div className={box}>
+                    <span className={label}>3. Add the weighted values, then multiply by (b − a)/2</span>
+                    <div className="overflow-x-auto text-center">
+                      <BlockMath math={`\\sum w_i f(x_i) = ${tableRows.map((r) => (r.product < 0 ? `(${r6(r.product)})` : r6(r.product))).join(' + ')} = ${r6(sum)}`} />
+                      <BlockMath math={`I \\approx ${r6(half)} \\times ${r6(sum)} = ${r6(result)}`} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Accuracy note */}
             <p className="text-xs font-mono text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 rounded-xl p-3 bg-neutral-50 dark:bg-neutral-800">

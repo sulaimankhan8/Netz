@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CoordinateGeometryCalculator from './algorithems.coordinate-geometry';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function CoordinateGeometryPage() {
             { title: '3. Draw It', text: <>A quick sketch shows whether the answer is sensible: a positive slope rises to the right.</> },
           ]}
         />
+        <SymbolKey rows={EX['coordinate-geometry'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -76,6 +79,7 @@ export default function CoordinateGeometryPage() {
           The calculator below opens on this line. Switch tool to try the section formula or the area of a triangle.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['coordinate-geometry'].mistakes} />
 
       <Lab heading="Interactive Coordinate Geometry Calculator">
         <CoordinateGeometryCalculator />

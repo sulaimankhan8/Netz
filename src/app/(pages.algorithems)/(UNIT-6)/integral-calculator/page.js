@@ -1,14 +1,15 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import IntegralCalculator from './algorithems.integral-calculator';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 
 const FAQ = [
   {
@@ -46,39 +47,11 @@ export default function IntegralPage() {
             { title: '4. Fraction of polynomials?', text: <>Divide if the top is not smaller, then split into partial fractions.</> },
           ]}
         />
+        <SymbolKey rows={EX['integral-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Find <InlineMath math="\int x\,e^{x}\,dx" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="CHOOSE u AND dv (ILATE)">
-          <StepText>x is algebraic and eˣ is exponential; A comes before E, so:</StepText>
-          <MathPanel>
-            <BlockMath math="u = x \Rightarrow du = dx, \qquad dv = e^{x}\,dx \Rightarrow v = e^{x}" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="APPLY THE FORMULA">
-          <MathPanel>
-            <BlockMath math="\int x\,e^{x}\,dx = uv - \int v\,du = x\,e^{x} - \int e^{x}\,dx" />
-          </MathPanel>
-          <StepText>The integral left over is simpler than the one we started with: that is the sign of a good choice of u.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="FINISH AND CHECK">
-          <MathPanel>
-            <BlockMath math="x\,e^{x} - e^{x} + C = e^{x}(x - 1) + C" />
-          </MathPanel>
-          <StepText>Check by differentiating: <InlineMath math="\frac{d}{dx}\left[e^{x}(x - 1)\right] = e^{x}(x - 1) + e^{x} = x\,e^{x}" /> ✓</StepText>
-        </ExampleStep>
-
-        <Conclusion result="∫ x eˣ dx = eˣ(x − 1) + C" math={<BlockMath math="\int x\,e^{x}\,dx = e^{x}(x - 1) + C" />}>
-          The calculator below opens on x² eˣ, where parts is needed twice (the tabular method does both at once).
-        </Conclusion>
-      </WorkedExample>
-
+      <DataExample ex={EX['integral-calculator'].example} />
+      <CommonMistakes items={EX['integral-calculator'].mistakes} />
       <Lab heading="Interactive Integral Calculator">
         <IntegralCalculator />
       </Lab>

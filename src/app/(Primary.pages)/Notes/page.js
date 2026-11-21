@@ -23,6 +23,7 @@ import {
   getTagColours,
   setTagColour
 } from './utils/noteStorage';
+import { createMethodNote } from './utils/methodNote';
 
 const AssetLibrary = dynamic(() => import('./components/AssetLibrary'), { ssr: false });
 const TrainingDataPanel = dynamic(() => import('./components/TrainingDataPanel'), { ssr: false });
@@ -74,6 +75,19 @@ export default function NotesPage() {
       }
       // ?assets=1: "Open in Notes" after saving a board from the Playground
       if (urlParams.get('assets')) setLibraryOpen(true);
+      // ?method=<id>: "Open in Notes" on a method page makes a new note holding that page's live calculator.
+      // The address is cleaned straight away, so a reload does not make a second note.
+      const methodParam = urlParams.get('method');
+      if (methodParam) {
+        const made = createMethodNote(methodParam);
+        if (made) {
+          setNotes(getNotes());
+          setActiveNoteId(made.id);
+          setPhoneView('note');
+          setSaveFailed(!didLastSaveSucceed());
+        }
+        window.history.replaceState(null, '', '/Notes');
+      }
       const keyParam = urlParams.get('key');
       if (keyParam) {
         const imported = importNoteByKey(keyParam);

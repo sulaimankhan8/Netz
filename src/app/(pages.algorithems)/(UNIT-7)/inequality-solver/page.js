@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import InequalityCalculator from './algorithems.inequality-solver';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function InequalityPage() {
           { title: '2. Critical points', text: <>Where the top is 0 (maybe included) and the bottom is 0 (never).</> },
           { title: '3. Test each interval', text: <>One value per interval; keep those with the right sign.</> },
         ]} />
+        <SymbolKey rows={EX['inequality-solver'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="x^2 - 5x + 6 \le 0" />.</ExampleProblem>
-        <ExampleStep n={1} title="FACTOR"><MathPanel><BlockMath math="(x - 2)(x - 3) \le 0" /></MathPanel><StepText>Critical points: x = 2 and x = 3.</StepText></ExampleStep>
-        <ExampleStep n={2} title="TEST THE INTERVALS"><MathPanel><BlockMath math="x = 0: \ (+) \qquad x = 2.5: \ (-) \qquad x = 4: \ (+)" /></MathPanel><StepText>We want ≤ 0: the middle interval, with the end points (they give exactly 0).</StepText></ExampleStep>
-        <Conclusion result="x ∈ [2, 3]" math={<BlockMath math="2 \le x \le 3" />}>The calculator below draws the answer on a number line.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['inequality-solver'].example} />
+      <CommonMistakes items={EX['inequality-solver'].mistakes} />
       <Lab heading="Interactive Inequality Solver"><InequalityCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['linear-equation', 'factoring', 'quadratic']} />

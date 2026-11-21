@@ -12,10 +12,11 @@ export const US_RULES = [
     validFrom: '2025-01-01',
     validTo: null,
     label: 'State sales tax rates 2025–26',
+    // Read 2026-11-21: every state rate matches the Tax Foundation table "as of July 1, 2026" (an aggregator, so 'secondary')
     source: {
-      title: 'State revenue departments, via the Tax Foundation "State and Local Sales Tax Rates" report',
-      url: 'https://taxfoundation.org/data/all/state/sales-tax-rates/',
-      verifiedOn: '2026-11-04',
+      title: 'State revenue departments, via the Tax Foundation "State and Local Sales Tax Rates, Midyear 2026"',
+      url: 'https://taxfoundation.org/data/all/state/2026-sales-tax-rates-midyear/',
+      verifiedOn: '2026-11-21',
       status: 'secondary',
     },
     data: {
@@ -49,10 +50,12 @@ export const US_RULES = [
     validFrom: '2026-01-01',
     validTo: '2027-01-01',
     label: 'Tax year 2026',
+    // Read 2026-11-21 on irs.gov: standard deductions, single and MFJ brackets (IR-2025-103), wage base 184,500, FICA rates
+    // (Topic 751). Head-of-household brackets and the MFJ/HOH additional-Medicare thresholds were not on those pages: 'secondary'.
     source: {
-      title: 'IRS Revenue Procedure 2025-32 (2026 inflation adjustments); SSA 2026 wage base',
-      url: 'https://www.irs.gov/',
-      verifiedOn: '2026-11-08',
+      title: 'IRS news release IR-2025-103 (2026 inflation adjustments, Rev. Proc. 2025-32); IRS Topic 751',
+      url: 'https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill',
+      verifiedOn: '2026-11-21',
       status: 'secondary',
     },
     data: {

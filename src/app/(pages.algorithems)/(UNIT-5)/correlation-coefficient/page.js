@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CorrelationCalculator from './algorithems.correlation-coefficient';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function CorrelationPage() {
           { title: '2. Deviation table', text: <>x − x̄, y − ȳ, their squares and products.</> },
           { title: '3. Divide', text: <>The sum of products over the square root of the two sums of squares.</> },
         ]} />
+        <SymbolKey rows={EX['correlation-coefficient'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find r for x = 1, 2, 3, 4, 5 and y = 2, 4, 5, 4, 5.</ExampleProblem>
-        <ExampleStep n={1} title="MEANS"><MathPanel><BlockMath math="\bar x = 3, \qquad \bar y = 4" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="TOTALS"><MathPanel><BlockMath math="\sum (x - \bar x)^2 = 10, \quad \sum (y - \bar y)^2 = 6, \quad \sum (x - \bar x)(y - \bar y) = 6" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="r"><MathPanel><BlockMath math="r = \frac{6}{\sqrt{10 \times 6}} = 0.7746" /></MathPanel><StepText>A moderately strong positive correlation.</StepText></ExampleStep>
-        <Conclusion result="r = 0.7746" math={<BlockMath math="r \approx 0.775" />}>The calculator below opens on this data, with the full table.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['correlation-coefficient'].example} />
+      <CommonMistakes items={EX['correlation-coefficient'].mistakes} />
       <Lab heading="Interactive Correlation Calculator"><CorrelationCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['regression', 'straight-line', 'descriptive-statistics']} />

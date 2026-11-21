@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import BinomialCalculator from './algorithems.binomial-theorem-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function BinomialPage() {
           { title: '2. General term', text: <>Write T(r+1) and simplify the power of x.</> },
           { title: '3. Choose r', text: <>From the term number, or by solving for the power you want.</> },
         ]} />
+        <SymbolKey rows={EX['binomial-theorem-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Expand <InlineMath math="(x + 2)^4" />.</ExampleProblem>
-        <ExampleStep n={1} title="COEFFICIENTS"><StepText>Row 4 of Pascal&apos;s triangle: 1, 4, 6, 4, 1.</StepText></ExampleStep>
-        <ExampleStep n={2} title="EACH TERM"><MathPanel><BlockMath math="x^4 + 4x^3(2) + 6x^2(2^2) + 4x(2^3) + 2^4" /></MathPanel></ExampleStep>
-        <Conclusion result="x⁴ + 8x³ + 24x² + 32x + 16" math={<BlockMath math="(x + 2)^4 = x^4 + 8x^3 + 24x^2 + 32x + 16" />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['binomial-theorem-calculator'].example} />
+      <CommonMistakes items={EX['binomial-theorem-calculator'].mistakes} />
       <Lab heading="Interactive Binomial Theorem Calculator"><BinomialCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['permutations-combinations', 'progressions', 'factoring']} />

@@ -87,6 +87,13 @@ test('pages record solves under their own id', () => {
     if (!f) continue;
     const src = fs.readdirSync(f.dir).filter((n) => n.endsWith('.js')).map((n) => fs.readFileSync(path.join(f.dir, n), 'utf8')).join('\n');
     const used = [...src.matchAll(/useRecordSolve\('([\w-]+)'/g)].map((x) => x[1]);
+    // These shared calculators call useRecordSolve themselves, with the page's id and unit props
+    const frame = src.match(/<(SymbolicCalculator|MatrixMethodCalculator|SavingsCalculator)\b[^>]*?\bid="([\w-]+)"/s);
+    if (frame) {
+      used.push(frame[2]);
+      const unit = src.match(new RegExp(`<${frame[1]}\\b[^>]*?\\bunit=\\{(\\d+)\\}`, 's'));
+      if (unit) assert.equal(Number(unit[1]), m.unit, `${m.id}: records solves under unit ${unit[1]}, but the method is in unit ${m.unit}`);
+    }
     if (m.status === 'live') assert.ok(used.length, `${m.id}: the calculator never calls useRecordSolve, so solves don't count for tasks`);
     for (const u of used) assert.equal(u, m.id, `${m.id}: page records solves as "${u}"`);
   }

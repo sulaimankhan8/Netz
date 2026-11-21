@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.leibniz-integral-rule';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Integrate in x", text: <>That gives F′(a).</> },
           { title: "3. Integrate in a", text: <>Fix C from a known value.</> },
         ]} />
+        <SymbolKey rows={EX['leibniz-integral-rule'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate F(a) = ∫₀¹ (xᵃ − 1)/ln x dx.</ExampleProblem>
-        <ExampleStep n={1} title="DIFFERENTIATE"><MathPanel><BlockMath math={"F'(a) = \\int_0^1 \\frac{\\partial}{\\partial a}\\frac{x^a - 1}{\\ln x}\\,dx = \\int_0^1 x^a\\,dx = \\frac{1}{a + 1}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE BACK"><MathPanel><BlockMath math={"F(a) = \\ln(a + 1) + C, \\quad F(0) = 0 \\Rightarrow C = 0"} /></MathPanel></ExampleStep>
-        <Conclusion result="F(a) = ln(a + 1)" math={<BlockMath math={"\\int_0^1 \\frac{x^a - 1}{\\ln x}\\,dx = \\ln(a + 1)"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['leibniz-integral-rule'].example} />
+      <CommonMistakes items={EX['leibniz-integral-rule'].mistakes} />
       <Lab heading="Interactive Leibniz Rule Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["integral","partial-derivative","improper-integrals"]} />

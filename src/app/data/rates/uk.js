@@ -3,7 +3,7 @@
  * Tax years run 6 April to 5 April; validFrom/validTo use those dates.
  * Bands are on income above the personal allowance for England, Wales and Northern Ireland: [from, to (null = no top), rate %]
  * measured from £0 of TAXABLE income (after the allowance). Scotland has its own bands for non-savings income.
- * Status 'secondary' until the owner checks them on GOV.UK (docs/launch/NETZ_OWNER_TODO.md, section K).
+ * 2026/27 income tax and NI were checked on GOV.UK on 2026-11-21 (status 'official'); 2025/26 is from earlier research.
  */
 
 export const UK_RULES = [
@@ -12,11 +12,13 @@ export const UK_RULES = [
     validFrom: '2026-04-06',
     validTo: '2027-04-06',
     label: 'Tax year 2026/27',
+    // Read 2026-11-21: allowance, taper and bands on gov.uk/income-tax-rates; NI 8%/2% and thresholds on
+    // gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; Scottish bands on gov.uk/scottish-rate-income-tax/how-it-works
     source: {
-      title: 'GOV.UK "Income Tax rates and Personal Allowances"; Scottish Government "Scottish income tax 2026 to 2027"',
+      title: 'GOV.UK "Income Tax rates and Personal Allowances", "Rates and thresholds for employers 2026 to 2027" and "Scottish Income Tax"',
       url: 'https://www.gov.uk/income-tax-rates',
-      verifiedOn: '2026-11-08',
-      status: 'unverified',
+      verifiedOn: '2026-11-21',
+      status: 'official',
     },
     data: {
       personalAllowance: 12570, taperFrom: 100000,
@@ -51,7 +53,9 @@ export const UK_RULES = [
     validFrom: '2023-04-01',
     validTo: null,
     label: 'Corporation tax from 1 April 2023',
-    source: { title: 'HMRC: Corporation Tax rates and reliefs; marginal relief', url: 'https://www.gov.uk/corporation-tax-rates', verifiedOn: '2026-11-08', status: 'unverified' },
+    // Read 2026-11-21 on GOV.UK: 19% to £50,000, 25% above £250,000, marginal relief between from 1 April 2023, limits
+    // divided by associated companies + 1. The 3/200 fraction is not stated on those two pages, so 'secondary'.
+    source: { title: 'GOV.UK: "Corporation Tax rates and allowances" and "Marginal Relief for Corporation Tax"', url: 'https://www.gov.uk/corporation-tax-rates', verifiedOn: '2026-11-21', status: 'secondary' },
     // limits are for a 12-month period with no associated companies (divided by 1 + associates)
     data: { smallRate: 19, mainRate: 25, lower: 50000, upper: 250000, fraction: [3, 200] },
   },

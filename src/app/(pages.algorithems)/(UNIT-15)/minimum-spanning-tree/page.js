@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.minimum-spanning-tree';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Take", text: <>If it joins two separate pieces.</> },
           { title: "3. Stop", text: <>At n − 1 edges.</> },
         ]} />
+        <SymbolKey rows={EX['minimum-spanning-tree'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the minimum spanning tree of the 6-node graph below by Kruskal.</ExampleProblem>
-        <ExampleStep n={1} title="SORTED"><MathPanel><BlockMath math={"BC\\,1, \\ AC\\,2, \\ DE\\,2, \\ EF\\,2, \\ AB\\,4, \\ BD\\,5, \\ldots"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="TAKE OR SKIP"><StepText>Take BC, AC, DE, EF; skip AB (cycle A–B–C); take BD. That is 5 edges for 6 nodes.</StepText></ExampleStep>
-        <Conclusion result="Total 12" math={<BlockMath math={"1 + 2 + 2 + 2 + 5 = 12"} />}>The calculator below opens on this graph.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['minimum-spanning-tree'].example} />
+      <CommonMistakes items={EX['minimum-spanning-tree'].mistakes} />
       <Lab heading="Interactive Minimum Spanning Tree Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["dijkstra","bfs-dfs","simplex"]} />

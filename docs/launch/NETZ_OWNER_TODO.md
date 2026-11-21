@@ -174,6 +174,23 @@ Their rates are in `src/app/data/rates/in.js` and `src/app/data/rates/vat.js`; e
 and has `status: 'secondary'` or `'unverified'`. For each one you check on the official site, change its status to
 `'official'` and its `verifiedOn` to the date you checked. Then ask Claude to publish the pages.
 
+**Update 2026-11-21:** all 11 Unit 11 tax pages are now public (owner's request). Claude read the official sites the same day:
+- **Confirmed, now `official`:** UK 2026/27 income tax, NI and Scottish bands; UK VAT 20/5/0; all Canada rates (CRA table); India company tax (115BAB is 15% on manufacturing business income only; the label now says so); UAE VAT 5%; Singapore GST 9%.
+- **Read but not fully confirmed, still `secondary` (dated 2026-11-21):**
+  - India FY 2025-26 slabs, rebates, surcharge and cess are confirmed, but the standard deductions were not on the page.
+  - US 2026: the head-of-household brackets and the joint/HOH additional-Medicare thresholds were not on the pages read.
+  - US state sales tax matches Tax Foundation midyear 2026 (an aggregator, not the state sites).
+  - UK corporation tax: the 3/200 marginal relief fraction was not on the GOV.UK pages.
+- **Not readable on 2026-11-21 (dates unchanged):**
+  - The sites refused or failed: incometaxindia.gov.in (redesigned; TDS chart and CII links gone), NSI (PPF), PIB, SSA, ATO, revenuquebec.ca and the BC PST page.
+  - India GST slabs, capital gains rates, HRA and TDS.
+  - India tax year 2026-27 (incometax.gov.in shows only AY 2026-27).
+  - All EU VAT rates (the Commission page points to TEDB).
+  - Saudi Arabia, Australia, New Zealand and Japan.
+- **Watch:**
+  - Japan's cabinet approved a two-year cut in the food and drink consumption tax on 15 Sep 2026; it needs a law first. A note is on the VAT page.
+  - incometaxindia.gov.in lists FAQs on "The Taxation and Other Laws (Amendment) Bill, 2026", which may change Indian rates.
+
 - [ ] **India GST 2.0 slabs** (0, 0.25, 3, 5, 12, 18, 40% from 22 Sep 2025): check against Notification 9/2025-Central Tax
       (Rate) on cbic-gst.gov.in and the GST Council FAQ. Also confirm the old slabs (with 28%) ended on 21 Sep 2025.
 - [ ] **EU VAT standard rates** (27 countries): check against the European Commission "VAT rates" list

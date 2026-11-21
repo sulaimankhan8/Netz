@@ -58,8 +58,11 @@ export function solve({ cells, b: tb = '' }) {
     for (let i = 0; i < n; i++) { let s = b[i]; for (let k = 0; k < i; k++) s -= L[i][k] * y[k]; y[i] = s / L[i][i]; }
     x = new Array(n).fill(0);
     for (let i = n - 1; i >= 0; i--) { let s = y[i]; for (let k = i + 1; k < n; k++) s -= L[k][i] * x[k]; x[i] = s / L[i][i]; }
-    steps.push({ title: 'Forward substitution: L y = b', lines: [`y = (${y.map(numTex).join(', ')})`] });
-    steps.push({ title: 'Back substitution: Lᵀ x = y', lines: [`x = (${x.map(numTex).join(', ')})`] });
+    const fwd = y.map((v, i) => `y_{${i + 1}} = \\frac{${numTex(b[i])}${Array.from({ length: i }, (_, k) => ` - (${numTex(L[i][k])})(${numTex(y[k])})`).join('')}}{${numTex(L[i][i])}} = ${numTex(v)}`);
+    const bwd = [];
+    for (let i = n - 1; i >= 0; i--) bwd.push(`x_{${i + 1}} = \\frac{${numTex(y[i])}${Array.from({ length: n - 1 - i }, (_, d) => { const k = i + 1 + d; return ` - (${numTex(L[k][i])})(${numTex(x[k])})`; }).join('')}}{${numTex(L[i][i])}} = ${numTex(x[i])}`);
+    steps.push({ title: 'Forward substitution: L y = b', lines: [...fwd, `y = (${y.map(numTex).join(', ')})`] });
+    steps.push({ title: 'Back substitution: Lᵀ x = y', lines: [...bwd, `x = (${x.map(numTex).join(', ')})`] });
   }
   // Check L Lᵀ = A
   const back = M.multiply(L, M.transpose(L)).result;

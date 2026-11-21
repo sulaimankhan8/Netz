@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.volume-of-revolution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Radii", text: <>R and r (washers) or radius and height (shells).</> },
           { title: "3. Integrate", text: <>From a to b.</> },
         ]} />
+        <SymbolKey rows={EX['volume-of-revolution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Turn the region under <InlineMath math={"y = \\sqrt{x}"} />, 0 ≤ x ≤ 4, about the x-axis.</ExampleProblem>
-        <ExampleStep n={1} title="DISCS"><MathPanel><BlockMath math={"V = \\pi\\int_0^4 (\\sqrt{x})^2\\,dx = \\pi\\int_0^4 x\\,dx"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math={"= \\pi\\left[\\frac{x^2}{2}\\right]_0^4 = 8\\pi"} /></MathPanel></ExampleStep>
-        <Conclusion result="8π" math={<BlockMath math={"V = 8\\pi"} />}>The calculator below opens on this region.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['volume-of-revolution'].example} />
+      <CommonMistakes items={EX['volume-of-revolution'].mistakes} />
       <Lab heading="Interactive Volume of Revolution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["area-under-curve","arc-length","double-integral"]} />

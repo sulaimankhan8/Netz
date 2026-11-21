@@ -5,7 +5,7 @@
  * The final number is cross-checked by Gauss–Legendre quadrature over the same region.
  */
 import { EngineError } from '../numeric/steps';
-import { math, num, sub, paren, tidy, polish, tex, simplifyExact, variablesOf } from './tree';
+import { math, num, sub, paren, tidy, polish, tex, simplifyExact, variablesOf, tidySigns } from './tree';
 import { integrate, polyNode } from './integral';
 import { polynomialCoeffs } from './poly';
 import { tidyMulti, equalAt, lettersOf, mtex, exactTex, integrandTex, readMulti } from './multi';
@@ -122,7 +122,7 @@ export function definite(f, v, lo, hi, vars, depth = 0, { light = false, noNeat 
     `\\int_{${mtex(lo)}}^{${mtex(hi)}} ${integrandTex(polish(f))}\\,d${texVar(v)} = \\Big[\\,${mtex(F)}\\,\\Big]_{${texVar(v)} = ${mtex(lo)}}^{${mtex(hi)}}`,
     loZero ? `= ${mtex(polish(Fhi))} - 0` : `= ${mtex(polish(Fhi))} - \\left(${mtex(polish(Flo))}\\right)`,
     `= ${valueTex}`,
-  ];
+  ].map(tidySigns);
   return { value, valueTex, number, F, lines, steps: r.steps.map((s) => ({ ...s, depth: (s.depth || 0) + depth + 1 })) };
 }
 

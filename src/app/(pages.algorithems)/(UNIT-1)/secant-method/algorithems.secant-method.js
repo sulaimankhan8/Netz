@@ -6,11 +6,12 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
-import { parseUserFunction } from "@/app/utils/evaluateMath";
+import { parseUserFunction, checkParses, substituteTex } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const SecantMethod = () => {
   const [functionInput, setFunctionInput] = useState("x^3 - 2*x - 5");
@@ -91,7 +92,7 @@ const SecantMethod = () => {
     let f;
     try {
       f = parseUserFunction(functionInput);
-      f(0);
+      checkParses(f);
     } catch {
       setError("Invalid function. Use expressions like x^3 - 2*x - 5");
       return;
@@ -107,6 +108,11 @@ const SecantMethod = () => {
     setResult(message);
     setIterations(iters);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x0 !== undefined) setX0Input(String(v.x0)); if (v.x1 !== undefined) setX1Input(String(v.x1)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -338,21 +344,57 @@ const SecantMethod = () => {
                   </button>
                 )}
               </div>
+              {/* 1. The formula used in every iteration */}
+              <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formula used in every iteration</div>
+                <div className="overflow-x-auto text-center text-black dark:text-white">
+                  <BlockMath math={`x_{n+1} = x_n - f(x_n) \\cdot \\frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}`} />
+                </div>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  Draw the straight line through the curve at the two latest guesses; where it crosses the x-axis is the new guess. Then drop the oldest guess and repeat. Stop when <InlineMath math={`|f(x_{n+1})| < ${tolerance}`} /> or the guess moves by less than <InlineMath math={`${tolerance}`} />.
+                </p>
+              </div>
+
+              {/* 2. Each iteration with every number put in */}
               <div className="space-y-3">
-                {(showAllSteps ? iterations : iterations.slice(0, 5)).map((iter, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {iter.iteration}</span>
-                      <span>Secant Step</span>
+                {(showAllSteps ? iterations : iterations.slice(0, 5)).map((iter) => {
+                  const n6 = (v) => Number(v.toFixed(6));
+                  const br = (v) => (v < 0 ? `(${n6(v)})` : `${n6(v)}`);
+                  const i = iter.iteration; // uses x_{i-1}, x_i to make x_{i+1}
+                  const isLast = iter === iterations[iterations.length - 1];
+                  const sub = substituteTex(functionInput, iter.x2);
+                  const move = Math.abs(iter.x2 - iter.x1);
+                  return (
+                    <div key={i} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                        <span>Iteration {i}</span>
+                        <span>Guesses {n6(iter.x0)}, {n6(iter.x1)}</span>
+                      </div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`f(x_{${i - 1}}) = f(${n6(iter.x0)}) = ${n6(iter.fx0)}`} />
+                        <BlockMath math={`f(x_{${i}}) = f(${n6(iter.x1)}) = ${n6(iter.fx1)}`} />
+                        <BlockMath math={`x_{${i + 1}} = ${n6(iter.x1)} - ${br(iter.fx1)} \\cdot \\frac{${n6(iter.x1)} - ${br(iter.x0)}}{${n6(iter.fx1)} - ${br(iter.fx0)}}`} />
+                        <BlockMath math={`= ${n6(iter.x1)} - ${br(iter.x1 - iter.x2)} = ${n6(iter.x2)}`} />
+                        <BlockMath math={`f(${n6(iter.x2)}) = ${sub ? `${sub} = ` : ''}${n6(iter.fx2)}`} />
+                      </div>
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        {isLast ? (
+                          <>
+                            Check the stopping rule:
+                            <div className="overflow-x-auto text-center text-black dark:text-white">
+                              {Math.abs(iter.fx2) < tolerance
+                                ? <BlockMath math={`|f(x_{${i + 1}})| = ${Math.abs(n6(iter.fx2))} < ${tolerance}`} />
+                                : <BlockMath math={`|x_{${i + 1}} - x_{${i}}| = ${n6(move)} < ${tolerance}`} />}
+                              <BlockMath math={`\\text{Root: } x \\approx ${n6(iter.x2)}`} />
+                            </div>
+                          </>
+                        ) : (
+                          <>The guess moved by <InlineMath math={`${n6(move)}`} /> (relative change {fixed(iter.ea, 4)}%). Drop <InlineMath math={`x_{${i - 1}}`} /> and repeat with <InlineMath math={`${n6(iter.x1)}`} /> and <InlineMath math={`${n6(iter.x2)}`} />.</>
+                        )}
+                      </div>
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`x_2 = ${iter.x1.toFixed(6)} - ${iter.fx1.toFixed(6)} \\cdot \\frac{${iter.x1.toFixed(6)} - ${iter.x0.toFixed(6)}}{${iter.fx1.toFixed(6)} - ${iter.fx0.toFixed(6)}} = ${iter.x2.toFixed(6)}`} />
-                    </div>
-                    <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(x_2) = ${iter.fx2.toFixed(6)}`} /> &rarr; Ea = {fixed(iter.ea, 4)}%
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!showAllSteps && iterations.length > 5 && (
                   <div className="text-center pt-2">
                     <button type="button" onClick={() => setShowAllSteps(true)}

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import HeightsCalculator from './algorithems.heights-and-distances';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function HeightsPage() {
           { title: '2. tan θ', text: <>Height over ground distance.</> },
           { title: '3. Solve', text: <>For two angles, eliminate the unknown distance.</> },
         ]} />
+        <SymbolKey rows={EX['heights-and-distances'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>The angle of elevation of the top of a tower changes from 30° to 60° as you walk 20 m towards it. Find the height.</ExampleProblem>
-        <ExampleStep n={1} title="TWO TRIANGLES"><MathPanel><BlockMath math="\tan 60^\circ = \frac{h}{x} \Rightarrow h = \sqrt{3}\,x, \qquad \tan 30^\circ = \frac{h}{x + 20} \Rightarrow \sqrt{3}\,h = x + 20" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ELIMINATE x"><MathPanel><BlockMath math="\sqrt{3}\,h = \frac{h}{\sqrt{3}} + 20 \ \Rightarrow \ 3h = h + 20\sqrt{3} \ \Rightarrow \ h = 10\sqrt{3}" /></MathPanel><StepText>And x = h/√3 = 10 m from the nearer point.</StepText></ExampleStep>
-        <Conclusion result="h = 10√3 ≈ 17.32 m" math={<BlockMath math="h = 10\sqrt{3} \approx 17.32 \text{ m}" />}>The second example button below loads this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['heights-and-distances'].example} />
+      <CommonMistakes items={EX['heights-and-distances'].mistakes} />
       <Lab heading="Interactive Heights and Distances Calculator"><HeightsCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['triangle-solver', 'pythagoras', 'unit-circle']} />

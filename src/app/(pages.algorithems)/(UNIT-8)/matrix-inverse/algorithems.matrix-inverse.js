@@ -8,9 +8,11 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
 import { MatrixInput, MatrixView, RowOps, matrixTex, texNumber } from '@/app/components/method/Matrix';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { identity } from '@/app/utils/numeric/matrix';
 import { solve } from '@/app/utils/engines/matrix-inverse';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = [['1', '2', '3'], ['0', '1', '4'], ['5', '6', '0']];
 
@@ -20,6 +22,7 @@ const Label = ({ children }) => (
 
 export default function MatrixInverseCalculator() {
   const [cells, setCells] = useState(START);
+  const guide = useCalcGuide('matrix-inverse');
   const [method, setMethod] = useState('adjoint');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
@@ -30,6 +33,8 @@ export default function MatrixInverseCalculator() {
   const adjointAllowed = cells.length <= 4;
   const shownMethod = adjointAllowed ? method : 'gauss-jordan';
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setCells(x.cells ? x.cells.map((r) => r.map(String)) : x); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -47,8 +52,10 @@ export default function MatrixInverseCalculator() {
         title="Matrix Inverse Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <MatrixInput label="A" value={cells} onChange={(v) => { setCells(v); setAnswer(null); }} square max={6} />
+        <GuideNote>{guide?.help?.matrix}</GuideNote>
         <Choice
           label="Method"
           value={shownMethod}
@@ -58,8 +65,9 @@ export default function MatrixInverseCalculator() {
             { value: 'gauss-jordan', label: 'Gauss-Jordan' },
           ]}
         />
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Find Inverse
           </EditorialButton>
         </div>

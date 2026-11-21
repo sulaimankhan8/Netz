@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import GaussBackwardInterpolation from './algorithems.gauss-backward-interpolations';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { gaussBackward as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function GaussBackwardInterpolations() {
   const formula = `
@@ -77,6 +80,16 @@ export default function GaussBackwardInterpolations() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_0,\\ y_0', t: 'The central row: the table value just after x, near the middle of the table.', e: 'x_0 = 1951,\\ y_0 = 27' },
+                    { s: 'h', t: 'The equal gap between the x values.', e: 'h = 10' },
+                    { s: 'p', t: 'How many steps x is from x₀; for Gauss backward it lies between −1 and 0.', e: 'p = \\dfrac{1946 - 1951}{10} = -0.5' },
+                    { s: '\\Delta y_{-1}', t: 'The first difference just above the central row: y₀ − y₋₁.', e: '27 - 20 = 7' },
+                    { s: '\\Delta^2 y_{-1}', t: 'The second difference on the central row: y₁ − 2y₀ + y₋₁.', e: '5' },
+                    { s: '\\Delta^3 y_{-2}', t: 'The third difference just above the central row. The formula zig-zags up, down, up through the table.', e: '3' },
+                  ]} />
                 </div>
               </div>
 
@@ -204,6 +217,14 @@ export default function GaussBackwardInterpolations() {
                       </tbody>
                     </table>
                   </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    The differences used, each one the entry below minus the entry above:
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-1">
+                    <BlockMath math={`\\Delta y_{-2} = 20 - 15 = 5, \\quad \\Delta y_{-1} = 27 - 20 = 7, \\quad \\Delta y_0 = 39 - 27 = 12`} />
+                    <BlockMath math={`\\Delta^2 y_{-2} = 7 - 5 = 2, \\qquad \\Delta^2 y_{-1} = 12 - 7 = 5`} />
+                    <BlockMath math={`\\Delta^3 y_{-2} = 5 - 2 = 3`} />
+                  </div>
                 </div>
 
                 {/* Step 3: Formula & Explicit Substitution */}
@@ -248,8 +269,18 @@ export default function GaussBackwardInterpolations() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Choosing x₀ before x.</>, f: <>For Gauss backward pick x₀ just <strong>after</strong> x, so that −1 &lt; p &lt; 0 (here 1951 for x = 1946).</> },
+                { m: <>Taking all differences from one row.</>, f: <>The formula zig-zags: <InlineMath math="\Delta y_{-1}" />, then <InlineMath math="\Delta^2 y_{-1}" />, then <InlineMath math="\Delta^3 y_{-2}" />, then <InlineMath math="\Delta^4 y_{-2}" />.</> },
+                { m: <>Mixing up the p factors.</>, f: <>Backward: <InlineMath math="p,\ (p+1)p,\ (p+1)p(p-1),\ (p+2)(p+1)p(p-1)" />.</> },
+                { m: <>Sign slips with negative p.</>, f: <>Bracket every factor: <InlineMath math="(0.5)(-0.5)(-1.5)" />.</> },
+                { m: <>Using it near the ends of the table.</>, f: <>Gauss needs differences on both sides of x₀. Near the start use Newton forward; near the end Newton backward.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show p, the difference table with the used entries marked, the formula, each term with numbers, and the sum.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -260,6 +291,8 @@ export default function GaussBackwardInterpolations() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

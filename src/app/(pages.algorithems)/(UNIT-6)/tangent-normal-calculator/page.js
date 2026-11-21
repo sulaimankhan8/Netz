@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import TangentNormalCalculator from './algorithems.tangent-normal-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,24 +42,11 @@ export default function TangentNormalPage() {
             { title: '3. The lines', text: <>Tangent with slope m; normal with slope −1/m, both through the point.</> },
           ]}
         />
+        <SymbolKey rows={EX['tangent-normal-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>Find the tangent and normal to <InlineMath math="y = x^2" /> at x = 1.</ExampleProblem>
-        <ExampleStep n={1} title="THE POINT AND THE SLOPE">
-          <MathPanel><BlockMath math="y = 1^2 = 1, \qquad \frac{dy}{dx} = 2x \ \Rightarrow \ m = 2(1) = 2" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={2} title="THE TANGENT">
-          <MathPanel><BlockMath math="y - 1 = 2(x - 1) \quad \Rightarrow \quad y = 2x - 1" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={3} title="THE NORMAL">
-          <StepText>Its slope is −1/2:</StepText>
-          <MathPanel><BlockMath math="y - 1 = -\frac{1}{2}(x - 1) \quad \Rightarrow \quad y = -\frac{1}{2}x + \frac{3}{2}" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="Tangent y = 2x − 1, normal y = −x/2 + 3/2" math={<BlockMath math="y = 2x - 1, \qquad x + 2y = 3" />}>
-          The calculator below opens on this example and draws both lines.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['tangent-normal-calculator'].example} />
+      <CommonMistakes items={EX['tangent-normal-calculator'].mistakes} />
 
       <Lab heading="Interactive Tangent & Normal Calculator">
         <TangentNormalCalculator />

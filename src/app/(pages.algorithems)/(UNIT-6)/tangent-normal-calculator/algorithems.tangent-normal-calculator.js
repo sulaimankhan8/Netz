@@ -6,11 +6,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import StepList from '@/app/components/method/StepList';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { plotView, around } from '@/app/components/method/plotView';
 import { solve } from '@/app/utils/engines/tangent-normal';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: 'x^2', a: '1' };
 const EXAMPLES = [
@@ -23,10 +25,13 @@ const EXAMPLES = [
 
 export default function TangentNormalCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('tangent-normal');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('tangent-normal', 6, answer, () => ({ fn: v.f, a: v.a }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     try { setError(''); setAnswer(solve({ ...v, ...override })); } catch (e) { setAnswer(null); setError(e.name === 'EngineError' ? e.message : 'Something went wrong. Please check the expression.'); }
   };
@@ -36,10 +41,11 @@ export default function TangentNormalCalculator() {
   return (
     <div className="w-full space-y-6">
       <CalcCard title="Tangent & Normal Engine" actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}>
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)] gap-4">
-          <Field label="y = f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} />
-          <Field label="At x = a" value={v.a} inputMode="text" placeholder="e.g. 1 or pi/4" onChange={(a) => set({ a })} onEnter={() => run()} />
+          <Field label="y = f(x) =" value={v.f} inputMode="text" placeholder="e.g. x^2" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
+          <Field label="At x = a" value={v.a} inputMode="text" placeholder="e.g. 1 or pi/4" onChange={(a) => set({ a })} onEnter={() => run()} help={guide?.help?.a} />
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
@@ -47,8 +53,9 @@ export default function TangentNormalCalculator() {
             <button key={e.label} type="button" onClick={() => { set(e.input); run(e.input); }} className="px-3 py-1.5 min-h-[36px] rounded-lg border border-black/30 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-800 text-xs font-mono text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700">{e.label}</button>
           ))}
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> Find Tangent & Normal</EditorialButton>
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto"><FiCheckCircle className="w-4 h-4 mr-2" /> Find Tangent & Normal</EditorialButton>
         </div>
 
         {answer && (

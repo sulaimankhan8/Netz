@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import EmiCalculator from './algorithems.emi-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit10';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function EmiPage() {
             { title: '3. Each Month', text: <>Interest = balance × i. The rest of the EMI reduces the balance.</> },
           ]}
         />
+        <SymbolKey rows={EX['emi-calculator'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -83,6 +86,7 @@ export default function EmiPage() {
           The calculator below opens on this loan. Add a prepayment of ₹1,00,000 after month 24 to see it finish a year early.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['emi-calculator'].mistakes} />
 
       <Lab heading="Interactive EMI Calculator">
         <EmiCalculator />

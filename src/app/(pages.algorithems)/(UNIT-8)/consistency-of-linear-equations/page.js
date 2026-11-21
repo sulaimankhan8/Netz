@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ConsistencyCalculator from './algorithems.consistency-of-linear-equations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function ConsistencyPage() {
           { title: '2. Row-reduce', text: <>Count the non-zero rows: with and without the last column.</> },
           { title: '3. Decide and solve', text: <>Free unknowns become parameters t, s, ….</> },
         ]} />
+        <SymbolKey rows={EX['consistency-of-linear-equations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Test <InlineMath math="x + y + z = 6, \ x + 2y + 3z = 14, \ 2x + 3y + 4z = 20" /> for consistency.</ExampleProblem>
-        <ExampleStep n={1} title="ROW-REDUCE [A | B]"><MathPanel><BlockMath math="\left[\begin{array}{ccc|c} 1 & 1 & 1 & 6 \\ 1 & 2 & 3 & 14 \\ 2 & 3 & 4 & 20 \end{array}\right] \to \left[\begin{array}{ccc|c} 1 & 0 & -1 & -2 \\ 0 & 1 & 2 & 8 \\ 0 & 0 & 0 & 0 \end{array}\right]" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="COMPARE RANKS"><MathPanel><BlockMath math="\rho(A) = \rho([A|B]) = 2 < 3" /></MathPanel><StepText>Consistent, with one free unknown: put z = t.</StepText></ExampleStep>
-        <Conclusion result="x = t − 2, y = 8 − 2t, z = t" math={<BlockMath math="x = t - 2, \quad y = -2t + 8, \quad z = t" />}>Try this system in the calculator below (&quot;infinitely many&quot;).</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['consistency-of-linear-equations'].example} />
+      <CommonMistakes items={EX['consistency-of-linear-equations'].mistakes} />
       <Lab heading="Interactive Consistency Calculator"><ConsistencyCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['rank', 'system-of-equations', 'gauss-elimination']} />

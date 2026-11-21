@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import FirstPrinciplesCalculator from './algorithems.first-principles-derivative';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,26 +42,11 @@ export default function FirstPrinciplesPage() {
             { title: '3. Let h → 0', text: <>Every term still containing h disappears. What is left is f′(x).</> },
           ]}
         />
+        <SymbolKey rows={EX['first-principles-derivative'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Find the derivative of <InlineMath math="f(x) = x^2" /> from first principles.
-        </ExampleProblem>
-        <ExampleStep n={1} title="WRITE f(x + h)">
-          <MathPanel><BlockMath math="f(x + h) = (x + h)^2 = x^2 + 2xh + h^2" /></MathPanel>
-        </ExampleStep>
-        <ExampleStep n={2} title="SUBTRACT f(x) AND DIVIDE BY h">
-          <MathPanel><BlockMath math="\frac{f(x + h) - f(x)}{h} = \frac{2xh + h^2}{h} = 2x + h" /></MathPanel>
-          <StepText>h cancels from the bottom, so the 0/0 problem is gone.</StepText>
-        </ExampleStep>
-        <ExampleStep n={3} title="LET h → 0">
-          <MathPanel><BlockMath math="f'(x) = \lim_{h \to 0} (2x + h) = 2x" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="f′(x) = 2x" math={<BlockMath math="\frac{d}{dx}\left(x^2\right) = 2x" />}>
-          The same answer as the power rule, which is proved exactly this way. The calculator below opens on this example.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['first-principles-derivative'].example} />
+      <CommonMistakes items={EX['first-principles-derivative'].mistakes} />
 
       <Lab heading="Interactive First Principles Calculator">
         <FirstPrinciplesCalculator />

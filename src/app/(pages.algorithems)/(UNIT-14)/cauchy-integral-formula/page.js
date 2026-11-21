@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.cauchy-integral-formula';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Inside?", text: <>Only points inside C count.</> },
           { title: "3. Formula", text: <>2πi g(a), or the derivative form.</> },
         ]} />
+        <SymbolKey rows={EX['cauchy-integral-formula'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate ∮ e²ᶻ/(z + 1)⁴ dz around |z| = 3.</ExampleProblem>
-        <ExampleStep n={1} title="THE POINT"><MathPanel><BlockMath math={"a = -1 \\text{ (inside } |z| = 3), \\quad n + 1 = 4, \\quad g(z) = e^{2z}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DERIVATIVE"><MathPanel><BlockMath math={"g'''(z) = 8e^{2z}, \\quad g'''(-1) = 8e^{-2}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="FORMULA"><MathPanel><BlockMath math={"\\oint = \\frac{2\\pi i}{3!}\\cdot 8e^{-2} = \\frac{8\\pi i}{3e^{2}}"} /></MathPanel></ExampleStep>
-        <Conclusion result="8πi/(3e²)" math={<BlockMath math={"\\oint_C \\frac{e^{2z}}{(z + 1)^4}dz = \\frac{8\\pi i}{3e^{2}}"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cauchy-integral-formula'].example} />
+      <CommonMistakes items={EX['cauchy-integral-formula'].mistakes} />
       <Lab heading="Interactive Cauchy Integral Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["residues","laurent-series","cauchy-riemann"]} />

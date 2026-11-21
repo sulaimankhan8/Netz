@@ -138,12 +138,12 @@ These are the code changes behind roadmap task 1.5 and the ⭐ section of `docs/
 | F5 | Switch every URL to the custom domain once it's bought (the config still says `netz-ruby.vercel.app`) | `next-sitemap.config.js`, `metadataBase` in both layouts, `public/robots.txt` | 30 min |
 | F6 | **Done 2026-11-10** (`src/app/robots.js`). Name the AI crawlers in robots.txt as allowed: `Googlebot`, `Google-Extended`, `Bingbot`, `GPTBot`, `OAI-SearchBot`, `ChatGPT-User`, `ClaudeBot`, `Claude-SearchBot`, `Claude-User`, `PerplexityBot` | `next-sitemap.config.js` → `robotsTxtOptions.policies` (or a `src/app/robots.js`) | 30 min |
 | F7 | Add JSON-LD structured data (`MathSolver` + `LearningResource` + `BreadcrumbList`) from one shared component. Check Google's current structured-data docs first | New `src/app/components/seo/JsonLd.js`, used by each method `layout.js` | Half a day |
-| F8 | Add an answer-first intro sentence and a 3–5 question FAQ to each ⭐ page, written from its search words | Each method page | 1–2 pages an hour |
-| F9 | Add links between related pages (e.g. Newton-Raphson ↔ Secant ↔ Bisection) | Method pages / `components/editorial/navData.js` | Half a day |
+| F8 | **Done 2026-11-15** (FAQ on all 245 pages: the newer pages in their page files, the 34 original pages from `src/app/data/methodFaqs.js`). Add an answer-first intro sentence and a 3–5 question FAQ to each ⭐ page, written from its search words | Each method page | 1–2 pages an hour |
+| F9 | **Done 2026-11-15** (`RelatedMethods` on every page; live pages only). Add links between related pages (e.g. Newton-Raphson ↔ Secant ↔ Bisection) | Method pages / `components/editorial/navData.js` | Half a day |
 | F10 | **Done 2026-11-10** (served by `src/app/llms.txt/route.js`, built from the live pages). Add `public/llms.txt`: the ⭐ pages with a one-line description each | `public/llms.txt` | 30 min |
 | F11 | **Owner:** set up Google Search Console + Bing Webmaster Tools, submit the sitemap; add IndexNow pings for new pages | Owner accounts (add to `docs/launch/NETZ_OWNER_TODO.md`) | 1 h |
 | F12 | Track visits referred by chatgpt.com, gemini.google.com, claude.ai and perplexity.ai in Google Analytics | GA settings / existing analytics code | 1 h |
-| F13 | Add an "Open in Notes" / "Try it on the Board" button on every ⭐ page | Method pages | Half a day |
+| F13 | **Done 2026-11-15**: a "Keep it in your notes" card above the previous/next links opens `/Notes?method=<id>`, which makes a new note holding the page's live calculator. Shown on the 34 original pages now; each newer page gets it when it goes live (its widget comes from `npm run build:widgets`). Add an "Open in Notes" / "Try it on the Board" button on every ⭐ page | Method pages | Half a day |
 
 **Done when:** each live method page shows its own title in the browser tab, Search Console shows the pages indexed, and a page check (e.g. Google's Rich Results Test) reads the structured data.
 

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.dft-fft-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function DftFftPage() {
           { title: '2. Butterflies', text: <>log₂N stages of sums and differences.</> },
           { title: '3. Read off', text: <>X₀ … X_(N−1) in natural order.</> },
         ]} />
+        <SymbolKey rows={EX['dft-fft-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the 4-point DFT of <InlineMath math="x = (1, 2, 3, 4)" />.</ExampleProblem>
-        <ExampleStep n={1} title="STAGE 1"><MathPanel><BlockMath math="(x_0, x_2) = (1, 3) \to (4, -2), \qquad (x_1, x_3) = (2, 4) \to (6, -2)" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="STAGE 2"><MathPanel><BlockMath math="X_0 = 4 + 6 = 10, \ X_2 = 4 - 6 = -2, \ X_1 = -2 + (-i)(-2) = -2 + 2i, \ X_3 = -2 - 2i" /></MathPanel><StepText>W₄¹ = −i.</StepText></ExampleStep>
-        <Conclusion result="(10, −2 + 2i, −2, −2 − 2i)" math={<BlockMath math="X = (10,\ -2 + 2i,\ -2,\ -2 - 2i)" />}>The calculator below opens on this signal.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['dft-fft-calculator'].example} />
+      <CommonMistakes items={EX['dft-fft-calculator'].mistakes} />
       <Lab heading="Interactive DFT / FFT Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['laplace', 'complex-numbers', 'matrix-calculator']} />

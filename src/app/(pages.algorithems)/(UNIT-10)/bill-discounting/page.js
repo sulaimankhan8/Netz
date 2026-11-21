@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.bill-discounting';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Discounts", text: <>BD and TD.</> },
           { title: "3. Gain", text: <>BG = BD − TD.</> },
         ]} />
+        <SymbolKey rows={EX['bill-discounting'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A bill for ₹7,300 is discounted at 10% per annum 73 days before it is due. Find BD, TD and BG.</ExampleProblem>
-        <ExampleStep n={1} title="TIME"><MathPanel><BlockMath math={"t = \\frac{73}{365} = \\frac15"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="BANKER'S DISCOUNT"><MathPanel><BlockMath math={"BD = 7300 \\times 0.10 \\times \\tfrac15 = 146"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="TRUE DISCOUNT"><MathPanel><BlockMath math={"TD = \\frac{146}{1 + 0.02} = 143.14, \\quad BG = 146 - 143.14 = 2.86"} /></MathPanel></ExampleStep>
-        <Conclusion result="BD ₹146, TD ₹143.14, BG ₹2.86" math={<BlockMath math={"BD = 146, \\ TD = 143.14, \\ BG = 2.86"} />}>The calculator below opens on this bill.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['bill-discounting'].example} />
+      <CommonMistakes items={EX['bill-discounting'].mistakes} />
       <Lab heading="Interactive Bill Discounting Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["compound-interest","percentage","tvm"]} />

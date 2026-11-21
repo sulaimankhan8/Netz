@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.asymptotes-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Horizontal", text: <>Limits at ±∞.</> },
           { title: "3. Oblique", text: <>m and c when f grows like a line.</> },
         ]} />
+        <SymbolKey rows={EX['asymptotes-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the asymptotes of <InlineMath math={"f(x) = \\frac{x^2 + 1}{x - 1}"} />.</ExampleProblem>
-        <ExampleStep n={1} title="VERTICAL"><MathPanel><BlockMath math={"x - 1 = 0 \\Rightarrow x = 1, \\quad f \\to \\pm\\infty"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="OBLIQUE"><MathPanel><BlockMath math={"m = \\lim \\frac{x^2 + 1}{x(x - 1)} = 1, \\qquad c = \\lim\\left(\\frac{x^2 + 1}{x - 1} - x\\right) = 1"} /></MathPanel><StepText>No horizontal asymptote: f grows without bound.</StepText></ExampleStep>
-        <Conclusion result="x = 1 and y = x + 1" math={<BlockMath math={"x = 1, \\qquad y = x + 1"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['asymptotes-calculator'].example} />
+      <CommonMistakes items={EX['asymptotes-calculator'].mistakes} />
       <Lab heading="Interactive Asymptote Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["limit","continuity","monotonicity"]} />

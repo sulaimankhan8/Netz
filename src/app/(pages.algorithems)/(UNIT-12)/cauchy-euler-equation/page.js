@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.cauchy-euler-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function CauchyEulerPage() {
           { title: '2. Solve in t', text: <>CF + PI as usual.</> },
           { title: '3. Back to x', text: <>t = ln x.</> },
         ]} />
+        <SymbolKey rows={EX['cauchy-euler-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="x^2y'' - xy' + y = \ln x" />.</ExampleProblem>
-        <ExampleStep n={1} title="IN t"><MathPanel><BlockMath math="(\theta(\theta - 1) - \theta + 1)y = t \;\Rightarrow\; (\theta - 1)^2y = t" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math="\text{CF} = (C_1 + C_2t)e^{t}, \qquad \text{PI} = t + 2" /></MathPanel><StepText>Put t = ln x and eᵗ = x.</StepText></ExampleStep>
-        <Conclusion result="y = (C₁ + C₂ ln x)x + ln x + 2" math={<BlockMath math="y = (C_1 + C_2\ln x)\,x + \ln x + 2" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cauchy-euler-equation'].example} />
+      <CommonMistakes items={EX['cauchy-euler-equation'].mistakes} />
       <Lab heading="Interactive Cauchy–Euler Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['ode-cc', 'variation-of-parameters', 'ode-solver']} />

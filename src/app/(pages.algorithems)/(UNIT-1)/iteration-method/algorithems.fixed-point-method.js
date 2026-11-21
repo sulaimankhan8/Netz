@@ -6,10 +6,11 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
-import { parseUserFunction, getSymbolicDerivative, evaluateMath, expressionToTex } from "@/app/utils/evaluateMath";
+import { parseUserFunction, checkParses, getSymbolicDerivative, evaluateMath, expressionToTex, substituteTex } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const FixedPointMethod = () => {
   const [functionInput, setFunctionInput] = useState("(x + 1)^(1/3)");
@@ -136,7 +137,7 @@ const FixedPointMethod = () => {
     let g;
     try {
       g = parseUserFunction(functionInput.trim());
-      g(0);
+      checkParses(g);
     } catch (err) {
       setError("Invalid function input. Please enter a valid mathematical expression like cos(x).");
       return;
@@ -178,6 +179,11 @@ const FixedPointMethod = () => {
     setIterationSteps(iterationResult.steps);
   };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.phi); if (v.x0 !== undefined) setInitialGuess(String(v.x0)); solveSoon(); });
+
+
   const handleDemo = () => {
     setDemoInProgress(true);
     const demoFn = "(x + 1)^(1/3)";
@@ -192,7 +198,7 @@ const FixedPointMethod = () => {
     let g;
     try {
       g = parseUserFunction(demoFn);
-      g(0);
+      checkParses(g);
     } catch {
       setError("Invalid demo expression.");
       setDemoInProgress(false);
@@ -479,32 +485,56 @@ const FixedPointMethod = () => {
                 </div>
               </div>
 
+              {/* 1. The formula used in every iteration */}
+              <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formula used in every iteration</div>
+                <div className="overflow-x-auto text-center text-black dark:text-white">
+                  <BlockMath math={`x_k = g(x_{k-1})`} />
+                  {(() => { try { return <BlockMath math={`g(x) = ${expressionToTex(functionInput)}`} />; } catch { return null; } })()}
+                </div>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  Put the last guess into <InlineMath math="g" /> to get the next one. Stop when the guess changes by less than the tolerance: <InlineMath math={`|x_k - x_{k-1}| < ${tolerance}`} />.
+                </p>
+              </div>
+
               <div className="space-y-3">
+                {/* 2. Will it converge? */}
                 {convergenceCheck && (
-                  <div className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-amber-50 dark:bg-amber-950/30 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Step 0</span>
-                      <span>Convergence Check</span>
+                  <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-amber-50 dark:bg-amber-950/30 space-y-2 text-black dark:text-white">
+                    <div className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Will it converge? Check the slope of g at the start</div>
+                    <div className="overflow-x-auto text-center">
+                      <BlockMath math={`g'(x) = ${expressionToTex(convergenceCheck.derivative)}`} />
+                      <BlockMath math={`|g'(${convergenceCheck.x0})| = ${Math.abs(convergenceCheck.slope).toFixed(4)} ${convergenceCheck.ok ? '< 1' : '\\geq 1'}`} />
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`g'(x) = ${expressionToTex(convergenceCheck.derivative)}, \\quad |g'(${convergenceCheck.x0})| = ${Math.abs(convergenceCheck.slope).toFixed(4)} ${convergenceCheck.ok ? '< 1 \\;\\Rightarrow\\; \\text{converges}' : '\\geq 1 \\;\\Rightarrow\\; \\text{diverges}'}`} />
-                    </div>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                      {convergenceCheck.ok
+                        ? 'The slope is smaller than 1, so each step shrinks the error: the method converges.'
+                        : 'The slope is 1 or more, so the error grows each step: rearrange f(x) = 0 into a different g(x).'}
+                    </p>
                   </div>
                 )}
-                {(showAllSteps ? iterationSteps : iterationSteps.slice(0, 5)).map((step, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {step.iter}</span>
-                      <span>Next Approximation</span>
+
+                {/* 3. Each iteration with every number put in */}
+                {(showAllSteps ? iterationSteps : iterationSteps.slice(0, 5)).map((step) => {
+                  const n6 = (v) => Number(v.toFixed(6));
+                  const k = step.iter;
+                  const isLast = step === iterationSteps[iterationSteps.length - 1];
+                  const sub = substituteTex(functionInput, step.x_n);
+                  return (
+                    <div key={k} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">Iteration {k}</div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`x_{${k}} = g(${n6(step.x_n)}) = ${sub ? `${sub} = ` : ''}${n6(step.x_next)}`} />
+                        <BlockMath math={`|x_{${k}} - x_{${k - 1}}| = |${n6(step.x_next)} - ${n6(step.x_n)}| = ${n6(step.difference)} ${step.difference <= tolerance ? '<' : '>'} ${tolerance}`} />
+                      </div>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                        {isLast && step.difference <= tolerance
+                          ? <>The change is below the tolerance, so stop: the root is <InlineMath math={`x \\approx ${n6(step.x_next)}`} />.</>
+                          : <>Not small enough yet: feed <InlineMath math={`x_{${k}} = ${n6(step.x_next)}`} /> back into <InlineMath math="g" />.</>}
+                      </p>
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`x^{(${step.iter})} = g(x^{(${step.iter - 1})}) = g(${step.x_n.toFixed(6)}) = ${step.x_next.toFixed(6)}`} />
-                    </div>
-                    <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`|x_{${step.iter}} - x_{${step.iter - 1}}| = ${Math.abs(step.x_next - step.x_n).toFixed(6)}`} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!showAllSteps && iterationSteps.length > 5 && (
                   <div className="text-center pt-2">
                     <button

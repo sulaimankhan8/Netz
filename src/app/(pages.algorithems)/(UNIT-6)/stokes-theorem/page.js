@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.stokes-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Surface side", text: <>Flux of the curl through S.</> },
           { title: "3. Edge side", text: <>Work round C.</> },
         ]} />
+        <SymbolKey rows={EX['stokes-theorem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Verify Stokes&apos; theorem for F = (x² + y²)i − 2xy j over the rectangle 0 ≤ x ≤ 2, 0 ≤ y ≤ 3 in z = 0.</ExampleProblem>
-        <ExampleStep n={1} title="CURL"><MathPanel><BlockMath math={"\\nabla \\times \\mathbf{F} = (0, 0, -2y - 2y) = (0, 0, -4y)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SURFACE SIDE"><MathPanel><BlockMath math={"\\iint (-4y)\\,dx\\,dy = \\int_0^2\\int_0^3 -4y\\,dy\\,dx = -36"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="EDGE SIDE"><MathPanel><BlockMath math={"\\oint = \\int_0^2 x^2dx + \\int_0^3 -4y\\,dy + \\int_2^0 (x^2 + 9)dx + 0 = -36"} /></MathPanel></ExampleStep>
-        <Conclusion result="Both sides = −36" math={<BlockMath math={"\\oint_C \\mathbf{F}\\cdot d\\mathbf{r} = -36"} />}>The calculator below opens on this rectangle.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['stokes-theorem'].example} />
+      <CommonMistakes items={EX['stokes-theorem'].mistakes} />
       <Lab heading="Interactive Stokes' Theorem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["greens-theorem","grad-div-curl","divergence-theorem"]} />

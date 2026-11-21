@@ -8,8 +8,10 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { solve } from '@/app/utils/engines/progressions';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const MODES = [
   { value: 'ap', label: 'Arithmetic (AP)', fields: [['a', 'First term a'], ['d', 'Common difference d'], ['n', 'Number of terms n']] },
@@ -31,6 +33,7 @@ function headline(r) {
 
 export default function ProgressionCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('progressions');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('progressions', 7, answer, () => ({ mode: s.mode }));
@@ -38,6 +41,8 @@ export default function ProgressionCalculator() {
   const info = MODES.find((m) => m.value === s.mode);
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -55,15 +60,17 @@ export default function ProgressionCalculator() {
         title="Progressions Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you want to work out?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map(({ value, label }) => ({ value, label }))} />
+        <Choice label="What do you want to work out?" value={s.mode} onChange={(v) => set({ mode: v })} options={MODES.map(({ value, label }) => ({ value, label }))} help={guide?.help?.mode} />
         <div className={`grid grid-cols-1 ${info.fields.length > 1 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
           {info.fields.map(([k, label]) => (
-            <Field key={k} label={label} value={s[k]} inputMode={k === 'terms' ? 'text' : 'decimal'} onChange={(v) => set({ [k]: v })} onEnter={run} />
+            <Field key={k} label={label} help={guide?.help?.[k]} value={s[k]} inputMode={k === 'terms' ? 'text' : 'decimal'} onChange={(v) => set({ [k]: v })} onEnter={run} />
           ))}
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

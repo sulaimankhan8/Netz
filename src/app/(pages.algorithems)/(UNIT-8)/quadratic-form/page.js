@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.quadratic-form';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Eigenvalues", text: <>They are the canonical coefficients.</> },
           { title: "3. Read off", text: <>Rank, index, signature, nature.</> },
         ]} />
+        <SymbolKey rows={EX['quadratic-form'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Reduce Q = 3x² + 5y² + 3z² − 2xy + 2xz − 2yz to canonical form and find its nature.</ExampleProblem>
-        <ExampleStep n={1} title="MATRIX"><MathPanel><BlockMath math={"A = \\begin{bmatrix} 3 & -1 & 1 \\\\ -1 & 5 & -1 \\\\ 1 & -1 & 3 \\end{bmatrix}"} /></MathPanel><StepText>The xy coefficient −2 is split as −1 and −1.</StepText></ExampleStep>
-        <ExampleStep n={2} title="EIGENVALUES"><MathPanel><BlockMath math={"\\lambda^3 - 11\\lambda^2 + 36\\lambda - 36 = 0 \\ \\Rightarrow \\ \\lambda = 2, 3, 6"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="CANONICAL FORM"><MathPanel><BlockMath math={"Q = 2y_1^2 + 3y_2^2 + 6y_3^2"} /></MathPanel><StepText>All three positive: rank 3, index 3, signature 3.</StepText></ExampleStep>
-        <Conclusion result="Positive definite" math={<BlockMath math={"Q = 2y_1^2 + 3y_2^2 + 6y_3^2"} />}>The calculator below opens on this form.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['quadratic-form'].example} />
+      <CommonMistakes items={EX['quadratic-form'].mistakes} />
       <Lab heading="Interactive Quadratic Form Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["diagonalization","eigenvalues","maxima-minima-2var"]} />

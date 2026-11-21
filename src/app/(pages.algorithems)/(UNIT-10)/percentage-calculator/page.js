@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PercentageCalculator from './algorithems.percentage-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit10';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function PercentagePage() {
             { title: '3. One Step at a Time', text: <>For successive changes, apply each % to the new amount, never add the percentages.</> },
           ]}
         />
+        <SymbolKey rows={EX['percentage-calculator'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -77,6 +80,7 @@ export default function PercentagePage() {
           The calculator below opens on this sale (CP 800, SP 900). Switch tool to try successive discounts.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['percentage-calculator'].mistakes} />
 
       <Lab heading="Interactive Percentage Calculator">
         <PercentageCalculator />

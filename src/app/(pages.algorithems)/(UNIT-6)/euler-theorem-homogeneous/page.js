@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import EulerHomogeneousCalculator from './algorithems.euler-theorem-homogeneous';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function EulerHomogeneousPage() {
           { title: '2. Partials', text: <>Find u_x and u_y.</> },
           { title: '3. Combine', text: <>x u_x + y u_y comes out as n u.</> },
         ]} />
+        <SymbolKey rows={EX['euler-theorem-homogeneous'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>If <InlineMath math="u = \sin^{-1}\frac{x^2 + y^2}{x + y}" />, show that <InlineMath math="xu_x + yu_y = \tan u" />.</ExampleProblem>
-        <ExampleStep n={1} title="A HOMOGENEOUS PART"><MathPanel><BlockMath math="z = \sin u = \frac{x^2 + y^2}{x + y}, \qquad z(tx, ty) = t\,z \Rightarrow n = 1" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EULER FOR z"><MathPanel><BlockMath math="xz_x + yz_y = z \;\Rightarrow\; \cos u\,(xu_x + yu_y) = \sin u" /></MathPanel><StepText>z_x = cos u · u_x by the chain rule.</StepText></ExampleStep>
-        <Conclusion result="x u_x + y u_y = tan u" math={<BlockMath math="xu_x + yu_y = \frac{\sin u}{\cos u} = \tan u" />}>The fourth example button below checks it.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['euler-theorem-homogeneous'].example} />
+      <CommonMistakes items={EX['euler-theorem-homogeneous'].mistakes} />
       <Lab heading="Interactive Euler's Theorem Calculator"><EulerHomogeneousCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['partial-derivative', 'jacobian', 'derivative']} />

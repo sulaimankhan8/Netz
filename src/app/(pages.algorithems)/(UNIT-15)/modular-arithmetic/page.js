@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.modular-arithmetic';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Back-substitute", text: <>gcd = ax + by.</> },
           { title: "3. Use it", text: <>Inverses, congruences, RSA.</> },
         ]} />
+        <SymbolKey rows={EX['modular-arithmetic'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find gcd(252, 198).</ExampleProblem>
-        <ExampleStep n={1} title="DIVIDE"><MathPanel><BlockMath math={"252 = 1 \\times 198 + 54, \\quad 198 = 3 \\times 54 + 36, \\quad 54 = 1 \\times 36 + 18, \\quad 36 = 2 \\times 18 + 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="READ OFF"><StepText>The last non-zero remainder is the gcd.</StepText></ExampleStep>
-        <Conclusion result="gcd = 18" math={<BlockMath math={"\\gcd(252, 198) = 18"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['modular-arithmetic'].example} />
+      <CommonMistakes items={EX['modular-arithmetic'].mistakes} />
       <Lab heading="Interactive Modular Arithmetic Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["truth-table","permutations-combinations","factoring"]} />

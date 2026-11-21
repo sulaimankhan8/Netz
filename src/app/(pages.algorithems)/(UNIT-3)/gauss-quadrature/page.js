@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import GaussQuadrature from './algorithems.gauss-quadrature';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { gaussQuadrature as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function GaussQuadraturePage() {
   return (
@@ -75,6 +78,15 @@ export default function GaussQuadraturePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'n', t: 'The number of Gauss points. n points integrate any polynomial up to degree 2n − 1 exactly.', e: 'n = 3' },
+                    { s: 't_i', t: 'The Gauss points on [−1, 1]: fixed numbers from the table.', e: 't = 0,\\ \\pm 0.7746' },
+                    { s: 'w_i', t: 'The weights that go with them (they add up to 2).', e: '0.8889,\\ 0.5556' },
+                    { s: 'x_i = \\frac{b-a}{2}t_i + \\frac{a+b}{2}', t: 'Each Gauss point moved from [−1, 1] to [a, b].', e: 'x_1 = \\dfrac{-0.7746 + 1}{2} = 0.1127' },
+                    { s: '\\frac{b - a}{2}', t: 'The factor that rescales the width of [−1, 1] (which is 2) to b − a.', e: '\\dfrac{1 - 0}{2} = \\dfrac12' },
+                  ]} />
                 </div>
               </div>
 
@@ -201,8 +213,18 @@ export default function GaussQuadraturePage() {
                 </div>
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using the t values directly on [a, b].</>, f: <>Map each point first: <InlineMath math="x_i = \dfrac{b-a}{2}t_i + \dfrac{a+b}{2}" />.</> },
+                { m: <>Forgetting the factor (b − a)/2.</>, f: <>Multiply the weighted sum by <InlineMath math="\dfrac{b-a}{2}" /> (here ½).</> },
+                { m: <>Mixing weights and points.</>, f: <>For 3 points: <InlineMath math="t = 0" /> has weight 8/9; <InlineMath math="t = \pm\sqrt{3/5}" /> have weight 5/9.</> },
+                { m: <>Rounding the points too much.</>, f: <>Use <InlineMath math="\sqrt{3/5} = 0.774597" />, not 0.77.</> },
+                { m: <>Expecting it for tabulated data.</>, f: <>Gauss needs f at special x values, so it suits a formula, not a fixed table.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show the mapping, each xᵢ and f(xᵢ), the weighted sum and the factor.</> },
+              ]} />
+
               {/* Interactive Calculator */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -212,6 +234,8 @@ export default function GaussQuadraturePage() {
                 <GaussQuadrature />
               </div>
 
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

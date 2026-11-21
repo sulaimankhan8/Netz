@@ -6,11 +6,13 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import RatesBadge from '@/app/components/method/RatesBadge';
 import { formatCurrencyCode } from '@/app/utils/finance/money';
 import { VAT_COUNTRIES } from '@/app/data/rates/vat';
 import { solve, country as findCountry, vatRule } from '@/app/utils/engines/vat';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const GROUPS = [...new Set(VAT_COUNTRIES.map((c) => c.group))];
 const START = { code: 'GB', amount: '240', mode: 'remove', rate: '20', custom: '' };
@@ -24,6 +26,7 @@ const Stat = ({ label, value, strong }) => (
 
 export default function VatCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('vat');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('vat', 11, answer, () => ({ country: s.code, mode: s.mode }));
@@ -35,6 +38,8 @@ export default function VatCalculator() {
   const money = (v) => formatCurrencyCode(v, c.currency);
 
   const pickCountry = (code) => set({ code, rate: String(vatRule(code).data.standard) });
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -59,6 +64,7 @@ export default function VatCalculator() {
         title={`${tax} Engine`}
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="space-y-1 min-w-0 block">
@@ -71,17 +77,18 @@ export default function VatCalculator() {
               ))}
             </select>
           </label>
-          <Field label={s.mode === 'add' ? `Price before ${tax} (${c.currency})` : `Price including ${tax} (${c.currency})`} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} />
+          <Field label={s.mode === 'add' ? `Price before ${tax} (${c.currency})` : `Price including ${tax} (${c.currency})`} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} help={guide?.help?.amount} />
         </div>
-        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: `Price before ${tax} (add ${tax})` }, { value: 'remove', label: `Price including ${tax} (remove ${tax})` }]} />
-        <Choice label={`${tax} rate`} value={s.rate} onChange={(v) => set({ rate: v })} options={rateOptions} />
+        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: `Price before ${tax} (add ${tax})` }, { value: 'remove', label: `Price including ${tax} (remove ${tax})` }]} help={guide?.help?.mode} />
+        <Choice label={`${tax} rate`} value={s.rate} onChange={(v) => set({ rate: v })} options={rateOptions} help={guide?.help?.rate} />
         {reducedNote && <p className="text-sm text-neutral-700 dark:text-neutral-300">{reducedNote.label}</p>}
         {c.note && <p className="text-sm text-neutral-700 dark:text-neutral-300">{c.name}: {c.note}.</p>}
         {usingCustom && (
-          <div className="max-w-xs"><Field label={`Your ${tax} rate (%)`} value={s.custom} placeholder="e.g. 13.5" onChange={(v) => set({ custom: v })} onEnter={run} /></div>
+          <div className="max-w-xs"><Field label={`Your ${tax} rate (%)`} value={s.custom} placeholder="e.g. 13.5" onChange={(v) => set({ custom: v })} onEnter={run} help={guide?.help?.custom} /></div>
         )}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate {tax}
           </EditorialButton>
         </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.cagr-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Root", text: <>The nth root for n years.</> },
           { title: "3. Subtract 1", text: <>As a percentage.</> },
         ]} />
+        <SymbolKey rows={EX['cagr-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹1,00,000 grew to ₹2,50,000 in 6 years. Find the CAGR.</ExampleProblem>
-        <ExampleStep n={1} title="RATIO"><MathPanel><BlockMath math={"\\frac{2{,}50{,}000}{1{,}00{,}000} = 2.5"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ROOT"><MathPanel><BlockMath math={"2.5^{1/6} - 1 = 1.1650 - 1 = 16.50\\%"} /></MathPanel><StepText>Not 150%/6 = 25%: growth compounds.</StepText></ExampleStep>
-        <Conclusion result="≈ 16.5% a year" math={<BlockMath math={"\\text{CAGR} \\approx 16.50\\%"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cagr-calculator'].example} />
+      <CommonMistakes items={EX['cagr-calculator'].mistakes} />
       <Lab heading="Interactive CAGR Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["compound-interest","lumpsum","npv-irr"]} />

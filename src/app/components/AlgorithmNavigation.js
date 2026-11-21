@@ -4,11 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AdSlot from './ads/AdSlot';
+import { OpenInNotes } from './method/PageExtras';
+import { NOTES_WIDGET_IDS } from '../data/methodWidgetIds';
 import { LIVE_METHODS, UNITS, unitMenus } from '../data/methods';
 
 // Previous / next order = exactly the menu order (units, then their groups), from the one methods list (src/app/data/methods.js)
 const menuOrder = unitMenus().flatMap((u) => u.subTopics.flatMap((s) => (s.subTopics ? s.subTopics : [s])).map((leaf) => leaf.link));
 export const ALGORITHMS_REGISTRY = menuOrder.map((route) => LIVE_METHODS.find((m) => m.route === route)).filter(Boolean).map((m) => ({
+  id: m.id,
+  // The 34 original pages all have a Notes widget; newer pages have one when build:widgets made it
+  inNotes: m.batch === 0 || NOTES_WIDGET_IDS.has(m.id),
   title: m.name,
   path: m.route,
   unit: UNITS.find((u) => u.unit === m.unit)?.shortTitle || `Unit ${m.unit}`,
@@ -32,6 +37,16 @@ export default function AlgorithmNavigation({ currentPath: overridePath }) {
 
   return (
     <>
+    {/* Keep the calculator: opens Notes with a new note holding this page's live calculator (Notes/page.js, ?method=) */}
+    {currentAlgo.inNotes && (
+      <div data-open-in-notes="" className="w-full md:w-[80%] mx-auto mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border-2 border-black/80 dark:border-neutral-700 bg-[#FFE600]/15 dark:bg-neutral-900">
+        <div>
+          <span className="text-xs font-mono font-bold uppercase tracking-widest text-neutral-600 dark:text-neutral-400 block">Keep it in your notes</span>
+          <p className="text-sm text-neutral-800 dark:text-neutral-200 mt-1">Add this calculator to a new note, next to your own working. It stays live: change the numbers there any time.</p>
+        </div>
+        <OpenInNotes href={`/Notes?method=${currentAlgo.id}`} />
+      </div>
+    )}
     {/* The algorithm pages' one ad: below the result and steps, above the next/previous links (plan 6.2) */}
     <AdSlot place="algorithm" className="w-full md:w-[80%] mx-auto mt-12" />
     <div className="w-full md:w-[80%] mx-auto mt-12 mb-6 pt-6 border-t border-gray-200 dark:border-neutral-700">

@@ -345,9 +345,9 @@ const StraightLineSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Normal Equations System Substitution
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">Normal Equations:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">Normal Equations:</span>
                   {/* Textbook form y = a + bx: a is the intercept (result.b), b the slope (result.a) */}
                   <BlockMath math={`\\sum y = n a + b \\sum x \\implies ${result.sumY.toFixed(4)} = ${result.n} a + ${result.sumX.toFixed(4)} b`} />
                   <BlockMath math={`\\sum xy = a \\sum x + b \\sum x^2 \\implies ${result.sumXY.toFixed(4)} = ${result.sumX.toFixed(4)} a + ${result.sumX2.toFixed(4)} b`} />

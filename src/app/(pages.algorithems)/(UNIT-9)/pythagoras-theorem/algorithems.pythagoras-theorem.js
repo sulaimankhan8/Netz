@@ -8,9 +8,11 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import TriangleDiagram from '@/app/components/method/TriangleDiagram';
 import { solve } from '@/app/utils/engines/pythagoras';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { a: '', b: '12', c: '13' };
 const FIELDS = [
@@ -22,11 +24,14 @@ const fieldClass = 'w-full min-h-[44px] px-3 text-base font-mono font-bold round
 
 export default function PythagorasCalculator() {
   const [values, setValues] = useState(START);
+  const guide = useCalcGuide('pythagoras');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('pythagoras', 9, answer, () => ({ find: answer?.unknown || 'check' }));
   const exportBar = useExportBar('pythagoras', () => values, !!answer);
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setValues({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -45,6 +50,7 @@ export default function PythagorasCalculator() {
         title="Pythagoras Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <p className="text-sm text-neutral-700 dark:text-neutral-300">Enter any two sides and leave the third empty. Enter all three to check whether the triangle is right-angled.</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -55,8 +61,9 @@ export default function PythagorasCalculator() {
             </label>
           ))}
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate
           </EditorialButton>
         </div>

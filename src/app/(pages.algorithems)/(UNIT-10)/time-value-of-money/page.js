@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.time-value-of-money';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Periods", text: <>n = years × payments a year.</> },
           { title: "3. Formula", text: <>Times (1 + i) for an annuity due.</> },
         ]} />
+        <SymbolKey rows={EX['time-value-of-money'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the present value of ₹10,000 a year for 5 years at 8%.</ExampleProblem>
-        <ExampleStep n={1} title="FORMULA"><MathPanel><BlockMath math={"PV = 10{,}000\\cdot\\frac{1 - (1.08)^{-5}}{0.08}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="VALUE"><MathPanel><BlockMath math={"= 10{,}000 \\times 3.9927 = 39{,}927.10"} /></MathPanel><StepText>Worth less than the ₹50,000 paid, because later rupees are discounted.</StepText></ExampleStep>
-        <Conclusion result="₹39,927.10" math={<BlockMath math={"PV \\approx 39{,}927.10"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['time-value-of-money'].example} />
+      <CommonMistakes items={EX['time-value-of-money'].mistakes} />
       <Lab heading="Interactive Time Value of Money Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["compound-interest","npv-irr","emi"]} />

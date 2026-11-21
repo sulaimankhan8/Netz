@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import EulerMethodSolver from './algorithems.euler-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { euler as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function EulerMethodPage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function EulerMethodPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'f(x, y)', t: 'The right-hand side of dy/dx = f(x, y): the slope of the solution curve at the point (x, y).', e: 'f(x, y) = x + y' },
+                    { s: 'x_0,\\ y_0', t: 'The starting point given by the initial condition.', e: 'y(0) = 1' },
+                    { s: 'h', t: 'The step size: how far x moves in each step. Smaller h, smaller error (it is proportional to h).', e: 'h = 0.1' },
+                    { s: 'f(x_n, y_n)', t: 'The slope at the start of step n: Euler walks along it in a straight line.', e: 'f(0, 1) = 1' },
+                    { s: 'y_{n+1} = y_n + h f(x_n, y_n)', t: 'The new value: the old y plus the rise (step × slope).', e: '1 + 0.1(1) = 1.1' },
+                  ]} />
                 </div>
               </div>
 
@@ -157,8 +169,18 @@ export default function EulerMethodPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using the new x with the old y (or the other way round).</>, f: <>The slope for step n uses both <InlineMath math="x_n" /> and <InlineMath math="y_n" /> from the start of the step.</> },
+                { m: <>Forgetting to multiply the slope by h.</>, f: <><InlineMath math="y_{n+1} = y_n + h \cdot f(x_n, y_n)" />, not <InlineMath math="y_n + f(x_n, y_n)" />.</> },
+                { m: <>Counting the steps wrongly.</>, f: <>Steps = (target − x₀)/h: from 0 to 0.2 with h = 0.1 is 2 steps.</> },
+                { m: <>Expecting high accuracy.</>, f: <>Euler is the roughest method (here 1.22 against 1.24281). Use modified Euler or RK4 when accuracy matters.</> },
+                { m: <>Rounding too early.</>, f: <>Keep 4–6 decimals in every step; errors add up.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show each slope with the numbers put in, each new y, and a table of x and y.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -169,6 +191,8 @@ export default function EulerMethodPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

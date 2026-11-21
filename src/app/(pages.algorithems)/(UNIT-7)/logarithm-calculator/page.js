@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LogarithmCalculator from './algorithems.logarithm-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LogarithmPage() {
           { title: 'Change of base', text: <>log_b x = ln x / ln b.</> },
           { title: 'Equations', text: <>Isolate the power, take logs; or isolate the log, raise the base.</> },
         ]} />
+        <SymbolKey rows={EX['logarithm-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="3 \cdot 2^{x - 1} + 5 = 29" />.</ExampleProblem>
-        <ExampleStep n={1} title="ISOLATE THE POWER"><MathPanel><BlockMath math="3 \cdot 2^{x - 1} = 24 \ \Rightarrow \ 2^{x - 1} = 8" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MATCH THE POWERS"><MathPanel><BlockMath math="2^{x - 1} = 2^3 \ \Rightarrow \ x - 1 = 3 \ \Rightarrow \ x = 4" /></MathPanel><StepText>Check: 3 · 2³ + 5 = 29 ✓</StepText></ExampleStep>
-        <Conclusion result="x = 4" math={<BlockMath math="x = 4" />}>The calculator below also solves ones like 5ˣ = 20 that need logs.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['logarithm-calculator'].example} />
+      <CommonMistakes items={EX['logarithm-calculator'].mistakes} />
       <Lab heading="Interactive Logarithm Calculator"><LogarithmCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['linear-equation', 'compound-interest', 'logarithmic']} />

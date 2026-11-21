@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import AreaCalculator from './algorithems.area-under-curve-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,21 +42,11 @@ export default function AreaPage() {
             { title: '3. Add sizes', text: <>Integrate each piece and add the absolute values.</> },
           ]}
         />
+        <SymbolKey rows={EX['area-under-curve-calculator'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>Find the area enclosed by <InlineMath math="y = x" /> and <InlineMath math="y = x^2" />.</ExampleProblem>
-        <ExampleStep n={1} title="WHERE DO THEY MEET?">
-          <MathPanel><BlockMath math="x = x^2 \ \Rightarrow \ x(x - 1) = 0 \ \Rightarrow \ x = 0, \ 1" /></MathPanel>
-          <StepText>Between 0 and 1 the line is above the parabola (try x = ½).</StepText>
-        </ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE TOP MINUS BOTTOM">
-          <MathPanel><BlockMath math="A = \int_0^1 (x - x^2)\,dx = \left[\frac{x^2}{2} - \frac{x^3}{3}\right]_0^1 = \frac{1}{2} - \frac{1}{3} = \frac{1}{6}" /></MathPanel>
-        </ExampleStep>
-        <Conclusion result="Area = 1/6" math={<BlockMath math="A = \frac{1}{6}" />}>
-          Try this in the calculator below with &quot;between x and x²&quot;.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['area-under-curve-calculator'].example} />
+      <CommonMistakes items={EX['area-under-curve-calculator'].mistakes} />
 
       <Lab heading="Interactive Area Calculator">
         <AreaCalculator />

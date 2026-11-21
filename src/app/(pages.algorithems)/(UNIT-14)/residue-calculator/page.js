@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.residue-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Residues", text: <>The limit formula at each.</> },
           { title: "3. Theorem", text: <>2πi × the residues inside.</> },
         ]} />
+        <SymbolKey rows={EX['residue-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate ∮ (z − 3)/(z² + 2z + 5) dz around |z| = 3.</ExampleProblem>
-        <ExampleStep n={1} title="POLES"><MathPanel><BlockMath math={"z^2 + 2z + 5 = 0 \\Rightarrow z = -1 \\pm 2i, \\quad |{-1} \\pm 2i| = \\sqrt5 < 3"} /></MathPanel><StepText>Both are inside.</StepText></ExampleStep>
-        <ExampleStep n={2} title="RESIDUES"><MathPanel><BlockMath math={"\\operatorname{Res}_{-1 + 2i} = \\frac{-4 + 2i}{4i} = \\frac12 + i, \\quad \\operatorname{Res}_{-1 - 2i} = \\frac12 - i"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="THEOREM"><MathPanel><BlockMath math={"\\oint = 2\\pi i\\left(\\tfrac12 + i + \\tfrac12 - i\\right) = 2\\pi i"} /></MathPanel></ExampleStep>
-        <Conclusion result="2πi" math={<BlockMath math={"\\oint_{|z| = 3}\\frac{z - 3}{z^2 + 2z + 5}dz = 2\\pi i"} />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['residue-calculator'].example} />
+      <CommonMistakes items={EX['residue-calculator'].mistakes} />
       <Lab heading="Interactive Residue Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["cauchy-integral","contour-integration","laurent-series"]} />

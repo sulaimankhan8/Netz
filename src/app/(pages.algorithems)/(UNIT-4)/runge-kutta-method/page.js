@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import RungeKuttaSolver from './algorithems.runge-kutta';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { rungeKutta as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function RungeKuttaMethodPage() {
   const k1Formula = `k_1 = h \\cdot f(x_n, y_n)`;
@@ -84,6 +87,15 @@ export default function RungeKuttaMethodPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'k_1', t: 'h × the slope at the start of the step.', e: '0.1(0 + 1) = 0.1' },
+                    { s: 'k_2', t: 'h × the slope at the middle, reached by going half of k₁.', e: '0.1(0.05 + 1.05) = 0.11' },
+                    { s: 'k_3', t: 'h × the slope at the middle again, reached with half of k₂.', e: '0.1(0.05 + 1.055) = 0.1105' },
+                    { s: 'k_4', t: 'h × the slope at the end, reached with the whole of k₃.', e: '0.1(0.1 + 1.1105) = 0.12105' },
+                    { s: '\\frac16(k_1 + 2k_2 + 2k_3 + k_4)', t: 'The weighted average rise: the middle slopes count twice (weights 1, 2, 2, 1 add up to 6).', e: '0.110342' },
+                  ]} />
                 </div>
               </div>
 
@@ -169,8 +181,18 @@ export default function RungeKuttaMethodPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Reaching the middle with the wrong k.</>, f: <><InlineMath math="k_2" /> uses <InlineMath math="y_n + \tfrac{k_1}{2}" />, <InlineMath math="k_3" /> uses <InlineMath math="y_n + \tfrac{k_2}{2}" />, <InlineMath math="k_4" /> uses <InlineMath math="y_n + k_3" />.</> },
+                { m: <>Using x + h for k₂ and k₃.</>, f: <>k₂ and k₃ are at the middle, <InlineMath math="x_n + \tfrac{h}{2}" />; only k₄ is at <InlineMath math="x_n + h" />.</> },
+                { m: <>Forgetting the factor h in each k.</>, f: <>In this form each k already includes h: <InlineMath math="k = h \cdot f(\dots)" />.</> },
+                { m: <>Dividing by 4 instead of 6.</>, f: <>The weights 1 + 2 + 2 + 1 add to 6.</> },
+                { m: <>Rounding the k values to 2–3 decimals.</>, f: <>RK4 is accurate to about 6 decimals; keep 5–6 in every k.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show each k with its point written out, the weighted average, and the new y.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -181,6 +203,8 @@ export default function RungeKuttaMethodPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -8,10 +8,12 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { solve } from '@/app/utils/engines/quadratic';
 import { texNumber } from '@/app/utils/numeric/latex';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { a: '2', b: '-7', c: '3' };
 const Panel = ({ title, lines }) => (
@@ -25,12 +27,15 @@ const Panel = ({ title, lines }) => (
 
 export default function QuadraticSolver() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('quadratic');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('quadratic', 7, answer, () => ({ fn: answer ? `${answer.a}x^2+${answer.b}x+${answer.c}` : '' }));
   const exportBar = useExportBar('quadratic', () => v, !!answer);
   const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setAnswer(null); setError(''); };
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -56,15 +61,17 @@ export default function QuadraticSolver() {
         title="Quadratic Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <p className="text-sm text-neutral-700 dark:text-neutral-300">Solve <strong>ax² + bx + c = 0</strong>. Fractions like 1/2 are fine.</p>
         <div className="grid grid-cols-3 gap-3 max-w-xl">
-          <Field label="a" value={v.a} onChange={(x) => set('a', x)} onEnter={run} />
-          <Field label="b" value={v.b} onChange={(x) => set('b', x)} onEnter={run} />
-          <Field label="c" value={v.c} onChange={(x) => set('c', x)} onEnter={run} />
+          <Field label="a" value={v.a} onChange={(x) => set('a', x)} onEnter={run} help={guide?.help?.a} />
+          <Field label="b" value={v.b} onChange={(x) => set('b', x)} onEnter={run} help={guide?.help?.b} />
+          <Field label="c" value={v.c} onChange={(x) => set('c', x)} onEnter={run} help={guide?.help?.c} />
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Solve Equation
           </EditorialButton>
         </div>

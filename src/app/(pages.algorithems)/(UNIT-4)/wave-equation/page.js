@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.wave-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Row 1", text: <>Uses u_t = g with a half step.</> },
           { title: "3. March", text: <>Each row from the two before.</> },
         ]} />
+        <SymbolKey rows={EX['wave-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve u_tt = u_xx on 0 &lt; x &lt; 4, u = 0 at both ends, u(x, 0) = x(4 − x), u_t(x, 0) = 0, with h = k = 1.</ExampleProblem>
-        <ExampleStep n={1} title="ROW 0"><MathPanel><BlockMath math={"u = 0, 3, 4, 3, 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ROW 1"><MathPanel><BlockMath math={"u_{i,1} = \\tfrac12(u_{i-1,0} + u_{i+1,0}): \\quad 0, 2, 3, 2, 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="ROW 2"><MathPanel><BlockMath math={"u_{i,2} = u_{i-1,1} + u_{i+1,1} - u_{i,0}: \\quad 0, 0, 0, 0, 0"} /></MathPanel></ExampleStep>
-        <Conclusion result="Rows 3, 4: −2, −3, −2 and −3, −4, −3" math={<BlockMath math={"u_{\\cdot,4} = 0, -3, -4, -3, 0"} />}>The calculator below opens on this string.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['wave-equation'].example} />
+      <CommonMistakes items={EX['wave-equation'].mistakes} />
       <Lab heading="Interactive Wave Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["heat-equation","separation-of-variables","laplace-liebmann"]} />

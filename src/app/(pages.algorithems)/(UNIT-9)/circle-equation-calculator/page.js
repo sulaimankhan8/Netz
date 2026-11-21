@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CircleCalculator from './algorithems.circle-equation-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function CirclePage() {
           { title: 'From three points', text: <>Each point gives a linear equation in g, f, c.</> },
           { title: 'From an equation', text: <>Compare coefficients to read g, f, c.</> },
         ]} />
+        <SymbolKey rows={EX['circle-equation-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the centre and radius of <InlineMath math="x^2 + y^2 - 4x + 6y - 12 = 0" />.</ExampleProblem>
-        <ExampleStep n={1} title="COMPARE"><MathPanel><BlockMath math="2g = -4, \ 2f = 6, \ c = -12 \ \Rightarrow \ g = -2, \ f = 3" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="CENTRE AND RADIUS"><MathPanel><BlockMath math="\text{Centre } (2, -3), \qquad r = \sqrt{4 + 9 + 12} = 5" /></MathPanel><StepText>Completing the square gives the same: (x − 2)² + (y + 3)² = 25.</StepText></ExampleStep>
-        <Conclusion result="Centre (2, −3), radius 5" math={<BlockMath math="(x - 2)^2 + (y + 3)^2 = 5^2" />}>The first example button below also finds the tangent at (5, 1).</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['circle-equation-calculator'].example} />
+      <CommonMistakes items={EX['circle-equation-calculator'].mistakes} />
       <Lab heading="Interactive Circle Calculator"><CircleCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['conics', 'coordinate-geometry', 'tangent-normal']} />

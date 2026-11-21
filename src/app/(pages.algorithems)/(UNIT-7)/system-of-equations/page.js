@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import SystemSolver from './algorithems.system-of-equations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit7';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -45,37 +46,11 @@ export default function SystemPage() {
             { title: '3. Solve and Check', text: <>Find the values, then put them back into every equation.</> },
           ]}
         />
+        <SymbolKey rows={EX['system-of-equations'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Solve <InlineMath math="2x + 3y = 13" /> and <InlineMath math="x - y = -1" /> by Cramer&apos;s rule.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="THE DETERMINANT D">
-          <MathPanel>
-            <BlockMath math="D = \begin{vmatrix} 2 & 3 \\ 1 & -1 \end{vmatrix} = (2)(-1) - (3)(1) = -5 \neq 0" />
-          </MathPanel>
-          <StepText>D is not zero, so there is exactly one solution.</StepText>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="REPLACE EACH COLUMN WITH THE CONSTANTS">
-          <MathPanel>
-            <BlockMath math="D_x = \begin{vmatrix} 13 & 3 \\ -1 & -1 \end{vmatrix} = -13 + 3 = -10, \qquad D_y = \begin{vmatrix} 2 & 13 \\ 1 & -1 \end{vmatrix} = -2 - 13 = -15" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="DIVIDE AND CHECK">
-          <MathPanel>
-            <BlockMath math="x = \frac{-10}{-5} = 2, \qquad y = \frac{-15}{-5} = 3" />
-            <BlockMath math="2(2) + 3(3) = 13 \ \checkmark \qquad 2 - 3 = -1 \ \checkmark" />
-          </MathPanel>
-        </ExampleStep>
-
-        <Conclusion result="x = 2, y = 3" math={<BlockMath math="(x, y) = (2, 3)" />}>
-          The solver below opens on this pair and draws the two lines meeting at (2, 3).
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['system-of-equations'].example} />
+      <CommonMistakes items={EX['system-of-equations'].mistakes} />
 
       <Lab heading="Interactive Equation Solver">
         <SystemSolver />

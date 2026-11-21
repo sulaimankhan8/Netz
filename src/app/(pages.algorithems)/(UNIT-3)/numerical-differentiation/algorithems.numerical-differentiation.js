@@ -10,6 +10,7 @@ import { parseUserFunction } from '@/app/utils/evaluateMath';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import SetupSteps from '@/app/components/SetupSteps';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const NumericalDifferentiationSolver = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -77,6 +78,11 @@ const NumericalDifferentiationSolver = () => {
     e?.preventDefault();
     calculateDifferentiation(functionInput, evalX, stepH);
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.x !== undefined) setEvalX(Number(v.x)); if (v.h !== undefined) setStepH(Number(v.h)); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -317,15 +323,19 @@ const NumericalDifferentiationSolver = () => {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Central Difference Substitutions
               </h4>
 
-              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
+              <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 text-black dark:text-white overflow-x-auto text-center">
                 <div className="space-y-1">
-                  <span className="font-bold text-neutral-500 uppercase block">1st Derivative Formula:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">The function at x − h, x and x + h:</span>
+                  <BlockMath math={`f(${Number((result.x0 - result.h).toFixed(6))}) = ${result.fx_minus_h.toFixed(6)}, \\quad f(${result.x0}) = ${result.fx0.toFixed(6)}, \\quad f(${Number((Number(result.x0) + Number(result.h)).toFixed(6))}) = ${result.fx_plus_h.toFixed(6)}`} />
+                </div>
+                <div className="space-y-1 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">1st Derivative Formula:</span>
                   <BlockMath math={`f'(x) \\approx \\frac{f(x+h) - f(x-h)}{2h}`} />
                   <BlockMath math={`f'(${result.x0}) \\approx \\frac{${result.fx_plus_h.toFixed(6)} - ${result.fx_minus_h.toFixed(6)}}{2 \\times ${result.h}} = ${result.firstDerivCentral.toFixed(6)}`} />
                 </div>
 
                 <div className="space-y-1 pt-3 border-t border-neutral-200 dark:border-neutral-700">
-                  <span className="font-bold text-neutral-500 uppercase block">2nd Derivative Formula:</span>
+                  <span className="text-xs font-mono font-bold text-neutral-500 uppercase block text-left">2nd Derivative Formula:</span>
                   <BlockMath math={`f''(x) \\approx \\frac{f(x+h) - 2f(x) + f(x-h)}{h^2}`} />
                   <BlockMath math={`f''(${result.x0}) \\approx \\frac{${result.fx_plus_h.toFixed(6)} - 2(${result.fx0.toFixed(6)}) + ${result.fx_minus_h.toFixed(6)}}{${result.h}^2} = ${result.secondDerivCentral.toFixed(6)}`} />
                 </div>

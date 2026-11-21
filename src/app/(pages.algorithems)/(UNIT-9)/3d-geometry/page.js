@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.3d-geometry';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Dot / cross", text: <>Angles from dot products; normals from cross products.</> },
           { title: "3. Formula", text: <>Divide by the right length.</> },
         ]} />
+        <SymbolKey rows={EX['3d-geometry'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the shortest distance between r = (1, 2, 3) + λ(2, 3, 4) and r = (2, 4, 5) + μ(3, 4, 5).</ExampleProblem>
-        <ExampleStep n={1} title="CROSS PRODUCT"><MathPanel><BlockMath math={"(2, 3, 4) \\times (3, 4, 5) = (-1, 2, -1), \\quad |\\,\\cdot\\,| = \\sqrt6"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DISTANCE"><MathPanel><BlockMath math={"\\vec a_2 - \\vec a_1 = (1, 2, 2), \\quad D = \\frac{|-1 + 4 - 2|}{\\sqrt6} = \\frac{1}{\\sqrt6}"} /></MathPanel></ExampleStep>
-        <Conclusion result="D = 1/√6 ≈ 0.408" math={<BlockMath math={"D = \\frac{\\sqrt6}{6}"} />}>The calculator below opens on these lines.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['3d-geometry'].example} />
+      <CommonMistakes items={EX['3d-geometry'].mistakes} />
       <Lab heading="Interactive 3D Geometry Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["vectors","coordinate-geometry","polar-coordinates"]} />

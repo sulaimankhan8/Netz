@@ -24,3 +24,4 @@ export { WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Iterat
 export { StepTable } from './StepTable';
 export { Faq, RelatedMethods, UsedIn, OpenInNotes } from './PageExtras';
 // Matrix input/display ('use client'); import from '@/app/components/method/Matrix' directly in calculators
+export { SymbolKey, CommonMistakes } from './TheoryExtras';

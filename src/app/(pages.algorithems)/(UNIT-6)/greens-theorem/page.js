@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.greens-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Line side", text: <>Add the line integrals.</> },
           { title: "3. Area side", text: <>∬(N_x − M_y) dA.</> },
         ]} />
+        <SymbolKey rows={EX['greens-theorem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Verify Green&apos;s theorem for ∮(3x² − 8y²)dx + (4y − 6xy)dy, C the boundary of the region between y = x² and y = √x.</ExampleProblem>
-        <ExampleStep n={1} title="ALONG y = x²"><MathPanel><BlockMath math={"\\int_0^1 \\left(3x^2 - 8x^4 + (4x^2 - 6x^3)2x\\right)dx = -1"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ALONG y = √x (BACK)"><MathPanel><BlockMath math={"\\int_1^0 \\left(3x^2 - 8x + (4\\sqrt x - 6x^{3/2})\\tfrac{1}{2\\sqrt x}\\right)dx = \\frac52"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="DOUBLE INTEGRAL"><MathPanel><BlockMath math={"\\iint (-6y + 16y)\\,dA = \\int_0^1\\int_{x^2}^{\\sqrt x} 10y\\,dy\\,dx = \\frac32"} /></MathPanel><StepText>The line side is −1 + 5/2 = 3/2 as well.</StepText></ExampleStep>
-        <Conclusion result="Both sides = 3/2" math={<BlockMath math={"\\oint_C = \\iint_R = \\frac32"} />}>The calculator below opens on this region.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['greens-theorem'].example} />
+      <CommonMistakes items={EX['greens-theorem'].mistakes} />
       <Lab heading="Interactive Green's Theorem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["line-integral","stokes-theorem","double-integral"]} />

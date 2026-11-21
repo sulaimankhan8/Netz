@@ -32,13 +32,20 @@ export function solve({ A: At, b: bt, x0: xt = '', tol = '1e-10' }) {
   let k = 0;
   for (; k < 4 * n && Math.sqrt(rr) > eps; k++) {
     const Ap = mv(A, p);
+    const pOld = [...p];
     const alpha = rr / dotv(p, Ap);
     x = x.map((v, i) => v + alpha * p[i]);
     r = r.map((v, i) => v - alpha * Ap[i]);
     const rr2 = dotv(r, r);
     const beta = rr2 / rr;
     p = r.map((v, i) => v + beta * p[i]);
-    if (k < 3) steps.push({ title: `Step ${k + 1}`, formula: '\\alpha_k = \\frac{r_k^Tr_k}{p_k^TAp_k}, \\ x_{k+1} = x_k + \\alpha_kp_k, \\ \\beta_k = \\frac{r_{k+1}^Tr_{k+1}}{r_k^Tr_k}', depth: 1, lines: [`\\alpha_{${k}} = ${r6(alpha)}, \\quad x_{${k + 1}} = ${vec(x)}`, `r_{${k + 1}} = ${vec(r)}, \\quad \\beta_{${k}} = ${r6(beta)}`] });
+    const full = k === 0 ? [
+      `p_{0} = ${vec(pOld)}, \\quad Ap_{0} = ${vec(Ap)}`,
+      `r_0^Tr_0 = ${r6(rr)}, \\quad p_0^TAp_0 = ${r6(dotv(pOld, Ap))}, \\quad \\alpha_0 = \\frac{${r6(rr)}}{${r6(dotv(pOld, Ap))}} = ${r6(alpha)}`,
+      `x_1 = x_0 + ${r6(alpha)}\\,p_0 = ${vec(x)}, \\quad r_1 = r_0 - ${r6(alpha)}\\,Ap_0 = ${vec(r)}`,
+      `\\beta_0 = \\frac{${r6(rr2)}}{${r6(rr)}} = ${r6(beta)}, \\quad p_1 = r_1 + ${r6(beta)}\\,p_0 = ${vec(p)}`,
+    ] : [`\\alpha_{${k}} = ${r6(alpha)}, \\quad x_{${k + 1}} = ${vec(x)}`, `r_{${k + 1}} = ${vec(r)}, \\quad \\beta_{${k}} = ${r6(beta)}`];
+    if (k < 3) steps.push({ title: k === 0 ? 'Step 1 in full' : `Step ${k + 1}`, formula: '\\alpha_k = \\frac{r_k^Tr_k}{p_k^TAp_k}, \\ x_{k+1} = x_k + \\alpha_kp_k, \\ \\beta_k = \\frac{r_{k+1}^Tr_{k+1}}{r_k^Tr_k}', depth: 1, lines: full });
     rr = rr2;
     rows.push({ k: k + 1, x: vec(x), r: r6(Math.sqrt(rr)), alpha: r6(alpha), beta: r6(beta) });
   }

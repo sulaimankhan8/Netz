@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.trigonometric-identities';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Rewrite", text: <>tan, sec, csc, cot in sin and cos.</> },
           { title: "3. Simplify", text: <>One fraction per side; sin² + cos² = 1.</> },
         ]} />
+        <SymbolKey rows={EX['trigonometric-identities'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Prove that tan x + cot x = sec x csc x.</ExampleProblem>
-        <ExampleStep n={1} title="LEFT SIDE"><MathPanel><BlockMath math={"\\frac{\\sin x}{\\cos x} + \\frac{\\cos x}{\\sin x} = \\frac{\\sin^2 x + \\cos^2 x}{\\sin x\\cos x} = \\frac{1}{\\sin x\\cos x}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="RIGHT SIDE"><MathPanel><BlockMath math={"\\sec x\\csc x = \\frac{1}{\\cos x} \\cdot \\frac{1}{\\sin x} = \\frac{1}{\\sin x\\cos x}"} /></MathPanel><StepText>Both sides reach the same fraction.</StepText></ExampleStep>
-        <Conclusion result="LHS = RHS" math={<BlockMath math={"\\tan x + \\cot x = \\sec x\\csc x"} />}>The calculator below opens on this identity.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['trigonometric-identities'].example} />
+      <CommonMistakes items={EX['trigonometric-identities'].mistakes} />
       <Lab heading="Interactive Trig Identity Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["trig-equations","inverse-trig","unit-circle"]} />

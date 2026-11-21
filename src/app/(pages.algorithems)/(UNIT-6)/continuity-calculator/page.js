@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.continuity-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Right limit", text: <>Using the piece on the right.</> },
           { title: "3. Compare", text: <>With each other and with f(a).</> },
         ]} />
+        <SymbolKey rows={EX['continuity-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find k so that f(x) = kx + 1 for x ≤ 2 and 3x² for x &gt; 2 is continuous.</ExampleProblem>
-        <ExampleStep n={1} title="LIMITS"><MathPanel><BlockMath math={"\\lim_{x\\to 2^-} (kx + 1) = 2k + 1, \\qquad \\lim_{x\\to 2^+} 3x^2 = 12"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EQUAL"><MathPanel><BlockMath math={"2k + 1 = 12 \\Rightarrow k = \\frac{11}{2}"} /></MathPanel></ExampleStep>
-        <Conclusion result="k = 11/2" math={<BlockMath math={"k = \\frac{11}{2}"} />}>The fifth example button below loads this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['continuity-calculator'].example} />
+      <CommonMistakes items={EX['continuity-calculator'].mistakes} />
       <Lab heading="Interactive Continuity Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["limit","asymptotes","derivative"]} />

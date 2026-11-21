@@ -26,7 +26,6 @@ export default function JacobianCalculator() {
         { key: 'wrt', label: 'With respect to (optional)', placeholder: 'e.g. x, y or r, θ' },
       ]}
       examples={EXAMPLES} solve={solve}
-      hint="Name each function (u = …) or just type it. Leave “with respect to” empty to use the letters in the functions."
       resultLabel="Jacobian"
       renderResult={(a) => (
         <div className="space-y-1 min-w-0">

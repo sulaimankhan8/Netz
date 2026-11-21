@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import GaussForwardInterpolation from './algorithems.gauss-forward-interpolations';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { gaussForward as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function GaussForwardInterpolations() {
   const formula = `
@@ -77,6 +80,16 @@ export default function GaussForwardInterpolations() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_0,\\ y_0', t: 'The central row: the table value just before x, near the middle of the table.', e: 'x_0 = 3.5,\\ y_0 = 20.225' },
+                    { s: 'h', t: 'The equal gap between the x values.', e: 'h = 0.5' },
+                    { s: 'p', t: 'How many steps x is past x₀; for Gauss forward it lies between 0 and 1.', e: 'p = \\dfrac{3.75 - 3.5}{0.5} = 0.5' },
+                    { s: '\\Delta y_0', t: 'The first difference just below the central row: y₁ − y₀.', e: '18.644 - 20.225 = -1.581' },
+                    { s: '\\Delta^2 y_{-1}', t: 'The second difference on the central row: y₁ − 2y₀ + y₋₁.', e: '0.237' },
+                    { s: '\\Delta^3 y_{-1}', t: 'The third difference just below the central row. The formula zig-zags down, up, down through the table.', e: '-0.038' },
+                  ]} />
                 </div>
               </div>
 
@@ -204,6 +217,14 @@ export default function GaussForwardInterpolations() {
                       </tbody>
                     </table>
                   </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                    The differences used, each one the entry below minus the entry above:
+                  </p>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-1">
+                    <BlockMath math={`\\Delta y_0 = 18.644 - 20.225 = -1.581, \\qquad \\Delta y_{-1} = 20.225 - 22.043 = -1.818`} />
+                    <BlockMath math={`\\Delta^2 y_{-1} = -1.581 - (-1.818) = 0.237, \\qquad \\Delta^2 y_0 = -1.382 - (-1.581) = 0.199`} />
+                    <BlockMath math={`\\Delta^3 y_{-1} = 0.199 - 0.237 = -0.038`} />
+                  </div>
                 </div>
 
                 {/* Step 3: Formula & Explicit Substitution */}
@@ -248,8 +269,18 @@ export default function GaussForwardInterpolations() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Choosing x₀ after x.</>, f: <>For Gauss forward pick x₀ just <strong>before</strong> x, so that 0 &lt; p &lt; 1 (here 3.5 for x = 3.75).</> },
+                { m: <>Taking all differences from one row.</>, f: <>The formula zig-zags: <InlineMath math="\Delta y_0" />, then <InlineMath math="\Delta^2 y_{-1}" />, then <InlineMath math="\Delta^3 y_{-1}" />, then <InlineMath math="\Delta^4 y_{-2}" />.</> },
+                { m: <>Mixing up the p factors.</>, f: <>Forward: <InlineMath math="p,\ p(p-1),\ (p+1)p(p-1),\ (p+1)p(p-1)(p-2)" />.</> },
+                { m: <>Sign slips with negative differences.</>, f: <>Bracket them: <InlineMath math="(0.5)(-1.581)" />, and <InlineMath math="-1.581 - (-1.818) = 0.237" />.</> },
+                { m: <>Using it near the ends of the table.</>, f: <>Gauss needs differences on both sides of x₀. Near the start use Newton forward; near the end Newton backward.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show p, the difference table with the used entries marked, the formula, each term with numbers, and the sum.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -260,6 +291,8 @@ export default function GaussForwardInterpolations() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

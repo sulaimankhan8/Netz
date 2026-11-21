@@ -7,11 +7,13 @@ import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, Notes, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import { StepTable } from '@/app/components/method';
 import StackedBars, { SERIES_CLASSES } from '@/app/components/method/StackedBars';
 import { CURRENCIES, formatMoney } from '@/app/utils/finance/money';
 import { solve } from '@/app/utils/engines/emi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { principal: '500000', rate: '9', tenure: '5', tenureUnit: 'years', method: 'reducing', prepayAmount: '', prepayMonth: '' };
 
@@ -53,6 +55,7 @@ function ShareBar({ principal, interest, money }) {
 
 export default function EmiCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('emi');
   const [cur, setCur] = useState('INR');
   const [view, setView] = useState('year');
   const [answer, setAnswer] = useState(null);
@@ -62,6 +65,8 @@ export default function EmiCalculator() {
   const set = (patch) => { setS((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
   const money = (v) => formatMoney(v, cur);
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -92,26 +97,28 @@ export default function EmiCalculator() {
         title="EMI Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="Loan amount P" value={s.principal} onChange={(v) => set({ principal: v })} onEnter={run} />
-          <Field label="Interest rate R (% a year)" value={s.rate} onChange={(v) => set({ rate: v })} onEnter={run} />
-          <Field label="Tenure" value={s.tenure} onChange={(v) => set({ tenure: v })} onEnter={run} />
-          <Select label="Tenure is in" value={s.tenureUnit} onChange={(v) => set({ tenureUnit: v })} options={[{ value: 'years', label: 'Years' }, { value: 'months', label: 'Months' }]} />
+          <Field label="Loan amount P" value={s.principal} onChange={(v) => set({ principal: v })} onEnter={run} help={guide?.help?.principal} />
+          <Field label="Interest rate R (% a year)" value={s.rate} onChange={(v) => set({ rate: v })} onEnter={run} help={guide?.help?.rate} />
+          <Field label="Tenure" value={s.tenure} onChange={(v) => set({ tenure: v })} onEnter={run} help={guide?.help?.tenure} />
+          <Select label="Tenure is in" value={s.tenureUnit} onChange={(v) => set({ tenureUnit: v })} options={[{ value: 'years', label: 'Years' }, { value: 'months', label: 'Months' }]} help={guide?.help?.tenureUnit} />
           <Select label="Currency" value={cur} onChange={(v) => { setCur(v); setAnswer(null); }} options={Object.entries(CURRENCIES).map(([value, c]) => ({ value, label: c.label }))} />
         </div>
-        <Choice label="Interest is charged on" value={s.method} onChange={(v) => set({ method: v })} options={[{ value: 'reducing', label: 'Reducing balance' }, { value: 'flat', label: 'Flat rate' }]} />
+        <Choice label="Interest is charged on" value={s.method} onChange={(v) => set({ method: v })} options={[{ value: 'reducing', label: 'Reducing balance' }, { value: 'flat', label: 'Flat rate' }]} help={guide?.help?.method} />
         {s.method === 'reducing' && (
           <fieldset className="border-2 border-dashed border-black/30 dark:border-neutral-600 rounded-xl px-3 pb-3 pt-1">
             <legend className="px-1 text-xs font-mono font-bold uppercase text-black dark:text-white">Prepayment (optional)</legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Extra amount paid once" value={s.prepayAmount} placeholder="e.g. 100000" onChange={(v) => set({ prepayAmount: v })} onEnter={run} />
-              <Field label="After which month?" value={s.prepayMonth} placeholder="e.g. 24" inputMode="numeric" onChange={(v) => set({ prepayMonth: v })} onEnter={run} />
+              <Field label="Extra amount paid once" value={s.prepayAmount} placeholder="e.g. 100000" onChange={(v) => set({ prepayAmount: v })} onEnter={run} help={guide?.help?.prepayAmount} />
+              <Field label="After which month?" value={s.prepayMonth} placeholder="e.g. 24" inputMode="numeric" onChange={(v) => set({ prepayMonth: v })} onEnter={run} help={guide?.help?.prepayMonth} />
             </div>
           </fieldset>
         )}
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate EMI
           </EditorialButton>
         </div>

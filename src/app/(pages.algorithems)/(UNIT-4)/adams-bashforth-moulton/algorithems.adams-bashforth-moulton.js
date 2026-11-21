@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRecordSolve } from '@/app/utils/activity';
 import OdeCalculator from '@/app/components/method/OdeCalculator';
+import { adamsWorking } from '@/app/components/method/odeWorking';
 import { solve } from '@/app/utils/engines/adams';
 
 const START = { f: 'x + y', x0: '0', y0: '1', h: '0.1', xn: '0.4' };
@@ -16,7 +17,7 @@ export default function AdamsCalculator() {
   useRecordSolve('adams', 4, answer, () => ({ fn: answer?.fn }));
   return (
     <OdeCalculator
-      exportId="adams"
+      exportId="adams" working={adamsWorking}
       onAnswer={(r, v) => setAnswer(r && { ...r, fn: v.f })} title="Adams-Bashforth-Moulton Engine" solve={solve} start={START} columns={COLUMNS}
       toRow={(r) => ({ n: r.n, x: r.x, how: r.how === 'P-C' ? 'predict + correct' : r.how, yp: r.yp, y: r.y, f: r.f, passes: r.passes })}
     />

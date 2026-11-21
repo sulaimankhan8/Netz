@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.laurent-series';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Choose", text: <>Pole inside the ring or outside it?</> },
           { title: "3. Expand", text: <>A geometric series in z/p or p/z.</> },
         ]} />
+        <SymbolKey rows={EX['laurent-series'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Expand f(z) = 1/((z − 1)(z − 2)) in 1 &lt; |z| &lt; 2.</ExampleProblem>
-        <ExampleStep n={1} title="PARTIAL FRACTIONS"><MathPanel><BlockMath math={"f(z) = \\frac{1}{z - 2} - \\frac{1}{z - 1}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EACH PART"><MathPanel><BlockMath math={"\\frac{1}{z - 2} = -\\frac{1}{2}\\sum \\left(\\frac{z}{2}\\right)^n \\ (|z| < 2), \\qquad \\frac{1}{z - 1} = \\frac{1}{z}\\sum \\left(\\frac{1}{z}\\right)^n \\ (|z| > 1)"} /></MathPanel></ExampleStep>
-        <Conclusion result="f = −Σ z⁻ⁿ⁻¹ − Σ zⁿ/2ⁿ⁺¹" math={<BlockMath math={"f(z) = \\cdots - \\frac{1}{z^2} - \\frac{1}{z} - \\frac{1}{2} - \\frac{z}{4} - \\frac{z^2}{8} - \\cdots"} />}>The calculator below opens on this ring.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['laurent-series'].example} />
+      <CommonMistakes items={EX['laurent-series'].mistakes} />
       <Lab heading="Interactive Laurent Series Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["residues","taylor-series","power-series"]} />

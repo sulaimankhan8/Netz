@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import TaylorSeriesSolver from './algorithems.taylor-series';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { taylor as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function TaylorSeriesMethodPage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function TaylorSeriesMethodPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: "y'_0", t: 'The equation itself at the starting point: the first derivative.', e: "y'(0) = 0 + 1 = 1" },
+                    { s: "y''_0,\\ y'''_0", t: 'Higher derivatives: differentiate the equation again (y is a function of x), then put in x₀, y₀.', e: "y''(0) = 1 + y'(0) = 2" },
+                    { s: 'h', t: 'How far from x₀ we want y: h = x − x₀.', e: 'h = 0.1' },
+                    { s: '\\frac{h^k}{k!}', t: 'The weight of each derivative in the series.', e: '\\dfrac{(0.1)^2}{2} = 0.005' },
+                    { s: 'y(x_0 + h)', t: 'The sum of the series: the estimate. The last term gives a rough idea of the error.', e: 'y(0.1) = 1.11034' },
+                  ]} />
                 </div>
               </div>
 
@@ -161,8 +173,18 @@ export default function TaylorSeriesMethodPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Treating y as a constant when differentiating.</>, f: <>y depends on x: <InlineMath math="\dfrac{d}{dx}(y^2) = 2yy'" />, <InlineMath math="\dfrac{d}{dx}(x + y) = 1 + y'" />.</> },
+                { m: <>Putting x₀ in before differentiating.</>, f: <>Differentiate the formula first, then substitute the numbers.</> },
+                { m: <>Forgetting the factorials.</>, f: <><InlineMath math="\dfrac{h^2}{2!},\ \dfrac{h^3}{3!},\ \dfrac{h^4}{4!}" />: 2, 6, 24.</> },
+                { m: <>Not reusing earlier derivatives.</>, f: <>Later derivatives often need earlier ones (y‴ uses y″): use the numbers you already have.</> },
+                { m: <>Using too few terms for a larger h.</>, f: <>The terms shrink like hᵏ/k!; for h = 0.1 four terms give 5 decimals, for h = 0.5 you need more.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show each derivative formula and value, the series with numbers, and the sum.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -173,6 +195,8 @@ export default function TaylorSeriesMethodPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

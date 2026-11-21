@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.diagonalization';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit8';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Eigenvectors", text: <>Solve (A − λI)X = 0 for each λ.</> },
           { title: "3. P and D", text: <>Eigenvectors as columns; eigenvalues on the diagonal.</> },
         ]} />
+        <SymbolKey rows={EX['diagonalization'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Diagonalise the symmetric matrix A = [[2, 0, 0], [0, 3, 4], [0, 4, 9]] by an orthogonal transformation.</ExampleProblem>
-        <ExampleStep n={1} title="EIGENVALUES"><MathPanel><BlockMath math={"(2 - \\lambda)(\\lambda^2 - 12\\lambda + 11) = 0 \\ \\Rightarrow \\ \\lambda = 1, 2, 11"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="EIGENVECTORS"><MathPanel><BlockMath math={"X_1 = \\begin{bmatrix} 0 \\\\ 2 \\\\ -1 \\end{bmatrix}, \\ X_2 = \\begin{bmatrix} 1 \\\\ 0 \\\\ 0 \\end{bmatrix}, \\ X_3 = \\begin{bmatrix} 0 \\\\ 1 \\\\ 2 \\end{bmatrix}"} /></MathPanel><StepText>They are perpendicular, as they must be for a symmetric matrix.</StepText></ExampleStep>
-        <ExampleStep n={3} title="NORMALISE"><MathPanel><BlockMath math={"N = \\begin{bmatrix} 0 & 1 & 0 \\\\ \\frac{2}{\\sqrt5} & 0 & \\frac{1}{\\sqrt5} \\\\ -\\frac{1}{\\sqrt5} & 0 & \\frac{2}{\\sqrt5} \\end{bmatrix}"} /></MathPanel></ExampleStep>
-        <Conclusion result="NᵀAN = diag(1, 2, 11)" math={<BlockMath math={"N^{T}AN = \\begin{bmatrix} 1 & 0 & 0 \\\\ 0 & 2 & 0 \\\\ 0 & 0 & 11 \\end{bmatrix}"} />}>The calculator below opens on this matrix.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['diagonalization'].example} />
+      <CommonMistakes items={EX['diagonalization'].mistakes} />
       <Lab heading="Interactive Diagonalization Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["eigenvalues","quadratic-form","cayley-hamilton"]} />

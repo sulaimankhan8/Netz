@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.depreciation-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Method", text: <>The yearly charge.</> },
           { title: "3. Schedule", text: <>Year by year.</> },
         ]} />
+        <SymbolKey rows={EX['depreciation-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A machine costs ₹1,00,000 with scrap value ₹10,000 after 5 years. Find the yearly straight-line depreciation.</ExampleProblem>
-        <ExampleStep n={1} title="FORMULA"><MathPanel><BlockMath math={"D = \\frac{1{,}00{,}000 - 10{,}000}{5} = 18{,}000"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SCHEDULE"><StepText>Book value: 82,000, 64,000, 46,000, 28,000, 10,000.</StepText></ExampleStep>
-        <Conclusion result="₹18,000 a year" math={<BlockMath math={"D = 18{,}000"} />}>The calculator below opens on this machine.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['depreciation-calculator'].example} />
+      <CommonMistakes items={EX['depreciation-calculator'].mistakes} />
       <Lab heading="Interactive Depreciation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["compound-interest","tvm","percentage"]} />

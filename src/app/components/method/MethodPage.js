@@ -58,7 +58,7 @@ export function MethodHeader({ badge, title, subtitle, children }) {
 /** The "Laboratory" section that holds the live calculator. */
 export function Lab({ heading = 'Interactive Live Calculator', children }) {
   return (
-    <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+    <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
       <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
         LABORATORY
       </div>

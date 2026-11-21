@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.transportation-problem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Start", text: <>NW corner, least cost or VAM.</> },
           { title: "3. MODI", text: <>Improve round loops until every d ≥ 0.</> },
         ]} />
+        <SymbolKey rows={EX['transportation-problem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Costs 19 30 50 10 / 70 30 40 60 / 40 8 70 20, supplies 7, 9, 18, demands 5, 8, 7, 14. Find the cheapest plan.</ExampleProblem>
-        <ExampleStep n={1} title="VAM START"><MathPanel><BlockMath math={"x_{11} = 5, \\ x_{14} = 2, \\ x_{23} = 7, \\ x_{24} = 2, \\ x_{32} = 8, \\ x_{34} = 10 \\Rightarrow 779"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MODI"><MathPanel><BlockMath math={"d_{22} = -18 < 0 \\Rightarrow \\text{move 2 units round the loop}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="OPTIMAL"><MathPanel><BlockMath math={"\\text{every } d_{ij} \\ge 0, \\quad \\text{cost} = 743"} /></MathPanel></ExampleStep>
-        <Conclusion result="Minimum cost 743" math={<BlockMath math={"\\text{total cost} = 743"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['transportation-problem'].example} />
+      <CommonMistakes items={EX['transportation-problem'].mistakes} />
       <Lab heading="Interactive Transportation Problem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["assignment-problem","simplex","kuhn-tucker"]} />

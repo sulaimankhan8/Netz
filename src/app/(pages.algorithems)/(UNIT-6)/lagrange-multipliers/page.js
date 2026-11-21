@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import LagrangeCalculator from './algorithems.lagrange-multipliers';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function LagrangePage() {
           { title: '2. Equations', text: <>One per variable, plus the constraint.</> },
           { title: '3. Compare', text: <>f at every solution.</> },
         ]} />
+        <SymbolKey rows={EX['lagrange-multipliers'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the maximum of <InlineMath math="f = x + y" /> on the circle <InlineMath math="x^2 + y^2 = 1" />.</ExampleProblem>
-        <ExampleStep n={1} title="EQUATIONS"><MathPanel><BlockMath math="1 = 2\lambda x, \quad 1 = 2\lambda y, \quad x^2 + y^2 = 1" /></MathPanel><StepText>The first two give x = y.</StepText></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math="2x^2 = 1 \Rightarrow x = y = \pm\frac{\sqrt{2}}{2}, \quad f = \pm\sqrt{2}" /></MathPanel></ExampleStep>
-        <Conclusion result="Maximum √2, minimum −√2" math={<BlockMath math="f_{\max} = \sqrt{2} \text{ at } \left(\tfrac{\sqrt{2}}{2}, \tfrac{\sqrt{2}}{2}\right)" />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['lagrange-multipliers'].example} />
+      <CommonMistakes items={EX['lagrange-multipliers'].mistakes} />
       <Lab heading="Interactive Lagrange Multiplier Calculator"><LagrangeCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['maxima-minima-2var', 'partial-derivative', 'maxima-minima']} />

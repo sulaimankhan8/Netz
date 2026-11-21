@@ -10,6 +10,7 @@ import { EditorialButton, EditorialExportButton } from '@/app/components/editori
 import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { fixed, plural } from '@/app/utils/numberFormat';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const GaussSeidel = () => {
   const [viewTab, setViewTab] = useState('all'); // 'all' | 'table' | 'steps' | 'plot'
@@ -100,6 +101,9 @@ const GaussSeidel = () => {
 
 
   // Handle Demo button click
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+  useLoadInput((v) => { if (!v.rows) return; setEquations(v.rows.map(([a, b, c, constant]) => ({ a, b, c, constant }))); solveSoon(); });
+
   const handleDemo = () => {
     setDemoInProgress(true);
     const demoEqs = [
@@ -412,18 +416,41 @@ const GaussSeidel = () => {
                 </div>
               </div>
 
+              {/* 1. The formulas used in every iteration */}
+              <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formulas used in every iteration</div>
+                <div className="overflow-x-auto text-center text-black dark:text-white">
+                  <BlockMath math={`x^{(k+1)} = \\frac{d_1 - b_1 y^{(k)} - c_1 z^{(k)}}{a_1}, \\quad y^{(k+1)} = \\frac{d_2 - a_2 x^{(k+1)} - c_2 z^{(k)}}{b_2}`} />
+                  <BlockMath math={`z^{(k+1)} = \\frac{d_3 - a_3 x^{(k+1)} - b_3 y^{(k+1)}}{c_3}`} />
+                </div>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  Start from <InlineMath math="(0, 0, 0)" />. Each new value is used straight away in the next formula. Stop when no value changes by more than the tolerance <InlineMath math={`\\varepsilon = ${error}`} />.
+                </p>
+              </div>
+
+              {/* 2. Each iteration: the three formulas with the numbers put in, one per line */}
               <div className="space-y-3">
-                {(showAllSteps ? iterationDetails : iterationDetails.slice(0, 5)).map((step, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {index + 1}</span>
-                      <span>Updated Variable Derivations</span>
+                {(showAllSteps ? iterationDetails : iterationDetails.slice(0, 5)).map((step, index) => {
+                  const now = results[index + 1], before = results[index];
+                  const change = now && before ? Math.max(Math.abs(now.x - before.x), Math.abs(now.y - before.y), Math.abs(now.z - before.z)) : null;
+                  const isLast = index === iterationDetails.length - 1;
+                  return (
+                    <div key={index} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">Iteration {index + 1}</div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={step} />
+                        <BlockMath math={iterationDetails2[index]} />
+                        <BlockMath math={iterationDetails3[index]} />
+                      </div>
+                      {change !== null && (
+                        <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                          Largest change from the last iteration: <InlineMath math={`${Number(change.toFixed(4))} ${change < error ? '<' : '\\geq'} ${error}`} />
+                          {isLast && change < error ? <>, so stop: <InlineMath math={`(x, y, z) \\approx (${now.x.toFixed(4)},\\ ${now.y.toFixed(4)},\\ ${now.z.toFixed(4)})`} />.</> : ', so do another iteration.'}
+                        </p>
+                      )}
                     </div>
-                    <div className="overflow-x-auto text-center py-1 font-mono text-xs">
-                      <BlockMath math={`${step} \\quad , \\quad ${iterationDetails2[index]} \\quad , \\quad ${iterationDetails3[index]}`} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!showAllSteps && iterationDetails.length > 5 && (
                   <div className="text-center pt-2">
                     <button

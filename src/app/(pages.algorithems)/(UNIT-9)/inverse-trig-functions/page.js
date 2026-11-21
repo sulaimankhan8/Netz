@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.inverse-trig-functions';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Range", text: <>Pick θ in the principal range.</> },
           { title: "3. Negatives", text: <>sin⁻¹(−x) = −sin⁻¹x; cos⁻¹(−x) = π − cos⁻¹x.</> },
         ]} />
+        <SymbolKey rows={EX['inverse-trig-functions'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find cos⁻¹(−1/2).</ExampleProblem>
-        <ExampleStep n={1} title="RULE"><MathPanel><BlockMath math={"\\cos^{-1}(-x) = \\pi - \\cos^{-1}x"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="VALUE"><MathPanel><BlockMath math={"\\cos^{-1}\\left(-\\tfrac12\\right) = \\pi - \\frac{\\pi}{3} = \\frac{2\\pi}{3}"} /></MathPanel><StepText>In [0, π], as the principal range requires.</StepText></ExampleStep>
-        <Conclusion result="2π/3 (120°)" math={<BlockMath math={"\\cos^{-1}\\left(-\\tfrac12\\right) = \\frac{2\\pi}{3}"} />}>The calculator below opens on this value.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['inverse-trig-functions'].example} />
+      <CommonMistakes items={EX['inverse-trig-functions'].mistakes} />
       <Lab heading="Interactive Inverse Trig Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["trig-equations","trig-identities","unit-circle"]} />

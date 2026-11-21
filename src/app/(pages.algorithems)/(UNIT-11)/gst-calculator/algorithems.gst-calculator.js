@@ -6,12 +6,14 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, StepsCard, Choice, Field, Select, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import RatesBadge from '@/app/components/method/RatesBadge';
 import { formatMoney } from '@/app/utils/finance/money';
 import { IN_RULES } from '@/app/data/rates/in';
 import { versions } from '@/app/utils/rates/getRule';
 import { solve } from '@/app/utils/engines/gst';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const PERIODS = versions(IN_RULES, 'in.gst.slabs');
 const START = { amount: '50000', mode: 'add', supply: 'intra', rate: '18', custom: '', period: 0 };
@@ -25,6 +27,7 @@ const Stat = ({ label, value, strong }) => (
 
 export default function GstCalculator() {
   const [s, setS] = useState(START);
+  const guide = useCalcGuide('gst');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('gst', 11, answer, () => ({ rate: answer?.rate, mode: s.mode }));
@@ -34,6 +37,8 @@ export default function GstCalculator() {
   const usingCustom = s.rate === 'custom';
   const rate = usingCustom ? s.custom : s.rate;
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setS({ ...START, ...x }); solveSoon(); });
   const run = () => {
     try {
       setError('');
@@ -58,19 +63,21 @@ export default function GstCalculator() {
         title="GST Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
-        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before GST (add GST)' }, { value: 'remove', label: 'Price including GST (remove GST)' }]} />
+        <Choice label="What do you have?" value={s.mode} onChange={(v) => set({ mode: v })} options={[{ value: 'add', label: 'Price before GST (add GST)' }, { value: 'remove', label: 'Price including GST (remove GST)' }]} help={guide?.help?.mode} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label={s.mode === 'add' ? 'Price before GST (₹)' : 'Price including GST (₹)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} />
+          <Field label={s.mode === 'add' ? 'Price before GST (₹)' : 'Price including GST (₹)'} value={s.amount} onChange={(v) => set({ amount: v })} onEnter={run} help={guide?.help?.amount} />
           <Select label="Rates for" value={String(s.period)} onChange={(v) => choosePeriod(Number(v))} options={PERIODS.map((p, i) => ({ value: String(i), label: p.label }))} />
         </div>
-        <Choice label="GST rate" value={s.rate} onChange={(v) => set({ rate: v })} options={rateOptions} />
+        <Choice label="GST rate" value={s.rate} onChange={(v) => set({ rate: v })} options={rateOptions} help={guide?.help?.rate} />
         {usingCustom && (
-          <div className="max-w-xs"><Field label="Your GST rate (%)" value={s.custom} placeholder="e.g. 7.5" onChange={(v) => set({ custom: v })} onEnter={run} /></div>
+          <div className="max-w-xs"><Field label="Your GST rate (%)" value={s.custom} placeholder="e.g. 7.5" onChange={(v) => set({ custom: v })} onEnter={run} help={guide?.help?.custom} /></div>
         )}
-        <Choice label="Where is it sold?" value={s.supply} onChange={(v) => set({ supply: v })} options={[{ value: 'intra', label: 'Within one state (CGST + SGST)' }, { value: 'inter', label: 'To another state / import (IGST)' }]} />
+        <Choice label="Where is it sold?" value={s.supply} onChange={(v) => set({ supply: v })} options={[{ value: 'intra', label: 'Within one state (CGST + SGST)' }, { value: 'inter', label: 'To another state / import (IGST)' }]} help={guide?.help?.supply} />
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Calculate GST
           </EditorialButton>
         </div>

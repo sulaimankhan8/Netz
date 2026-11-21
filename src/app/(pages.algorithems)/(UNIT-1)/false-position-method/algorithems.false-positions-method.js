@@ -6,12 +6,13 @@ import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 import React, { useState } from 'react';
 import UnifiedPlot from '@/app/components/UnifiedPlot';
-import { parseUserFunction } from "@/app/utils/evaluateMath";
+import { parseUserFunction, checkParses, substituteTex } from "@/app/utils/evaluateMath";
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import { plural, fixed } from '@/app/utils/numberFormat';
 import SetupSteps from '@/app/components/SetupSteps';
 import ConvergenceBanner from '@/app/components/ConvergenceBanner';
 import { FiPlay, FiRotateCcw, FiCheckCircle, FiTrendingUp, FiLayers, FiList, FiAlertCircle } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const FalsePositionMethod = () => {
   const [demoInProgress, setDemoInProgress] = useState(false);
@@ -154,7 +155,7 @@ const FalsePositionMethod = () => {
     let f;
     try {
       f = parseUserFunction(functionInput);
-      f(0);
+      checkParses(f);
     } catch {
       setError("Invalid function input. Please enter a valid mathematical expression.");
       return;
@@ -183,6 +184,11 @@ const FalsePositionMethod = () => {
     iterations: [],
   });
 
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { setFunctionInput(v.f); if (v.tol) setTolerance(Number(v.tol)); solveSoon(); });
+
+
   const handleDemo = () => {
     setDemoInProgress(true);
     const demoFn = "x^3 - 4*x - 9";
@@ -195,7 +201,7 @@ const FalsePositionMethod = () => {
     let f;
     try {
       f = parseUserFunction(demoFn);
-      f(0);
+      checkParses(f);
     } catch {
       setError("Invalid demo function input.");
       setDemoInProgress(false);
@@ -477,21 +483,62 @@ const FalsePositionMethod = () => {
                 </div>
               </div>
 
+              {/* 1. The formula used in every iteration */}
+              <div className="p-4 md:p-5 border-2 border-black/80 dark:border-neutral-600 rounded-xl bg-[#FAF8F5] dark:bg-neutral-800 space-y-2">
+                <div className="text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">The formula used in every iteration</div>
+                <div className="overflow-x-auto text-center text-black dark:text-white">
+                  <BlockMath math={`c = \\frac{a \\cdot f(b) - b \\cdot f(a)}{f(b) - f(a)}`} />
+                </div>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  <InlineMath math="c" /> is where the straight line from <InlineMath math="(a, f(a))" /> to <InlineMath math="(b, f(b))" /> crosses the x-axis. Work out <InlineMath math="f(c)" />: if it has the same sign as <InlineMath math="f(a)" />, <InlineMath math="a" /> becomes <InlineMath math="c" />; otherwise <InlineMath math="b" /> becomes <InlineMath math="c" />. Stop when <InlineMath math="|f(c)|" /> or the change <InlineMath math="|c_k - c_{k-1}|" /> is smaller than the tolerance <InlineMath math={`\\varepsilon = ${tolerance}`} />.
+                </p>
+              </div>
+
+              {/* 2. Each iteration with every number put in */}
               <div className="space-y-3">
-                {(showAllSteps ? falsePositionIterations : falsePositionIterations.slice(0, 5)).map((iter, index) => (
-                  <div key={index} className="p-4 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
-                      <span>Iteration {iter.iteration}</span>
-                      <span>Chord Root Approximation</span>
+                {(showAllSteps ? falsePositionIterations : falsePositionIterations.slice(0, 5)).map((iter) => {
+                  const n6 = (v) => Number(v.toFixed(6));
+                  const br = (v) => (v < 0 ? `(${n6(v)})` : `${n6(v)}`);
+                  const sgn = (v) => (v < 0 ? '< 0' : v > 0 ? '> 0' : '= 0');
+                  const i = iter.iteration;
+                  const prev = falsePositionIterations[i - 2];
+                  const isLast = iter === falsePositionIterations[falsePositionIterations.length - 1];
+                  const sub = substituteTex(functionInput, iter.c);
+                  const sameSign = iter.fa * iter.fc > 0;
+                  return (
+                    <div key={i} className="p-4 md:p-5 border-2 border-black/40 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-2 text-black dark:text-white">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                        <span>Iteration {i}</span>
+                        <span>[a, b] = [{n6(iter.a)}, {n6(iter.b)}]</span>
+                      </div>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`f(a) = f(${n6(iter.a)}) = ${n6(iter.fa)}`} />
+                        <BlockMath math={`f(b) = f(${n6(iter.b)}) = ${n6(iter.fb)}`} />
+                        <BlockMath math={`c_{${i}} = \\frac{${br(iter.a)}(${n6(iter.fb)}) - ${br(iter.b)}(${n6(iter.fa)})}{${n6(iter.fb)} - ${br(iter.fa)}}`} />
+                        <BlockMath math={`= \\frac{${n6(iter.a * iter.fb - iter.b * iter.fa)}}{${n6(iter.fb - iter.fa)}} = ${n6(iter.c)}`} />
+                        <BlockMath math={`f(${n6(iter.c)}) = ${sub ? `${sub} = ` : ''}${n6(iter.fc)}`} />
+                      </div>
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        {isLast ? (
+                          <>
+                            Check the stopping rule:
+                            <div className="overflow-x-auto text-center text-black dark:text-white">
+                              {Math.abs(iter.fc) < tolerance
+                                ? <BlockMath math={`|f(c_{${i}})| = ${Math.abs(n6(iter.fc))} < ${tolerance}`} />
+                                : <BlockMath math={`|c_{${i}} - c_{${i - 1}}| = |${n6(iter.c)} - ${n6(prev.c)}| = ${n6(Math.abs(iter.c - prev.c))} < ${tolerance}`} />}
+                              <BlockMath math={`\\text{Root: } x \\approx ${n6(iter.c)}`} />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <InlineMath math={`f(c) ${sgn(iter.fc)}`} /> has the {sameSign ? 'same sign as' : 'opposite sign to'} <InlineMath math={`f(a) ${sgn(iter.fa)}`} />, so set <InlineMath math={sameSign ? `a = ${n6(iter.c)}` : `b = ${n6(iter.c)}`} />.
+                            {prev && <> The guess moved by <InlineMath math={`|c_{${i}} - c_{${i - 1}}| = ${n6(Math.abs(iter.c - prev.c))}`} />, not yet below <InlineMath math={`${tolerance}`} />.</>}
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="overflow-x-auto text-center py-1">
-                      <BlockMath math={`c^{(${iter.iteration})} = \\frac{a f(b) - b f(a)}{f(b) - f(a)} = \\frac{(${iter.a.toFixed(6)})(${iter.fb.toFixed(6)}) - (${iter.b.toFixed(6)})(${iter.fa.toFixed(6)})}{${iter.fb.toFixed(6)} - (${iter.fa.toFixed(6)})} = ${iter.c.toFixed(6)}`} />
-                    </div>
-                    <div className="text-xs font-mono text-neutral-600 dark:text-neutral-300 text-center">
-                      <InlineMath math={`f(c) = ${iter.fc.toFixed(6)}`} /> &rarr; {iter.fa * iter.fc < 0 ? 'Sign change in left subinterval [a, c]. New b = c.' : 'Sign change in right subinterval [c, b]. New a = c.'}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!showAllSteps && falsePositionIterations.length > 5 && (
                   <div className="text-center pt-2">
                     <button

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PartialDerivativeCalculator from './algorithems.partial-derivative-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function PartialDerivativePage() {
           { title: '2. Freeze the rest', text: <>Every other letter is a constant.</> },
           { title: '3. Usual rules', text: <>Power, product, chain rules as in one variable.</> },
         ]} />
+        <SymbolKey rows={EX['partial-derivative-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find <InlineMath math="f_x" />, <InlineMath math="f_y" /> and <InlineMath math="f_{xy}" /> for <InlineMath math="f = x^2y^3 + \sin(xy)" />.</ExampleProblem>
-        <ExampleStep n={1} title="WITH RESPECT TO x"><MathPanel><BlockMath math="f_x = 2xy^3 + y\cos(xy)" /></MathPanel><StepText>y is a constant, so y³ stays and the chain rule gives the y in y cos(xy).</StepText></ExampleStep>
-        <ExampleStep n={2} title="WITH RESPECT TO y"><MathPanel><BlockMath math="f_y = 3x^2y^2 + x\cos(xy)" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="MIXED"><MathPanel><BlockMath math="f_{xy} = \frac{\partial}{\partial y}\left(2xy^3 + y\cos(xy)\right) = 6xy^2 + \cos(xy) - xy\sin(xy)" /></MathPanel></ExampleStep>
-        <Conclusion result="f_xy = f_yx" math={<BlockMath math="f_{xy} = 6xy^2 + \cos(xy) - xy\sin(xy)" />}>Differentiating in the other order gives the same.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['partial-derivative-calculator'].example} />
+      <CommonMistakes items={EX['partial-derivative-calculator'].mistakes} />
       <Lab heading="Interactive Partial Derivative Calculator"><PartialDerivativeCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['derivative', 'euler-homogeneous', 'jacobian']} />

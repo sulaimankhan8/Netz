@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import PoissonCalculator from './algorithems.poisson-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,12 +30,10 @@ export default function PoissonPage() {
           { title: '2. Terms', text: <>Compute P(X = k) for the k you need.</> },
           { title: '3. Complement', text: <>&quot;At least k&quot; is 1 minus &quot;at most k − 1&quot;.</> },
         ]} />
+        <SymbolKey rows={EX['poisson-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A switchboard gets on average 2 calls a minute. Find the probability of exactly 3 calls in a minute.</ExampleProblem>
-        <ExampleStep n={1} title="SUBSTITUTE"><MathPanel><BlockMath math="P(X = 3) = \frac{e^{-2} \, 2^3}{3!} = \frac{8 \times 0.135335}{6}" /></MathPanel></ExampleStep>
-        <Conclusion result="0.1804" math={<BlockMath math="P(X = 3) \approx 0.1804" />}>The calculator below opens on this question.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['poisson-distribution'].example} />
+      <CommonMistakes items={EX['poisson-distribution'].mistakes} />
       <Lab heading="Interactive Poisson Calculator"><PoissonCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['binomial', 'normal', 'random-variables']} />

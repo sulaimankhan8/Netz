@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import ChiSquareSolver from './algorithems.chi-square';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { chiSquare as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function ChiSquarePage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function ChiSquarePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'O_i', t: 'The observed count in category i (what the data show).', e: 'O_1 = 25' },
+                    { s: 'E_i', t: 'The expected count if H₀ is true.', e: 'E_i = \\tfrac{80}{4} = 20' },
+                    { s: '\\frac{(O_i - E_i)^2}{E_i}', t: 'Each category’s contribution: big when observed and expected differ a lot.', e: '\\tfrac{25}{20} = 1.25' },
+                    { s: 'df', t: 'Degrees of freedom: number of categories − 1 (minus any parameters estimated).', e: '4 - 1 = 3' },
+                    { s: '\\chi^2_{0.05,\\,df}', t: 'The table value at the 5% level: reject H₀ if the calculated value is bigger.', e: '7.815' },
+                  ]} />
                 </div>
               </div>
 
@@ -203,6 +215,16 @@ export default function ChiSquarePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Dividing by $O_i$ instead of $E_i$.', f: 'Each term is $(O - E)^2 / E$: divide by the expected count.' },
+                { m: 'Forgetting to square.', f: '$O - E$ adds up to 0; squaring makes every term positive.' },
+                { m: 'Wrong degrees of freedom.', f: 'Goodness of fit: categories − 1. Contingency table: $(r - 1)(c - 1)$.' },
+                { m: 'Expected counts below 5.', f: 'Merge small categories first; the test is unreliable otherwise.' },
+                { m: 'Saying "accept H₀".', f: 'Say "do not reject H₀": the data are consistent with it, not proof of it.' },
+                { m: 'Writing only the final answer.', f: 'Show the O, E, (O − E)²/E table, the sum, df, the table value, and the decision.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -215,6 +237,8 @@ export default function ChiSquarePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.simplex-method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit15';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Pivot", text: <>Entering column, leaving row.</> },
           { title: "3. Stop", text: <>When every zⱼ − cⱼ ≥ 0.</> },
         ]} />
+        <SymbolKey rows={EX['simplex-method'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Maximise <InlineMath math={"z = 3x + 5y"} /> subject to x ≤ 4, 2y ≤ 12, 3x + 2y ≤ 18.</ExampleProblem>
-        <ExampleStep n={1} title="FIRST PIVOT"><StepText>y enters (−5 is the most negative); ratios 12/2 = 6 and 18/2 = 9, so s₂ leaves.</StepText></ExampleStep>
-        <ExampleStep n={2} title="SECOND PIVOT"><StepText>x enters; ratios 4/1 and 6/3 = 2, so s₃ leaves. All zⱼ − cⱼ ≥ 0: optimal.</StepText></ExampleStep>
-        <Conclusion result="x = 2, y = 6, z = 36" math={<BlockMath math={"x = 2, \\ y = 6, \\quad z_{\\max} = 36"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['simplex-method'].example} />
+      <CommonMistakes items={EX['simplex-method'].mistakes} />
       <Lab heading="Interactive Simplex Method Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["system-of-equations","gauss-jordan","dijkstra"]} />

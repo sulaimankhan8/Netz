@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import StraightLineSolver from './algorithems.straight-line';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { straightLine as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function FittingStraightLinesPage() {
   const lineEquation = `y = a + b x`;
@@ -83,6 +86,15 @@ export default function FittingStraightLinesPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'a,\\ b', t: 'The intercept and slope of the line y = a + bx.', e: '1.3,\\ 0.9' },
+                    { s: 'n', t: 'The number of data points.', e: '5' },
+                    { s: '\\sum x,\\ \\sum y,\\ \\sum x^2,\\ \\sum xy', t: 'Column totals from the working table.', e: '15,\\ 20,\\ 55,\\ 69' },
+                    { s: '\\text{normal equations}', t: '$\\sum y = na + b\\sum x$ and $\\sum xy = a\\sum x + b\\sum x^2$.', e: '5a + 15b = 20' },
+                    { s: '\\text{least squares}', t: 'The line that makes the sum of squared vertical gaps from the points as small as possible.', e: '' },
+                  ]} />
                 </div>
               </div>
 
@@ -227,6 +239,15 @@ export default function FittingStraightLinesPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Using $(\\sum x)^2$ for $\\sum x^2$.', f: 'Square each x first, then add: $\\sum x^2 = 55$, while $(\\sum x)^2 = 225$.' },
+                { m: 'Swapping a and b.', f: 'a is the intercept (y at x = 0), b the slope.' },
+                { m: 'Mixing up the two normal equations.', f: 'First: sum y = na + b·sum x. Second: multiply by x first, then sum.' },
+                { m: 'Predicting far outside the data.', f: 'The line is reliable only within the range of x used.' },
+                { m: 'Writing only the final answer.', f: 'Show the table with totals, both normal equations, the solution and the line.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -239,6 +260,8 @@ export default function FittingStraightLinesPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

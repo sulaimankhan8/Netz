@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import LeastSquaresSolver from './algorithems.least-squares';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { leastSquares as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function LeastSquaresPage() {
   const formula = `
@@ -76,6 +79,14 @@ export default function LeastSquaresPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'y = ae^{bx}', t: 'The curve to fit: y grows by a constant factor for each step in x.', e: 'y = 0.5353\\,e^{1.0792x}' },
+                    { s: 'Y = \\ln y', t: 'Taking logs gives a straight line: ln y = ln a + bx.', e: '\\ln 4.5 = 1.50408' },
+                    { s: 'A = \\ln a', t: 'The line’s intercept; undo it at the end with a = eᴬ.', e: 'A = -0.6249' },
+                    { s: '\\sum Y,\\ \\sum xY', t: 'The totals of the logged values used in the normal equations.', e: '8.29262,\\ 26.12765' },
+                  ]} />
                 </div>
               </div>
 
@@ -215,6 +226,15 @@ export default function LeastSquaresPage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Fitting a line to y instead of ln y.', f: 'Take logs first: ln y = A + bx is the straight line.' },
+                { m: 'Forgetting to undo the log.', f: '$a = e^A$ (here $e^{-0.6249} = 0.5353$), not A.' },
+                { m: 'Mixing ln and log₁₀.', f: 'With $e^{bx}$ use natural logs; with $10^{bx}$ use log₁₀. Keep one base throughout.' },
+                { m: 'Rounding the logs too much.', f: 'Keep 5 decimals in ln y; small errors grow when you exponentiate.' },
+                { m: 'Writing only the final answer.', f: 'Show the log table with totals, the normal equations, A and b, then a and the curve.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -227,6 +247,8 @@ export default function LeastSquaresPage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

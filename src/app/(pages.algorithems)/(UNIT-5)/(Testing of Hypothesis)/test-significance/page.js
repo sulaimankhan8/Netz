@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import ZTestSolver from './algorithems.z-test';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { zTest as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function TestOfSignificancePage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function TestOfSignificancePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: '\\mu_0', t: 'The value of the mean claimed by H₀.', e: '1000' },
+                    { s: '\\sigma', t: 'The population standard deviation (known, or a large-sample estimate).', e: '50' },
+                    { s: 'SE = \\frac{\\sigma}{\\sqrt n}', t: 'The standard error of the sample mean.', e: '\\tfrac{50}{10} = 5' },
+                    { s: 'Z = \\frac{\\bar x - \\mu_0}{SE}', t: 'How many standard errors the sample mean is from μ₀.', e: '\\tfrac{12}{5} = 2.4' },
+                    { s: 'Z_{\\alpha/2}', t: 'The critical value: 1.96 for a two-tailed test at 5%, 2.58 at 1%.', e: '1.96' },
+                  ]} />
                 </div>
               </div>
 
@@ -157,6 +169,15 @@ export default function TestOfSignificancePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: 'Using σ instead of the standard error.', f: 'Divide by $\\sigma / \\sqrt n$: here 5, not 50.' },
+                { m: 'One-tailed critical value for a two-tailed test.', f: 'H₁: μ ≠ μ₀ at 5% uses 1.96; 1.645 is one-tailed.' },
+                { m: 'Comparing Z without the absolute value.', f: 'For a two-tailed test compare |Z| with the critical value.' },
+                { m: 'Using z for a small sample with unknown σ.', f: 'Then use the t-test.' },
+                { m: 'Writing only the final answer.', f: 'Show H₀ and H₁, the standard error, Z, the critical value and the decision in words.' },
+              ]} />
+
               {/* Interactive Calculator Section */}
               <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
@@ -169,6 +190,8 @@ export default function TestOfSignificancePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

@@ -3,11 +3,13 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useCodeExportInputs, rowsToXY } from '@/app/utils/codeExport/inputs';
 import { useState } from "react";
 import { BlockMath, InlineMath } from "react-katex";
+import TermWorking from '@/app/components/method/TermWorking';
 import "katex/dist/katex.min.css";
 import Plot from '@/app/components/UnifiedPlot';
 import { EditorialButton, EditorialExportButton } from '@/app/components/editorial';
 import DataPointsInput from '@/app/components/DataPointsInput';
 import { FiPlay, FiRotateCcw, FiPlus, FiTrash2, FiCheckCircle, FiTrendingUp, FiLayers, FiList } from 'react-icons/fi';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 export default function NewtonDividedDifference({ theme }) {
   const [xRange, setXRange] = useState(Array.from({ length: 100 }, (_, i) => i));
@@ -87,6 +89,11 @@ export default function NewtonDividedDifference({ theme }) {
       final: `f(${xToInterpolate}) = ${interpolatedValue.toFixed(6)}`,
     });
   };
+
+  // Values sent with loadIntoCalculator() (calcDemo.js) load here and solve
+
+  useLoadInput((v) => { const sp = (t) => String(t || '').split(/[,\s]+/).filter(Boolean); const ys = sp(v.y); setRows(sp(v.x).map((x, i) => ({ x, y: ys[i] ?? '' }))); setInterpolateX(String(v.at ?? '')); solveSoon(); });
+
 
   const handleDemo = () => {
     setDemoInProgress(true);
@@ -366,14 +373,7 @@ export default function NewtonDividedDifference({ theme }) {
                 <FiLayers className="w-5 h-5 text-neutral-500" /> Step Derivation & Polynomial Expansion
               </h4>
 
-              {polynomialSteps.formulas.length > 0 && (
-                <div className="p-4 border-2 border-black/30 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 space-y-3 font-mono text-xs">
-                  <span className="text-xs font-mono font-bold uppercase text-neutral-500 block">Substituted Dividend Terms:</span>
-                  <div className="overflow-x-auto py-1">
-                    <BlockMath math={polynomialSteps.substituted.join(" + ")} />
-                  </div>
-                </div>
-              )}
+              <TermWorking formulas={polynomialSteps.formulas} substituted={polynomialSteps.substituted} calculated={polynomialSteps.calculated} />
             </div>
           )}
 

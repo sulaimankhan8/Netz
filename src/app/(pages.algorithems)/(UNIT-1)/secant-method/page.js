@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import SecantMethod from './algorithems.secant-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { secant as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function SecantMethodPage() {
   const iterationData = [
@@ -85,6 +88,16 @@ export default function SecantMethodPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'f(x)', t: 'The function whose root we want: where the graph crosses the x-axis.', e: 'f(x) = x^3 - 2x - 5' },
+                    { s: 'x_{n-1},\\ x_n', t: 'The two latest guesses. The secant line is drawn through the curve at these two points. They do not need to bracket the root.', e: 'x_0 = 2,\\ x_1 = 3' },
+                    { s: 'f(x_{n-1}),\\ f(x_n)', t: 'The heights of the curve at the two guesses.', e: 'f(2) = -1,\\ f(3) = 16' },
+                    { s: '\\dfrac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}', t: 'One over the slope of the secant line. It replaces the 1 / f′(x) of Newton–Raphson, so no derivative is needed.', e: '\\dfrac{3 - 2}{16 - (-1)} = \\dfrac{1}{17}' },
+                    { s: 'x_{n+1}', t: 'Where the secant line crosses the x-axis: the new guess.', e: 'x_2 = 2.058824' },
+                    { s: '\\varepsilon', t: 'The tolerance. Stop when |f(x)| (or the change in x) is smaller than it.', e: '\\varepsilon = 0.0001' },
+                  ]} />
                 </div>
               </div>
 
@@ -151,10 +164,35 @@ export default function SecantMethodPage() {
                   </div>
                 </div>
 
+                {/* Later iterations, each with every number put in */}
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-neutral-500">
+                    <span>STEP 04</span> • <span>STEP-BY-STEP ITERATIONS WALKTHROUGH</span>
+                  </div>
+                  {[
+                    { k: 2, a: 3, b: '2.058824', fa: '16', fb: '-0.3908', d: '2.058824 - 3', df: '-0.3908 - 16', corr: '(-0.022440)', x: '2.081264', fx: '-0.147204', move: '0.022440' },
+                    { k: 3, a: '2.058824', b: '2.081264', fa: '(-0.3908)', fb: '-0.147204', d: '2.081264 - 2.058824', df: '-0.147204 - (-0.3908)', corr: '(-0.013560)', x: '2.094824', fx: '+0.003044', move: '0.013560' },
+                    { k: 4, a: '2.081264', b: '2.094824', fa: '(-0.147204)', fb: '0.003044', d: '2.094824 - 2.081264', df: '0.003044 - (-0.147204)', corr: '0.000275', x: '2.094549', fx: '-0.000023', move: '0.000275' },
+                  ].map((it) => (
+                    <div key={it.k} className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2">
+                      <strong className="text-amber-600 dark:text-amber-400 block text-xs font-mono">Iteration {it.k}: <InlineMath math={`x_{${it.k - 1}} = ${it.a},\\ x_{${it.k}} = ${it.b}`} /></strong>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`x_{${it.k + 1}} = ${it.b} - (${it.fb}) \\cdot \\frac{${it.d}}{${it.df}} = ${it.b} - ${it.corr} = ${it.x}`} />
+                        <BlockMath math={`f(${it.x}) = (${it.x})^3 - 2(${it.x}) - 5 = ${it.fx}`} />
+                      </div>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                        {it.k < 4
+                          ? <>The guess moved by <InlineMath math={`${it.move}`} />. Slide the pair forward: <InlineMath math={`x_{${it.k}} = ${it.b},\\ x_{${it.k + 1}} = ${it.x}`} />, and repeat.</>
+                          : <><InlineMath math={`|f(x_5)| = 0.000023 < 0.0001`} />, so stop: the root is <InlineMath math="x \approx 2.094549" />.</>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
                 {/* Iteration Summary Table */}
                 <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
                   <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-neutral-500">
-                    <span>STEP 04</span> • <span>ITERATION SUMMARY TABLE</span>
+                    <span>STEP 05</span> • <span>ITERATION SUMMARY TABLE</span>
                   </div>
                   <div className="overflow-x-auto rounded-xl border border-black/30 dark:border-neutral-700">
                     <table className="w-full text-center text-xs font-mono border-collapse">
@@ -206,10 +244,20 @@ export default function SecantMethodPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Common Mistakes */}
+                <CommonMistakes items={[
+                  { m: <>Mixing up which point goes where in the formula.</>, f: <>The formula starts from the <strong>latest</strong> guess: <InlineMath math="x_{n+1} = x_n - f(x_n) \cdot \dfrac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}" />. Top and bottom must both be &quot;new minus old&quot;.</> },
+                  { m: <>Sign slips with negative values.</>, f: <>Bracket negatives: <InlineMath math="16 - (-1) = 17" />, and <InlineMath math="-0.3908 - 16 = -16.3908" />.</> },
+                  { m: <>Keeping the bracket as in false position.</>, f: <>The secant method always drops the <strong>oldest</strong> point, even if the two new points no longer bracket the root.</> },
+                  { m: <>Two guesses with the same f value.</>, f: <>Then <InlineMath math="f(x_n) - f(x_{n-1}) = 0" /> and the formula divides by zero (the secant line is flat). Pick different starting guesses.</> },
+                  { m: <>Rounding the guesses too early.</>, f: <>Keep 6 decimals; the corrections (0.000275 in the last step) are tiny.</> },
+                  { m: <>Writing only the final answer.</>, f: <>Show <InlineMath math="f" /> at both guesses, the formula with numbers for each iteration, and the table.</> },
+                ]} />
               </div>
 
               {/* Interactive Calculator */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -219,6 +267,8 @@ export default function SecantMethodPage() {
                 <SecantMethod />
               </div>
 
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

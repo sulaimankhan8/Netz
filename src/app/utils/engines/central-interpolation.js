@@ -112,8 +112,16 @@ function finish(kind, r, warning) {
     headers: differenceHeaders(order),
     lines: [
       `h = ${n(r.h)}, \\quad x_0 = ${n(r.x[r.o])}, \\quad p = \\frac{x - x_0}{h} = \\frac{${n(r.X)} - ${n(r.x[r.o])}}{${n(r.h)}} = ${n(r.p)}`,
-      ...r.used.map((t) => `${t.tex} = ${n(t.value)}`),
-      `y(${n(r.X)}) \\approx ${n(r.total)}`,
+      // Each term with the numbers from the table put in: coefficient × difference (or mean of two) = value
+      ...r.used.map((t) => {
+        const second = t.vals[1] < 0 ? `(${n(t.vals[1])})` : n(t.vals[1]);
+        const numbers = t.vals.length === 2 ? `\\frac{${n(t.vals[0])} + ${second}}{2}` : `(${n(t.vals[0])})`;
+        if (t.label === 'y_0') return t.tex;
+        return t.label === 'mean'
+          ? `${t.tex} = ${numbers} = ${n(t.value)}`
+          : `${t.tex} = ${n(t.coef)} \\times ${numbers} = ${n(t.value)}`;
+      }),
+      `y(${n(r.X)}) \\approx ${r.used.map((t, i) => (i && t.value >= 0 ? `+ ${n(t.value)}` : i ? `- ${n(Math.abs(t.value))}` : n(t.value))).join(' ')} = ${n(r.total)}`,
     ],
     notes: warning ? [warning] : [], result: r.total, steps: { headers: [], rows: [] }, plot: null,
   };

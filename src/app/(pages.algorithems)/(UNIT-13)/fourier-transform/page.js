@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.fourier-transform';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Integrate", text: <>Piece by piece, with ω as a letter.</> },
           { title: "3. Combine", text: <>F = A − iB; even f has B = 0.</> },
         ]} />
+        <SymbolKey rows={EX['fourier-transform'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the Fourier transform of f(x) = 1 for |x| &lt; 1, and 0 otherwise.</ExampleProblem>
-        <ExampleStep n={1} title="SPLIT"><MathPanel><BlockMath math={"F(\\omega) = \\int_{-1}^{1}\\cos\\omega x\\,dx - i\\int_{-1}^{1}\\sin\\omega x\\,dx"} /></MathPanel><StepText>The sine part is 0 because f is even.</StepText></ExampleStep>
-        <ExampleStep n={2} title="INTEGRATE"><MathPanel><BlockMath math={"\\int_{-1}^{1}\\cos\\omega x\\,dx = \\left[\\frac{\\sin\\omega x}{\\omega}\\right]_{-1}^{1} = \\frac{2\\sin\\omega}{\\omega}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="ω = 0"><MathPanel><BlockMath math={"F(0) = \\int_{-1}^{1} 1\\,dx = 2"} /></MathPanel><StepText>The limit of 2 sin ω/ω as ω → 0.</StepText></ExampleStep>
-        <Conclusion result="F(ω) = 2 sin ω/ω" math={<BlockMath math={"F(\\omega) = \\frac{2\\sin\\omega}{\\omega}"} />}>The calculator below opens on this pulse.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['fourier-transform'].example} />
+      <CommonMistakes items={EX['fourier-transform'].mistakes} />
       <Lab heading="Interactive Fourier Transform Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["fourier-series","laplace","complex-fourier-series"]} />

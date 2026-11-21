@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.confidence-interval';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Critical value", text: <>z or t for the level.</> },
           { title: "3. Margin", text: <>Critical value × SE, either side.</> },
         ]} />
+        <SymbolKey rows={EX['confidence-interval'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A sample of 25 has mean 50; σ = 10. Find a 95% confidence interval for the mean.</ExampleProblem>
-        <ExampleStep n={1} title="STANDARD ERROR"><MathPanel><BlockMath math={"SE = \\frac{10}{\\sqrt{25}} = 2"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="INTERVAL"><MathPanel><BlockMath math={"50 \\pm 1.96 \\times 2 = 50 \\pm 3.92"} /></MathPanel></ExampleStep>
-        <Conclusion result="(46.08, 53.92)" math={<BlockMath math={"46.08 < \\mu < 53.92"} />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['confidence-interval'].example} />
+      <CommonMistakes items={EX['confidence-interval'].mistakes} />
       <Lab heading="Interactive Confidence Interval Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["t-test","z-test","normal"]} />

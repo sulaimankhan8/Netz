@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.ode-applications';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Solve", text: <>With the starting value.</> },
           { title: "3. Use the data", text: <>Find k, then answer.</> },
         ]} />
+        <SymbolKey rows={EX['ode-applications'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A body cools from 100° to 60° in 20 minutes in air at 20°. Find its temperature after 40 minutes, and when it reaches 30°.</ExampleProblem>
-        <ExampleStep n={1} title="SOLVE"><MathPanel><BlockMath math={"T = 20 + 80e^{-kt}, \\quad 60 = 20 + 80e^{-20k} \\Rightarrow k = \\frac{\\ln 2}{20}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="AFTER 40 MIN"><MathPanel><BlockMath math={"T(40) = 20 + 80e^{-2\\ln 2} = 20 + 20 = 40^\\circ"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="REACH 30°"><MathPanel><BlockMath math={"30 = 20 + 80e^{-kt} \\Rightarrow t = \\frac{\\ln 8}{k} = 60 \\text{ min}"} /></MathPanel></ExampleStep>
-        <Conclusion result="40° after 40 min; 30° at 60 min" math={<BlockMath math={"T(40) = 40^\\circ, \\qquad t = 60 \\text{ min}"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['ode-applications'].example} />
+      <CommonMistakes items={EX['ode-applications'].mistakes} />
       <Lab heading="Interactive ODE Applications Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["ode-solver","linear-ode","ode-cc"]} />

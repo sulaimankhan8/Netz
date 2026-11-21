@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.corporate-tax-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +29,10 @@ export default function Page() {
           { title: "2. Add-ons", text: <>Surcharge and cess, or marginal relief, or state tax.</> },
           { title: "3. Total", text: <>And the effective rate.</> },
         ]} />
+        <SymbolKey rows={EX['corporate-tax-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A UK company has profits of £100,000 (no associated companies). Find its corporation tax.</ExampleProblem>
-        <ExampleStep n={1} title="MAIN RATE"><MathPanel><BlockMath math={"25\\% \\times 100{,}000 = 25{,}000"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MARGINAL RELIEF"><MathPanel><BlockMath math={"\\tfrac{3}{200}(250{,}000 - 100{,}000) = 2{,}250"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="TAX"><MathPanel><BlockMath math={"25{,}000 - 2{,}250 = 22{,}750 \\ (22.75\\%)"} /></MathPanel></ExampleStep>
-        <Conclusion result="£22,750" math={<BlockMath math={"\\text{tax} = £22{,}750"} />}>The calculator below opens on an Indian company.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['corporate-tax-calculator'].example} />
+      <CommonMistakes items={EX['corporate-tax-calculator'].mistakes} />
       <Lab heading="Interactive Corporate Tax Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["income-tax","gst","uk-income-tax"]} />

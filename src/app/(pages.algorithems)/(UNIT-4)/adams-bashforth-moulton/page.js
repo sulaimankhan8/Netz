@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import AdamsCalculator from './algorithems.adams-bashforth-moulton';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,37 +42,11 @@ export default function AdamsPage() {
             { title: '3. Correct', text: <>Adams-Moulton improves it; repeat the corrector until it settles.</> },
           ]}
         />
+        <SymbolKey rows={EX['adams'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Solve <InlineMath math="\frac{dy}{dx} = x + y" />, <InlineMath math="y(0) = 1" /> with <InlineMath math="h = 0.1" />, and find <InlineMath math="y(0.4)" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="STARTING VALUES BY RK4">
-          <MathPanel>
-            <BlockMath math="f_0 = 1, \quad f_1 = 1.210342, \quad f_2 = 1.442805, \quad f_3 = 1.699717, \quad y_3 = 1.399717" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="PREDICT">
-          <MathPanel>
-            <BlockMath math="y_4^P = 1.399717 + \frac{0.1}{24}\left(55 \times 1.699717 - 59 \times 1.442805 + 37 \times 1.210342 - 9 \times 1\right) = 1.583640" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={3} title="CORRECT">
-          <MathPanel>
-            <BlockMath math="f_4 = 0.4 + 1.583640 = 1.983640" />
-            <BlockMath math="y_4^C = 1.399717 + \frac{0.1}{24}\left(9 \times 1.983640 + 19 \times 1.699717 - 5 \times 1.442805 + 1.210342\right) = 1.583649" />
-          </MathPanel>
-          <StepText>The exact value <InlineMath math="2e^{0.4} - 1.4 = 1.583649" /> agrees to six decimal places.</StepText>
-        </ExampleStep>
-
-        <Conclusion result="y(0.4) ≈ 1.583649" math={<BlockMath math="y(0.4) \approx 1.583649" />}>
-          The calculator below opens on this problem and shows every predictor and corrector value.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['adams'].example} />
+      <CommonMistakes items={EX['adams'].mistakes} />
 
       <Lab heading="Interactive Adams-Bashforth-Moulton Calculator">
         <AdamsCalculator />

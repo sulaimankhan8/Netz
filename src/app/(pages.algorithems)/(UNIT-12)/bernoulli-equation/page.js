@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.bernoulli-equation';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function BernoulliPage() {
           { title: '2. z = y^(1−n)', text: <>A linear equation in z.</> },
           { title: '3. Solve', text: <>Integrating factor, then put z back.</> },
         ]} />
+        <SymbolKey rows={EX['bernoulli-equation'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="\frac{dy}{dx} + y = xy^3" />.</ExampleProblem>
-        <ExampleStep n={1} title="SUBSTITUTE"><MathPanel><BlockMath math="n = 3,\ z = y^{-2}: \quad \frac{dz}{dx} - 2z = -2x" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="LINEAR IN z"><MathPanel><BlockMath math="\text{IF} = e^{-2x}, \quad ze^{-2x} = \int -2xe^{-2x}\,dx = \left(x + \tfrac{1}{2}\right)e^{-2x} + C" /></MathPanel></ExampleStep>
-        <Conclusion result="y⁻² = x + ½ + Ce^(2x)" math={<BlockMath math="\frac{1}{y^2} = x + \frac{1}{2} + Ce^{2x}" />}>The second example button below loads this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['bernoulli-equation'].example} />
+      <CommonMistakes items={EX['bernoulli-equation'].mistakes} />
       <Lab heading="Interactive Bernoulli Equation Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['linear-ode', 'exact-ode', 'ode-solver']} />

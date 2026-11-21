@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import AreaPerimeterCalculator from './algorithems.area-and-perimeter';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function AreaPerimeterPage() {
             { title: '3. Square for Area', text: <>Area answers are in square units (cm²); perimeter answers are plain lengths (cm).</> },
           ]}
         />
+        <SymbolKey rows={EX['area-and-perimeter'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -79,6 +82,7 @@ export default function AreaPerimeterPage() {
           The calculator below opens on this triangle. Switch shape to try a circle, trapezium or regular polygon.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['area-and-perimeter'].mistakes} />
 
       <Lab heading="Interactive Area & Perimeter Calculator">
         <AreaPerimeterCalculator />

@@ -35,10 +35,12 @@ export function solve({ n = '4', top, bottom, left, right, tol = '0.001' }) {
   const rows = [];
   let it = 0, change = Infinity;
   rows.push({ it: 0, ...Object.fromEntries(names.map(([j, i]) => [`u${j}${i}`, r4(u[j][i])])), d: '' });
+  const firstSweep = [];
   while (change > eps && it < 300) {
     change = 0;
     for (const [j, i] of names) {
       const v = (u[j - 1][i] + u[j + 1][i] + u[j][i - 1] + u[j][i + 1]) / 4;
+      if (it === 0 && firstSweep.length < 9) firstSweep.push(`u_{${j}${i}} = \\tfrac{1}{4}(${r4(u[j - 1][i])} + ${r4(u[j + 1][i])} + ${r4(u[j][i - 1])} + ${r4(u[j][i + 1])}) = ${r4(v)}`);
       change = Math.max(change, Math.abs(v - u[j][i]));
       u[j][i] = v;
     }
@@ -48,6 +50,7 @@ export function solve({ n = '4', top, bottom, left, right, tol = '0.001' }) {
   const columns = [{ key: 'it', label: 'Iteration', bold: true }, ...names.map(([j, i]) => ({ key: `u${j}${i}`, label: `u${j}${i}` })), { key: 'd', label: 'Largest change', highlight: true }];
   const steps = [
     { title: 'Five-point formula', formula: 'u_{i,j} = \\tfrac{1}{4}(u_{i-1,j} + u_{i+1,j} + u_{i,j-1} + u_{i,j+1})', depth: 0, lines: [`\\text{${names.length} inner points, starting from } ${r4(start)} \\text{ (the average boundary value)}`] },
+    { title: 'Sweep 1 in full', formula: '\\text{up, down, left, right neighbours; new values are used at once}', depth: 0, lines: firstSweep },
     { title: `Liebmann (Gauss–Seidel) iteration: ${it} sweeps`, depth: 0, lines: [`\\text{Stopped when the largest change was } ${r4(change)} < ${eps}`] },
   ];
   return {

@@ -6,7 +6,8 @@ import 'katex/dist/katex.min.css';
 import RombergCalculator from './algorithems.romberg-integration';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
+  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, StepTable, Conclusion,
+  SymbolKey, CommonMistakes,
   Faq, RelatedMethods,
 } from '@/app/components/method';
 
@@ -41,6 +42,13 @@ export default function RombergPage() {
             { title: '3. Read the Corner', text: <>The bottom-right entry is the answer.</> },
           ]}
         />
+        <SymbolKey rows={[
+          { s: 'R(i, 0)', t: 'The trapezoidal rule with 2ⁱ strips: the first column of the table.', e: 'R(1, 0) = 0.708333' },
+          { s: 'R(i, j)', t: 'An improved value: column j cancels the next error term of the column before it.', e: 'R(2, 2) = 0.693175' },
+          { s: '4^j - 1', t: 'The divisor for column j: 3, 15, 63, …', e: '4^1 - 1 = 3' },
+          { s: 'R(i, j-1) - R(i-1, j-1)', t: 'The difference between an entry and the one above it in the same column.', e: '0.708333 - 0.75' },
+          { s: '\\text{bottom-right}', t: 'The most accurate value in the table: the answer.', e: '0.693175' },
+        ]} />
       </FormulaBox>
 
       <WorkedExample>
@@ -52,8 +60,9 @@ export default function RombergPage() {
           <MathPanel>
             <BlockMath math="R(0,0) = \tfrac{1}{2}\left[f(0) + f(1)\right] = \tfrac{1}{2}(1 + 0.5) = 0.75" />
             <BlockMath math="R(1,0) = \tfrac{1}{2}R(0,0) + 0.5\,f(0.5) = 0.375 + 0.333333 = 0.708333" />
-            <BlockMath math="R(2,0) = \tfrac{1}{2}R(1,0) + 0.25\left[f(0.25) + f(0.75)\right] = 0.697024" />
+            <BlockMath math="R(2,0) = \tfrac{1}{2}R(1,0) + 0.25\left[f(0.25) + f(0.75)\right] = 0.354167 + 0.25(0.8 + 0.571429) = 0.697024" />
           </MathPanel>
+          <StepText>Each new row halves h and only needs f at the new midpoints; the old points are reused through <InlineMath math="\tfrac12 R(i-1, 0)" />.</StepText>
         </ExampleStep>
 
         <ExampleStep n={2} title="EXTRAPOLATE">
@@ -65,10 +74,31 @@ export default function RombergPage() {
           <StepText>Four strips of plain trapezoids were off by 0.0039; the Romberg corner is off by only 0.000028.</StepText>
         </ExampleStep>
 
+        <ExampleStep n={3} title="THE ROMBERG TABLE">
+          <StepTable
+            columns={[{ key: 'i', label: 'i (strips)', bold: true }, { key: 'c0', label: 'R(i, 0) trapezoid' }, { key: 'c1', label: 'R(i, 1)' }, { key: 'c2', label: 'R(i, 2)', highlight: true }]}
+            rows={[
+              { i: '0 (1)', c0: '0.750000', c1: '', c2: '' },
+              { i: '1 (2)', c0: '0.708333', c1: '0.694444', c2: '' },
+              { i: '2 (4)', c0: '0.697024', c1: '0.693254', c2: '0.693175' },
+            ]}
+            rowKey={(r) => r.i}
+          />
+        </ExampleStep>
+
         <Conclusion result="∫ ≈ 0.693175 (ln 2 = 0.693147)" math={<BlockMath math="R(2,2) = 0.693175" />}>
           The calculator below opens on this integral. Add a level to see the answer match ln 2 to six places.
         </Conclusion>
       </WorkedExample>
+
+      <CommonMistakes items={[
+        { m: <>Using 4 as the divisor in every column.</>, f: <>Column j divides by <InlineMath math="4^j - 1" />: 3, then 15, then 63.</> },
+        { m: <>Subtracting the wrong way round.</>, f: <>New = lower entry + (lower − upper) / (4ʲ − 1), both from the column to the left.</> },
+        { m: <>Recomputing every f value for each trapezoid.</>, f: <><InlineMath math="R(i,0) = \tfrac12 R(i-1,0) + h_i \sum f(\text{new midpoints})" />: only the new points are needed.</> },
+        { m: <>Reading the answer from the first column.</>, f: <>The answer is the bottom-right entry.</> },
+        { m: <>Using it on a function with a kink or jump.</>, f: <>Romberg assumes a smooth function; otherwise the extrapolation does not help.</> },
+        { m: <>Writing only the final answer.</>, f: <>Show the trapezoidal column with its working, one extrapolation per column in full, and the table.</> },
+      ]} />
 
       <Lab heading="Interactive Romberg Calculator">
         <RombergCalculator />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.ode-constant-coefficients';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit12';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function OdeConstantPage() {
           { title: '2. CF', text: <>One term per root.</> },
           { title: '3. PI', text: <>The shortcut rules, or undetermined coefficients.</> },
         ]} />
+        <SymbolKey rows={EX['ode-constant-coefficients'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math="y'' - 3y' + 2y = e^{3x}" />.</ExampleProblem>
-        <ExampleStep n={1} title="CF"><MathPanel><BlockMath math="m^2 - 3m + 2 = 0 \Rightarrow m = 1, 2, \qquad \text{CF} = C_1e^{x} + C_2e^{2x}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="PI"><MathPanel><BlockMath math="\text{PI} = \frac{e^{3x}}{f(3)} = \frac{e^{3x}}{9 - 9 + 2} = \frac{e^{3x}}{2}" /></MathPanel><StepText>3 is not a root, so the shortcut works directly.</StepText></ExampleStep>
-        <Conclusion result="y = C₁eˣ + C₂e²ˣ + e³ˣ/2" math={<BlockMath math="y = C_1e^{x} + C_2e^{2x} + \frac{e^{3x}}{2}" />}>The calculator below opens on this equation.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['ode-constant-coefficients'].example} />
+      <CommonMistakes items={EX['ode-constant-coefficients'].mistakes} />
       <Lab heading="Interactive CF + PI Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['variation-of-parameters', 'cauchy-euler', 'ode-solver']} />

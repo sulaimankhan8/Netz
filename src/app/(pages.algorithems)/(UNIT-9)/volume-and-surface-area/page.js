@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import VolumeSurfaceAreaCalculator from './algorithems.volume-and-surface-area';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit9';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function VolumeSurfaceAreaPage() {
             { title: '3. Units', text: <>Volume in cm³ (or litres), surface area in cm². Keep every length in the same unit.</> },
           ]}
         />
+        <SymbolKey rows={EX['volume-and-surface-area'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -76,6 +79,7 @@ export default function VolumeSurfaceAreaPage() {
           The calculator below opens on this tank. Change π to see the answer with π kept exact.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['volume-and-surface-area'].mistakes} />
 
       <Lab heading="Interactive Volume & Surface Area Calculator">
         <VolumeSurfaceAreaCalculator />

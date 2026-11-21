@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import Simpson38RuleSolver from './algorithems.simpson-3-8-rule';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { simpson38 as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function Simpson38RulePage() {
   const formula = `
@@ -76,6 +79,16 @@ export default function Simpson38RulePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'n', t: 'The number of strips. It must be a multiple of 3: the rule fits a cubic over each group of three strips.', e: 'n = 3' },
+                    { s: 'h', t: 'The width of each strip: (b − a)/n.', e: 'h = 1' },
+                    { s: 'y_0,\\ y_n', t: 'The two end heights: weight 1.', e: '1,\\ e^3' },
+                    { s: 'y_1, y_2, y_4, \\dots', t: 'Heights not at a multiple of 3: weight 3.', e: '3(e + e^2)' },
+                    { s: 'y_3, y_6, \\dots', t: 'Inside heights at multiples of 3 (where two cubics meet): weight 2.', e: '' },
+                    { s: '\\frac{3h}{8}', t: 'The factor in front of the bracket.', e: '\\dfrac{3(1)}{8}' },
+                  ]} />
                 </div>
               </div>
 
@@ -208,8 +221,18 @@ export default function Simpson38RulePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using n that is not a multiple of 3.</>, f: <>The 3/8 rule needs n = 3, 6, 9, …</> },
+                { m: <>Giving every inside point weight 3.</>, f: <>Points at multiples of 3 (y₃, y₆, …) get weight 2; the others get 3.</> },
+                { m: <>Using h/3.</>, f: <>The factor is <InlineMath math="\dfrac{3h}{8}" />.</> },
+                { m: <>Mixing it up with the 1/3 rule.</>, f: <>1/3 rule: weights 1, 4, 2, 4, …, 1 with h/3. 3/8 rule: 1, 3, 3, 2, 3, 3, …, 1 with 3h/8.</> },
+                { m: <>Rounding the heights too early.</>, f: <>Keep 5–6 decimals; round only the final answer.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show h, the table, the weighted sums, the formula with numbers, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -220,6 +243,8 @@ export default function Simpson38RulePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

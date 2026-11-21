@@ -7,6 +7,10 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import JacobiMethod from './algorithems.jacobi-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { jacobi as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import { StepTable, Conclusion } from '@/app/components/method';
 
 export default function JacobiMethodPage() {
   return (
@@ -62,6 +66,15 @@ export default function JacobiMethodPage() {
                       <span className="text-neutral-600 dark:text-neutral-400">All variable updates are independent per iteration — making Jacobi naturally parallelizable on GPUs.</span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'x_i^{(k)}', t: 'The value of unknown i after k iterations. Start from a guess, usually all zeros.', e: 'x_1^{(1)} = 0.6' },
+                    { s: 'a_{ii}', t: 'The diagonal coefficient of equation i: we divide by it.', e: 'a_{11} = 10' },
+                    { s: 'b_i', t: 'The right-hand side of equation i.', e: 'b_1 = 6' },
+                    { s: '\\sum_{j \\ne i} a_{ij}x_j^{(k)}', t: 'All the other unknowns, using the values from the previous iteration only.', e: '-x_2 + 2x_3' },
+                    { s: '|a_{ii}| > \\sum_{j \\ne i} |a_{ij}|', t: 'Diagonal dominance: it guarantees the iterations settle down.', e: '10 > 1 + 2' },
+                  ]} />
                 </div>
               </div>
 
@@ -77,7 +90,7 @@ export default function JacobiMethodPage() {
                   <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-200">
                     Solve: <InlineMath math="10x_1 - x_2 + 2x_3 = 6,\quad -x_1 + 11x_2 - x_3 = 25,\quad 2x_1 - x_2 + 10x_3 = -11" />
                   </p>
-                  <p className="text-xs font-mono text-emerald-700 dark:text-emerald-400">Expected solution: x₁ = 1, x₂ = 2, x₃ = -1</p>
+                  <p className="text-xs font-mono text-emerald-700 dark:text-emerald-400">Start from x = (0, 0, 0) and stop when no value changes by more than 0.0001.</p>
                 </div>
 
                 <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
@@ -97,15 +110,57 @@ export default function JacobiMethodPage() {
                     <BlockMath math={`x_3^{(1)} = \\frac{-11 - 0 + 0}{10} = -1.1`} />
                   </div>
                 </div>
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
+                  <div className="text-xs font-mono font-bold uppercase text-neutral-500">STEP 03 • ITERATION 2 (using only the iteration-1 values)</div>
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl font-mono text-xs overflow-x-auto text-center space-y-2">
+                    <BlockMath math={`x_1^{(2)} = \\frac{6 + 2.2727 - 2(-1.1)}{10} = \\frac{10.4727}{10} = 1.0473`} />
+                    <BlockMath math={`x_2^{(2)} = \\frac{25 + 0.6 + (-1.1)}{11} = \\frac{24.5}{11} = 2.2273`} />
+                    <BlockMath math={`x_3^{(2)} = \\frac{-11 - 2(0.6) + 2.2727}{10} = \\frac{-9.9273}{10} = -0.9927`} />
+                  </div>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">All three use the old values (0.6, 2.2727, −1.1), even though x₁ was just updated: that is what makes it Jacobi.</p>
+                </div>
+                <div className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-3">
+                  <div className="text-xs font-mono font-bold uppercase text-neutral-500">STEP 04 • ITERATION TABLE</div>
+                  <StepTable
+                    columns={[{ key: 'k', label: 'k', bold: true }, { key: 'x1', label: 'x₁' }, { key: 'x2', label: 'x₂' }, { key: 'x3', label: 'x₃' }, { key: 'd', label: 'Largest change', highlight: true }]}
+                    rows={[
+                      { k: 1, x1: '0.6000', x2: '2.2727', x3: '−1.1000', d: '2.2727' },
+                      { k: 2, x1: '1.0473', x2: '2.2273', x3: '−0.9927', d: '0.4473' },
+                      { k: 3, x1: '1.0213', x2: '2.2777', x3: '−1.0867', d: '0.0940' },
+                      { k: 4, x1: '1.0451', x2: '2.2668', x3: '−1.0765', d: '0.0238' },
+                      { k: 5, x1: '1.0420', x2: '2.2699', x3: '−1.0823', d: '0.0059' },
+                      { k: 6, x1: '1.0435', x2: '2.2691', x3: '−1.0814', d: '0.0015' },
+                      { k: 7, x1: '1.0432', x2: '2.2693', x3: '−1.0818', d: '0.0004' },
+                      { k: 8, x1: '1.0433', x2: '2.2692', x3: '−1.0817', d: '0.0001' },
+                      { k: 9, x1: '1.0433', x2: '2.2692', x3: '−1.0817', d: '0.0000' },
+                    ]}
+                    rowKey={(r) => r.k}
+                  />
+                </div>
+                <Conclusion result="x₁ ≈ 1.0433, x₂ ≈ 2.2692, x₃ ≈ −1.0817" math={<BlockMath math="x_1 = 1.043269, \quad x_2 = 2.269231, \quad x_3 = -1.081731" />}>
+                  The values swing either side of the answer and close in; after 9 iterations they agree to 4 decimals with the exact solution (by elimination).
+                </Conclusion>
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using a new value in the same iteration.</>, f: <>That is Gauss-Seidel. Jacobi uses only the previous iteration&apos;s values for every unknown.</> },
+                { m: <>Not checking diagonal dominance.</>, f: <>Each diagonal coefficient should beat the others in its row (|10| &gt; 1 + 2). Otherwise reorder the equations, or the values may grow.</> },
+                { m: <>Sign slips when rearranging.</>, f: <><InlineMath math="10x_1 - x_2 + 2x_3 = 6" /> gives <InlineMath math="x_1 = \dfrac{6 + x_2 - 2x_3}{10}" />: every term that moves changes sign.</> },
+                { m: <>Stopping too early.</>, f: <>Continue until no value changes by more than the tolerance (9 iterations here for 0.0001).</> },
+                { m: <>Rounding each iteration heavily.</>, f: <>Keep 4–6 decimals; the last changes are tiny.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show the rearranged formulas, the first iteration in full, and a table of all iterations.</> },
+              ]} />
+
               {/* Interactive Calculator */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">LABORATORY</div>
                 <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Interactive Live Calculator</h2>
                 <JacobiMethod />
               </div>
 
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
             </section>
           </div>

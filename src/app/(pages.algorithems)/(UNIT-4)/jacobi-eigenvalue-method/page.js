@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import JacobiEigenCalculator from './algorithems.jacobi-eigenvalue-method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function JacobiEigenPage() {
           { title: '2. Rotate', text: <>Choose θ to make it zero.</> },
           { title: '3. Repeat', text: <>Until every off-diagonal entry is tiny.</> },
         ]} />
+        <SymbolKey rows={EX['jacobi-eigen'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the eigenvalues of <InlineMath math="A = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}" /> by Jacobi&apos;s method.</ExampleProblem>
-        <ExampleStep n={1} title="ANGLE"><MathPanel><BlockMath math="a_{11} = a_{22} = 2 \ \Rightarrow \ \theta = \frac{\pi}{4}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="ROTATE"><MathPanel><BlockMath math="P = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 & -1 \\ 1 & 1 \end{bmatrix}, \qquad P^{T}AP = \begin{bmatrix} 3 & 0 \\ 0 & 1 \end{bmatrix}" /></MathPanel><StepText>One rotation is enough for a 2 × 2 matrix.</StepText></ExampleStep>
-        <Conclusion result="λ = 3, 1" math={<BlockMath math="\lambda_1 = 3, \quad \lambda_2 = 1" />}>Larger matrices need several rotations; the table shows each one.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['jacobi-eigen'].example} />
+      <CommonMistakes items={EX['jacobi-eigen'].mistakes} />
       <Lab heading="Interactive Jacobi Eigenvalue Calculator"><JacobiEigenCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['eigenvalues', 'power-method', 'qr']} />

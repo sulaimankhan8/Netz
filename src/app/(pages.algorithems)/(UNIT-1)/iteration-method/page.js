@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import IterationMethod from './algorithems.fixed-point-method';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { fixedPoint as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function IterationMethods() {
   const iterationData = [
@@ -82,6 +85,16 @@ export default function IterationMethods() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'f(x) = 0', t: 'The equation we want to solve.', e: 'x^3 - x - 1 = 0' },
+                    { s: '\\phi(x)', t: <>The same equation rearranged as <InlineMath math="x = \phi(x)" />. A root of <InlineMath math="f" /> is a point where <InlineMath math="\phi" /> gives back the same number (a fixed point).</>, e: '\\phi(x) = (x + 1)^{1/3}' },
+                    { s: "\\phi'(x)", t: 'The slope of φ. If its size is below 1 near the root, every step shrinks the error and the method converges; the smaller, the faster.', e: "|\\phi'(1.5)| \\approx 0.18" },
+                    { s: 'x_0', t: 'The starting guess.', e: 'x_0 = 1.5' },
+                    { s: 'x_k', t: 'The guess after k steps: x_k = φ(x_{k−1}).', e: 'x_1 = 1.357209' },
+                    { s: '|x_k - x_{k-1}|', t: 'How much the guess changed. Stop when it is smaller than the tolerance.', e: '0.000034 < 0.0001' },
+                  ]} />
                 </div>
               </div>
 
@@ -154,17 +167,24 @@ export default function IterationMethods() {
                     <span>STEP 04</span> • <span>SUBSEQUENT ITERATIONS WALKTHROUGH</span>
                   </div>
 
-                  {/* Iteration 3 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 3:</strong>
-                    <div>Calculation: <InlineMath math="x_3 = (1.330861 + 1)^{1/3} = (2.330861)^{1/3} \approx 1.325884" /></div>
-                  </div>
-
-                  {/* Iteration 4 */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2 text-xs font-mono">
-                    <strong className="text-amber-600 dark:text-amber-400 block">Iteration 4:</strong>
-                    <div>Calculation: <InlineMath math="x_4 = (1.325884 + 1)^{1/3} = (2.325884)^{1/3} \approx 1.324939" /></div>
-                  </div>
+                  {/* Iterations 3–6, each with every number put in */}
+                  {[
+                    { k: 3, prev: '1.330861', x: '1.325884', diff: '0.004977' },
+                    { k: 4, prev: '1.325884', x: '1.324939', diff: '0.000944' },
+                    { k: 5, prev: '1.324939', x: '1.324760', diff: '0.000179' },
+                    { k: 6, prev: '1.324760', x: '1.324726', diff: '0.000034' },
+                  ].map((it) => (
+                    <div key={it.k} className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-300 dark:border-neutral-700 space-y-2">
+                      <strong className="text-amber-600 dark:text-amber-400 block text-xs font-mono">Iteration {it.k}:</strong>
+                      <div className="overflow-x-auto text-center">
+                        <BlockMath math={`x_${it.k} = \\phi(${it.prev}) = (${it.prev} + 1)^{1/3} = (${(Number(it.prev) + 1).toFixed(6)})^{1/3} = ${it.x}`} />
+                      </div>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                        Change: <InlineMath math={`|x_${it.k} - x_${it.k - 1}| = |${it.x} - ${it.prev}| = ${it.diff}`} />
+                        {it.k < 6 ? '. Not small enough yet, so feed it back in.' : <>{' '}<InlineMath math="< 0.0001" />, so stop: the root is <InlineMath math="x \approx 1.324726" /> (about 1.3247).</>}
+                      </p>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Step 5: Summary Table */}
@@ -217,8 +237,18 @@ export default function IterationMethods() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Choosing a rearrangement that diverges.</>, f: <><InlineMath math="x = x^3 - 1" /> is also a rearrangement of <InlineMath math="x^3 - x - 1 = 0" />, but there <InlineMath math="|\phi'(x)| = 3x^2 > 1" /> and the guesses run away. Always check <InlineMath math="|\phi'(x_0)| < 1" /> first.</> },
+                { m: <>Checking <InlineMath math="|f'(x)| < 1" /> instead of <InlineMath math="|\phi'(x)| < 1" />.</>, f: <>The condition is on the rearranged function <InlineMath math="\phi" />, not on <InlineMath math="f" />.</> },
+                { m: <>Algebra slips when rearranging.</>, f: <>Check the rearrangement: put the final answer into <InlineMath math="f" />; <InlineMath math="f(1.324726)" /> should be close to 0.</> },
+                { m: <>Feeding in the wrong value.</>, f: <>Each step uses only the previous result: <InlineMath math="x_k = \phi(x_{k-1})" />.</> },
+                { m: <>Rounding each guess heavily.</>, f: <>Keep 6 decimals; the last changes (0.000034) are smaller than 3-decimal rounding.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show <InlineMath math="\phi(x)" />, the check <InlineMath math="|\phi'(x_0)| < 1" />, each step with numbers, and the table.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -229,6 +259,8 @@ export default function IterationMethods() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

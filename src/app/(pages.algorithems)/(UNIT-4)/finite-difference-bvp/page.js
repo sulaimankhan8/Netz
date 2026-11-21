@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.finite-difference-bvp';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Equations", text: <>One per inner point.</> },
           { title: "3. Solve", text: <>Tridiagonal: Thomas algorithm.</> },
         ]} />
+        <SymbolKey rows={EX['finite-difference-bvp'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Solve <InlineMath math={"y'' = y"} />, y(0) = 0, y(1) = 1 with h = 1/4.</ExampleProblem>
-        <ExampleStep n={1} title="THE EQUATION"><MathPanel><BlockMath math={"y_{i-1} - \\left(2 + h^2\\right)y_i + y_{i+1} = 0, \\quad 2 + h^2 = 2.0625"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math={"y_1 = 0.2151, \\ y_2 = 0.4437, \\ y_3 = 0.7000"} /></MathPanel><StepText>The exact values are sinh(x)/sinh(1): 0.2150, 0.4434, 0.6997.</StepText></ExampleStep>
-        <Conclusion result="y(0.5) ≈ 0.4437" math={<BlockMath math={"y(0.5) \\approx 0.4437 \\ (\\text{exact } 0.4434)"} />}>The calculator below opens on this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['finite-difference-bvp'].example} />
+      <CommonMistakes items={EX['finite-difference-bvp'].mistakes} />
       <Lab heading="Interactive Finite Difference Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["shooting-method","heat-equation","cubic-spline"]} />

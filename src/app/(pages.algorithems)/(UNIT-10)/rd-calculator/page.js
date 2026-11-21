@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import RdCalculator from './algorithems.rd-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit10';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function RdPage() {
           { title: '2. Each instalment', text: <>Grows to R(1 + i)^(months left/3).</> },
           { title: '3. Add them up', text: <>A geometric series gives the closed formula.</> },
         ]} />
+        <SymbolKey rows={EX['rd-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>₹1,000 is paid into an RD every month for 1 year at 7% a year, compounded quarterly. Find the maturity amount.</ExampleProblem>
-        <ExampleStep n={1} title="RATE"><MathPanel><BlockMath math="i = \frac{7}{400} = 0.0175, \qquad N = 12 \text{ months} = 4 \text{ quarters}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="FORMULA"><MathPanel><BlockMath math="M = 1000 \times \frac{(1.0175)^{4} - 1}{1 - (1.0175)^{-1/3}} = 12{,}462.13" /></MathPanel><StepText>Paid in: 12 × ₹1,000 = ₹12,000, so the interest is ₹462.13.</StepText></ExampleStep>
-        <Conclusion result="Maturity ₹12,462.13" math={<BlockMath math="M = 12{,}462.13" />}>The second example button below loads this RD.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['rd-calculator'].example} />
+      <CommonMistakes items={EX['rd-calculator'].mistakes} />
       <Lab heading="Interactive RD Calculator"><RdCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['fd', 'sip', 'compound-interest']} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.mean-value-theorem';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Slope", text: <>Of the chord from a to b.</> },
           { title: "3. Solve", text: <>f′(c) = that slope.</> },
         ]} />
+        <SymbolKey rows={EX['mean-value-theorem'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Verify the mean value theorem for <InlineMath math={"f(x) = x^3 - 3x + 1"} /> on [−2, 3].</ExampleProblem>
-        <ExampleStep n={1} title="CHORD"><MathPanel><BlockMath math={"\\frac{f(3) - f(-2)}{3 - (-2)} = \\frac{19 - (-1)}{5} = 4"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><MathPanel><BlockMath math={"3c^2 - 3 = 4 \\Rightarrow c = \\pm\\sqrt{\\frac{7}{3}}"} /></MathPanel><StepText>Both lie between −2 and 3.</StepText></ExampleStep>
-        <Conclusion result="c = ±√(7/3)" math={<BlockMath math={"c = \\pm\\frac{\\sqrt{21}}{3} \\approx \\pm 1.53"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['mean-value-theorem'].example} />
+      <CommonMistakes items={EX['mean-value-theorem'].mistakes} />
       <Lab heading="Interactive Mean Value Theorem Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["derivative","maxima-minima","monotonicity"]} />

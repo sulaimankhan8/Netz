@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CurveFittingCalculator from './algorithems.curve-fitting';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function CurveFittingPage() {
           { title: '2. Straight line', text: <>Solve the two normal equations for A and B.</> },
           { title: '3. Back', text: <>a = 10ᴬ (or eᴬ), and b from B.</> },
         ]} />
+        <SymbolKey rows={EX['curve-fitting'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Fit <InlineMath math="y = ab^x" /> to x = 1, 2, 3, 4, 5 and y = 6, 12, 24, 48, 96.</ExampleProblem>
-        <ExampleStep n={1} title="TAKE LOGS"><MathPanel><BlockMath math="\log y = \log a + x \log b \ \Rightarrow \ Y = A + Bx" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="SOLVE"><StepText>The normal equations give A = log 3 = 0.4771 and B = log 2 = 0.3010.</StepText></ExampleStep>
-        <ExampleStep n={3} title="BACK TO a AND b"><MathPanel><BlockMath math="a = 10^{0.4771} = 3, \qquad b = 10^{0.3010} = 2" /></MathPanel></ExampleStep>
-        <Conclusion result="y = 3(2)ˣ" math={<BlockMath math="y = 3 \cdot 2^x" />}>The data double each step, so the fit is exact.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['curve-fitting'].example} />
+      <CommonMistakes items={EX['curve-fitting'].mistakes} />
       <Lab heading="Interactive Curve Fitting Calculator"><CurveFittingCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['straight-line', 'parabola', 'least-squares']} />

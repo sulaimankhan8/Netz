@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.geometric-distribution';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit5';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. k − 1 failures", text: <>Then one success.</> },
           { title: "3. Cumulative", text: <>1 − qᵏ.</> },
         ]} />
+        <SymbolKey rows={EX['geometric-distribution'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A die is rolled until a six appears. Find the chance a six appears within the first 4 rolls.</ExampleProblem>
-        <ExampleStep n={1} title="MODEL"><MathPanel><BlockMath math={"p = \\tfrac{1}{6}, \\ q = \\tfrac{5}{6}"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="CUMULATIVE"><MathPanel><BlockMath math={"P(X \\le 4) = 1 - \\left(\\tfrac{5}{6}\\right)^4 = 1 - \\tfrac{625}{1296} = \\tfrac{671}{1296} \\approx 0.5177"} /></MathPanel></ExampleStep>
-        <Conclusion result="≈ 0.518" math={<BlockMath math={"P(X \\le 4) \\approx 0.5177"} />}>The second example button below loads this problem.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['geometric-distribution'].example} />
+      <CommonMistakes items={EX['geometric-distribution'].mistakes} />
       <Lab heading="Interactive Geometric Distribution Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["binomial","exponential-dist","poisson"]} />

@@ -14,7 +14,7 @@ export function useExportBar(id, getRaw, hasAnswer, fallbackTitle = null) {
   const name = methodById(id)?.name || fallbackTitle || 'NETZ';
   useCodeExportInputs(id, () => (hasAnswer ? getRaw() : null), name);
   return (
-    <div className="flex justify-end -mt-1 mb-2">
+    <div data-result="" className="flex justify-end -mt-1 mb-2">
       <EditorialExportButton title={name} elementId={`netz-solve-${id}`} size="sm" />
     </div>
   );

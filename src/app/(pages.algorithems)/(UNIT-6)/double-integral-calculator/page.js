@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import DoubleIntegralCalculator from './algorithems.double-integral-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function DoubleIntegralPage() {
           { title: '2. Limits', text: <>Put in y = g₂(x) and y = g₁(x).</> },
           { title: '3. Outer', text: <>Integrate the result in x from a to b.</> },
         ]} />
+        <SymbolKey rows={EX['double-integral-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate <InlineMath math="\int_0^1\int_0^x (x^2 + y^2)\,dy\,dx" />.</ExampleProblem>
-        <ExampleStep n={1} title="INNER"><MathPanel><BlockMath math="\int_0^x (x^2 + y^2)\,dy = \left[x^2y + \frac{y^3}{3}\right]_0^x = \frac{4x^3}{3}" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="OUTER"><MathPanel><BlockMath math="\int_0^1 \frac{4x^3}{3}\,dx = \left[\frac{x^4}{3}\right]_0^1 = \frac{1}{3}" /></MathPanel><StepText>The region is the triangle under y = x.</StepText></ExampleStep>
-        <Conclusion result="1/3" math={<BlockMath math="\int_0^1\int_0^x (x^2 + y^2)\,dy\,dx = \frac{1}{3}" />}>The calculator below opens on this integral.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['double-integral-calculator'].example} />
+      <CommonMistakes items={EX['double-integral-calculator'].mistakes} />
       <Lab heading="Interactive Double Integral Calculator"><DoubleIntegralCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['change-of-order', 'triple-integral', 'double-integration']} />

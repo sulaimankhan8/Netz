@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.unit-step-function';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit13';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function UnitStepPage() {
           { title: '2. Shift', text: <>Each u(t − a) gives e^(−as).</> },
           { title: '3. Periodic', text: <>One period, then divide.</> },
         ]} />
+        <SymbolKey rows={EX['unit-step-function'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the transform of <InlineMath math="f(t) = t" /> for 0 &lt; t &lt; 1 and 1 for t &gt; 1.</ExampleProblem>
-        <ExampleStep n={1} title="UNIT STEPS"><MathPanel><BlockMath math="f = t - (t - 1)\,u(t - 1)" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="TRANSFORM"><MathPanel><BlockMath math="\mathcal{L}\{t\} = \frac{1}{s^2}, \qquad \mathcal{L}\{(t - 1)u(t - 1)\} = \frac{e^{-s}}{s^2}" /></MathPanel><StepText>Second shifting theorem with a = 1.</StepText></ExampleStep>
-        <Conclusion result="(1 − e⁻ˢ)/s²" math={<BlockMath math="F(s) = \frac{1 - e^{-s}}{s^2}" />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['unit-step-function'].example} />
+      <CommonMistakes items={EX['unit-step-function'].mistakes} />
       <Lab heading="Interactive Unit Step Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['laplace', 'inverse-laplace', 'laplace-ode']} />

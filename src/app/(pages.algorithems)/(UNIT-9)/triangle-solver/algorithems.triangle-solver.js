@@ -8,7 +8,8 @@ import { useRecordSolve } from '@/app/utils/activity';
 import { useExportBar } from '@/app/components/method/ExportBar';
 import { sig } from '@/app/utils/numberFormat';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import TriangleDiagram from '@/app/components/method/TriangleDiagram';
 import { solve, MODES } from '@/app/utils/engines/triangle-solver';
 
@@ -18,6 +19,7 @@ const fieldClass = 'w-full min-h-[44px] px-3 text-base font-mono font-bold round
 
 export default function TriangleSolverCalculator() {
   const [mode, setMode] = useState(START.mode);
+  const guide = useCalcGuide('triangle-solver');
   const [values, setValues] = useState(START.values);
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
@@ -42,6 +44,7 @@ export default function TriangleSolverCalculator() {
         title="Triangle Solver Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <Choice label="What do you know?" value={mode} onChange={(v) => { setMode(v); setAnswer(null); setError(''); }} options={MODES.map((m) => ({ value: m.id, label: m.id }))} />
         <p className="text-sm text-neutral-700 dark:text-neutral-300">{info.label.replace(/^\w+: /, 'You know ')}. Side a is opposite angle A, b opposite B, c opposite C.</p>
@@ -53,8 +56,9 @@ export default function TriangleSolverCalculator() {
             </label>
           ))}
         </div>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={run} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={run} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Solve Triangle
           </EditorialButton>
         </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.grad-div-curl';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function GradDivCurlPage() {
           { title: '2. Combine', text: <>As a vector, a sum or a determinant.</> },
           { title: '3. At a point', text: <>Put the numbers in.</> },
         ]} />
+        <SymbolKey rows={EX['grad-div-curl'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the directional derivative of <InlineMath math="\phi = x^2y + yz^3" /> at (1, −1, 1) in the direction 2i + j − 2k.</ExampleProblem>
-        <ExampleStep n={1} title="GRADIENT"><MathPanel><BlockMath math="\nabla\phi = (2xy,\ x^2 + z^3,\ 3yz^2) = (-2,\ 2,\ -3) \text{ at } (1, -1, 1)" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="DOT WITH THE UNIT VECTOR"><MathPanel><BlockMath math="\hat a = \frac{(2, 1, -2)}{3}, \qquad \nabla\phi\cdot\hat a = \frac{-4 + 2 + 6}{3} = \frac{4}{3}" /></MathPanel></ExampleStep>
-        <Conclusion result="4/3" math={<BlockMath math="D_{\hat a}\phi = \frac{4}{3}" />}>The calculator below opens on this example.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['grad-div-curl'].example} />
+      <CommonMistakes items={EX['grad-div-curl'].mistakes} />
       <Lab heading="Interactive Grad, Div & Curl Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['partial-derivative', 'vectors', 'jacobian']} />

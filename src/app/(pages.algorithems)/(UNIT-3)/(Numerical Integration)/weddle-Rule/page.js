@@ -7,6 +7,9 @@ import FullscreenToggle from '@/app/components/FullscreenToggle';
 import { EditorialThemeToggle } from '@/app/components/editorial';
 import WeddleRuleSolver from './algorithems.weddle-rule';
 import AlgorithmNavigation from '@/app/components/AlgorithmNavigation';
+import { weddle as EXTRAS } from '@/app/data/methodFaqs';
+import { Faq, RelatedMethods } from '@/app/components/method/PageExtras';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
 
 export default function WeddleRulePage() {
   const formula = `
@@ -76,6 +79,15 @@ export default function WeddleRulePage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* What each symbol means */}
+                  <SymbolKey rows={[
+                    { s: 'n', t: 'The number of strips. It must be a multiple of 6.', e: 'n = 6' },
+                    { s: 'h', t: 'The width of each strip: (b − a)/n.', e: 'h = 1' },
+                    { s: '1,\\ 5,\\ 1,\\ 6,\\ 1,\\ 5,\\ 1', t: 'The weights for one group of six strips. Where two groups meet the 1s add up to 2.', e: 'y_0 + 5y_1 + y_2 + 6y_3 + y_4 + 5y_5 + y_6' },
+                    { s: '\\frac{3h}{10}', t: 'The factor in front of the bracket.', e: '\\dfrac{3(1)}{10}' },
+                    { s: 'y_i', t: 'The heights f(xᵢ) at the strip edges.', e: 'y_1 = f(1) = 0.5' },
+                  ]} />
                 </div>
               </div>
 
@@ -226,8 +238,18 @@ export default function WeddleRulePage() {
 
               </div>
 
+              {/* Common Mistakes */}
+              <CommonMistakes items={[
+                { m: <>Using n that is not a multiple of 6.</>, f: <>Weddle&apos;s rule needs n = 6, 12, 18, …</> },
+                { m: <>Wrong weight pattern.</>, f: <>1, 5, 1, 6, 1, 5, 1 for each group; a shared point between groups gets 1 + 1 = 2.</> },
+                { m: <>Wrong factor.</>, f: <>It is <InlineMath math="\dfrac{3h}{10}" />.</> },
+                { m: <>Too few strips for a fast-changing function.</>, f: <>With h = 1, ∫₀⁶ 1/(1 + x²) gives 1.3735 against 1.4056; more strips (n = 12) are much closer.</> },
+                { m: <>Rounding the heights too early.</>, f: <>Keep 5–6 decimals; round only the final answer.</> },
+                { m: <>Writing only the final answer.</>, f: <>Show h, the table, each weight times its height, the bracket, and the answer.</> },
+              ]} />
+
               {/* Interactive Calculator Section */}
-              <div className="pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
+              <div id="calculator" className="scroll-mt-24 pt-8 border-t-2 border-black/80 dark:border-neutral-700 space-y-6">
                 <div className="inline-block border border-black/60 dark:border-neutral-600 bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 text-xs font-mono font-bold rounded-md uppercase mb-1">
                   LABORATORY
                 </div>
@@ -238,6 +260,8 @@ export default function WeddleRulePage() {
               </div>
 
               {/* Sequential Routing Navigation */}
+              <Faq items={EXTRAS.faq} />
+              <RelatedMethods ids={EXTRAS.related} />
               <AlgorithmNavigation />
 
             </section>

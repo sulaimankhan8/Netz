@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.uk-income-tax-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit11';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +29,10 @@ export default function Page() {
           { title: "2. Income tax", text: <>Band by band.</> },
           { title: "3. NI", text: <>8% and 2%.</> },
         ]} />
+        <SymbolKey rows={EX['uk-income-tax-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>A £45,000 salary with 5% pension by salary sacrifice. Find the take-home pay.</ExampleProblem>
-        <ExampleStep n={1} title="PAY"><MathPanel><BlockMath math={"45{,}000 - 2{,}250 = 42{,}750, \\quad \\text{taxable} = 42{,}750 - 12{,}570 = 30{,}180"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="TAX AND NI"><MathPanel><BlockMath math={"30{,}180 \\times 20\\% = 6{,}036, \\quad 30{,}180 \\times 8\\% = 2{,}414.40"} /></MathPanel></ExampleStep>
-        <Conclusion result="£34,299.60 a year" math={<BlockMath math={"45{,}000 - 2{,}250 - 6{,}036 - 2{,}414.40 = 34{,}299.60"} />}>The calculator below opens on this salary.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['uk-income-tax-calculator'].example} />
+      <CommonMistakes items={EX['uk-income-tax-calculator'].mistakes} />
       <Lab heading="Interactive UK Income Tax Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["us-income-tax","vat","percentage"]} />

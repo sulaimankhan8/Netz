@@ -4,6 +4,8 @@ import React from 'react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import VatCalculator from './algorithems.vat-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import EX from '@/app/data/workedExamples/unit11';
 import {
   MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
   WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
@@ -45,6 +47,7 @@ export default function VatPage() {
             { title: '3. Multiply or Divide', text: <>Net → gross: multiply. Gross → net: divide. VAT = gross − net.</> },
           ]}
         />
+        <SymbolKey rows={EX['vat-calculator'].symbols} />
       </FormulaBox>
 
       <WorkedExample>
@@ -77,6 +80,7 @@ export default function VatPage() {
           The calculator below opens on this jacket. Pick another country to use its rate.
         </Conclusion>
       </WorkedExample>
+      <CommonMistakes items={EX['vat-calculator'].mistakes} />
 
       <Lab heading="Interactive VAT Calculator">
         <VatCalculator />

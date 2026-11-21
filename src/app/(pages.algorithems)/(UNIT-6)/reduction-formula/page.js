@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.reduction-formula';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function Page() {
           { title: "2. Repeat", text: <>Down to I₀ or I₁.</> },
           { title: "3. Collect", text: <>Put the pieces back together.</> },
         ]} />
+        <SymbolKey rows={EX['reduction-formula'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Evaluate ∫₀^{'{'}π/2{'}'} sin⁶x dx.</ExampleProblem>
-        <ExampleStep n={1} title="WALLIS"><MathPanel><BlockMath math={"I_n = \\frac{n - 1}{n}I_{n-2}, \\quad I_0 = \\frac{\\pi}{2}"} /></MathPanel><StepText>The boundary term is 0 at both ends.</StepText></ExampleStep>
-        <ExampleStep n={2} title="APPLY"><MathPanel><BlockMath math={"I_6 = \\frac56\\cdot\\frac34\\cdot\\frac12\\cdot\\frac{\\pi}{2} = \\frac{5\\pi}{32}"} /></MathPanel></ExampleStep>
-        <Conclusion result="5π/32" math={<BlockMath math={"\\int_0^{\\pi/2}\\sin^6x\\,dx = \\frac{5\\pi}{32}"} />}>The calculator below opens on ∫ sin⁴x dx.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['reduction-formula'].example} />
+      <CommonMistakes items={EX['reduction-formula'].mistakes} />
       <Lab heading="Interactive Reduction Formulas Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["integral","trig-integrals","beta-gamma"]} />

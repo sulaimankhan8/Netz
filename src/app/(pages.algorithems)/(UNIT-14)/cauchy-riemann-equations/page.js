@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.cauchy-riemann-equations';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Differentiate", text: <>uₓ, u_y, vₓ, v_y.</> },
           { title: "3. Compare", text: <>Both equations hold → analytic.</> },
         ]} />
+        <SymbolKey rows={EX['cauchy-riemann-equations'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Show that f(z) = z² + 2z is analytic and find f′(z).</ExampleProblem>
-        <ExampleStep n={1} title="SPLIT"><MathPanel><BlockMath math={"(x + iy)^2 + 2(x + iy) = (x^2 - y^2 + 2x) + i(2xy + 2y)"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="CAUCHY–RIEMANN"><MathPanel><BlockMath math={"u_x = 2x + 2 = v_y, \\qquad u_y = -2y = -v_x"} /></MathPanel><StepText>Both hold everywhere, and the partials are continuous.</StepText></ExampleStep>
-        <ExampleStep n={3} title="DERIVATIVE"><MathPanel><BlockMath math={"f'(z) = u_x + i\\,v_x = 2x + 2 + 2iy = 2z + 2"} /></MathPanel></ExampleStep>
-        <Conclusion result="Analytic; f′(z) = 2z + 2" math={<BlockMath math={"f'(z) = 2z + 2"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['cauchy-riemann-equations'].example} />
+      <CommonMistakes items={EX['cauchy-riemann-equations'].mistakes} />
       <Lab heading="Interactive Cauchy-Riemann Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["harmonic-conjugate","complex-numbers","partial-derivative"]} />

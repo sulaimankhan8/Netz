@@ -36,8 +36,25 @@ export function solve({ f, g = '0', L, c = '1', h, k = '', steps: nt = '4' }) {
   const rows = g1.map((row, j) => ({ t: r4(j * K), ...Object.fromEntries(row.map((v, i) => [`u${i}`, r4(v)])) }));
   const steps = [
     { title: 'Grid', formula: 'r = \\frac{ck}{h}', depth: 0, lines: [`h = ${H}, \\quad k = ${r4(K)}, \\quad r = ${r4(r)}`] },
-    { title: 'First time step (uses u_t = g)', formula: "u_{i,1} = (1 - r^2)u_{i,0} + \\tfrac{r^2}{2}(u_{i-1,0} + u_{i+1,0}) + k\\,g(x_i)", depth: 0, lines: n > 1 ? [`u_{1,1} = ${r4(u1[1])}`] : [] },
-    { title: 'Later steps', formula: Math.abs(r - 1) < 1e-12 ? 'u_{i,j+1} = u_{i-1,j} + u_{i+1,j} - u_{i,j-1} \\quad (r = 1)' : 'u_{i,j+1} = 2(1 - r^2)u_{i,j} + r^2(u_{i-1,j} + u_{i+1,j}) - u_{i,j-1}', depth: 0, lines: T > 1 ? [`u_{1,2} = ${r4(grid[2][1])}`] : [] },
+    {
+      title: 'First time step (uses u_t = g)', formula: "u_{i,1} = (1 - r^2)u_{i,0} + \\tfrac{r^2}{2}(u_{i-1,0} + u_{i+1,0}) + k\\,g(x_i)", depth: 0,
+      lines: n > 1 ? [
+        `u_{i,0} = f(x_i): \\ ${u0.map((v, i) => `u_{${i},0} = ${r4(v)}`).slice(0, 8).join(', \\ ')}`,
+        ...Array.from({ length: Math.min(n - 1, 6) }, (_, k) => {
+          const i = k + 1;
+          return `u_{${i},1} = (1 - ${r4(r2)})(${r4(u0[i])}) + \\tfrac{${r4(r2)}}{2}(${r4(u0[i - 1])} + ${r4(u0[i + 1])}) + ${r4(K)}(${r4(ev(gn, xs[i], 'g'))}) = ${r4(u1[i])}`;
+        }),
+      ] : [],
+    },
+    {
+      title: 'Later steps', formula: Math.abs(r - 1) < 1e-12 ? 'u_{i,j+1} = u_{i-1,j} + u_{i+1,j} - u_{i,j-1} \\quad (r = 1)' : 'u_{i,j+1} = 2(1 - r^2)u_{i,j} + r^2(u_{i-1,j} + u_{i+1,j}) - u_{i,j-1}', depth: 0,
+      lines: T > 1 ? Array.from({ length: Math.min(n - 1, 4) }, (_, k) => {
+        const i = k + 1;
+        return Math.abs(r - 1) < 1e-12
+          ? `u_{${i},2} = ${r4(grid[1][i - 1])} + ${r4(grid[1][i + 1])} - ${r4(grid[0][i]) < 0 ? `(${r4(grid[0][i])})` : r4(grid[0][i])} = ${r4(grid[2][i])}`
+          : `u_{${i},2} = 2(1 - ${r4(r2)})(${r4(grid[1][i])}) + ${r4(r2)}(${r4(grid[1][i - 1])} + ${r4(grid[1][i + 1])}) - ${r4(grid[0][i])} = ${r4(grid[2][i])}`;
+      }) : [],
+    },
   ];
   if (!notes.length) notes.push('r = ck/h ≤ 1 keeps the explicit scheme stable (the CFL condition); r = 1 is the usual textbook choice.');
   return { h: H, k: r4(K), r: r4(r), columns, rows, steps, notes, verified: true, result: rows.at(-1) };

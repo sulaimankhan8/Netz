@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import ConicCalculator from './algorithems.conic-sections-calculator';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit9';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function ConicPage() {
           { title: '2. Standard form', text: <>Complete the square and divide.</> },
           { title: '3. Read off', text: <>a, b, c, then the foci, e and directrices.</> },
         ]} />
+        <SymbolKey rows={EX['conic-sections-calculator'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the foci, eccentricity and latus rectum of <InlineMath math="4x^2 + 9y^2 = 36" />.</ExampleProblem>
-        <ExampleStep n={1} title="STANDARD FORM"><MathPanel><BlockMath math="\frac{x^2}{9} + \frac{y^2}{4} = 1 \ \Rightarrow \ a = 3, \ b = 2" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="c AND e"><MathPanel><BlockMath math="c = \sqrt{9 - 4} = \sqrt{5}, \qquad e = \frac{\sqrt{5}}{3}" /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="FOCI AND LATUS RECTUM"><MathPanel><BlockMath math="\text{Foci } (\pm\sqrt{5}, 0), \qquad \frac{2b^2}{a} = \frac{8}{3}" /></MathPanel><StepText>The major axis is along x because 9 &gt; 4.</StepText></ExampleStep>
-        <Conclusion result="Foci (±√5, 0), e = √5/3" math={<BlockMath math="e = \frac{\sqrt{5}}{3} \approx 0.745" />}>The calculator below opens on this ellipse and draws it.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['conic-sections-calculator'].example} />
+      <CommonMistakes items={EX['conic-sections-calculator'].mistakes} />
       <Lab heading="Interactive Conic Sections Calculator"><ConicCalculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['circles', 'coordinate-geometry', 'implicit']} />

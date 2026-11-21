@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.harmonic-conjugate';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit14';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,14 +30,10 @@ export default function Page() {
           { title: "2. Milne-Thomson", text: <>Put x = z, y = 0 in uₓ − i u_y.</> },
           { title: "3. Integrate", text: <>Then v = Im f(x + iy).</> },
         ]} />
+        <SymbolKey rows={EX['harmonic-conjugate'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Show u = x³ − 3xy² is harmonic and find its conjugate.</ExampleProblem>
-        <ExampleStep n={1} title="HARMONIC"><MathPanel><BlockMath math={"u_{xx} + u_{yy} = 6x - 6x = 0"} /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="MILNE-THOMSON"><MathPanel><BlockMath math={"u_x = 3x^2 - 3y^2, \\ u_y = -6xy \\Rightarrow f'(z) = 3z^2"} /></MathPanel></ExampleStep>
-        <ExampleStep n={3} title="INTEGRATE"><MathPanel><BlockMath math={"f(z) = z^3 \\Rightarrow v = \\operatorname{Im}(x + iy)^3 = 3x^2y - y^3"} /></MathPanel></ExampleStep>
-        <Conclusion result="v = 3x²y − y³" math={<BlockMath math={"v = 3x^2y - y^3 + C"} />}>The calculator below opens on this function.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['harmonic-conjugate'].example} />
+      <CommonMistakes items={EX['harmonic-conjugate'].mistakes} />
       <Lab heading="Interactive Harmonic Conjugate Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={["cauchy-riemann","partial-derivative","laurent-series"]} />

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Calculator from './algorithems.power-series-radius-of-convergence';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit6';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -29,13 +30,10 @@ export default function PowerSeriesPage() {
           { title: '2. Interval', text: <>a − R &lt; x &lt; a + R.</> },
           { title: '3. End points', text: <>Test each as a series.</> },
         ]} />
+        <SymbolKey rows={EX['power-series-radius-of-convergence'].symbols} />
       </FormulaBox>
-      <WorkedExample>
-        <ExampleProblem>Find the interval of convergence of <InlineMath math="\sum \frac{x^n}{n}" />.</ExampleProblem>
-        <ExampleStep n={1} title="RADIUS"><MathPanel><BlockMath math="\left|\frac{c_n}{c_{n+1}}\right| = \frac{n+1}{n} \to 1 \Rightarrow R = 1" /></MathPanel></ExampleStep>
-        <ExampleStep n={2} title="END POINTS"><StepText>At x = 1: Σ1/n diverges. At x = −1: Σ(−1)ⁿ/n converges (alternating series test).</StepText></ExampleStep>
-        <Conclusion result="[−1, 1)" math={<BlockMath math="-1 \le x < 1" />}>The first example button below loads this series.</Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['power-series-radius-of-convergence'].example} />
+      <CommonMistakes items={EX['power-series-radius-of-convergence'].mistakes} />
       <Lab heading="Interactive Power Series Calculator"><Calculator /></Lab>
       <Faq items={FAQ} />
       <RelatedMethods ids={['convergence-tests', 'taylor-series', 'limit']} />

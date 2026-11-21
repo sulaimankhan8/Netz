@@ -6,10 +6,12 @@ import 'katex/dist/katex.min.css';
 import { FiCheckCircle, FiRotateCcw, FiAlertTriangle } from 'react-icons/fi';
 import { useRecordSolve } from '@/app/utils/activity';
 import { EditorialButton } from '@/app/components/editorial';
-import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice } from '@/app/components/method/Calculator';
+import { CalcCard, ErrorBox, ResultBox, StepsCard, Field, Choice, HowToUse, GuideNote, TypingGuide } from '@/app/components/method/Calculator';
+import { useCalcGuide } from '@/app/components/method/calcGuide';
 import CoordPlot from '@/app/components/method/CoordPlot';
 import { texValue } from '@/app/utils/symbolic/limit';
 import { solve } from '@/app/utils/engines/limit';
+import { useLoadInput, solveSoon } from '@/app/components/method/calcDemo';
 
 const START = { f: '(x^2-5x+6)/(x^2-4)', a: '2', dir: 'both' };
 const EXAMPLES = [['sin(x)/x', '0'], ['(1-cos(x))/x^2', '0'], ['(3x^2+1)/(2x^2-x)', 'inf'], ['(sqrt(x)-2)/(x-4)', '4'], ['1/x', '0'], ['ln(x)/x', 'inf']];
@@ -28,10 +30,13 @@ function viewFor(f, a) {
 
 export default function LimitCalculator() {
   const [v, setV] = useState(START);
+  const guide = useCalcGuide('limit');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState('');
   useRecordSolve('limit', 6, answer, () => ({ fn: v.f, at: v.a }));
   const set = (patch) => { setV((o) => ({ ...o, ...patch })); setAnswer(null); setError(''); };
+  // Values sent with loadIntoCalculator() (calcDemo.js) load its inputs here, then the page's own solve button is pressed
+  useLoadInput((x) => { setV({ ...START, ...x }); solveSoon(); });
   const run = (override) => {
     try {
       setError('');
@@ -54,10 +59,11 @@ export default function LimitCalculator() {
         title="Limit Engine"
         actions={<EditorialButton variant="outline" size="sm" onClick={reset}><FiRotateCcw className="w-3.5 h-3.5 mr-1" /> Reset</EditorialButton>}
       >
+        <HowToUse steps={guide?.howTo} />
         <ErrorBox>{error}</ErrorBox>
         <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_10rem] gap-3">
-          <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. sin(x)/x" onChange={(f) => set({ f })} onEnter={() => run()} />
-          <Field label="as x →" value={v.a} inputMode="text" placeholder="0, pi/2, inf" onChange={(a) => set({ a })} onEnter={() => run()} />
+          <Field label="f(x) =" value={v.f} inputMode="text" placeholder="e.g. sin(x)/x" onChange={(f) => set({ f })} onEnter={() => run()} help={guide?.help?.f} />
+          <Field label="as x →" value={v.a} inputMode="text" placeholder="0, pi/2, inf" onChange={(a) => set({ a })} onEnter={() => run()} help={guide?.help?.a} />
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-mono font-bold uppercase text-neutral-600 dark:text-neutral-400">Try:</span>
@@ -67,10 +73,11 @@ export default function LimitCalculator() {
             </button>
           ))}
         </div>
-        <Choice label="Approach from" value={v.dir} onChange={(dir) => set({ dir })} options={[{ value: 'both', label: 'Both sides' }, { value: 'left', label: 'Left (x → a⁻)' }, { value: 'right', label: 'Right (x → a⁺)' }]} />
+        <Choice label="Approach from" value={v.dir} onChange={(dir) => set({ dir })} options={[{ value: 'both', label: 'Both sides' }, { value: 'left', label: 'Left (x → a⁻)' }, { value: 'right', label: 'Right (x → a⁺)' }]} help={guide?.help?.dir} />
         <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">Type inf or -inf for infinity. Use ^ for powers and brackets for functions: sin(x), ln(x), sqrt(x).</p>
+        {guide?.maths?.length > 0 && <TypingGuide />}
         <div className="pt-2 flex justify-end">
-          <EditorialButton variant="primary" size="md" onClick={() => run()} className="w-full sm:w-auto">
+          <EditorialButton variant="primary" data-solve="" size="md" onClick={() => run()} className="w-full sm:w-auto">
             <FiCheckCircle className="w-4 h-4 mr-2" /> Find Limit
           </EditorialButton>
         </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Rk2Calculator from './algorithems.rk2-method';
+import { SymbolKey, CommonMistakes } from '@/app/components/method/TheoryExtras';
+import DataExample from '@/app/components/method/DataExample';
+import EX from '@/app/data/workedExamples/unit4';
 import {
-  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps,
-  WorkedExample, ExampleProblem, ExampleStep, StepText, MathPanel, Conclusion,
-  Faq, RelatedMethods,
+  MethodPage, MethodHeader, Lab, FormulaBox, Formula, FormulaSteps, Faq, RelatedMethods,
 } from '@/app/components/method';
 
 const FAQ = [
@@ -41,32 +42,11 @@ export default function Rk2Page() {
             { title: '3. Average', text: <>Step forward with the average slope <InlineMath math="\frac{k_1 + k_2}{2}" />.</> },
           ]}
         />
+        <SymbolKey rows={EX['rk2'].symbols} />
       </FormulaBox>
 
-      <WorkedExample>
-        <ExampleProblem>
-          Solve <InlineMath math="\frac{dy}{dx} = x + y" />, <InlineMath math="y(0) = 1" /> with <InlineMath math="h = 0.1" /> by Heun&apos;s method, and find <InlineMath math="y(0.2)" />.
-        </ExampleProblem>
-
-        <ExampleStep n={1} title="STEP 1: x = 0 → 0.1">
-          <MathPanel>
-            <BlockMath math="k_1 = 0 + 1 = 1, \qquad k_2 = f(0.1,\ 1 + 0.1 \times 1) = 0.1 + 1.1 = 1.2" />
-            <BlockMath math="y_1 = 1 + \frac{0.1}{2}(1 + 1.2) = 1.11" />
-          </MathPanel>
-        </ExampleStep>
-
-        <ExampleStep n={2} title="STEP 2: x = 0.1 → 0.2">
-          <MathPanel>
-            <BlockMath math="k_1 = 0.1 + 1.11 = 1.21, \qquad k_2 = f(0.2,\ 1.11 + 0.121) = 0.2 + 1.231 = 1.431" />
-            <BlockMath math="y_2 = 1.11 + \frac{0.1}{2}(1.21 + 1.431) = 1.24205" />
-          </MathPanel>
-          <StepText>The exact solution is <InlineMath math="y = 2e^x - x - 1" />, so <InlineMath math="y(0.2) = 1.242806" />: RK2 is off by about 0.0008.</StepText>
-        </ExampleStep>
-
-        <Conclusion result="y(0.2) ≈ 1.24205" math={<BlockMath math="y(0.2) \approx 1.24205" />}>
-          The calculator below opens on this problem. Switch to the midpoint version to compare.
-        </Conclusion>
-      </WorkedExample>
+      <DataExample ex={EX['rk2'].example} />
+      <CommonMistakes items={EX['rk2'].mistakes} />
 
       <Lab heading="Interactive RK2 Calculator">
         <Rk2Calculator />
