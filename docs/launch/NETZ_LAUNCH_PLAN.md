@@ -626,6 +626,6 @@ Refunds are given from the Razorpay dashboard; the webhook then ends Pro by itse
 2. **Year badge**: settled 2026-10-21. Free for everyone, bought in the shop for 1,500 gems during its year (`shop.js` `YEAR_BADGE_PRICE`); no longer earned from monthly medals.
 3. **Robot's default name**: Bolt (`DEFAULT_ROBOT_NAME` in `catalog.js`).
 4. **Gem prices and amounts** in 2.5 are a first guess, to be tuned after a few weeks of real use.
-5. **Refunds**: settled 2026-10-21. No refunds; cancel any time, Pro stays until the paid date. Double or mistaken charges are still refunded.
+5. **Refunds**: settled 2026-10-21, changed 2026-11-21 (roadmap 1.3). No refunds for a change of mind; double or mistaken charges, and Pro features we cannot fix within 7 days, are refunded. Cancel is one tap on the Profile; Pro stays until the paid date.
 6. **Code and LaTeX export**: built 2026-10-21 (Pro). Code: `utils/codeExport` (one description per method, compiled to Python, MATLAB, C++, JavaScript, Rust, Go; pages share inputs with `useCodeExportInputs`), checked by `test_code_export.mjs`. LaTeX: `utils/latexExport.js` (solver Solve panel), `Notes/utils/latexNote.js`, `Playground/utils/latexPage.js`. Dialog: `components/export/ProExportDialog.js`.
 7. **Rupees only while in test mode**: Pricing shows ₹ only until `NEXT_PUBLIC_USD_PAYMENTS=on`; `/api/billing/start` refuses USD until then.

@@ -29,8 +29,11 @@ Paths in the docs are written from the project root, for example `docs/launch/NE
 |---|---|
 | [METHODS_IMPLEMENTATION_PLAN.md](methods/METHODS_IMPLEMENTATION_PLAN.md) | **Status.** How to build the new methods, batch by batch, with progress |
 | [NETZ_METHODS_CATALOG.md](methods/NETZ_METHODS_CATALOG.md) | Every method and unit to add, and what every page needs |
+| [SYLLABUS_METHODS_TO_ADD.md](methods/SYLLABUS_METHODS_TO_ADD.md) | The 14 calculus pages added from the BCA syllabi (built 2026-11-27), with the syllabus findings in BCS012_CALCULUS_FOUND.md and INTEGRAL_UNIVERSITY_BCA_MATHS_FOUND.md |
 | [METHOD_PAGES_WORST_CASE_REPORT.md](methods/METHOD_PAGES_WORST_CASE_REPORT.md) | Worst-case inputs on the method pages (all 15 findings fixed) |
 | [ALGORITHM_STEPS_AUDIT.md](methods/ALGORITHM_STEPS_AUDIT.md) | Audit of the steps shown on the first 34 pages (fixed 2026-10-18) |
+| [METHOD_PAGES_TEACHING_PLAN.md](methods/METHOD_PAGES_TEACHING_PLAN.md) | **Done 2026-11-21.** Symbol keys, common mistakes and full worked examples on all 15 units, formula-first calculator working; progress and checks per unit |
+| [METHOD_PAGES_TEACHING_AUDIT.md](methods/METHOD_PAGES_TEACHING_AUDIT.md) | The audit that started it: what each page's theory and working was missing (`npm run audit:teaching`) |
 
 ## rewards/: tasks, medals and gems
 

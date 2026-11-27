@@ -1482,6 +1482,15 @@ export const METHOD_WIDGETS = [
         { key: 'rho', label: 'Density ρ(x, y) (empty: 1)', placeholder: 'x y' },
       ],
   },
+  {
+    id: "chain-rule",
+    load: () => import('@/app/utils/engines/chain-rule'),
+    start: { f: 'sin(x^2)', at: '' },
+    fields: [
+        { key: 'f', label: 'f(x) = a function inside a function', placeholder: 'e.g. sin(x^2)', wide: true, maths: true },
+        { key: 'at', label: 'Slope at x = (optional)', placeholder: 'e.g. 1' },
+      ],
+  },
   (() => {
     const ORDERS = [{ value: 'dydx', label: 'Given dy dx' }, { value: 'dxdy', label: 'Given dx dy' }];
     return {
@@ -1534,6 +1543,12 @@ export const METHOD_WIDGETS = [
         { key: 'r', label: 'r = f(θ)', placeholder: '1 + cos(theta)', show: (v) => v.mode === 'polar' },
         { key: 'at', label: 'At (x, t or θ)', placeholder: '1' },
       ],
+  },
+  {
+    id: "curve-tracing",
+    load: () => import('@/app/utils/engines/curve-tracing'),
+    start: { f: 'x^3 - 3x' },
+    fields: [{ key: 'f', label: 'y = f(x)', placeholder: 'e.g. x^3 - 3x', wide: true, maths: true }],
   },
   {
     id: "divergence-theorem",
@@ -1609,6 +1624,20 @@ export const METHOD_WIDGETS = [
       ],
   };
   })(),
+  {
+    id: "fundamental-theorem",
+    load: () => import('@/app/utils/engines/fundamental-theorem'),
+    start: { mode: 'evaluate', f: 'x^2', a: '0', b: '3', h: 't^2', lo: '0', up: 'x' },
+    fields: [
+        { key: 'mode', label: 'What do you want to do?', kind: 'choice', options: [{ value: 'evaluate', label: 'Find an area (Part 2)' }, { value: 'derivative', label: 'Differentiate an integral (Part 1)' }] },
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. x^2', wide: true, maths: true, show: (v) => v.mode === 'evaluate' },
+        { key: 'a', label: 'From x = a', placeholder: 'e.g. 0', show: (v) => v.mode === 'evaluate' },
+        { key: 'b', label: 'To x = b', placeholder: 'e.g. 3', show: (v) => v.mode === 'evaluate' },
+        { key: 'h', label: 'Integrand h(t) =', placeholder: 'e.g. sqrt(1 + t^2)', wide: true, maths: true, show: (v) => v.mode === 'derivative' },
+        { key: 'lo', label: 'Lower limit (a number or in x)', placeholder: 'e.g. 0', show: (v) => v.mode === 'derivative' },
+        { key: 'up', label: 'Upper limit (in x)', placeholder: 'e.g. x^2', show: (v) => v.mode === 'derivative' },
+      ],
+  },
   (() => {
     const MODES = [{ value: 'grad', label: 'grad φ' }, { value: 'div', label: 'div F' }, { value: 'curl', label: 'curl F' }, { value: 'potential', label: 'Scalar potential' }];
     return {
@@ -1674,6 +1703,49 @@ export const METHOD_WIDGETS = [
       ],
   },
   {
+    id: "indeterminate-forms",
+    load: () => import('@/app/utils/engines/indeterminate-forms'),
+    start: { f: '(x^2 - 1)/(x - 1)', a: '1' },
+    fields: [
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. (x^2 - 1)/(x - 1)', wide: true, maths: true },
+        { key: 'a', label: 'x approaches', placeholder: 'a number, inf or -inf' },
+      ],
+  },
+  {
+    id: "riemann-sum",
+    load: () => import('@/app/utils/engines/riemann-sum'),
+    start: { f: 'x^2', a: '0', b: '1', n: '4', rule: 'right' },
+    fields: [
+        { key: 'rule', label: 'Rectangle heights taken at the', kind: 'choice', options: [{ value: 'left', label: 'Left end' }, { value: 'right', label: 'Right end' }, { value: 'mid', label: 'Middle' }] },
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. x^2', wide: true, maths: true },
+        { key: 'a', label: 'From x = a', placeholder: 'e.g. 0' },
+        { key: 'b', label: 'To x = b', placeholder: 'e.g. 1' },
+        { key: 'n', label: 'Number of strips, n', placeholder: 'e.g. 4' },
+      ],
+  },
+  {
+    id: "integration-by-parts",
+    load: () => import('@/app/utils/engines/integration-by-parts'),
+    start: { f: 'x*e^x', u: '', a: '', b: '' },
+    fields: [
+        { key: 'f', label: 'Integrand f(x) =', placeholder: 'e.g. x*e^x', wide: true, maths: true },
+        { key: 'u', label: 'Your choice of u (optional)', placeholder: 'e.g. x', maths: true },
+        { key: 'a', label: 'Lower limit (optional)', placeholder: 'e.g. 0' },
+        { key: 'b', label: 'Upper limit (optional)', placeholder: 'e.g. 1' },
+      ],
+  },
+  {
+    id: "ivt",
+    load: () => import('@/app/utils/engines/intermediate-value-theorem'),
+    start: { f: 'x^3 - x - 1', a: '1', b: '2', y: '' },
+    fields: [
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. x^3 - x - 1', wide: true, maths: true },
+        { key: 'a', label: 'Left end, a =', placeholder: 'e.g. 1' },
+        { key: 'b', label: 'Right end, b =', placeholder: 'e.g. 2' },
+        { key: 'y', label: 'Target value N (empty = look for a root)', placeholder: 'e.g. 4 (or leave empty)' },
+      ],
+  },
+  {
     id: "jacobian",
     load: () => import('@/app/utils/engines/jacobian'),
     start: { f1: 'x = r cos(θ)', f2: 'y = r sin(θ)', f3: '', wrt: 'r, θ' },
@@ -1708,6 +1780,15 @@ export const METHOD_WIDGETS = [
         { key: 'f', label: 'f(x, a)', placeholder: '(x^a - 1)/log(x)', wide: true },
         { key: 'lo', label: 'From', placeholder: '0' }, { key: 'hi', label: 'To (inf allowed when evaluating)', placeholder: '1' },
         { key: 'a0', label: 'Where F is known (optional: 0, 1 or inf)', placeholder: 'inf', show: (v) => v.mode === 'evaluate' },
+      ],
+  },
+  {
+    id: "limit-laws",
+    load: () => import('@/app/utils/engines/limit-laws'),
+    start: { f: 'x^2 + 3x', a: '2' },
+    fields: [
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. (x^2 + 1)/(x + 1)', wide: true, maths: true },
+        { key: 'a', label: 'x approaches', placeholder: 'e.g. 2' },
       ],
   },
   {
@@ -1790,6 +1871,36 @@ export const METHOD_WIDGETS = [
   };
   })(),
   {
+    id: "product-rule",
+    load: () => import('@/app/utils/engines/product-rule'),
+    start: { u: 'x^2', v: 'sin(x)', at: '' },
+    fields: [
+        { key: 'u', label: 'First factor, u(x) =', placeholder: 'e.g. x^2', maths: true },
+        { key: 'v', label: 'Second factor, v(x) =', placeholder: 'e.g. sin(x)', maths: true },
+        { key: 'at', label: 'Slope at x = (optional)', placeholder: 'e.g. 1' },
+      ],
+  },
+  {
+    id: "definite-integral-properties",
+    load: () => import('@/app/utils/engines/definite-integral-properties'),
+    start: { f: 'x^3', a: '-1', b: '1' },
+    fields: [
+        { key: 'f', label: 'f(x) =', placeholder: 'e.g. x^3', wide: true, maths: true },
+        { key: 'a', label: 'Lower limit a', placeholder: 'e.g. -1' },
+        { key: 'b', label: 'Upper limit b', placeholder: 'e.g. 1' },
+      ],
+  },
+  {
+    id: "quotient-rule",
+    load: () => import('@/app/utils/engines/quotient-rule'),
+    start: { u: 'x', v: 'x^2 + 1', at: '' },
+    fields: [
+        { key: 'u', label: 'Top, u(x) =', placeholder: 'e.g. x', maths: true },
+        { key: 'v', label: 'Bottom, v(x) =', placeholder: 'e.g. x^2 + 1', maths: true },
+        { key: 'at', label: 'Slope at x = (optional)', placeholder: 'e.g. 2' },
+      ],
+  },
+  {
     id: "reduction-formula",
     load: () => import('@/app/utils/engines/reduction-formula'),
     start: {
@@ -1804,6 +1915,12 @@ export const METHOD_WIDGETS = [
         { key: 'a', label: 'a', placeholder: '1', show: (v) => v.kind === 'xexp' },
         { key: 'wallis', label: 'Limits', kind: 'choice', options: [{ value: 'no', label: "Indefinite" }, { value: 'yes', label: "0 to π/2 (Wallis)" }], show: (v) => v.kind === 'sin' || v.kind === 'cos' },
       ],
+  },
+  {
+    id: "standard-integrals",
+    load: () => import('@/app/utils/engines/integral'),
+    start: { f: '3x^2 + 2/x - cos(x)' },
+    fields: [{ key: 'f', label: 'Integrand f(x) =', placeholder: 'e.g. 3x^2 + 2/x - cos(x)', wide: true, maths: true }],
   },
   {
     id: "stokes-theorem",
@@ -1909,6 +2026,27 @@ export const METHOD_WIDGETS = [
         { key: 'l2to', label: 'Middle: to', placeholder: 'may use the outer letter' },
         { key: 'l3from', label: 'Outermost: from', placeholder: 'a number' },
         { key: 'l3to', label: 'Outermost: to', placeholder: 'a number' },
+      ],
+  },
+  {
+    id: "discontinuity-types",
+    load: () => import('@/app/utils/engines/discontinuity-types'),
+    start: { f: '(x^2 - 1)/((x - 1)*(x - 3))', lo: '-10', hi: '10' },
+    fields: [
+        { key: 'f', label: 'f(x), or pieces separated by ;', placeholder: 'e.g. 1/(x - 2)', wide: true, maths: true },
+        { key: 'lo', label: 'Search from x =', placeholder: '-10' },
+        { key: 'hi', label: 'to x =', placeholder: '10' },
+      ],
+  },
+  {
+    id: "u-substitution",
+    load: () => import('@/app/utils/engines/u-substitution'),
+    start: { f: '2*x*(x^2 + 1)^3', u: '', a: '', b: '' },
+    fields: [
+        { key: 'f', label: 'Integrand f(x) =', placeholder: 'e.g. 2*x*(x^2 + 1)^3', wide: true, maths: true },
+        { key: 'u', label: 'Your choice of u (optional)', placeholder: 'e.g. x^2 + 1', maths: true },
+        { key: 'a', label: 'Lower limit (optional)', placeholder: 'e.g. 0' },
+        { key: 'b', label: 'Upper limit (optional)', placeholder: 'e.g. 1' },
       ],
   },
   {

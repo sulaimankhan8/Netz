@@ -663,7 +663,7 @@ export function compile(program, lang) {
   // Body first, so we know which libraries it uses
   const fnTexts = (program.funcs || []).map((f) => funcCode(f, ctx));
   const bodyLines = emitStatements(program.body, ctx, ['python', 'matlab', 'javascript'].includes(lang) ? 0 : 1);
-  const header = [`${c} ${program.title}`, ...(program.about || []).map((l) => `${c} ${l}`), `${c} Made with NETZ (netz-ruby.vercel.app)`];
+  const header = [`${c} ${program.title}`, ...(program.about || []).map((l) => `${c} ${l}`), `${c} Made with NETZ (netzmath.vercel.app)`];
 
   if (lang === 'python') {
     return [...header, '', ...(ctx.uses.math ? ['import math', '', ''] : []), ...fnTexts.flatMap((t) => [t, '', '']), ...bodyLines, ''].join('\n');

@@ -1,8 +1,8 @@
 /**
  * VAT / GST / consumption tax: standard (and main reduced) rates by country, for /vat-calculator.
  * Same rule shape as in.js. Research: docs/research_notes/NETZ topics and new units/interest_and_taxes.md (section 4.K),
- * where most rates are marked secondary or unverified. The owner checks every rate against the official list
- * (EU: taxation-customs.ec.europa.eu "VAT rates") before the page goes live (docs/launch/NETZ_OWNER_TODO.md, section K).
+ * where most rates are marked secondary or unverified. The page is live since 2026-11-21; each rate still to be checked
+ * on its official list (EU: the Commission's TEDB) is logged in docs/launch/NETZ_OWNER_TODO.md, section K.
  */
 
 const EU_SOURCE = {

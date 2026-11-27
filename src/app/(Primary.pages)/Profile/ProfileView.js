@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import useProgress from '@/app/utils/progress/useProgress';
 import useAccount from '@/app/utils/progress/useAccount';
-import { markOnboardingSeen, PROGRESS_EVENT } from '@/app/utils/progress/engine';
+import { markOnboardingSeen, PROGRESS_EVENT, resetProgress } from '@/app/utils/progress/engine';
 import { GROUPS, GEMS, MONTH_MEDAL_DAYS, ONBOARDING, PRO_REWARD_AT, PRO_SEASONS, PRO_TASKS, STREAK_MEDALS, TASKS, MAX_FREEZES, DEFAULT_ROBOT_NAME } from '@/app/utils/progress/catalog';
 import useIsPro, { useProStatus } from '@/app/utils/useIsPro';
 import { refreshPro } from '@/app/utils/proClient';
@@ -429,7 +429,6 @@ function Gems({ summary, state, today, signedIn, className, onOpenShop }) {
 /** The student's plan: what it is, when it renews or ends, and cancelling the renewal (plan 5.4 step 5). */
 function YourPlan({ userId }) {
   const status = useProStatus();
-  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   if (!status?.pro) return null;
@@ -438,6 +437,7 @@ function YourPlan({ userId }) {
   const line = status.lifetime ? 'Pro for life. Nothing more to pay.'
     : status.renews ? `Renews on ${date}.` : `Pro until ${date}. It will not renew.`;
 
+  // One tap, no "are you sure?" step (roadmap 1.3: cancelling must be as easy as buying)
   const cancel = async () => {
     setBusy(true);
     setMessage('');
@@ -446,12 +446,11 @@ function YourPlan({ userId }) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'failed');
       await refreshPro(userId, { force: true });
-      setMessage(`Cancelled. You keep Pro until ${date}.`);
+      setMessage(`Cancelled. Nothing more will be charged, and you keep Pro until ${date}.`);
     } catch {
       setMessage('Could not cancel just now. Please try again, or email us from the Contact page.');
     } finally {
       setBusy(false);
-      setConfirming(false);
     }
   };
 
@@ -461,20 +460,13 @@ function YourPlan({ userId }) {
         <h3 id="pf-plan" className="m-0 text-[15px] font-bold">Your plan: Pro {PLANS[status.plan]?.label.toLowerCase() || ''}</h3>
       </div>
       <p className="m-0 text-[14px] text-[#D8D8DC]">{line}</p>
-      {status.renews && !confirming && (
-        <button type="button" className={`${BTN} self-start border border-[#2B4570] bg-transparent text-[#F4F4F2] hover:bg-[#2B4570]`} onClick={() => setConfirming(true)}>
-          Cancel renewal
+      {status.renews && (
+        <button type="button" disabled={busy} className={`${BTN} self-start border border-[#2B4570] bg-transparent text-[#F4F4F2] hover:bg-[#2B4570]`} onClick={cancel}>
+          {busy ? 'Cancelling…' : 'Cancel renewal'}
         </button>
       )}
-      {status.renews && confirming && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[14px]">Stop renewing? You keep Pro until {date}.</span>
-          <button type="button" disabled={busy} className={`${BTN} bg-[#D55E64] text-white hover:brightness-105`} onClick={cancel}>{busy ? 'Cancelling…' : 'Yes, cancel'}</button>
-          <button type="button" disabled={busy} className={`${BTN} bg-transparent text-[#F4F4F2] hover:bg-[#2B4570]`} onClick={() => setConfirming(false)}>Keep it</button>
-        </div>
-      )}
       {message && <p className="m-0 text-[13px] text-[#FBAE3D]" role="status">{message}</p>}
-      <p className="m-0 text-[12px] text-[#B4B4BA]">Payments are not refunded; cancelling keeps Pro until the paid date. See <Link href="/Refund" className="underline">Refunds</Link>.</p>
+      <p className="m-0 text-[12px] text-[#B4B4BA]">Cancelling stops the next payment; Pro stays on until the paid date. No refunds for a change of mind (double charges and faults are refunded). See <Link href="/Refund" className="underline">Refunds</Link>.</p>
     </div>
   );
 }
@@ -541,6 +533,59 @@ function Pro({ state, today, userId, className }) {
   );
 }
 
+/**
+ * "Delete my account" (Privacy page; docs/launch/NETZ_ROADMAP.md 1.2): one button and one confirmation, no email
+ * needed. /api/account/delete stops a renewing plan, removes the cloud files and the account; this device's
+ * progress is reset and the student is signed out. Notes saved in this browser stay until they delete them.
+ */
+function DeleteAccount({ signOut }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const ERRORS = {
+    cancel_failed: 'We could not stop your Pro renewal, so nothing was deleted. Please try again in a minute.',
+    billing_unavailable: 'Payments are unavailable right now, so nothing was deleted. Please try again later.',
+  };
+
+  const remove = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/account/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: 'delete' }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'failed');
+      resetProgress();
+      window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { kind: 'progress.reset', events: [] } }));
+      try { await signOut(); } catch { /* the account is already gone */ }
+    } catch (error) {
+      setMessage(ERRORS[error.message] || 'Something went wrong and your account was not deleted. Please try again, or email us from the Contact page.');
+      setBusy(false);
+      setConfirming(false);
+    }
+  };
+
+  if (!confirming) {
+    return (
+      <button type="button" className={`${BTN} bg-[var(--pf-tray)] text-[var(--pf-danger)] border border-[var(--pf-line)] hover:brightness-95`} onClick={() => setConfirming(true)}>Delete my account</button>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-[var(--pf-danger)] p-4" role="group" aria-labelledby="pf-delete">
+      <h3 id="pf-delete" className="m-0 text-[15px] font-bold">Delete your account?</h3>
+      <p className="m-0 text-[14px] leading-relaxed text-[var(--pf-text2)]">
+        This removes your account, the copies of your notes and files in the cloud, your published notes, and your saved
+        medals, streak and gems. A Pro plan stops renewing. It cannot be undone. Payment records are kept for tax, as the
+        Privacy page explains. Notes saved in this browser stay on this device.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={busy} className={`${BTN} bg-[var(--pf-danger)] text-[var(--pf-danger-ink)] hover:brightness-105`} onClick={remove}>{busy ? 'Deleting…' : 'Yes, delete everything'}</button>
+        <button type="button" disabled={busy} className={BTN_QUIET} onClick={() => setConfirming(false)}>Keep my account</button>
+      </div>
+      {message && <p className="m-0 text-[13px] text-[var(--pf-danger)]" role="alert">{message}</p>}
+    </div>
+  );
+}
+
 function SaveProgress({ account, className }) {
   const { configured, user, loading, signIn, signOut } = account;
   const [busy, setBusy] = useState(false);
@@ -553,6 +598,7 @@ function SaveProgress({ account, className }) {
           Signed in as <span className="font-semibold text-[var(--pf-ink)]">{user.email}</span>. Your medals, streak and gems are kept safe and follow you to every device you sign in on.
         </p>
         <button type="button" className={BTN_QUIET} onClick={signOut}>Sign out</button>
+        <DeleteAccount signOut={signOut} />
       </section>
     );
   }

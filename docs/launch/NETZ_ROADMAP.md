@@ -12,7 +12,7 @@
 
 | Area | State |
 | :--- | :--- |
-| Method pages | 34 pages in 5 units, steps + tables + graphs, code/LaTeX export (Pro) |
+| Method pages | 233 pages in 15 units (2026-11-21; PPF still hidden), each with a symbol key, common mistakes and a full worked example; steps + tables + graphs, code/LaTeX export (Pro) |
 | Board / Playground | On-device handwriting (text + maths), shapes, symbols, equations, export |
 | Notes | Blocks, KaTeX, live solver widgets, quizzes, handwriting, public links |
 | Rewards | Tasks, streaks, 75 medals, gems, shop, Bolt |
@@ -74,8 +74,8 @@ Each phase has a **gate**: don't start the next phase until the gate is met.
 | # | Task | Notes |
 | :---: | :--- | :--- |
 | 1.1 | Add date of birth at sign-up, plus the chosen under-18 rule | Section 2.2 |
-| 1.2 | Rewrite the privacy notice and add a grievance contact, one-tap "delete my account" and a breach plan | DPDP basics |
-| 1.3 | Change the Refund page from "no refunds" to "no refunds for change of mind, except double charges and faults"; make Cancel one tap | Consumer rules on subscription traps |
+| 1.2 | **Done 2026-11-21.** Rewrite the privacy notice and add a grievance contact, one-tap "delete my account" and a breach plan. Built: `/Privacy` rewritten; "Delete my account" on the Profile (`/api/account/delete`: stops a renewing plan, removes Storage files, deletes the auth user so every table cascades; `payments` is kept for tax). Still open: the under-18 rule (0.4 / 1.1) | DPDP basics |
+| 1.3 | **Done 2026-11-21.** Change the Refund page from "no refunds" to "no refunds for change of mind, except double charges and faults"; make Cancel one tap. Faults: a Pro feature not fixed within 7 days of being reported (lifetime: within the first 30 days); owner to confirm these numbers. Wording also changed on Terms, Pricing and the Profile | Consumer rules on subscription traps |
 | 1.4 | Change prices in `pricing.js` and Razorpay: **₹79–99/mo, ₹699–799/yr, ₹1,999–2,499 lifetime** | Goodnotes India is ₹699/yr |
 | 1.5 | Make pages findable on Google and AI assistants: give every page its own title and description (live pages all say "NETZ" / "current objective: survive"), add the 7 missing pages to the sitemap, connect the domain, set up Search Console + Bing Webmaster Tools, and name the AI crawlers in robots.txt. Then do the ⭐ page items in `docs/methods/NETZ_METHODS_CATALOG.md`, starting with the 16 pages that already exist. Code task list: **section 4 (F1–F13)** | Google, ChatGPT, Gemini and Claude are the free channel |
 | 1.6 | Switch Razorpay to Live | After 1.4 |
@@ -137,7 +137,7 @@ These are the code changes behind roadmap task 1.5 and the ⭐ section of `docs/
 | F4 | **Done** (one source: `src/app/sitemap.js`, built from `methods.js`; `next-sitemap` retired 2026-11-10). Fix the sitemap: add the 7 missing method pages and `lastmod` dates. Choose **one** sitemap source, because both `src/app/sitemap.js` and `next-sitemap.config.js` (writing `public/sitemap.xml`) exist today | `src/app/sitemap.js`, `next-sitemap.config.js` | 1–2 h |
 | F5 | Switch every URL to the custom domain once it's bought (the config still says `netz-ruby.vercel.app`) | `next-sitemap.config.js`, `metadataBase` in both layouts, `public/robots.txt` | 30 min |
 | F6 | **Done 2026-11-10** (`src/app/robots.js`). Name the AI crawlers in robots.txt as allowed: `Googlebot`, `Google-Extended`, `Bingbot`, `GPTBot`, `OAI-SearchBot`, `ChatGPT-User`, `ClaudeBot`, `Claude-SearchBot`, `Claude-User`, `PerplexityBot` | `next-sitemap.config.js` → `robotsTxtOptions.policies` (or a `src/app/robots.js`) | 30 min |
-| F7 | Add JSON-LD structured data (`MathSolver` + `LearningResource` + `BreadcrumbList`) from one shared component. Check Google's current structured-data docs first | New `src/app/components/seo/JsonLd.js`, used by each method `layout.js` | Half a day |
+| F7 | **Done 2026-11-21, except MathSolver.** Every method page has `BreadcrumbList` + `LearningResource` (`methodJsonLd` in `utils/seo/methodMetadata.js`, from each page's `layout.js`); the home page has `WebSite` + `Organization` (`siteJsonLd`). Google's docs (read 2026-11-21) put `MathSolver` on the home page with a `SolveMathAction` whose target URL solves the expression passed in it (e.g. `/solve?q={math_expression_string}`); NETZ has no such URL yet, so it is left out until one is built. Original task: add JSON-LD structured data (`MathSolver` + `LearningResource` + `BreadcrumbList`) from one shared component. Check Google's current structured-data docs first | New `src/app/components/seo/JsonLd.js`, used by each method `layout.js` | Half a day |
 | F8 | **Done 2026-11-15** (FAQ on all 245 pages: the newer pages in their page files, the 34 original pages from `src/app/data/methodFaqs.js`). Add an answer-first intro sentence and a 3–5 question FAQ to each ⭐ page, written from its search words | Each method page | 1–2 pages an hour |
 | F9 | **Done 2026-11-15** (`RelatedMethods` on every page; live pages only). Add links between related pages (e.g. Newton-Raphson ↔ Secant ↔ Bisection) | Method pages / `components/editorial/navData.js` | Half a day |
 | F10 | **Done 2026-11-10** (served by `src/app/llms.txt/route.js`, built from the live pages). Add `public/llms.txt`: the ⭐ pages with a one-line description each | `public/llms.txt` | 30 min |

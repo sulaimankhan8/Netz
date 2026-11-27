@@ -20,9 +20,14 @@
   --pf-lock-rim: #D2D2CD;
   --pf-lock-fill: #EDEDEA;
   --pf-lock-mark: #9C9CA2;
+  /* Delete my account: text, and the confirm button */
+  --pf-danger: #B3261E;
+  --pf-danger-ink: #FFFFFF;
 }
 
 .dark {
+  --pf-danger: #F2B8B5;
+  --pf-danger-ink: #601410;
   --pf-paper: #141415;
   --pf-surface: #1E1E20;
   --pf-tray: #2A2A2D;

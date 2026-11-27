@@ -500,7 +500,13 @@ export default function EditorialSidebar({ className = '' }) {
                         <div className="absolute -left-3 top-0 bottom-0 w-4 pointer-events-auto" />
 
                         <div className="px-2.5 py-1.5 border-b border-neutral-300 dark:border-neutral-700 font-mono font-bold text-xs text-neutral-900 dark:text-white flex justify-between items-center">
-                          <span className="truncate uppercase tracking-wider">{UNITS_DATA[railActiveUnitIndex].shortTitle} Topics</span>
+                          {/* The unit's real name ("Equations & Systems"), without the "Unit 1:" part the list on the left already shows */}
+                          <span
+                            className="uppercase tracking-wider leading-snug"
+                            title={UNITS_DATA[railActiveUnitIndex].title}
+                          >
+                            {String(UNITS_DATA[railActiveUnitIndex].title || UNITS_DATA[railActiveUnitIndex].shortTitle).replace(/^Unit\s*\d+\s*[:\-–]\s*/i, '')}
+                          </span>
                         </div>
 
                         <div className="max-h-80 overflow-y-auto space-y-1 pt-1 custom-notion-scrollbar">

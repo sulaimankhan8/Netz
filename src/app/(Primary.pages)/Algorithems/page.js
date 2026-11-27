@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ALGORITHMS_CATALOG } from '../Notes/utils/algorithmRegistry';
+import { LIVE_METHODS, UNITS, methodByRoute } from '../../data/methods';
 import Tour from '../../components/tour/Tour';
 import AdSlot from '../../components/ads/AdSlot';
 import { 
@@ -24,17 +25,42 @@ export default function AlgorithmsPage() {
 
   const units = ['All', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5'];
 
+  const query = searchQuery.trim().toLowerCase();
+  // Other names people type ("regula falsi", "bolzano method"...) come from the methods list
+  const matchesWords = (route) => {
+    const m = methodByRoute(route);
+    return !!m && m.searchWords.some((w) => w.toLowerCase().includes(query));
+  };
+
   const filteredAlgorithms = ALGORITHMS_CATALOG.filter((alg) => {
     const matchesSearch =
       alg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       alg.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alg.unit.toLowerCase().includes(searchQuery.toLowerCase());
+      alg.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (query.length >= 2 && matchesWords(alg.route));
 
     const matchesUnit =
       activeUnit === 'All' || alg.unit.toLowerCase().includes(activeUnit.toLowerCase());
 
     return matchesSearch && matchesUnit;
   });
+
+  const unitFilterNumber = activeUnit === 'All' ? null : Number(activeUnit.replace(/\D/g, ''));
+  const cardRoutes = new Set(ALGORITHMS_CATALOG.map((a) => a.route.toLowerCase()));
+  const extraMatches =
+    query.length < 2
+      ? []
+      : LIVE_METHODS.filter((m) => {
+          if (cardRoutes.has(m.route.toLowerCase())) return false;
+          if (unitFilterNumber && m.unit !== unitFilterNumber) return false;
+          const unitTitle = UNITS.find((u) => u.unit === m.unit)?.title || '';
+          return (
+            m.name.toLowerCase().includes(query) ||
+            m.title.toLowerCase().includes(query) ||
+            unitTitle.toLowerCase().includes(query) ||
+            m.searchWords.some((w) => w.toLowerCase().includes(query))
+          );
+        }).slice(0, 40);
 
   const handleSelectAlgorithm = (alg) => {
     setActiveAlgorithm(alg);
@@ -138,6 +164,24 @@ export default function AlgorithmsPage() {
             </button>
           )}
         </div>
+
+        {/* Live pages that have no card above (basic calculators and some methods): found by the same search */}
+        {extraMatches.length > 0 && (
+          <div className="rounded-xl border border-[#2e2e2e] bg-[#202020] p-4 text-sm" data-tour="hub-more">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+              Also on NETZ ({extraMatches.length})
+            </p>
+            <ul className="flex flex-wrap gap-x-5 gap-y-2">
+              {extraMatches.map((m) => (
+                <li key={m.id}>
+                  <a href={m.route} className="text-indigo-300 hover:text-indigo-200 underline-offset-2 hover:underline">
+                    {m.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Algorithms Grid & Active Solver Split View */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

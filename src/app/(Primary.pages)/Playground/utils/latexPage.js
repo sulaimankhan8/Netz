@@ -60,7 +60,7 @@ export function pageToTex({ title, blocks = [], strokeCount = 0, inkImage = null
   const note = strokeCount && !inkImage ?`% This page also has ${strokeCount} handwritten stroke${strokeCount === 1 ? '' : 's'}; export PNG, SVG or PDF to keep them.\n` : '';
   const usesChem = parts.some((p) => /\\ce\{/.test(p));
   const tex = [
-    '% Made with NETZ (netz-ruby.vercel.app)',
+    '% Made with NETZ (netzmath.vercel.app)',
     note.trimEnd(),
     '\\documentclass[11pt]{article}',
     '\\usepackage[margin=2.2cm]{geometry}',

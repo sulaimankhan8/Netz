@@ -41,7 +41,7 @@ const COMPARE = [
 
 const QUESTIONS = [
   ['What happens if I cancel?', 'Pro stays on until the end of the period you paid for. Your notes and everything you earned stay.'],
-  ['Can I get a refund?', 'No, payments are not refunded. You can cancel a monthly or yearly plan any time and Pro stays on until the paid period ends.', { href: '/Refund', label: 'Refund policy' }],
+  ['Can I get a refund?', 'Not for a change of mind. If you were charged twice, or a Pro feature does not work and we cannot fix it within 7 days, we refund it. You can cancel a monthly or yearly plan any time in one tap and Pro stays on until the paid period ends.', { href: '/Refund', label: 'Refund policy' }],
   ['Do I need an account?', 'For Pro, yes: sign in with Google so Pro works on all your devices.'],
   ['Which payments work?', payableCurrencies().includes('USD') ? 'UPI, cards and netbanking in India; international cards in USD. Payments are handled by Razorpay.' : 'UPI, Indian cards and netbanking, in rupees. Payments are handled by Razorpay.'],
 ];
@@ -169,7 +169,7 @@ export default function PricingView() {
             <div className="ld-pr-buy">
               {buyButton()}
               <p className="ld-pr-msg" role="status">{message || proLine}</p>
-              <span className="ld-pr-fine">UPI, card or netbanking via Razorpay · cancel any time · no refunds</span>
+              <span className="ld-pr-fine">UPI, card or netbanking via Razorpay · cancel any time in one tap · see refunds</span>
             </div>
           </section>
 

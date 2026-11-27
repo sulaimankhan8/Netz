@@ -83,7 +83,7 @@ export function tableToTex(table) {
 /** A whole .tex document around a body. */
 export function texDocument({ title, subtitle = '', body }) {
   return [
-    '% Made with NETZ (netz-ruby.vercel.app)',
+    '% Made with NETZ (netzmath.vercel.app)',
     '\\documentclass[11pt]{article}',
     '\\usepackage[margin=2.2cm]{geometry}',
     '\\usepackage{amsmath,amssymb}',

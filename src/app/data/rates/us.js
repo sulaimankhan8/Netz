@@ -2,8 +2,8 @@
  * US state sales tax: the statewide base rate for each state and DC, for /sales-tax-calculator.
  * Local (county and city) rates are added on top; the page has a box for them. Same rule shape as in.js.
  * Rates are state base rates as published by each state's revenue department, collected from tax aggregators
- * (Tax Foundation, Avalara, Sales Tax Institute): status 'secondary' until the owner checks them
- * (docs/launch/NETZ_OWNER_TODO.md, section K).
+ * (Tax Foundation, Avalara, Sales Tax Institute): status 'secondary' (the page is live; the check log is in
+ * docs/launch/NETZ_OWNER_TODO.md, section K).
  */
 
 export const US_RULES = [
@@ -90,7 +90,7 @@ export const US_RULES = [
     },
   },
   {
-    // Federal corporate income tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    // Federal corporate income tax (corporate tax page; checks logged in docs/launch/NETZ_OWNER_TODO.md section K)
     id: 'us.corporate',
     validFrom: '2018-01-01',
     validTo: null,

@@ -200,6 +200,20 @@ export const UNIT_MEDALS = {
   'transportation-problem': 'Route Planner',
   'assignment-problem': 'Match Maker',
   'kuhn-tucker': 'Edge Optimiser',
+  'limit-laws': 'Law Abider',
+  'indeterminate-forms': 'Form Breaker',
+  'ivt': 'Bridge Builder',
+  'discontinuity-types': 'Gap Namer',
+  'product-rule': 'Pair Splitter',
+  'quotient-rule': 'Low D-High',
+  'chain-rule': 'Link Forger',
+  'curve-tracing': 'Curve Sketcher',
+  'riemann-sum': 'Strip Adder',
+  'fundamental-theorem': 'Great Link',
+  'standard-integrals': 'Table Reader',
+  'u-substitution': 'Swap Master',
+  'integration-by-parts': 'Part Splitter',
+  'definite-integral-properties': 'Symmetry Spotter',
 };
 
 /** Every Unit 6–15 method page, live or not, as a task (check:methods uses this). */

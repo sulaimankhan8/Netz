@@ -3,8 +3,8 @@
  *   'gst'   5% federal GST only
  *   'hst'   one harmonized tax (federal 5% + provincial part)
  *   'pst'   5% GST plus a separate provincial tax (PST, RST or QST), each on the price before tax
- * Source: Canada Revenue Agency "GST/HST rates" page and provincial sites: status 'secondary' until the owner
- * checks them (docs/launch/NETZ_OWNER_TODO.md, section K).
+ * Source: Canada Revenue Agency "GST/HST rates" page and provincial sites; the current rule was confirmed on them
+ * on 2026-11-21 (docs/launch/NETZ_OWNER_TODO.md, section K).
  */
 
 export const CA_RULES = [

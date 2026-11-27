@@ -1363,4 +1363,46 @@ export const UNIT_EMBLEMS = {
       {dot(70.5, 49, acc, 5.5)}
     </>
   ),
+  'unit6.limit-laws': ({ ink, acc }) => (
+    <>{dot(40, 62, ink, 7)}{dot(80, 62, ink, 7)}<path d="M54 62 H66 M60 56 V68" {...S(acc, 4)} /><path d="M32 84 H88" {...S(ink, 3)} opacity="0.7" /></>
+  ),
+  'unit6.indeterminate-forms': ({ ink, acc }) => (
+    <>{ring(60, 43, ink, 9, 4.5)}{ring(60, 79, ink, 9, 4.5)}<path d="M36 61 H84" {...S(acc, 4.5)} /></>
+  ),
+  'unit6.ivt': ({ ink, acc }) => (
+    <><path d="M28 82 C46 82 52 36 92 36" {...S(ink, 5)} /><path d="M26 60 H94" {...S(acc, 2.5)} strokeDasharray="4 4" />{dot(57, 60, acc, 5.5)}</>
+  ),
+  'unit6.discontinuity-types': ({ ink, acc }) => (
+    <><path d="M28 76 L56 62" {...S(ink, 5)} /><path d="M64 38 L92 50" {...S(ink, 5)} />{ring(58, 61, acc, 4.5, 3.5)}{dot(63, 39, acc, 4.5)}</>
+  ),
+  'unit6.product-rule': ({ ink, acc }) => (
+    <><rect x="30" y="50" width="36" height="36" rx="3" fill={ink} opacity="0.35" /><path d="M66 50 H90 V86 H66" {...S(acc, 4)} /><path d="M30 40 H90" {...S(ink, 3)} opacity="0.7" /></>
+  ),
+  'unit6.quotient-rule': ({ ink, acc }) => (
+    <><path d="M34 60 H86" {...S(ink, 5)} />{dot(60, 42, acc, 7)}{dot(60, 80, acc, 7)}</>
+  ),
+  'unit6.chain-rule': ({ ink, acc }) => (
+    <>{ring(46, 60, ink, 16, 5)}{ring(74, 60, acc, 16, 5)}</>
+  ),
+  'unit6.curve-tracing': ({ ink, acc }) => (
+    <><path d="M28 80 C40 80 44 38 60 56 C76 74 80 36 92 36" {...S(ink, 4.5)} />{dot(44, 47, acc, 4.5)}{dot(76, 52, acc, 4.5)}</>
+  ),
+  'unit6.riemann-sum': ({ ink, acc }) => (
+    <><path d="M30 86 H92" {...S(ink, 3)} opacity="0.7" /><path d="M36 86 V68 H48 V86 M48 86 V58 H60 V86 M60 86 V48 H72 V86 M72 86 V40 H84 V86" {...S(acc, 3)} /><path d="M32 72 C48 62 64 50 90 36" {...S(ink, 4)} /></>
+  ),
+  'unit6.fundamental-theorem': ({ ink, acc }) => (
+    <><path d="M34 86 V62 C50 58 64 48 80 42 V86 Z" fill={ink} opacity="0.35" />{arrow(30, 34, 88, 34, acc, 4, 8)}{arrow(88, 48, 30, 48, ink, 3, 7)}</>
+  ),
+  'unit6.standard-integrals': ({ ink, acc }) => (
+    <><path d="M70 32 C60 28 56 38 56 50 V74 C56 86 50 90 42 86" {...S(ink, 5)} />{dot(78, 60, acc, 4.5)}</>
+  ),
+  'unit6.u-substitution': ({ ink, acc }) => (
+    <>{arrow(34, 50, 86, 50, ink, 4.5, 9)}{arrow(86, 72, 34, 72, acc, 4.5, 9)}</>
+  ),
+  'unit6.integration-by-parts': ({ ink, acc }) => (
+    <><rect x="30" y="40" width="42" height="40" rx="3" fill={ink} opacity="0.35" /><path d="M72 40 H90 M72 80 H90 M81 40 V80" {...S(acc, 4)} /></>
+  ),
+  'unit6.definite-integral-properties': ({ ink, acc }) => (
+    <><path d="M60 28 V92" {...S(acc, 2.5)} strokeDasharray="4 4" /><path d="M30 82 C44 82 52 44 60 44 C68 44 76 82 90 82" {...S(ink, 5)} /></>
+  ),
 };

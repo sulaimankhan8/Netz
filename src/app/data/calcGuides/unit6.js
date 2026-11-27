@@ -550,6 +550,223 @@ const GUIDES = {
     },
     maths: ['f', 'g'],
   },
+  "limit-laws": {
+    "howTo": [
+      "Type the function, for example `(x^2 + 1)/(x + 1)`.",
+      "Type the number $x$ approaches.",
+      "Press {button}. Each step names the law used (sum, product, quotient …)."
+    ],
+    "help": {
+      "f": "Your function, written with x: `x^2 + 3x`, `(2x + 1)*sqrt(x + 4)`. Put `*` between a bracket and a letter.",
+      "a": "The number x gets close to, like `2` or `pi/2`."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "indeterminate-forms": {
+    "howTo": [
+      "Type the function, like `(x^2 - 1)/(x - 1)`.",
+      "Type where x is heading: a number, or `inf` / `-inf`.",
+      "Press {button}. NETZ names the form, rewrites it and finds the limit."
+    ],
+    "help": {
+      "f": "Your function in x. For a product write `x*ln(x)`; for a power `(1 + 1/x)^x`.",
+      "a": "A number like `0` or `1`, or `inf` for infinity."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "ivt": {
+    "howTo": [
+      "Type the function, like `x^3 - x - 1`.",
+      "Type the two ends $a$ and $b$.",
+      "Leave the target empty to look for a root, or type the height N you want. Press {button}."
+    ],
+    "help": {
+      "f": "Your function in x, like `x^3 - x - 1` or `cos(x) - x`.",
+      "a": "The left end of the interval, like `1`.",
+      "b": "The right end (bigger than the left), like `2`.",
+      "y": "The height N to reach. Empty means N = 0 (find a root)."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "discontinuity-types": {
+    "howTo": [
+      "Type the function. For a piecewise function write each piece with a condition, separated by `;`.",
+      "Choose the stretch of x to search (the default −10 to 10 is fine).",
+      "Press {button}. NETZ checks each suspect point and names the type."
+    ],
+    "help": {
+      "f": "Your function: `1/(x - 2)`, or pieces like `x + 1 for x < 0; x - 1 for x >= 0`.",
+      "lo": "Where to start searching along the x-axis.",
+      "hi": "Where to stop searching."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "product-rule": {
+    "howTo": [
+      "Type the first factor $u$ in the first box and the second factor $v$ in the second box.",
+      "Optionally type an $x$ to get the slope there.",
+      "Press {button}. NETZ finds $u'$ and $v'$ and puts them in the rule."
+    ],
+    "help": {
+      "u": "The first factor, like `x^2`.",
+      "v": "The second factor, like `sin(x)`.",
+      "at": "Optional: an x where you also want the slope. Leave empty to skip."
+    },
+    "maths": [
+      "u",
+      "v"
+    ]
+  },
+  "quotient-rule": {
+    "howTo": [
+      "Type the top $u$ in the first box and the bottom $v$ in the second box.",
+      "Optionally type an $x$ to get the slope there.",
+      "Press {button}. NETZ finds $u'$ and $v'$ and puts them in the rule."
+    ],
+    "help": {
+      "u": "The top of the fraction, like `x`.",
+      "v": "The bottom of the fraction, like `x^2 + 1`. It must not be 0.",
+      "at": "Optional: an x where you also want the slope. Leave empty to skip."
+    },
+    "maths": [
+      "u",
+      "v"
+    ]
+  },
+  "chain-rule": {
+    "howTo": [
+      "Type the function that has a function inside another function, like `sin(x^2)`.",
+      "Optionally type an $x$ to get the slope there.",
+      "Press {button}. NETZ finds the layers, differentiates each and multiplies."
+    ],
+    "help": {
+      "f": "A function inside a function: `sin(x^2)`, `(3x + 1)^5`, `e^(2x)`, `sqrt(x^2 + 1)`.",
+      "at": "Optional: an x where you also want the slope. Leave empty to skip."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "curve-tracing": {
+    "howTo": [
+      "Type the function $y = f(x)$, like `x^3 - 3x`.",
+      "Press {button}.",
+      "Read the checklist in the working below, and compare it with the graph."
+    ],
+    "help": {
+      "f": "Your function in x: `x^3 - 3x`, `x^2/(x^2 - 1)`, `x*e^x`."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "riemann-sum": {
+    "howTo": [
+      "Choose where the rectangle heights are taken: left end, right end or middle.",
+      "Type the function and the limits $a$ and $b$.",
+      "Type the number of strips $n$ and press {button}. Try a bigger $n$ to see the sum close in."
+    ],
+    "help": {
+      "rule": "Left or right end of each strip, or the middle. The right end is the textbook limit-of-a-sum choice.",
+      "f": "The function to integrate, like `x^2`.",
+      "a": "Where the area starts, like `0`.",
+      "b": "Where it ends, like `1`.",
+      "n": "How many strips to cut it into: a whole number like `4`, `10` or `100`."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "fundamental-theorem": {
+    "howTo": [
+      "Choose \"Find an area\" to evaluate a definite integral, or \"Differentiate an integral\" for a variable limit.",
+      "For an area, type the function and the two limits. For the derivative, type the integrand in $t$ and the limits in $x$.",
+      "Press {button}. The working shows each part of the theorem."
+    ],
+    "help": {
+      "mode": "Part 2 gives a number (the area). Part 1 differentiates an integral and gives a function of x.",
+      "f": "The function to integrate, like `x^2`.",
+      "a": "The lower limit, like `0`.",
+      "b": "The upper limit, like `3`.",
+      "h": "The integrand written in t, like `sqrt(1 + t^2)`.",
+      "lo": "The lower limit: a number like `0`, or an expression in x.",
+      "up": "The upper limit, an expression in x, like `x^2`."
+    },
+    "maths": [
+      "f",
+      "h"
+    ]
+  },
+  "standard-integrals": {
+    "howTo": [
+      "Type the function you want to integrate.",
+      "Press {button}.",
+      "Each step names the table formula that was used."
+    ],
+    "help": {
+      "f": "Your function: `3x^2 + 2/x - cos(x)`. Sums are done term by term."
+    },
+    "maths": [
+      "f"
+    ]
+  },
+  "u-substitution": {
+    "howTo": [
+      "Type the integrand. Put `*` between a letter and a bracket, like `2*x*(x^2 + 1)^3`.",
+      "Leave u empty and NETZ finds a good one, or type your own u to try it.",
+      "For a definite integral, fill in both limits. Press {button}."
+    ],
+    "help": {
+      "f": "The function to integrate: `2*x*(x^2 + 1)^3`, `x*e^(x^2)`, `cos(x)/sin(x)`.",
+      "u": "Optional: the inside part you want as u, like `x^2 + 1`. Empty means NETZ looks for one.",
+      "a": "Optional lower limit, for a definite integral.",
+      "b": "Optional upper limit."
+    },
+    "maths": [
+      "f",
+      "u"
+    ]
+  },
+  "integration-by-parts": {
+    "howTo": [
+      "Type the product to integrate, with `*` between the two parts, like `x*e^x`.",
+      "Leave u empty and NETZ picks it with ILATE, or type your own u to compare.",
+      "For a definite integral, fill in both limits. Press {button}."
+    ],
+    "help": {
+      "f": "The product to integrate: `x*e^x`, `x*sin(x)`, `ln(x)`.",
+      "u": "Optional: the part you want as u, like `x`. Empty means NETZ uses ILATE.",
+      "a": "Optional lower limit, for a definite integral.",
+      "b": "Optional upper limit."
+    },
+    "maths": [
+      "f",
+      "u"
+    ]
+  },
+  "definite-integral-properties": {
+    "howTo": [
+      "Type the function and the two limits.",
+      "Press {button}. NETZ finds the value, then tests each property on your integral.",
+      "Green means the property gives a shortcut here; blue means it is always true."
+    ],
+    "help": {
+      "f": "The function: `x^3`, `sin(x)/(sin(x) + cos(x))`.",
+      "a": "The lower limit, like `-1` or `0`.",
+      "b": "The upper limit, like `1` or `pi/2`."
+    },
+    "maths": [
+      "f"
+    ]
+  },
 };
 
 export default GUIDES;

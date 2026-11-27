@@ -167,7 +167,22 @@ Do this after the custom domain is live. The code side is `docs/launch/NETZ_ROAD
 - [ ] **Fill the missing keyword volumes** (research could only get US figures). Either sign up for a free seodata.dev key (500 lookups a month) or use Google Keyword Planner with the country set to **India**, then **worldwide**. Run the primary keywords from `docs/reports/NETZ method search volume and SEO.md`.
 - [ ] **Check about 10 ⭐ searches by hand** in a private window on google.co.in and google.com. Note the top 3 results, whether an AI Overview shows, and the "People also ask" questions.
 
-## K. Check tax rates before the GST and VAT pages go live (about 45 minutes; added 2026-11-04)
+## L. Privacy, refunds and "delete my account" (about 20 minutes; added 2026-11-21)
+
+Built 2026-11-21 (roadmap 1.2 and 1.3). Three things only you can confirm:
+
+- [ ] **Refund numbers.** `/Refund` now refunds a Pro feature that is not fixed within **7 days** of being reported (for
+      lifetime, the full payment within the **first 30 days**), and promises a reply within 2 working days. Change the
+      numbers in `src/app/(Primary.pages)/Refund/page.js` (and the Pricing FAQ) if you want others.
+- [ ] **Privacy promises.** `/Privacy` says complaints are answered within 7 days and resolved within 30, backups roll
+      over within about 30 days, and payment records are kept 6–8 years. Check these fit you and your CA's advice (roadmap 0.5).
+- [ ] **Try "Delete my account" once in test mode** with a spare Google account: Profile → Delete my account → Yes. It
+      deletes the row in `auth.users` through `DATABASE_URL`; if Supabase refuses that, the page says "not deleted" and
+      the server log shows `[account/delete] user`. Then check in Supabase that the user, their notes and their
+      `note-assets` files are gone and the `payments` rows are still there.
+- [ ] **Under 18 (roadmap 0.4).** The privacy notice does not cover children yet; it needs your decision first.
+
+## K. Check tax rates (about 45 minutes; added 2026-11-04; the pages are live since 2026-11-21)
 
 The pages `/gst-calculator` and `/vat-calculator` are built but hidden (`building` in `src/app/data/methods.js`).
 Their rates are in `src/app/data/rates/in.js` and `src/app/data/rates/vat.js`; each rate says where it came from

@@ -10,6 +10,8 @@ import InstallButton from '../components/landing/install';
 import MethodGuide from '../components/landing/MethodGuide';
 import RevealObserver from '../components/landing/RevealObserver';
 import TourCards from '../components/landing/TourCards';
+import JsonLd from '../components/seo/JsonLd';
+import { siteJsonLd } from '../utils/seo/methodMetadata';
 
 const DESCRIPTION =
   'Write maths by hand and NETZ types it for you. Solve it step by step, see it on a graph, and keep it all in your notes. Free, works offline, no account.';
@@ -22,14 +24,14 @@ export const metadata = {
     siteName: 'NETZ',
     title: 'NETZ: write, solve and keep your maths',
     description: DESCRIPTION,
-    url: 'https://netz-ruby.vercel.app',
-    images: [{ url: 'https://netz-ruby.vercel.app/icons/icon-512x512.png', width: 512, height: 512, alt: 'NETZ' }],
+    url: 'https://netzmath.vercel.app',
+    images: [{ url: 'https://netzmath.vercel.app/icons/icon-512x512.png', width: 512, height: 512, alt: 'NETZ' }],
   },
   twitter: {
     card: 'summary',
     title: 'NETZ: write, solve and keep your maths',
     description: DESCRIPTION,
-    images: ['https://netz-ruby.vercel.app/icons/icon-512x512.png'],
+    images: ['https://netzmath.vercel.app/icons/icon-512x512.png'],
   },
 };
 
@@ -41,6 +43,7 @@ export const metadata = {
 export default function Home() {
   return (
     <div className={`ld-root ${LD_FONT}`}>
+      <JsonLd data={siteJsonLd()} />
       <RevealObserver />
 
       <div className="ld-wrap">

@@ -335,6 +335,18 @@ Each shared file gets its test file of textbook problems as it is written, as in
 
 ---
 
+### 5.3 Syllabus calculus pages (BCA syllabi; built 2026-11-27, 14 pages, hidden as `building`)
+
+Added from the IGNOU BCS-012 and Integral University BCA maths syllabi (docs/methods/SYLLABUS_METHODS_TO_ADD.md). Each page has the original theory style (formula box with three steps, symbol key, worked example, common mistakes, FAQ), a Guide entry and a Demo-ready example that matches the calculator start values.
+
+- Limits and continuity: /limit-laws-calculator, /indeterminate-forms-calculator, /intermediate-value-theorem, /types-of-discontinuity
+- Differentiation: /product-rule-calculator, /quotient-rule-calculator, /chain-rule-calculator, /curve-tracing-calculator
+- Integration: /integral-as-limit-of-a-sum, /fundamental-theorem-of-calculus, /standard-integrals-table, /u-substitution-calculator, /integration-by-parts-calculator, /properties-of-definite-integrals
+- Engines in src/app/utils/engines: diff-rules.js (product, quotient and chain rule; product-rule.js, quotient-rule.js and chain-rule.js re-export them as solve), u-substitution.js, integration-by-parts.js, riemann-sum.js, definite-integral-properties.js, definite-helpers.js, limit-laws.js, indeterminate-forms.js, intermediate-value-theorem.js, discontinuity-types.js, fundamental-theorem.js, curve-tracing.js. The standard-integrals page reuses integral.js.
+- Tests: tests/engines/calculus-methods.test.mjs (13 tests). Checked 2026-11-27: test:engines 450/450, check:methods, eslint, every page run in the browser (laptop), three on a phone width with no sideways scroll, audit:teaching runs all engines.
+- Typing note: math.js reads `2x (x+1)` as a call of x. The calculators and examples use `2*x*(x^2 + 1)^3`; the hints say so.
+- To publish: change `building(` to `live(` for each id in src/app/data/methods.js (tasks, medals and Notes widgets appear then).
+
 ## 6. Decisions for the owner
 
 | # | Question | Default if no answer |

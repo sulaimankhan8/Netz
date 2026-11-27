@@ -12,11 +12,14 @@ const PAGES = [
   { path: '/Setting', changeFrequency: 'weekly', priority: 0.8 },
 ];
 
+// The app pages change when the newest method page changes, so they take that date (not a fixed old one)
+const NEWEST_LASTMOD = LIVE_METHODS.reduce((max, m) => (m.lastmod > max ? m.lastmod : max), '2024-10-01');
+
 export default function sitemap() {
   return [
     ...PAGES.map((p) => ({
       url: `${SITE}${p.path === '/' ? '/' : p.path}`,
-      lastModified: new Date('2024-10-01T00:00:00+00:00'),
+      lastModified: new Date(`${NEWEST_LASTMOD}T00:00:00+00:00`),
       changeFrequency: p.changeFrequency,
       priority: p.priority,
     })),

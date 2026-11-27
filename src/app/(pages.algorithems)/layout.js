@@ -13,6 +13,7 @@ import FitMath from '../components/FitMath';
 import LongTables from '../components/LongTables';
 import WorstCaseToggle from '../components/dev/WorstCaseToggle';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../utils/seo/site';
+import RelatedMethods from '../components/seo/RelatedMethods';
 
 const APP_NAME = "Netz";
 const APP_DEFAULT_TITLE = "NETZ";
@@ -107,6 +108,7 @@ export default function RootLayout({ children }) {
         {process.env.NODE_ENV !== 'production' && <WorstCaseToggle />}
         <Laout>
           {children}
+          <RelatedMethods />
         </Laout>
         <Analytics />
         <SpeedInsights />

@@ -177,7 +177,7 @@ export default function MethodGuide() {
         <figure className="ld-browser">
           <div className="ld-browser-bar" aria-hidden="true">
             <span className="ld-browser-dots"><span /><span /><span /></span>
-            <span className="ld-browser-url ld-mono">netz-ruby.vercel.app/Gauss-seidal</span>
+            <span className="ld-browser-url ld-mono">netzmath.vercel.app/Gauss-seidal</span>
           </div>
           <div className="ld-browser-view">
             <div key={step.id} className="ld-shot" style={{ '--ar': shot.light.width / shot.light.height }}>

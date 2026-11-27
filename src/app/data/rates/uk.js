@@ -48,7 +48,7 @@ export const UK_RULES = [
     },
   },
   {
-    // Corporation tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    // Corporation tax (corporate tax page; checks logged in docs/launch/NETZ_OWNER_TODO.md section K)
     id: 'uk.corporation',
     validFrom: '2023-04-01',
     validTo: null,

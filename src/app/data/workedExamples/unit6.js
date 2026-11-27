@@ -3592,6 +3592,957 @@ const DATA = {
         "f": "About the y-axis, write x in terms of y (discs) or use shells."
       }
     ]
+  },
+  "limit-laws-calculator": {
+    "example": {
+      "question": "Find $\\displaystyle\\lim_{x \\to 2} (x^2 + 3x)$ using the limit laws.",
+      "steps": [
+        {
+          "title": "Split the sum",
+          "text": "The outermost operation is a sum, so use the sum law.",
+          "math": [
+            "\\lim_{x\\to 2}(x^2 + 3x) = \\lim_{x\\to 2} x^2 + \\lim_{x\\to 2} 3x"
+          ]
+        },
+        {
+          "title": "Power law on $x^2$",
+          "text": "As $x \\to 2$, $x$ tends to 2, so $x^2$ tends to $2^2$.",
+          "math": [
+            "\\lim_{x\\to 2} x^2 = (2)^2 = 4"
+          ]
+        },
+        {
+          "title": "Constant multiple law on $3x$",
+          "text": "The 3 comes outside, then $x \\to 2$.",
+          "math": [
+            "\\lim_{x\\to 2} 3x = 3 \\cdot 2 = 6"
+          ]
+        },
+        {
+          "title": "Add the pieces",
+          "math": [
+            "4 + 6 = 10"
+          ]
+        }
+      ],
+      "answer": "\\lim_{x \\to 2}(x^2 + 3x) = 10",
+      "check": "Putting $x = 2$ straight in gives $4 + 6 = 10$ as well. For a polynomial the limit equals the value."
+    },
+    "symbols": [
+      {
+        "s": "\\lim_{x\\to a} f(x)",
+        "t": "The number $f(x)$ gets close to as $x$ gets close to $a$ (not necessarily equal to $f(a)$)."
+      },
+      {
+        "s": "f, g",
+        "t": "The two pieces the function splits into."
+      },
+      {
+        "s": "c",
+        "t": "A constant number, which can be taken outside the limit."
+      },
+      {
+        "s": "\\lim g \\neq 0",
+        "t": "The condition for the quotient law: the limit of the bottom must not be zero."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Using the quotient law when the bottom tends to 0.",
+        "f": "The law needs $\\lim g \\neq 0$. If both top and bottom tend to 0 (for example $\\frac{x^2-1}{x-1}$ at 1), factor or use L’Hôpital’s rule instead."
+      },
+      {
+        "m": "Using the laws when a piece has no limit.",
+        "f": "Every piece must settle to a number first. A piece that shoots off to infinity breaks the law."
+      },
+      {
+        "m": "Thinking the limit must equal $f(a)$.",
+        "f": "The limit only cares about values near $a$. The laws give the limit; $f(a)$ may be missing or different."
+      }
+    ]
+  },
+  "indeterminate-forms-calculator": {
+    "example": {
+      "question": "Find $\\displaystyle\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$.",
+      "steps": [
+        {
+          "title": "Find what each part tends to",
+          "math": [
+            "\\text{top: } x^2 - 1 \\to 0",
+            "\\text{bottom: } x - 1 \\to 0"
+          ]
+        },
+        {
+          "title": "Name the form",
+          "text": "Zero over zero is undecided: it could be anything.",
+          "math": [
+            "\\frac{0}{0}"
+          ]
+        },
+        {
+          "title": "Rewrite by factoring",
+          "text": "Top and bottom share the factor $(x - 1)$. For $x \\neq 1$ it cancels.",
+          "math": [
+            "\\frac{(x - 1)(x + 1)}{x - 1} = x + 1"
+          ]
+        },
+        {
+          "title": "Take the limit again",
+          "math": [
+            "\\lim_{x\\to 1}(x + 1) = 2"
+          ]
+        }
+      ],
+      "answer": "\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1} = 2",
+      "check": "L’Hôpital’s rule agrees: $\\frac{2x}{1} \\to 2$."
+    },
+    "symbols": [
+      {
+        "s": "\\frac{0}{0}",
+        "t": "Top and bottom both tend to 0."
+      },
+      {
+        "s": "\\frac{\\infty}{\\infty}",
+        "t": "Top and bottom both grow without bound."
+      },
+      {
+        "s": "0\\cdot\\infty,\\ \\infty-\\infty",
+        "t": "A shrinking part against a growing part."
+      },
+      {
+        "s": "1^{\\infty},\\ 0^{0},\\ \\infty^{0}",
+        "t": "A power whose base and exponent pull in opposite directions; solved by taking $\\ln$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Writing $\\frac{0}{0} = 1$ or $= 0$.",
+        "f": "$\\frac{0}{0}$ has no value. $\\frac{x}{x} \\to 1$ but $\\frac{x^2}{x} \\to 0$: the answer depends on the actual functions."
+      },
+      {
+        "m": "Writing $1^{\\infty} = 1$.",
+        "f": "The base only tends to 1; it is not exactly 1. $(1 + \\frac1n)^n \\to e$."
+      },
+      {
+        "m": "Using L’Hôpital’s rule on a form that is not $\\frac{0}{0}$ or $\\frac{\\infty}{\\infty}$.",
+        "f": "Rewrite first. Check the form every time you use the rule."
+      }
+    ]
+  },
+  "intermediate-value-theorem": {
+    "example": {
+      "question": "Show that $f(x) = x^3 - x - 1$ has a root between 1 and 2, and locate it.",
+      "steps": [
+        {
+          "title": "Continuity",
+          "text": "A polynomial is continuous everywhere, so it is continuous on $[1, 2]$."
+        },
+        {
+          "title": "End values",
+          "math": [
+            "f(1) = 1 - 1 - 1 = -1",
+            "f(2) = 8 - 2 - 1 = 5"
+          ]
+        },
+        {
+          "title": "N = 0 is between them",
+          "text": "$f(1)$ is negative and $f(2)$ is positive, so $-1 < 0 < 5$. The theorem gives a root $c \\in (1, 2)$."
+        },
+        {
+          "title": "Halve the interval",
+          "text": "Test the middle, keep the half where the sign changes.",
+          "table": {
+            "columns": [
+              "step",
+              "left",
+              "right",
+              "f(middle)"
+            ],
+            "rows": [
+              [
+                "1",
+                "1",
+                "2",
+                "0.875"
+              ],
+              [
+                "2",
+                "1",
+                "1.5",
+                "-0.2969"
+              ],
+              [
+                "3",
+                "1.25",
+                "1.5",
+                "0.2246"
+              ]
+            ]
+          }
+        }
+      ],
+      "answer": "c \\approx 1.3247",
+      "check": "$f(1.3247) \\approx 0$."
+    },
+    "symbols": [
+      {
+        "s": "[a, b]",
+        "t": "The closed interval, including both end points."
+      },
+      {
+        "s": "N",
+        "t": "The height you want the curve to reach (0 if you are looking for a root)."
+      },
+      {
+        "s": "c",
+        "t": "A point strictly between $a$ and $b$ where $f(c) = N$."
+      },
+      {
+        "s": "f(a),\\ f(b)",
+        "t": "The heights of the curve at the two ends."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Forgetting to check continuity.",
+        "f": "For $f(x) = \\frac1x$ on $[-1, 1]$, $f(-1) = -1$ and $f(1) = 1$ but there is no root: the curve breaks at 0."
+      },
+      {
+        "m": "Thinking \"N is not between\" proves there is no solution.",
+        "f": "It only means the theorem promises nothing. A curve can go up past $N$ and come back down."
+      },
+      {
+        "m": "Believing the theorem finds $c$.",
+        "f": "It only says $c$ exists. Bisection (halving) is what finds a good approximation."
+      }
+    ]
+  },
+  "types-of-discontinuity": {
+    "example": {
+      "question": "Classify the discontinuities of $f(x) = \\dfrac{x^2 - 1}{(x - 1)(x - 3)}$.",
+      "steps": [
+        {
+          "title": "Find the suspect points",
+          "text": "The bottom is 0 when $x = 1$ and when $x = 3$."
+        },
+        {
+          "title": "At x = 1",
+          "text": "The top also has the factor $(x - 1)$, which cancels, leaving $\\frac{x+1}{x-3}$.",
+          "math": [
+            "\\lim_{x\\to 1^-} f = \\lim_{x\\to 1^+} f = \\frac{2}{-2} = -1",
+            "f(1) \\text{ is undefined}"
+          ]
+        },
+        {
+          "title": "Name it",
+          "text": "Equal side limits, but $f(1)$ is missing: a **removable** discontinuity (a hole at $(1, -1)$)."
+        },
+        {
+          "title": "At x = 3",
+          "text": "The top is 8 and the bottom tends to 0.",
+          "math": [
+            "\\lim_{x\\to 3^-} f = -\\infty, \\quad \\lim_{x\\to 3^+} f = +\\infty"
+          ]
+        },
+        {
+          "title": "Name it",
+          "text": "A side limit is infinite: an **infinite** discontinuity (a vertical asymptote at $x = 3$)."
+        }
+      ],
+      "answer": "x = 1: \\text{removable}, \\quad x = 3: \\text{infinite}",
+      "check": "Between those points the function is continuous."
+    },
+    "symbols": [
+      {
+        "s": "\\lim_{x\\to a^-} f",
+        "t": "The left-hand limit: what $f$ approaches as $x$ comes up to $a$ from below."
+      },
+      {
+        "s": "\\lim_{x\\to a^+} f",
+        "t": "The right-hand limit: from above."
+      },
+      {
+        "s": "f(a)",
+        "t": "The actual value at $a$ (it may not exist)."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Calling every break a hole.",
+        "f": "Only a break where both side limits are equal numbers is removable. A jump or an asymptote cannot be filled in."
+      },
+      {
+        "m": "Looking only at where the bottom is 0.",
+        "f": "A piecewise function can also break where one piece ends and the next begins. Check those points too."
+      },
+      {
+        "m": "Saying the limit exists at a jump.",
+        "f": "If the left and right limits differ, the (two-sided) limit does not exist."
+      }
+    ]
+  },
+  "product-rule-calculator": {
+    "example": {
+      "question": "Differentiate $f(x) = x^2 \\sin x$.",
+      "steps": [
+        {
+          "title": "Name u and v",
+          "math": [
+            "u = x^2, \\quad v = \\sin x"
+          ]
+        },
+        {
+          "title": "Differentiate u",
+          "math": [
+            "u' = 2x"
+          ]
+        },
+        {
+          "title": "Differentiate v",
+          "math": [
+            "v' = \\cos x"
+          ]
+        },
+        {
+          "title": "Put them into the product rule",
+          "math": [
+            "(uv)' = u'v + uv' = (2x)(\\sin x) + (x^2)(\\cos x)"
+          ]
+        },
+        {
+          "title": "Simplify",
+          "math": [
+            "f'(x) = 2x\\sin x + x^2\\cos x"
+          ]
+        }
+      ],
+      "answer": "f'(x) = 2x\\sin x + x^2\\cos x",
+      "check": "At $x = 1$ the slope is $2\\sin 1 + \\cos 1 \\approx 2.2232$."
+    },
+    "symbols": [
+      {
+        "s": "u,\\ v",
+        "t": "The two factors of the function, $f = u \\cdot v$."
+      },
+      {
+        "s": "u',\\ v'",
+        "t": "Their derivatives, found separately."
+      },
+      {
+        "s": "(u\\,v)'",
+        "t": "The derivative of the whole product."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Writing $(uv)' = u'v'$.",
+        "f": "This is the most common mistake. $(x \\cdot x)' = (x^2)' = 2x$, but $u'v' = 1 \\cdot 1 = 1$. You must add both cross terms."
+      },
+      {
+        "m": "Forgetting a term.",
+        "f": "There are two terms. If one of them is missing, the answer is wrong."
+      },
+      {
+        "m": "Using the rule when there is a constant factor.",
+        "f": "For $5x^2$, the 5 simply stays outside: $(5x^2)' = 5 \\cdot 2x$. The product rule is for two functions of $x$."
+      }
+    ]
+  },
+  "quotient-rule-calculator": {
+    "example": {
+      "question": "Differentiate $f(x) = \\dfrac{x}{x^2 + 1}$.",
+      "steps": [
+        {
+          "title": "Name the top and the bottom",
+          "math": [
+            "u = x, \\quad v = x^2 + 1"
+          ]
+        },
+        {
+          "title": "Differentiate each",
+          "math": [
+            "u' = 1, \\quad v' = 2x"
+          ]
+        },
+        {
+          "title": "Put them into the quotient rule",
+          "math": [
+            "\\left(\\frac{u}{v}\\right)' = \\frac{(1)(x^2 + 1) - (x)(2x)}{(x^2 + 1)^2}"
+          ]
+        },
+        {
+          "title": "Simplify the top",
+          "math": [
+            "x^2 + 1 - 2x^2 = 1 - x^2"
+          ]
+        }
+      ],
+      "answer": "f'(x) = \\frac{1 - x^2}{(x^2 + 1)^2}",
+      "check": "At $x = 2$ the slope is $\\frac{1 - 4}{25} = -\\frac{3}{25}$."
+    },
+    "symbols": [
+      {
+        "s": "u,\\ v",
+        "t": "The top and the bottom of the fraction."
+      },
+      {
+        "s": "u',\\ v'",
+        "t": "Their derivatives."
+      },
+      {
+        "s": "v^2",
+        "t": "The bottom, squared. It goes on the whole answer."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Mixing up the order: $uv' - u'v$.",
+        "f": "The top of the answer is $u'v - uv'$ (derivative of the top first). The other way round gives the answer with the wrong sign."
+      },
+      {
+        "m": "Forgetting to square the bottom.",
+        "f": "The denominator of the answer is $v^2$, not $v$."
+      },
+      {
+        "m": "Using the rule when the bottom is a number.",
+        "f": "For $\\frac{x^2}{5}$, just take $\\frac15$ outside. The quotient rule is for a bottom that contains $x$."
+      }
+    ]
+  },
+  "chain-rule-calculator": {
+    "example": {
+      "question": "Differentiate $f(x) = \\sin(x^2)$.",
+      "steps": [
+        {
+          "title": "Find the inside and the outside",
+          "text": "The inside is $x^2$; the outside is sine.",
+          "math": [
+            "y = \\sin u, \\quad u = x^2"
+          ]
+        },
+        {
+          "title": "Differentiate the outside",
+          "math": [
+            "\\frac{dy}{du} = \\cos u"
+          ]
+        },
+        {
+          "title": "Differentiate the inside",
+          "math": [
+            "\\frac{du}{dx} = 2x"
+          ]
+        },
+        {
+          "title": "Multiply, then put x back",
+          "math": [
+            "\\frac{dy}{dx} = \\cos u \\cdot 2x = \\cos(x^2)\\cdot 2x"
+          ]
+        }
+      ],
+      "answer": "f'(x) = 2x\\cos(x^2)",
+      "check": "At $x = 1$ the slope is $2\\cos 1 \\approx 1.0806$."
+    },
+    "symbols": [
+      {
+        "s": "u",
+        "t": "The inside function, $u = h(x)$."
+      },
+      {
+        "s": "\\frac{dy}{du}",
+        "t": "The derivative of the outside function, treating $u$ as if it were $x$."
+      },
+      {
+        "s": "\\frac{du}{dx}",
+        "t": "The derivative of the inside function."
+      },
+      {
+        "s": "g'(h(x))",
+        "t": "The outer derivative with the inside left as it is."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Forgetting to multiply by the derivative of the inside.",
+        "f": "$(\\sin x^2)'$ is NOT $\\cos x^2$. It is $\\cos(x^2)\\cdot 2x$."
+      },
+      {
+        "m": "Changing the inside while differentiating the outside.",
+        "f": "Leave the inside alone in the first step. $(\\sin(x^2))'$ starts as $\\cos(x^2)$, not $\\cos(2x)$."
+      },
+      {
+        "m": "Stopping after one layer.",
+        "f": "For $\\sin(\\cos(x^2))$ there are three layers: sine of cosine of $x^2$. Multiply all three derivatives."
+      }
+    ]
+  },
+  "curve-tracing-calculator": {
+    "example": {
+      "question": "Trace the curve $y = x^3 - 3x$.",
+      "steps": [
+        {
+          "title": "Symmetry and intercepts",
+          "text": "$f(-x) = -f(x)$, so it is odd (a half-turn about the origin). $f(0) = 0$ and $x^3 - 3x = x(x^2 - 3) = 0$ at $x = 0, \\pm\\sqrt3$."
+        },
+        {
+          "title": "Asymptotes",
+          "text": "A polynomial has none."
+        },
+        {
+          "title": "First derivative",
+          "math": [
+            "f'(x) = 3x^2 - 3 = 3(x - 1)(x + 1)"
+          ],
+          "after": "Rising for $x < -1$ and $x > 1$; falling for $-1 < x < 1$. So a **local maximum** at $(-1, 2)$ and a **local minimum** at $(1, -2)$."
+        },
+        {
+          "title": "Second derivative",
+          "math": [
+            "f''(x) = 6x"
+          ],
+          "after": "Bending down for $x < 0$ and up for $x > 0$, so $(0, 0)$ is an **inflection point**."
+        },
+        {
+          "title": "Sketch",
+          "text": "Rise to $(-1, 2)$, fall through $(0, 0)$ to $(1, -2)$, then rise again, crossing the axis at $\\pm\\sqrt3$."
+        }
+      ],
+      "answer": "\\text{max } (-1, 2), \\quad \\text{min } (1, -2), \\quad \\text{inflection } (0, 0)",
+      "check": "The calculator draws it with these points marked."
+    },
+    "symbols": [
+      {
+        "s": "f'(x)",
+        "t": "The slope. Its sign says whether the curve rises or falls."
+      },
+      {
+        "s": "f''(x)",
+        "t": "The slope of the slope. Its sign says which way the curve bends."
+      },
+      {
+        "s": "\\text{inflection point}",
+        "t": "Where the bend changes from up to down or from down to up."
+      },
+      {
+        "s": "\\text{asymptote}",
+        "t": "A line the curve runs along but never reaches."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Skipping the domain.",
+        "f": "A curve cannot be drawn where $f$ is not defined. Mark the gaps first."
+      },
+      {
+        "m": "Thinking $f''(c) = 0$ always gives an inflection point.",
+        "f": "The bend must actually change on both sides. $x^4$ has $f''(0) = 0$ but no inflection point."
+      },
+      {
+        "m": "Joining points with straight lines.",
+        "f": "Use the rise/fall and bend information to curve the sketch between the key points."
+      }
+    ]
+  },
+  "integral-as-limit-of-a-sum": {
+    "example": {
+      "question": "Find $\\displaystyle\\int_0^1 x^2\\,dx$ as the limit of a sum (right-hand rectangles). First estimate it with $n = 4$.",
+      "steps": [
+        {
+          "title": "Cut into 4 strips",
+          "math": [
+            "h = \\frac{1 - 0}{4} = \\frac14"
+          ]
+        },
+        {
+          "title": "Heights at the right ends",
+          "table": {
+            "columns": [
+              "i",
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            "rows": [
+              [
+                "x_i",
+                "1/4",
+                "1/2",
+                "3/4",
+                "1"
+              ],
+              [
+                "f(x_i)",
+                "1/16",
+                "4/16",
+                "9/16",
+                "16/16"
+              ]
+            ]
+          }
+        },
+        {
+          "title": "Add the rectangle areas",
+          "math": [
+            "S_4 = \\frac14\\cdot\\frac{30}{16} = \\frac{15}{32} \\approx 0.46875"
+          ]
+        },
+        {
+          "title": "Now do it for any n",
+          "text": "With $x_i = \\frac{i}{n}$ and $h = \\frac1n$, use $\\sum i^2 = \\frac{n(n+1)(2n+1)}{6}$.",
+          "math": [
+            "S_n = \\frac1n\\sum \\frac{i^2}{n^2} = \\frac{1}{n^3}\\cdot\\frac{n(n+1)(2n+1)}{6} = \\frac16\\left(1 + \\frac1n\\right)\\left(2 + \\frac1n\\right)"
+          ]
+        },
+        {
+          "title": "Let n → ∞",
+          "math": [
+            "\\lim_{n\\to\\infty} S_n = \\frac16 (1)(2) = \\frac13"
+          ]
+        }
+      ],
+      "answer": "\\int_0^1 x^2\\,dx = \\frac13",
+      "check": "The antiderivative gives $\\left[\\frac{x^3}{3}\\right]_0^1 = \\frac13$ as well."
+    },
+    "symbols": [
+      {
+        "s": "h",
+        "t": "The width of each strip, $\\frac{b-a}{n}$."
+      },
+      {
+        "s": "x_i = a + ih",
+        "t": "The right end of the $i$-th strip (use $a + (i-1)h$ for the left end)."
+      },
+      {
+        "s": "S_n",
+        "t": "The total area of $n$ rectangles."
+      },
+      {
+        "s": "\\sum_{i=1}^{n}",
+        "t": "Add up the term for $i = 1, 2, \\ldots, n$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Mixing up left and right rectangles.",
+        "f": "Right-hand rectangles use $x_i = a + ih$ (from $i = 1$ to $n$); left-hand ones use $a + (i-1)h$. They give slightly different sums for the same $n$."
+      },
+      {
+        "m": "Using $h = \\frac{b - a}{n}$ and forgetting the factor $h$ in front of the sum.",
+        "f": "The area of each rectangle is height × width, so the sum of heights must be multiplied by $h$."
+      },
+      {
+        "m": "Stopping at a finite n and calling it the integral.",
+        "f": "A sum with a finite $n$ is only an estimate. The integral is the limit as $n \\to \\infty$."
+      }
+    ]
+  },
+  "fundamental-theorem-of-calculus": {
+    "example": {
+      "question": "Use the theorem to find $\\displaystyle\\int_0^3 x^2\\,dx$.",
+      "steps": [
+        {
+          "title": "Find an antiderivative F",
+          "text": "Add 1 to the power and divide by it.",
+          "math": [
+            "F(x) = \\frac{x^3}{3}"
+          ]
+        },
+        {
+          "title": "Put in the limits",
+          "math": [
+            "F(3) = \\frac{27}{3} = 9, \\quad F(0) = 0"
+          ]
+        },
+        {
+          "title": "Subtract",
+          "math": [
+            "\\int_0^3 x^2\\,dx = F(3) - F(0) = 9 - 0 = 9"
+          ]
+        }
+      ],
+      "answer": "\\int_0^3 x^2\\,dx = 9",
+      "check": "The curve fills one third of the 3 × 9 box around it: $27 \\div 3 = 9$."
+    },
+    "symbols": [
+      {
+        "s": "F(x)",
+        "t": "An antiderivative of $f$: a function whose derivative is $f$."
+      },
+      {
+        "s": "F(b) - F(a)",
+        "t": "The value at the top limit minus the value at the bottom limit."
+      },
+      {
+        "s": "h(t)",
+        "t": "The integrand when the limits contain $x$ (written in $t$ so it is not confused with $x$)."
+      },
+      {
+        "s": "b'(x),\\ a'(x)",
+        "t": "The derivatives of the upper and lower limits."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Subtracting the wrong way round.",
+        "f": "It is $F(b) - F(a)$: top limit first. Swapping gives the answer with the wrong sign."
+      },
+      {
+        "m": "Forgetting $b'(x)$ in Part 1.",
+        "f": "For an upper limit $x^2$, the answer must be multiplied by $2x$."
+      },
+      {
+        "m": "Adding $+C$ to a definite integral.",
+        "f": "The $C$ cancels in $F(b) - F(a)$, so a definite integral is a number with no $C$."
+      }
+    ]
+  },
+  "standard-integrals-table": {
+    "example": {
+      "question": "Find $\\displaystyle\\int \\left(3x^2 + \\frac{2}{x} - \\cos x\\right) dx$.",
+      "steps": [
+        {
+          "title": "Integrate term by term",
+          "text": "An integral of a sum is the sum of the integrals, and numbers in front come outside.",
+          "math": [
+            "3\\int x^2\\,dx + 2\\int \\frac1x\\,dx - \\int \\cos x\\,dx"
+          ]
+        },
+        {
+          "title": "Use the table for each term",
+          "math": [
+            "\\int x^2\\,dx = \\frac{x^3}{3}",
+            "\\int \\frac1x\\,dx = \\ln|x|",
+            "\\int \\cos x\\,dx = \\sin x"
+          ]
+        },
+        {
+          "title": "Put them together",
+          "math": [
+            "3\\cdot\\frac{x^3}{3} + 2\\ln|x| - \\sin x + C"
+          ]
+        }
+      ],
+      "answer": "x^3 + 2\\ln|x| - \\sin x + C",
+      "check": "Differentiate: $3x^2 + \\frac2x - \\cos x$, the starting function."
+    },
+    "symbols": [
+      {
+        "s": "\\int",
+        "t": "The integral sign: \"find the function whose derivative is this\"."
+      },
+      {
+        "s": "C",
+        "t": "The constant of integration. Any constant has derivative 0, so it is always there."
+      },
+      {
+        "s": "ax + b",
+        "t": "A linear inside. $\\int f(ax + b)\\,dx = \\frac{1}{a}F(ax + b) + C$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Using the power rule on $\\frac1x$.",
+        "f": "$n = -1$ would divide by zero. $\\int \\frac1x\\,dx = \\ln|x| + C$ is its own formula."
+      },
+      {
+        "m": "Forgetting the $\\frac1a$ for $e^{3x}$ or $\\sin 2x$.",
+        "f": "$\\int e^{3x}\\,dx = \\frac{e^{3x}}{3} + C$, not $e^{3x}$. Differentiate your answer to check."
+      },
+      {
+        "m": "Getting the sign wrong for sine.",
+        "f": "$\\int \\sin x\\,dx = -\\cos x$: the minus sign is there because $(\\cos x)' = -\\sin x$."
+      }
+    ]
+  },
+  "u-substitution-calculator": {
+    "example": {
+      "question": "Find $\\displaystyle\\int 2x(x^2 + 1)^3\\,dx$.",
+      "steps": [
+        {
+          "title": "Choose u",
+          "text": "The inside part is $x^2 + 1$, and its derivative $2x$ is right beside it.",
+          "math": [
+            "u = x^2 + 1"
+          ]
+        },
+        {
+          "title": "Find du",
+          "math": [
+            "\\frac{du}{dx} = 2x \\quad\\Rightarrow\\quad du = 2x\\,dx"
+          ]
+        },
+        {
+          "title": "Rewrite the integral in u",
+          "text": "The whole $2x\\,dx$ becomes $du$.",
+          "math": [
+            "\\int 2x(x^2 + 1)^3\\,dx = \\int u^3\\,du"
+          ]
+        },
+        {
+          "title": "Integrate in u",
+          "math": [
+            "\\int u^3\\,du = \\frac{u^4}{4} + C"
+          ]
+        },
+        {
+          "title": "Put x back",
+          "math": [
+            "\\frac{(x^2 + 1)^4}{4} + C"
+          ]
+        }
+      ],
+      "answer": "\\int 2x(x^2 + 1)^3\\,dx = \\frac{(x^2 + 1)^4}{4} + C",
+      "check": "Differentiate by the chain rule: $\\frac{4(x^2+1)^3 \\cdot 2x}{4} = 2x(x^2+1)^3$."
+    },
+    "symbols": [
+      {
+        "s": "u = g(x)",
+        "t": "The new variable: the inside part of the integrand."
+      },
+      {
+        "s": "du = g'(x)\\,dx",
+        "t": "The matching little piece: the derivative of $u$ times $dx$."
+      },
+      {
+        "s": "u(a),\\ u(b)",
+        "t": "The new limits of a definite integral: put the old limits through $u = g(x)$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Leaving some $x$ behind.",
+        "f": "After the substitution, the integral must contain only $u$ and $du$. If an $x$ remains, the choice of $u$ does not work."
+      },
+      {
+        "m": "Forgetting to change the limits.",
+        "f": "For a definite integral either change the limits to $u$-values, or put $x$ back and use the old limits. Never mix them."
+      },
+      {
+        "m": "Dropping a constant.",
+        "f": "If $du = 2x\\,dx$ but the integrand has only $x\\,dx$, then $x\\,dx = \\frac12 du$. The $\\frac12$ matters."
+      }
+    ]
+  },
+  "integration-by-parts-calculator": {
+    "example": {
+      "question": "Find $\\displaystyle\\int x e^x\\,dx$.",
+      "steps": [
+        {
+          "title": "Choose u and dv by ILATE",
+          "text": "$x$ is algebraic (A) and $e^x$ is exponential (E). A comes before E, so $u = x$.",
+          "math": [
+            "u = x, \\quad dv = e^x\\,dx"
+          ]
+        },
+        {
+          "title": "Find du and v",
+          "math": [
+            "du = dx, \\quad v = \\int e^x\\,dx = e^x"
+          ]
+        },
+        {
+          "title": "Put them into the formula",
+          "math": [
+            "\\int x e^x\\,dx = x e^x - \\int e^x\\,dx"
+          ]
+        },
+        {
+          "title": "Integrate what is left",
+          "math": [
+            "= x e^x - e^x + C"
+          ]
+        }
+      ],
+      "answer": "\\int x e^x\\,dx = e^x(x - 1) + C",
+      "check": "Differentiate by the product rule: $e^x(x - 1) + e^x = x e^x$."
+    },
+    "symbols": [
+      {
+        "s": "u",
+        "t": "The part you differentiate (it should get simpler: $x \\to 1$, $\\ln x \\to \\frac1x$)."
+      },
+      {
+        "s": "dv",
+        "t": "The part you integrate (it should be easy: $e^x\\,dx$, $\\sin x\\,dx$)."
+      },
+      {
+        "s": "du,\\ v",
+        "t": "$du$ is the derivative of $u$ times $dx$; $v$ is the integral of $dv$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Choosing u badly.",
+        "f": "If the new integral looks harder than the old one, swap the roles. For $x e^x$, $u = e^x$ would give $\\frac{x^2}{2}e^x - \\ldots$, which is worse; $u = x$ gives a simple $\\int e^x$."
+      },
+      {
+        "m": "Forgetting the minus sign.",
+        "f": "It is $uv - \\int v\\,du$. The second part is subtracted, not added."
+      },
+      {
+        "m": "Adding $+C$ to $v$.",
+        "f": "Leave it out when finding $v$; put one $+C$ at the very end."
+      }
+    ]
+  },
+  "properties-of-definite-integrals": {
+    "example": {
+      "question": "Evaluate $\\displaystyle\\int_{-1}^{1} x^3\\,dx$ using the properties.",
+      "steps": [
+        {
+          "title": "Are the limits symmetric?",
+          "text": "Yes: $-1$ and $1$ are $-c$ and $c$ with $c = 1$."
+        },
+        {
+          "title": "Is f even or odd?",
+          "math": [
+            "f(-x) = (-x)^3 = -x^3 = -f(x)"
+          ],
+          "after": "So $f$ is **odd**."
+        },
+        {
+          "title": "Use the odd-function property",
+          "text": "The left half of the area is exactly cancelled by the right half.",
+          "math": [
+            "\\int_{-1}^{1} x^3\\,dx = 0"
+          ]
+        }
+      ],
+      "answer": "\\int_{-1}^{1} x^3\\,dx = 0",
+      "check": "Direct: $\\left[\\frac{x^4}{4}\\right]_{-1}^{1} = \\frac14 - \\frac14 = 0$."
+    },
+    "symbols": [
+      {
+        "s": "f(-x) = f(x)",
+        "t": "An even function: the graph is a mirror image in the y-axis (like $x^2$, $\\cos x$)."
+      },
+      {
+        "s": "f(-x) = -f(x)",
+        "t": "An odd function: unchanged by a half-turn about the origin (like $x^3$, $\\sin x$)."
+      },
+      {
+        "s": "a + b - x",
+        "t": "The mirror position of $x$ inside the interval $[a, b]$."
+      },
+      {
+        "s": "T",
+        "t": "The period of a periodic function: it repeats every $T$."
+      }
+    ],
+    "mistakes": [
+      {
+        "m": "Using the odd/even shortcut on limits that are not $-c$ and $c$.",
+        "f": "The shortcut needs symmetric limits. Over $[0, 2]$ an odd function does not give 0."
+      },
+      {
+        "m": "Assuming the integral of an odd function is 0 when it is not defined everywhere.",
+        "f": "For $\\frac1x$ on $[-1, 1]$ the function blows up at 0, so the integral does not exist."
+      },
+      {
+        "m": "Forgetting that swapping limits changes the sign.",
+        "f": "$\\int_3^1 f\\,dx = -\\int_1^3 f\\,dx$."
+      }
+    ]
   }
 };
 

@@ -130,7 +130,7 @@ export function noteToTex(note, { images = null } = {}) {
 
   const tags = (note?.tags || []).length ? `\\textit{${escapeTex(note.tags.join(' · '))}}\n\n` : '';
   const tex = [
-    '% Made with NETZ (netz-ruby.vercel.app)',
+    '% Made with NETZ (netzmath.vercel.app)',
     '\\documentclass[11pt]{article}',
     '\\usepackage[margin=2.2cm]{geometry}',
     '\\usepackage{amsmath,amssymb}',

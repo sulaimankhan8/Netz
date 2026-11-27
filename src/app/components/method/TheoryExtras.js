@@ -36,18 +36,25 @@ export function SymbolKey({ rows }) {
   );
 }
 
+/**
+ * Collapsed until the student opens it (a plain <details>, so it works without JavaScript and the text stays in the
+ * page for search engines). Tap or click the heading to open or close it.
+ */
 export function CommonMistakes({ items }) {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center pb-2 border-b-2 border-black/80 dark:border-neutral-700">
+    <details className="group space-y-6">
+      <summary className="flex justify-between items-center gap-3 pb-2 border-b-2 border-black/80 dark:border-neutral-700 cursor-pointer list-none min-h-[44px] [&::-webkit-details-marker]:hidden">
         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
           Common Mistakes
         </h2>
-        <span className="text-xs font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-3 py-1 rounded-lg border border-black/40 dark:border-neutral-600">
-          LOSE NO MARKS
+        <span className="flex items-center gap-3 shrink-0">
+          <span className="text-xs font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-3 py-1 rounded-lg border border-black/40 dark:border-neutral-600">
+            LOSE NO MARKS
+          </span>
+          <span aria-hidden="true" className="font-mono text-2xl leading-none text-black dark:text-white transition-transform group-open:rotate-45">+</span>
         </span>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      </summary>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         {items.map((row, i) => (
           <div key={i} className="border-2 border-black/80 dark:border-neutral-700 rounded-2xl bg-white dark:bg-neutral-800 p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)] dark:shadow-none space-y-2">
             <div className="text-xs font-mono font-bold uppercase text-red-600 dark:text-red-400">
@@ -61,6 +68,6 @@ export function CommonMistakes({ items }) {
           </div>
         ))}
       </div>
-    </div>
+    </details>
   );
 }

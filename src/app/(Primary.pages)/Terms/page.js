@@ -53,7 +53,8 @@ export default function TermsPage() {
         </P>
         <P>
           Pro rewards you earn (the year&apos;s banner, robot skin and Pro medal) are yours to keep after Pro ends.
-          Payments are not refunded; you can cancel any time. Details are on the <Link href="/Refund" style={linkStyle}>Refund page</Link>.
+          Payments are not refunded for a change of mind; double charges and Pro features that do not work are refunded.
+          You can cancel any time in one tap on your Profile. Details are on the <Link href="/Refund" style={linkStyle}>Refund page</Link>.
         </P>
       </LegalSection>
 

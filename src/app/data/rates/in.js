@@ -2,8 +2,8 @@
  * India tax rates (docs/methods/NETZ_METHODS_CATALOG.md section 0.2). Pages hold formulas only; every rate lives here.
  * Each rule: id, validFrom (inclusive), validTo (exclusive, null = still in force), label, source, data.
  * source.status: 'official' (checked on the government site), 'secondary' (tax portals and news), 'unverified'.
- * Research: docs/research_notes/NETZ topics and new units/interest_and_taxes.md. The owner checks these before the
- * pages go live (docs/launch/NETZ_OWNER_TODO.md, section K).
+ * Research: docs/research_notes/NETZ topics and new units/interest_and_taxes.md. The pages are live since 2026-11-21;
+ * what has been checked on official sites, and when, is logged in docs/launch/NETZ_OWNER_TODO.md, section K.
  */
 
 export const IN_RULES = [
@@ -278,7 +278,7 @@ export const IN_RULES = [
     },
   },
   {
-    // Domestic company income tax (corporate tax page, hidden until checked: docs/launch/NETZ_OWNER_TODO.md section K)
+    // Domestic company income tax (corporate tax page; checks logged in docs/launch/NETZ_OWNER_TODO.md section K)
     id: 'in.corporate',
     validFrom: '2019-04-01',
     validTo: null,

@@ -12,5 +12,5 @@ export const LEGAL = {
   address: '356/218/348, Govind Puram, Habibpur, Rajajipuram, Lucknow, Uttar Pradesh 226017',
   // Courts for disputes, usually your city and state
   jurisdiction: 'Lucknow, Uttar Pradesh',
-  updated: '21 October 2026',
+  updated: '21 November 2026',
 };
